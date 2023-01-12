@@ -229,7 +229,7 @@ void UpdateSearchItems(bool printMsg, List &searchItems,
 //' @export
 // [[Rcpp::export]]
 List GetSearchOptions(bool parallel = false, int reportInterval = 2,
-                      bool printMsg = true);
+                      bool printMsg = false);
 // clang-format on
 
 void CheckSearchOptions(List options);
