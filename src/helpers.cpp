@@ -6,51 +6,6 @@
 
 #include "helpers.h"
 
-//#pragma region choose
-
-unsigned int gcd(unsigned int x, unsigned int y) {
-  unsigned int t;
-  while (y != 0) {
-    t = x % y;
-    x = y;
-    y = t;
-  }
-  return x;
-}
-
-unsigned int choose(unsigned int n, unsigned int k) {
-  if (k == 0)
-    return 1; // before n==0 because choose(0,0) must return 1
-  if (n == 0)
-    return 0;
-  if (k == n)
-    return 1;
-  if (k == 1)
-    return n;
-  if (k == n - 1)
-    return n;
-  if (k > n)
-    return 0;
-
-  // source https://stackoverflow.com/a/4701106/5615980
-
-  unsigned int r = 1, d, g, t, imax;
-  imax = std::numeric_limits<unsigned int>::max();
-  for (d = 1; d <= k; ++d, --n) {
-    g = gcd(r, d);
-    r /= g;
-    t = n / (d / g);
-    if (r > imax / t) {
-      // overflow
-      return imax;
-    }
-    r *= t;
-  }
-  return r;
-}
-
-//#pragma endregion
-
 LDT_EXPORT bool StartsWith(const char *code, const char *str) {
   return boost::starts_with(str, code);
 }

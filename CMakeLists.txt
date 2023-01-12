@@ -141,6 +141,9 @@ file(GLOB REMOVE_FILES  ${PROJECT_SOURCE_DIR}/Rpackage/src/api.h
                         ${PROJECT_SOURCE_DIR}/Rpackage/src/api.cpp)
 file(REMOVE ${REMOVE_FILES})
 message(STATUS "Source files and headers are copied to Rpackage/src directory.")
+# Copy copyright file to R package
+file(GLOB COPYRIGHT  ${PROJECT_SOURCE_DIR}/readme.md)
+file(COPY ${COPYRIGHT} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage/inst/COPYRIGHTS)
 # ------
 
 add_library(ldt SHARED ${SOURCES})
@@ -305,7 +308,7 @@ install(DIRECTORY ${LDT_HEADER_DIR}/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include
  
  
 include(InstallRequiredSystemLibraries)
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 set(CPACK_PACKAGE_VERSION_MAJOR "${LDT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${LDT_VERSION_MINOR}")
 set(CPACK_SOURCE_GENERATOR "TGZ")

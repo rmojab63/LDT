@@ -395,7 +395,9 @@ template <typename Tw> void Matrix<Tw>::Transpose() {
       }
     }
   } else {
-    // using: https://stackoverflow.com/a/9320349
+    // for more description see:
+    // https://en.wikipedia.org/wiki/In-place_matrix_transposition#Non-square_matrices%3a_Following_the_cycles
+    // source: https://stackoverflow.com/a/9320349
 
     const Ti l = length() - 1;
     std::vector<bool> visited(l);

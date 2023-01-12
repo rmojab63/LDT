@@ -233,7 +233,7 @@ bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
 Ti Searcher::GetCount(bool effective) {
   // auto r = SizeG - mFixFirstG;
   // auto n = pGroupIndexMap->size() - mFixFirstG;
-  // auto countG = choose((Ti)n, (Ti)r);
+  // auto countG = choose((Ti)n, (Ti)r); // use boost 'binomial_coefficient'
 
   // simulate indexation in groups and multiply sizes
 

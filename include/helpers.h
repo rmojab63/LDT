@@ -58,8 +58,6 @@ const double c_ln_2Pi_plus_one =
 
 // #pragma region Statistics
 
-unsigned int choose(unsigned int n, unsigned int k);
-
 double dist_normal_pdf(double x, double mean = 0.0, double std = 1.0);
 
 double dist_normal_pdf_ln(double x, double mean = 0.0, double std = 1.0);
@@ -126,8 +124,8 @@ LDT_EXPORT void Rethrow(const char *msg, bool logic = true);
 
 // #pragma region Other
 
-/// @brief Sorts an array and keeps the sorting indices  (source:
-/// https://stackoverflow.com/a/12399290/5615980)
+/// @brief Sorts an array and keeps the sorting indices  (for a description,
+/// see: https://stackoverflow.com/a/12399290/5615980)
 /// @tparam Tw Type of data
 /// @param v The array
 /// @param length Length of the array
@@ -135,19 +133,20 @@ LDT_EXPORT void Rethrow(const char *msg, bool logic = true);
 template <typename Tw = Tv>
 void SortIndexes(const Tw *v, Ti length, std::vector<Ti> &result) {
   result.resize(length);
-  iota(result.begin(), result.end(), 0);
+  std::iota(result.begin(), result.end(), 0);
   std::stable_sort(result.begin(), result.end(),
                    [&v](Ti i1, Ti i2) { return v[i1] < v[i2]; });
 }
 
-/// @brief Sorts a vector and keeps the sorting indices
+/// @brief Sorts a vector and keeps the sorting indices (for a description,
+/// see: https://stackoverflow.com/a/12399290/5615980)
 /// @tparam Tw Type of data
 /// @param v The vector
 /// @param result A place to keep the sorting indices
 template <typename Tw = Tv>
 void SortIndexes(const std::vector<Tw> &v, std::vector<Ti> &result) {
   result.resize(v.size());
-  iota(result.begin(), result.end(), 0);
+  std::iota(result.begin(), result.end(), 0);
   std::stable_sort(result.begin(), result.end(),
                    [&v](Ti i1, Ti i2) { return v.at(i1) < v.at(i2); });
 }
