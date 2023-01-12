@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+RcppExports.R
+RcppExports.cpp
+*.o
+*.dll
+man/*
+NAMESPACE
+inst/doc
+/doc/
+/Meta/
+
+src/*
+!src/r_*.cpp
+!src/r_*.h
+!src/Makevar

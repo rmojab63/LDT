@@ -1,0 +1,6 @@
+/pkg/*
+!/pkg/PKGBUILD
+
+/out/*
+*.tar.gz
+.Rproj.user

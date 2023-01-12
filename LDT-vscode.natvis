@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="ldt::Matrix&lt;*&gt;">
+    <DisplayString Condition="Data==0">Matrix (empty: {RowsCount} x {ColsCount})</DisplayString>
+    <DisplayString>Matrix ({RowsCount} x {ColsCount})</DisplayString>
+    <Expand>
+      <IndexListItems>
+        <Size>RowsCount * ColsCount</Size>
+        <ValueNode>Data[$i]</ValueNode>
+      </IndexListItems> 
+    </Expand>
+  </Type>
+
+ 
+
+</AutoVisualizer>

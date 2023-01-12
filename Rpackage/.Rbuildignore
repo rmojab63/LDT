@@ -1,0 +1,8 @@
+^Rproject\.Rproject$
+^\.Rproject\.user$
+^.*\.Rproj$
+^\.Rproj\.user$
+^doc$
+^Meta$
+^vignettes/data$
+^LICENSE\.md$
