@@ -43,6 +43,6 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #' @export
 DcSearch_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                        counts = c(NA, 40, 30, 20),
-                       savePre = "ldt_dc_search_res_", ...) {
+                       savePre = NULL, ...) {
   Search_s("dc", x, xSizes, counts, savePre, ...)
 }

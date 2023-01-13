@@ -94,7 +94,7 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
           ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
           : GetSearchOptions();
   CheckSearchOptions(searchOptions_);
-  bool printMsg = true;
+  bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
@@ -266,7 +266,7 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
              std::string distType = "logit", SEXP newX = R_NilValue,
              SEXP pcaOptionsX = R_NilValue, SEXP costMatrices = R_NilValue,
              int simFixSize = 200, double simTrainRatio = 0.5,
-             int simTrainFixSize = 0, int simSeed = 0, bool weightedEval = false, bool printMsg = true)
+             int simTrainFixSize = 0, int simSeed = 0, bool weightedEval = false, bool printMsg = false)
 // clang-format on
 {
   if (y == R_NilValue || x == R_NilValue)

@@ -54,6 +54,6 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' @export
 SurSearch_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                         counts = c(NA, 40, 30, 20),
-                        savePre = "ldt_sur_search_res_", ...) {
+                        savePre = NULL, ...) {
   Search_s("sur", x, xSizes, counts, savePre, ...)
 }

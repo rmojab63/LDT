@@ -8,8 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-ec <- FALSE # identical(Sys.getenv("NOT_CRAN", unset = "true"), "true")
+```{r, include = FALSE} 
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "  >",
@@ -17,7 +16,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   echo = TRUE,
   results = "hide",
-  eval = ec
+  eval = TRUE
 )
 ```
 
@@ -26,17 +25,6 @@ library(ldt)
 library(kableExtra)
 ```
 
- 
-```{r eval_warn, eval=TRUE, echo=FALSE, results='asis'}
-if (ec == FALSE){
-  cat("\n---------------------\n     Warning: no evaluation\n---------------------\n\n")
-}
-```
-
-```{r}
-if (dir.exists("data") == FALSE)
-  dir.create("data")
-```
 
 It is recommended to read the following vignettes first:
 
@@ -89,55 +77,68 @@ In this presentation, $t_i$ for $i=1,\ldots,n$ is the threshold for the predicte
 ## Data
 In this vignette, we use @dataset_berka data-set and `ldt::Data_BerkaLoan()` function to get a sample for the dependent variable and the potential predictors (or, features):
 
-```{r data_get}
-berkadata <- tryCatch(readRDS("data/dc_berka_data.RData"), error = function(e) NULL)
-if (is.null(berkadata)) {
-  berka1 <- Data_BerkaLoan(positive = c("B", "D"), negative = c("A", "C"))
-  berka2 <- Data_BerkaLoan(positive = c("B"), negative = c("A"))
-  berkadata <- list(berka1 = berka1, berka2 = berka2)
-  saveRDS(berkadata, file = "data/dc_berka_data.RData")
-}
-data <- berkadata$berka1
+```{r data_get, eval=FALSE}
+data <- Data_BerkaLoan(positive = c("B", "D"), negative = c("A", "C"))
+#data <- Data_BerkaLoan(positive = c("B"), negative = c("A"))
 ```
 
 The data set has a _loan table_ with 682 observations, each labeled as one of the following: 
 
-- A: finished (`r if (ec) round(sum(data$status=="A")/length(data$status)*100,1) else NA`\%);
-- B: finished with default (`r if (ec) round(sum(data$status=="B")/length(data$status)*100,1) else NA`\%);
-- C: running (`r if (ec) round(sum(data$status=="C")/length(data$status)*100,1) else NA`\%); and
-- D: running with default (`r if (ec) round(sum(data$status=="D")/length(data$status)*100,1) else NA`\%).
+- A: finished (`r vig_data$berka$A_finished`\%);
+- B: finished with default (`vig_data$berka$B_finished`\%);
+- C: running (`r vig_data$berka$C_running`\%); and
+- D: running with default (`r vig_data$berka$D_running`\%).
 
 Numbers in the parenthesis show the percentage of data in each class. Each loan observation has an _account identification_ that can provide other types of information from other tables, such as the characteristics of the account of the loan and its transactions. Furthermore, each account has a _district identification_ that can provide information about the demographic characteristics of the location of its branch.  The combined table has `r ncol(data)-2` features (including the label) and `r nrow(data)` observations. 
 
-For this example, both _finished_ and _running_ (without default) classes are considered to be _negative_ and both finished and running _with default_ classes to be positive observations. Note that the observations labeled _running_ might introduce measurement errors. Without them, the length of the table is `r if (ec) nrow(berkadata$berka2) else NA`. If you do not want to use this part of the data, use `data <- berkadata$berka2` in the previous chunk of code.
+For this example, both _finished_ and _running_ (without default) classes are considered to be _negative_ and both finished and running _with default_ classes to be positive observations. Note that the observations labeled _running_ might introduce measurement errors. Without them, the length of the table is smaller. If you do not want to use this part of the data, uncomment the code in the previous chunk.
 
 The dependent and potential exogenous variables are:
 
-```{r data_define}
+```{r data_define, eval=FALSE}
 y <- data[, c("label"), drop = FALSE]
-x <- data[, 4:length(data)]
+x <- data[, 4:ncol(data)]
 ```
 
-Note that the first 2 columns of `data` are `id` and `status`. Since only `r if (ec) (sum(y==1)/nrow(y))*200 else NA`\% of the observations are positive, we define and use the following weight vector to balance the data:  
+```{r save_data, eval=FALSE,echo=FALSE}
+vig_data = ldt::vig_data
+vig_data$berka = list()
+vig_data$berka$y = y
+vig_data$berka$x = x[,1:10]
 
+vig_data$berka$A_finished = round(sum(data$status=="A")/length(data$status)*100,1)
+vig_data$berka$B_finished = round(sum(data$status=="B")/length(data$status)*100,1)
+vig_data$berka$C_running =round(sum(data$status=="C")/length(data$status)*100,1)
+vig_data$berka$D_running = round(sum(data$status=="D")/length(data$status)*100,1)
+#usethis::use_data(vig_data, overwrite = TRUE)
+```
+
+Note that the first 2 columns of `data` are `id` and `status`. 
+
+## Estimation 
+
+We are not able to load the data in this vignette, because it needs an external data set and this is not available in this package. But, a part of the data set is saved in the **ldt** package, and we load:
+```{r data_load}
+x = ldt::vig_data$berka$x
+y = ldt::vig_data$berka$y
+```
+If you have downloaded the data set files, do not run this code. Since only `r (sum(y==1)/nrow(y))*200 `\% of the observations are positive, we define and use the following weight vector to balance the data:  
 ```{r }
 weight <- as.numeric((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 ```
 
-## Estimation 
-
-There are `r if (ec) ncol(x) else NA` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `DcSearch_s()` function:
+There are `r ncol(x) ` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `DcSearch_s()` function:
 
 ```{r modelset_steps}
-xSizes <- list(c(1, 2), c(3, 4, 5))
-xCounts <- c(NA, 20)
+xSizes <- list(c(1, 2), c(3))
+xCounts <- c(NA, 4)
 ```
 
 We also need a seed for the RNG and some other options to define the out-of-sample prediction:
 
 ```{r seed}
 measureOptions$seed <- 340
-measureOptions$simFixSize <- 50
+measureOptions$simFixSize <- 10
 measureOptions$trainRatio <- 0.75
 ```
 
@@ -151,8 +152,8 @@ berka_res <- list(
     searchLogit = TRUE, searchProbit = FALSE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,
-    searchOptions = GetSearchOptions(printMsg = TRUE),
-    savePre = "data/dc_berka_logit_"
+    searchOptions = GetSearchOptions(printMsg = FALSE),
+    savePre = NULL
   ),
   probit = DcSearch_s(
     x = x, y = y, w = weight, costMatrices = list(costMatrix),
@@ -160,8 +161,8 @@ berka_res <- list(
     searchLogit = FALSE, searchProbit = TRUE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,
-    searchOptions = GetSearchOptions(printMsg = TRUE),
-    savePre = "data/dc_berka_probit_"
+    searchOptions = GetSearchOptions(printMsg = FALSE),
+    savePre = NULL
   )
 )
 ```
@@ -205,21 +206,21 @@ col <- c("black", "red")
 lwd <- 1
 
 barplot(as.matrix(data_cost),
-  beside = T, ylim = c(0, 1),
-  col = col, lwd = lwd, angle = angle, density = density
+        beside = T, ylim = c(0, 1),
+        col = col, lwd = lwd, angle = angle, density = density
 )
 legend("top",
-  legend = colnames(data_cost), angle = angle, density = density,
-  fill = col, bg = NULL
+       legend = colnames(data_cost), angle = angle, density = density,
+       fill = col, bg = NULL
 )
 
 barplot(as.matrix(data_auc),
-  beside = T, ylim = c(0, 1),
-  col = col, lwd = lwd, angle = angle, density = density
+        beside = T, ylim = c(0, 1),
+        col = col, lwd = lwd, angle = angle, density = density
 )
 legend("top",
-  legend = colnames(data_auc), angle = angle, density = density,
-  fill = col, bg = NULL
+       legend = colnames(data_auc), angle = angle, density = density,
+       fill = col, bg = NULL
 )
 ```
 

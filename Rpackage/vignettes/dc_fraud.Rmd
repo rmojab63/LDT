@@ -8,8 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-ec <- FALSE # identical(Sys.getenv("NOT_CRAN", unset = "true"), "true")
+```{r, include = FALSE} 
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "  >",
@@ -17,23 +16,12 @@ knitr::opts_chunk$set(
   message = FALSE,
   echo = TRUE,
   results = "hide",
-  eval = ec
+  eval = FALSE
 )
 ```
 
 ```{r setup}
 library(ldt)
-```
-
-```{r eval_warn, eval=TRUE, echo=FALSE, results='asis'}
-if (ec == FALSE){
-  cat("\n---------------------\n     Warning: no evaluation\n---------------------\n\n")
-}
-```
-
-```{r}
-if (dir.exists("data") == FALSE)
-  dir.create("data")
 ```
 
 It is recommended to read the following vignettes first:
@@ -49,20 +37,19 @@ In this vignette, we talk about fraud detection. The data in this example is pub
 We use @dataset_ieeefraud and `Data_VestaFraud()` function to get the required data:
 
 ```{r data}
-vestadata <- tryCatch(readRDS("data/dc_vesta_data.RData"), error = function(e) NULL)
-if (is.null(vestadata)) {
-  vestadata <- Data_VestaFraud(training = TRUE)
-  saveRDS(vestadata, file = "data/dc_vesta_data.RData")
-}
+vestadata <- Data_VestaFraud(training = TRUE)
 ```
 
-```{r data_info, echo=FALSE}
-sum_vestadata <- sum(lengths(vestadata$data))
-sum_vestadata_na <- sum(is.na(vestadata$data))
-vestadata_na_perc <- sum_vestadata_na / sum_vestadata * 100
+```{r save_data, echo=FALSE,eval=FALSE}
+vig_data = ldt::vig_data
+vig_data$vesta = list()
+vig_data$vesta$sum_data <- sum(lengths(vestadata$data))
+vig_data$vesta$sum_data_na <- sum(is.na(vestadata$data))
+vig_data$vesta$ncols <- ncol(vestadata$data)
+#usethis::use_data(vig_data, overwrite = TRUE)
 ```
 
-In this data set, there are two samples: train and test. We will use the training sample in this vignette. The observations are labeled with _fraud_ or _not fraud_. There are 393 features in the files. Furthermore, each observation has an \textit{id} that can link a part of the observations to another data file with 40 identity-related features. The combined data-set has `r if (ec) ncol(vestadata$data) else NA` features and `r if (ec) round(sum_vestadata/1000000,0) else NA` millions data-points in which `r if (ec) round(vestadata_na_perc,1) else NA`% is `NA`.
+In this data set, there are two samples: train and test. We will use the training sample in this vignette. The observations are labeled with _fraud_ or _not fraud_. There are 393 features in the files. Furthermore, each observation has an \textit{id} that can link a part of the observations to another data file with 40 identity-related features. The combined data-set has `r ldt::vig_data$vesta$ncols` features and `r round(ldt::vig_data$vesta$sum_data/1000000,0) ` millions data-points in which `r round(ldt::vig_data$vesta$sum_data_na / ldt::vig_data$vesta$sum_data * 100,1) `% is `NA`.
 
 Dependent and potential exogenous data are:
 ```{r}
@@ -110,7 +97,7 @@ vestaRes <- DcSearch_s(
     trainRatio = 0.9,
     seed = 340
   ),
-  searchOptions = GetSearchOptions(printMsg = TRUE),
+  searchOptions = GetSearchOptions(printMsg = FALSE),
   printMsg = FALSE,
   savePre = "data/dc_vesta_"
 )
@@ -123,6 +110,7 @@ print(paste0("Best In-Sample AUC:     ", vestaRes$aucIn$target1$model$bests$best
 print(paste0("Best Out-Of-Sample AUC: ", vestaRes$aucOut$target1$model$bests$best1$weight))
 ```
 
+Note that we do not evaluate the codes here due to the large data.
 
 ## Discussion
 The computations are relatively time-consuming even if we choose a small subset of the model set. One might be able to improve our current performance by better use of categorical features (e.g., by studying them and grouping some items). Furthermore, (for development) any improvement in the speed of the calculations allows us to search a larger proportion of the data set. In the presence of categorical variables, applying a more efficient algorithm in dealing with dummy variables or sparse matrices might be helpful.

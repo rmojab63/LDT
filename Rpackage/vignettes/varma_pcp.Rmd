@@ -8,8 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-ec <- FALSE # identical(Sys.getenv("NOT_CRAN", unset = "true"), "true")
+```{r, include = FALSE} 
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "  >",
@@ -17,24 +16,13 @@ knitr::opts_chunk$set(
   message = FALSE,
   echo = TRUE,
   results = "hide",
-  eval = ec
+  eval = TRUE
 )
 ```
 
 ```{r setup}
 library(ldt)
 library(kableExtra)
-```
-
-```{r eval_warn, eval=TRUE, echo=FALSE, results='asis'}
-if (ec == FALSE){
-  cat("\n---------------------\n     Warning: no evaluation\n---------------------\n\n")
-}
-```
-
-```{r}
-if (dir.exists("data") == FALSE)
-  dir.create("data")
 ```
 
 It is recommended to read the following vignettes first:
@@ -54,8 +42,8 @@ measureOptions <- GetMeasureOptions(
   horizons = c(1)
 )
 ```
- 
-This means, that there are `r if (ec) measureOptions$simFixSize else NA` out-of-sample experiments. In each iteration, we predict the direction of next month's change and summarize the results by calculating the rate of correct predictions. We also calculate the prediction error and CRPS in one horizon-ahead prediction and summarize the results by averaging.
+
+This means, that there are `r measureOptions$simFixSize` out-of-sample experiments. In each iteration, we predict the direction of next month's change and summarize the results by calculating the rate of correct predictions. We also calculate the prediction error and CRPS in one horizon-ahead prediction and summarize the results by averaging.
 
 
 
@@ -63,26 +51,27 @@ This means, that there are `r if (ec) measureOptions$simFixSize else NA` out-of-
 
 We use @dataset_pcp data set, which is updated monthly based on the IMF’s Primary Commodity Price System:
 
-```{r data}
+```{r data, eval=FALSE}
 pcpdata <- Data_Pcp()
 ```
-
-While the data set starts from \textit{1990m1}, variables have different starting periods. We focus on the nominal prices, however, we use the (lags of) US and China CPI as two potential predictors. The final data has `r if (ec) ncol(pcpdata$data) else NA` variables (including CPI series). Since data is monthly, we define the following variable:
+ 
+While the data set starts from \textit{1990m1}, variables have different starting periods. We focus on the nominal prices, however, we use the (lags of) US and China CPI as two potential predictors. The final data has `r ncol(ldt::vig_data$pcp$ncol)` variables (including CPI series). Since data is monthly, we define the following variable:
 
 ```{r}
 seasonsCount <- 12
 ```
 
 ## Estimation
+
 Since the last two variables are the US and China CPIs, the number of targets is:
 
-```{r}
+```{r, eval=FALSE}
 numTargets <- ncol(pcpdata$data) - 2
 ```
 
 We use the logarithm of data:
 
-```{r}
+```{r, eval=FALSE}
 y <- sapply(pcpdata$data, function(v) {
   r <- log(v)
   r[r <= 0] <- NA
@@ -92,11 +81,31 @@ y <- sapply(pcpdata$data, function(v) {
 
 and we define intercept and linear trend as two potential exogenous predictors:
 
-```{r}
+```{r,eval=FALSE}
 n <- nrow(y)
 x <- as.matrix(data.frame(Intercept = rep.int(1, n), Trend = c(1:n)))
 newX <- as.matrix(data.frame(Intercept = rep(1, 24), Trend = c((n + 1):(n + 24))))
 ```
+
+```{r save_data, echo=FALSE,eval=FALSE}
+vig_data = ldt::vig_data
+vig_data$pcp = list()
+vig_data$pcp$y <- y[,1:5]
+vig_data$pcp$desc <- pcpdata$desc[1:5]
+vig_data$pcp$x <- x
+vig_data$pcp$newX <- newX
+vig_data$pcp$ncols <- ncol(pcpdata$data)
+#usethis::use_data(vig_data, overwrite = TRUE)
+```
+
+We are not able to load the data in this vignette, because it needs an external data set and this is not available in this package. But, a part of the data set is saved in the **ldt** package, and we load:
+```{r data_load} 
+y = ldt::vig_data$pcp$y
+x = ldt::vig_data$pcp$x
+newX = ldt::vig_data$pcp$newX
+numTargets <- 3
+```
+If you have downloaded the data set files, do not run this code. Note that we also reset the number of targets.
 
 We search VARMA models with at most 2 number of variables:
 
@@ -129,21 +138,18 @@ Finally, we search for the best models:
 
 ```{r estimation}
 
-pcpRes <- tryCatch(readRDS("data/varma_pcp_res.RData"), error = function(e) NULL)
-if (is.null(pcpRes)) {
-  pcpRes <- VarmaSearch(
-    y = y, x = x, numTargets = numTargets,
-    ySizes = ySizes, xGroups = xGroups, maxParams = maxParams,
-    seasonsCount = seasonsCount, maxHorizon = 1, newX = newX,
-    interpolate = TRUE,
-    measureOptions = measureOptions,
-    modelCheckItems = checkItems,
-    searchItems = GetSearchItems(model = TRUE, bestK = 1),
-    searchOptions = GetSearchOptions(printMsg = FALSE)
-  )
+pcpRes <- VarmaSearch(
+  y = y, x = x, numTargets = numTargets,
+  ySizes = ySizes, xGroups = xGroups, maxParams = maxParams,
+  seasonsCount = seasonsCount, maxHorizon = 1, newX = newX,
+  interpolate = TRUE,
+  measureOptions = measureOptions,
+  modelCheckItems = checkItems,
+  searchItems = GetSearchItems(model = TRUE, bestK = 1),
+  searchOptions = GetSearchOptions(printMsg = FALSE)
+)
 
-  saveRDS(pcpRes, file = "data/varma_pcp_res.RData")
-}
+
 ```
 
 The following table shows, given a performance measure, which price index is better predicted:
@@ -152,11 +158,11 @@ The following table shows, given a performance measure, which price index is bet
 max_desc_length <- 25
 
 pcpranks <- data.frame(sapply(c(1:3), function(mi) {
-  targs <- sapply(c(1:(ncol(pcpdata$data) - 2)), function(ti) pcpRes[[1 + mi]][[ti]]$model$bests$best1$weight)
-  names(targs) <- sapply(c(1:(ncol(pcpdata$data) - 2)), function(ti) pcpRes[[1 + mi]][[ti]]$name)
+  targs <- sapply(c(1:numTargets), function(ti) pcpRes[[1 + mi]][[ti]]$model$bests$best1$weight)
+  names(targs) <- sapply(c(1:numTargets), function(ti) pcpRes[[1 + mi]][[ti]]$name)
   targs <- sort(targs, decreasing = TRUE, index.return = TRUE)
-  nams <- colnames(pcpdata$data)[targs$ix]
-  desc <- pcpdata$desc[targs$ix]
+  nams <- colnames(vig_data$pcp$y)[targs$ix]
+  desc <- vig_data$pcp$desc[targs$ix]
   targs$labels <- sapply(targs$ix, function(i) {
     d <- desc[[i]]
     if (nchar(d) > max_desc_length) {
@@ -193,9 +199,9 @@ colnames(res) <- mea_names
 
 
 kableExtra::kable(res, "html",
-  booktabs = TRUE, digits = 2,
-  align = c("l", "l", "l"), caption = "Psuedo out-of-sample scores and ranks",
-  linesep = "", escape = FALSE
+                  booktabs = TRUE, digits = 2,
+                  align = c("l", "l", "l"), caption = "Psuedo out-of-sample scores and ranks",
+                  linesep = "", escape = FALSE
 ) %>%
   kableExtra::footnote(
     general = "<p>Each value is the best score that is found for the variables in the row. The numbers in the parentheses indicate the rank of the values.</p>",

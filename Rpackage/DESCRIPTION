@@ -30,8 +30,11 @@ Imports:
 Suggests:
     knitr,
     testthat,
-    rmarkdown
+    rmarkdown,
+    kableExtra,
+    MASS
 LinkingTo: 
     BH,
     Rcpp
 Config/testthat/edition: 3
+LazyData: true

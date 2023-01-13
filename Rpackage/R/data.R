@@ -21,7 +21,7 @@
 #' @export
 #' @importFrom utils read.csv
 #' @importFrom stats var
-Data_Wdi <- function(dirPath = "D:/Data/WDI", minYear = 1960, maxYear = 2020,
+Data_Wdi <- function(dirPath, minYear = 1960, maxYear = 2020,
                      aggFunction = function(data, code, name, unit, definition, aggMethod) {
                        isPerc <- unit == "%" || grepl(".ZG", code)
                        if (isPerc) {
@@ -46,7 +46,7 @@ Data_Wdi <- function(dirPath = "D:/Data/WDI", minYear = 1960, maxYear = 2020,
 
   # final data matrix
   result <- matrix(NA, length(countriesCodes), length(seriesCodes),
-    dimnames = list(countriesCodes, seriesCodes)
+                   dimnames = list(countriesCodes, seriesCodes)
   )
 
   # meta: WDIData.csv (aggregate data)
@@ -132,7 +132,7 @@ has_all <- function(keywords, text) {
   if (length(text) == 0)
     return(FALSE)
   if (length(keywords) == 0)
-    stop("Invalid keywords. It is empty.")
+    stop(paste0("Invalid keywords. It is empty. text='", text,"'"))
   for (key in keywords){
     if (length(key) == 0)
       next()
@@ -185,9 +185,9 @@ Data_WdiSearchFor <- function(series, keywords, searchName = TRUE,
     topic <- tolower(series$topics[[i]])
 
     if (keywords[[1]] == code ||
-      (searchName && has_all(keywords, name)) ||
-      (searchDesc && has_all(keywords, description))) {
-      if (is.null(topickeywords) || has_all(topickeywords, topic)) {
+        (searchName && has_all(keywords, name)) ||
+        (searchDesc && has_all(keywords, description))) {
+      if (length(topickeywords) == 0 || has_all(topickeywords, topic)) {
         res[[length(res) + 1]] <- list(
           code = series$codes[[i]], # don't use lowercase
           name = series$names[[i]],
@@ -316,7 +316,7 @@ getDummy <- function(table, colName, pre = "",
 #'
 #' @export
 #' @importFrom utils read.csv
-Data_BerkaLoan <- function(dirPath = "D:/Data/Berka",
+Data_BerkaLoan <- function(dirPath,
                            positive = c("B", "D"), negative = c("A", "C"),
                            rateFun = function(amount, duration, paymentPerMonth) {
                              ((paymentPerMonth * duration) / amount - 1) * 100
@@ -554,7 +554,7 @@ Data_BerkaLoan <- function(dirPath = "D:/Data/Berka",
 #'
 #' @export
 #' @importFrom utils read.csv
-Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
+Data_VestaFraud <- function(dirPath, training = TRUE,
                             t_dumCols = NULL, i_dumCols = NULL,
                             cat_min_unique_skip = 6) {
   # TODO: add an argument to group some items in categorical data
@@ -570,7 +570,7 @@ Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
 
   transaction <- as.data.frame(
     read.csv(paste0(dirPath, "/", pre, "transaction.csv"),
-      header = TRUE, sep = ","
+             header = TRUE, sep = ","
     )
   )
 
@@ -591,8 +591,8 @@ Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
     name <- if (givenNames) tc$name else tc
     uniques <- if (givenNames) tc$values else NULL
     res <- getDummy(transaction,
-      colName = name, "", cat_min_unique_skip,
-      uniques = uniques
+                    colName = name, "", cat_min_unique_skip,
+                    uniques = uniques
     ) # note that in 'test', some columns might be missing. They are actually all 0
     if (is.null(res) == FALSE) {
       t_dumCols0[[length(t_dumCols0) + 1]] <- list(name = name, values = res$uniques)
@@ -605,7 +605,7 @@ Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
 
   # append identity
   identity <- as.data.frame(read.csv(paste0(dirPath, "/", pre, "identity.csv"),
-    header = TRUE, sep = ","
+                                     header = TRUE, sep = ","
   ))
 
   if (is.null(i_dumCols)) {
@@ -621,8 +621,8 @@ Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
     name <- if (givenNames) tc$name else tc
     uniques <- if (givenNames) tc$values else NULL
     res <- getDummy(identity,
-      colName = name, "", cat_min_unique_skip,
-      uniques = uniques
+                    colName = name, "", cat_min_unique_skip,
+                    uniques = uniques
     ) # note that in 'test', some columns might be missing. They are actually all 0
     if (is.null(res) == FALSE) {
       i_dumCols0[[length(i_dumCols0) + 1]] <- list(name = name, values = res$uniques)
@@ -650,7 +650,7 @@ Data_VestaFraud <- function(dirPath = "D:/Data/Vesta", training = TRUE,
 #' @return a list with data, descriptions, etc.
 #'
 #' @export
-Data_Pcp <- function(dirPath = "D:/Data/PCP", makeReal = FALSE) {
+Data_Pcp <- function(dirPath, makeReal = FALSE) {
   fs <- list.files(dirPath, "*.xls")
   data0 <- readxl::read_excel(file.path(dirPath, fs[[1]]))
 
@@ -673,3 +673,22 @@ Data_Pcp <- function(dirPath = "D:/Data/PCP", makeReal = FALSE) {
     desc = descriptions, types = datatypes, makeReal = makeReal
   ))
 }
+
+
+#' Data for Vignettes (and Tests)
+#'
+#' A subset of different data sets generally for tests and vignettes.
+#' Data is generated from \code{Data_?} functions.
+#'
+#'
+#' \itemize{
+#'   \item wdi. data from WDI data set.
+#'   \item berka. data from Berka data set.
+#'   \item vesta. data from Vesta data set.
+#'   \item pcp. data from PCP data set.
+#' }
+#'
+#' @docType data
+#' @name vig_data
+#' @format A list
+NULL

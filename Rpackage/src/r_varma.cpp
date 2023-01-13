@@ -105,7 +105,7 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
           ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
           : GetSearchOptions();
   CheckSearchOptions(searchOptions_);
-  bool printMsg = true;
+  bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
@@ -295,7 +295,7 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
                 SEXP pcaOptionsY = R_NilValue, SEXP pcaOptionsX = R_NilValue,
                 int maxHorizon = 0, SEXP newX = R_NilValue, int simFixSize = 0,
                 SEXP simHorizons = R_NilValue, bool simUsePreviousEstim = true,
-                double simMaxConditionNumber = 1e20, bool printMsg = true)
+                double simMaxConditionNumber = 1e20, bool printMsg = false)
 // clang-format on
 {
 

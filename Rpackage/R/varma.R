@@ -57,6 +57,6 @@ GetEstim_varma <- function(searchRes, endoIndices,
 #' @export
 VarmaSearch_s <- function(y, ySizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                           counts = c(NA, 40, 30, 20),
-                          savePre = "ldt_varma_search_res_", ...) {
+                          savePre = NULL, ...) {
   Search_s("varma", y, ySizes, counts, savePre, ...)
 }

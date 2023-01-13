@@ -51,7 +51,7 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
           ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
           : GetSearchOptions();
   CheckSearchOptions(searchOptions_);
-  bool printMsg = true;
+  bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
@@ -210,7 +210,7 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
               SEXP pcaOptionsY = R_NilValue, SEXP pcaOptionsX = R_NilValue,
               int simFixSize = 0, double simTrainRatio = 0.75,
               int simTrainFixSize = 0, int simSeed = 0,
-              double simMaxConditionNumber = 1.7e308, bool printMsg = true)
+              double simMaxConditionNumber = 1.7e308, bool printMsg = false)
 // clang-format on
 {
 

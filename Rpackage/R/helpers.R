@@ -373,7 +373,7 @@ combineSearch <- function(list, type1Name = "coefs") {
 #'
 #' @return the result
 Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                     counts = c(NA, 40, 30, 20), savePre, printMsg = TRUE, ...) {
+                     counts = c(NA, 40, 30, 20), savePre, printMsg = FALSE, ...) {
   dots <- list(...)
 
   # TODO: check search items here
