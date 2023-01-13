@@ -4,6 +4,7 @@
 #' @param x An \code{ldtf} object
 #' @param ... additional arguments
 #'
+#' @return \code{NULL}
 #' @export
 print.ldtf <- function(x, ...) {
   if (is.null(x)) {
@@ -15,6 +16,7 @@ print.ldtf <- function(x, ...) {
   s <- ToString_F0(x)
 
   cat("Frequency: ", s$value, " (", s$classType, ": ", s$class, ")", sep = "")
+  return(NULL)
 }
 
 #' Prints an \code{ldtv} object
@@ -22,6 +24,7 @@ print.ldtf <- function(x, ...) {
 #' @param x An \code{ldtv} object
 #' @param ... additional arguments
 #'
+#' @return \code{NULL}
 #' @export
 print.ldtv <- function(x, ...) {
   if (is.null(x)) {
@@ -60,6 +63,7 @@ print.ldtv <- function(x, ...) {
     "    Fields:\n", strrep(" ", 8), if (is.null(fields)) "" else fields,
     sep = ""
   )
+  return(NULL)
 }
 
 #' Converts an \code{ldtv} object to a \code{data.frame}
@@ -96,6 +100,7 @@ to.data.frame <- function(x, ...) {
 #' @param x \code{ldtsearch} object
 #' @param ... additional arguments
 #'
+#' @return \code{NULL}
 #' @export
 print.ldtsearch <- function(x, ...) {
   if (is.null(x)) {
@@ -147,6 +152,7 @@ print.ldtsearch <- function(x, ...) {
       }
     }
   }
+  return(NULL)
 }
 
 

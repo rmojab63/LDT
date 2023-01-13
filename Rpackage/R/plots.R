@@ -1,6 +1,6 @@
 
 
-#' Title
+#' Plots Estimated Coefficients
 #'
 #' @param points (list of list) each element is a point estimation to be drawn
 #' as a shape; defined by 1.\code{value}, 2.\code{y} (default=0), 3.\code{shape}
@@ -83,6 +83,10 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
                       },
                       legendsTitle = c("Point", "Bound", "Interval", "Density"),
                       legendTitleCex = 1.1, legendSize = 5, ...) {
+
+  oldpar <- par(no.readonly = TRUE)
+  on.exit(par(oldpar))
+
   dots <- list(...)
 
   def_bound_ymin <- -0.1
