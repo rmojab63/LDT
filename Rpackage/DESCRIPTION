@@ -1,6 +1,6 @@
 Package: ldt
 Title: Let Data Talk
-Version: 0.1.0.0
+Version: 0.1.1.0
 Authors@R: c(
     person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")),
     person("Microsoft Corporation", role = c("cph"), comment = "MIT license. Code from LightGBM package is used for AUC calculations."),
