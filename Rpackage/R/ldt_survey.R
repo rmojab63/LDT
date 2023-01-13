@@ -40,10 +40,6 @@
 #' for a distribution forecast (e.g., 'normal(0,1)')
 #' @param forecast_ExternalDesc A short description on what is provided in
 #' \code{forecast_External} (e.g., the name of the numerical method)
-#' @param fileName A file name to save the data for submitting to the LDT30. Use
-#' \code{NULL} to skip saving data.
-#' @param override If \code{FALSE} and \code{fileName} exists, it stops. Otherwise,
-#' it overrides the current file.
 #'
 #' @export
 #' @return The JSON content
@@ -68,9 +64,7 @@ CreateProject <- function(data,
                           survey_EndConditionValue = 0,
                           forecast_IsEnabled = TRUE,
                           forecast_External = list(),
-                          forecast_ExternalDesc = "",
-                          fileName = "ldt_survey_project",
-                          override = FALSE) {
+                          forecast_ExternalDesc = "") {
   # TODO:
   #  data_IsDiscrete = FALSE
   #  data_MinData = -Inf
@@ -137,13 +131,12 @@ CreateProject <- function(data,
 
   res <- jsonlite::toJSON(e, pretty = FALSE, digits = NA, auto_unbox = TRUE)
 
-  f <- paste0(fileName, ".json")
-  if (file.exists(f) && override == FALSE) {
-    stop(paste0("File (", f, ") exists."))
-  }
-  write(res, file = f)
-
-  print(paste0("File created: ", getwd(), "/", f))
+  #f <- paste0(fileName, ".json")
+  #if (file.exists(f) && override == FALSE) {
+  #  stop(paste0("File (", f, ") exists."))
+  #}
+  #write(res, file = f)
+  #print(paste0("File created: ", getwd(), "/", f))
 
   return(res)
 }
