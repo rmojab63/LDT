@@ -65,7 +65,7 @@ Data_Wdi <- function(dirPath, minYear = 1960, maxYear = 2020,
     stop(paste0("Invalid date. data starts at ", startYear))
   }
 
-  print("reading CSV file. This might be time-consuming ...")
+  #print("reading CSV file. This might be time-consuming ...")
   con <- file(paste0(dirPath, "/", dataFileName), open = "rt")
 
   # all <- length(readLines(con)) I'm not sure about the efficiency of
@@ -99,7 +99,7 @@ Data_Wdi <- function(dirPath, minYear = 1960, maxYear = 2020,
     }
   }
   close(con)
-  print("reading CSV file finished.")
+  #print("reading CSV file finished.")
 
   # NA columns
   c_inds <- which(as.logical(sapply(as.data.frame(result), function(X) keepFunction(X))))

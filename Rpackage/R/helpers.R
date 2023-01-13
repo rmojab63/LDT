@@ -486,8 +486,10 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
     }
 
     if (estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount) {
-      print("......Failures.......")
-      print(estims[[i]]$counts$failedDetails)
+      if (printMsg){
+         print("......Failures.......")
+         print(estims[[i]]$counts$failedDetails)
+      }
       stop("all estimations failed")
     }
 
