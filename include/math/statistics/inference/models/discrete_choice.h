@@ -650,10 +650,7 @@ public:
                          Newton &newtonOptions, bool addLogit = true,
                          bool addProbit = false);
 
-  virtual ~DiscreteChoiceModelset() {
-    for (auto s : Searchers)
-      delete s;
-  }
+  virtual ~DiscreteChoiceModelset();
 };
 
 extern template class ldt::DiscreteChoiceModelset<

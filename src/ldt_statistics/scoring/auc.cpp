@@ -8,6 +8,10 @@
 
 using namespace ldt;
 
+template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(){};
+
+template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(Ti n){};
+
 template <bool hasWeight, bool isBinary>
 void AUC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
                                          Matrix<Tv> *weights,

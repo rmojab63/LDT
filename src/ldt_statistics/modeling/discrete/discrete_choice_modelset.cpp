@@ -340,6 +340,12 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
 }
 
 template <bool hasWeight, DiscreteChoiceModelType modelType>
+DiscreteChoiceModelset<hasWeight, modelType>::~DiscreteChoiceModelset() {
+  for (auto s : Searchers)
+    delete s;
+}
+
+template <bool hasWeight, DiscreteChoiceModelType modelType>
 DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     SearchOptions &searchOptions, SearchItems &searchItems,
     SearchMeasureOptions &measures, SearchModelChecks &checks,

@@ -8,6 +8,8 @@
 
 using namespace ldt;
 
+template <typename T> FrequencyList<T>::~FrequencyList() {}
+
 template <typename T>
 FrequencyList<T>::FrequencyList(T value, std::vector<T> *items) {
   if constexpr (std::is_same<T, std::string>())

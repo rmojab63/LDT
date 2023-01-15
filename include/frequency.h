@@ -400,7 +400,7 @@ public:
   /// later.
   FrequencyList(T value, std::vector<T> *items);
 
-  virtual ~FrequencyList() override{};
+  virtual ~FrequencyList() override;
 
   /// @brief Gets index of \ref Value in \ref Items
   /// @return The index of \ref Value in \ref Items
