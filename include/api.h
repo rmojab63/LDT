@@ -7,15 +7,7 @@
 #include "variable.h"
 #include "varma.h"
 
-#if defined(_MSC_VER)
-#define LDT_C_EXPORT extern "C" __declspec(dllexport) __cdecl
-#elif defined(__GNUC__)
-#define LDT_C_EXPORT __attribute__((visibility("default")))
-#else
-#define LDT_C_EXPORT
-#pragma warning Unknown dynamic link import / export semantics.
-#endif
-
+#define LDT_C_EXPORT extern "C" LDT_EXPORT
 // #pragma region Exception
 
 static char LastErrorMsg[2048] = ""; // thread_local?
