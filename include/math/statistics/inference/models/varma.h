@@ -209,8 +209,8 @@ private:
 class LDT_EXPORT Varma {
 private:
   bool mIsRestricted = false;
-  bool mDoDetails;
-  bool mCalculateVarCoefs;
+  bool mDoDetails = false;
+  bool mCalculateVarCoefs = false;
 
 public:
   /// @brief Parameters and sizes. It gets updated in the \ref EstimateOls
@@ -263,9 +263,9 @@ public:
 };
 
 class LDT_EXPORT VarmaArma {
-  const VarmaSizes *pSizes;
+  const VarmaSizes *pSizes = nullptr;
 
-  Ti mMaInfCount;
+  Ti mMaInfCount = 0;
 
 public:
   Ti WorkSize = 0;
@@ -289,11 +289,11 @@ public:
 
   Ti StorageSize = 0;
 
-  Ti StartIndex;
+  Ti StartIndex = 0;
 
-  Ti mHorizon;
-  Ti mDoVariance;
-  bool mCoefUncertainty;
+  Ti mHorizon = 0;
+  Ti mDoVariance = 0;
+  bool mCoefUncertainty = false;
 
   Matrix<Tv> Forecast;
 
@@ -414,15 +414,15 @@ struct VarmaSimulationDetail {
         VarmaSimulationDetail();
         ~VarmaSimulationDetail();
 
-        Matrix<Tv>* Actuals;
+        Matrix<Tv>* Actuals = nullptr;
 
-        Matrix<Tv>* Forecasts;
+        Matrix<Tv>* Forecasts = nullptr;
 
-        Matrix<Tv>* ForecastsStd;
+        Matrix<Tv>* ForecastsStd = nullptr;
 
-        bool IsValid;
+        bool IsValid = false;
 
-        Ti SampleEnds;
+        Ti SampleEnds = 0;
 
 };*/
 
@@ -436,7 +436,7 @@ public:
 
   Ti StorageSize = 0;
 
-  const VarmaSizes *pSizes;
+  const VarmaSizes *pSizes = nullptr;
 
   Ti mCount = 0;
 
