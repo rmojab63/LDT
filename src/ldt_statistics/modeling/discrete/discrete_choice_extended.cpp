@@ -150,21 +150,21 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     if (mHasWeight && mWeightedEval) {
       if (mModelType == DiscreteChoiceModelType::kBinary) {
         auto auc = AUC<true, true>(numObs);
-        auc.Calculate(Y, Projections, &W, nullptr);
+        auc.Calculate(Y, Projections, &W, false);
         Auc = auc.Result;
       } else {
         auto auc = AUC<true, false>(numObs);
-        auc.Calculate(Y, Projections, &W, nullptr);
+        auc.Calculate(Y, Projections, &W, false);
         Auc = auc.Result;
       }
     } else {
       if (mModelType == DiscreteChoiceModelType::kBinary) {
         auto auc = AUC<false, true>(numObs);
-        auc.Calculate(Y, Projections, nullptr, nullptr);
+        auc.Calculate(Y, Projections, nullptr, false);
         Auc = auc.Result;
       } else {
         auto auc = AUC<false, false>(numObs);
-        auc.Calculate(Y, Projections, nullptr, nullptr);
+        auc.Calculate(Y, Projections, nullptr, false);
         Auc = auc.Result;
       }
     }

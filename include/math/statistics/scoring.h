@@ -301,6 +301,9 @@ public:
   /// @brief After \ref Calculate, it is AUC
   Tv Result = -1;
 
+  /// @brief curve points
+  std::vector<std::tuple<Tv, Tv>> Points;
+
   /// @brief Calculate the result
   /// @param y Actual labels. Length = N
   /// @param scores Calculated scores for each label. Dimension : N x P, where P
@@ -312,7 +315,7 @@ public:
   /// @param multi_class_weights_ See LightGBM source code (It is not currently
   /// implemented)
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         Matrix<Tv> *multi_class_weights_) = 0;
+                         bool normalizePoints = true) = 0;
   virtual ~AucBase(){};
 };
 
@@ -337,10 +340,10 @@ public:
   /// E.g., if 2, the element at the 3-rd column is the score for this label)
   /// @param weights Weight of each label. Length: N. It should be null if this
   /// is not a weighted class.
-  /// @param multi_class_weights_ See LightGBM source code (It is not currently
-  /// implemented)
+  /// @param normalizePoints If false, AUC is calculated without normalizing
+  /// \par Points (It is faster, but you can't draw the ROC properly)
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         Matrix<Tv> *multi_class_weights_) override;
+                         bool normalizePoints = true) override;
 };
 
 extern template class ldt::AUC<true, true>;

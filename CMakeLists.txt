@@ -102,6 +102,7 @@ file(GLOB SOURCES
  src/ldt_math/polynomials/mpolynomial.cpp
  src/ldt_math/polynomials/polynomial.cpp
  src/ldt_math/derivative.cpp
+ src/ldt_math/auc_points.cpp
 
  src/matrix/matrix_la.cpp
  src/matrix/matrix.cpp
