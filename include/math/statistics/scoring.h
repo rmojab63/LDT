@@ -305,7 +305,8 @@ public:
   std::vector<std::tuple<Tv, Tv>> Points;
 
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         bool normalizePoints = true) = 0;
+                         bool normalizePoints = true, Tv lowerThreshold = NAN,
+                         Tv upperThreshold = NAN) = 0;
   virtual ~RocBase(){};
 };
 
@@ -332,8 +333,11 @@ public:
   /// is not a weighted class.
   /// @param normalizePoints If false, AUC is calculated without normalizing
   /// \par Points (It is faster, but you can't draw the ROC properly)
+  /// @param lowerThreshold Lower bound for calculating partial AUC
+  /// @param upperThreshold Upper bound for calculating partial AUC
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         bool normalizePoints = true) override;
+                         bool normalizePoints = true, Tv lowerThreshold = NAN,
+                         Tv upperThreshold = NAN) override;
 };
 
 extern template class ldt::ROC<true, true>;

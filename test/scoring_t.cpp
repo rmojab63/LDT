@@ -60,6 +60,15 @@ TEST(Scoring_T, auc_binary) {
   auc.Calculate(y, scores, nullptr, true);
   ASSERT_NEAR(auc.Result, 0.125, 1e-15);
   ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.25, 1e-15);
+
+  // partial
+  scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
+  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  ASSERT_NEAR(auc.Result, 0.3, 1e-15);
+
+  scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
+  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  ASSERT_NEAR(auc.Result, 0.525, 1e-15);
 }
 
 TEST(Scoring_T, costMatrix) {
