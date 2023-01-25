@@ -157,7 +157,7 @@ if(MSVC)
 	target_compile_options(ldt PRIVATE "/wd4251;/wd4661")
 endif()
 if ( CMAKE_COMPILER_IS_GNUCC )
-    target_compile_options(ldt PRIVATE -DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2 -fpic  -g -O3 -Wall -pedantic)
+    #target_compile_options(ldt PRIVATE -DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2 -fpic  -g -O3 -Wall -pedantic)
 endif()
  
   if (CMAKEPRESETS)

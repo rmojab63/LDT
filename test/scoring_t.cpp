@@ -41,21 +41,25 @@ TEST(Scoring_T, logNormal) {
 }
 
 TEST(Scoring_T, auc_binary) {
+  auto y = Matrix<Tv>(new Tv[6]{1, 0, 1, 0, 1, 1}, 6, 1);
+  auto scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
+  auto auc = AUC<false, true>(6);
+  auc.Calculate(y, scores, nullptr, true);
+  ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
-  auto y = Matrix<Tv>(new Tv[8]{0, 1, 0, 1, 0, 1, 0, 1}, 8, 1);
-  auto scores = Matrix<Tv>(new Tv[16]{0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9,
-                                      0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1},
-                           8, 2);
+  scores = Matrix<Tv>(new Tv[6]{0.2, 0.2, 0.2, 0.2, 0.2, 0.2}, 6, 1);
+  auc.Calculate(y, scores, nullptr, true);
+  ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
-  auto auc = AUC<false, true>(8);
-  auc.Calculate(y, scores, nullptr, nullptr);
+  scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
+  auc.Calculate(y, scores, nullptr, true);
+  ASSERT_NEAR(auc.Result, 0.875, 1e-15);
+  ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.75, 1e-15);
 
-  ASSERT_NEAR(auc.Result, 0.53125, 1e-8);
-
-  auto weights =
-      Matrix<Tv>(new Tv[8]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1}, 8, 1);
-  auc = AUC<false, true>(8);
-  auc.Calculate(y, scores, &weights, nullptr);
+  scores = Matrix<Tv>(new Tv[6]{0.9, 0.1, 0.9, 0.1, 0.9, 0.1}, 6, 1);
+  auc.Calculate(y, scores, nullptr, true);
+  ASSERT_NEAR(auc.Result, 0.125, 1e-15);
+  ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.25, 1e-15);
 }
 
 TEST(Scoring_T, costMatrix) {
