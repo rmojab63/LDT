@@ -295,42 +295,32 @@ public:
 extern template class ldt::CostMatrix<true>;
 extern template class ldt::CostMatrix<false>;
 
-/// @brief A base class for AUC
-class LDT_EXPORT AucBase {
+/// @brief A base class for ROC
+class LDT_EXPORT RocBase {
 public:
   /// @brief After \ref Calculate, it is AUC
   Tv Result = -1;
 
-  /// @brief curve points
+  /// @brief After \ref Calculate, it contains the curve points
   std::vector<std::tuple<Tv, Tv>> Points;
 
-  /// @brief Calculate the result
-  /// @param y Actual labels. Length = N
-  /// @param scores Calculated scores for each label. Dimension : N x P, where P
-  /// is the number of unique choices (E.g., for binary case it must have 2
-  /// columns for 0 and 1). An actual label is an index (i.e., starts from 0.
-  /// E.g., if 2, the element at the 3-rd column is the score for this label)
-  /// @param weights Weight of each label. Length: N. It should be null if this
-  /// is not a weighted class.
-  /// @param multi_class_weights_ See LightGBM source code (It is not currently
-  /// implemented)
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
                          bool normalizePoints = true) = 0;
-  virtual ~AucBase(){};
+  virtual ~RocBase(){};
 };
 
-/// @brief A class to calculate AUC. Original source: LightGBM source code
+/// @brief A class to calculate ROC points and AUC.
 /// @tparam hasWeight If true, labels are weighted
 /// @tparam isBinary If true, labels are 0 and 1, otherwise, it has more than 1
 /// number of choices.
-template <bool hasWeight, bool isBinary> class LDT_EXPORT AUC : public AucBase {
+template <bool hasWeight, bool isBinary> class LDT_EXPORT ROC : public RocBase {
 public:
   /// @brief Initializes a new instance of the class
-  AUC();
+  ROC();
 
   /// @brief Initializes a new instance of the class
   /// @param n Number of the observations
-  AUC(Ti n);
+  ROC(Ti n);
 
   /// @brief Calculate the result
   /// @param y Actual labels. Length = N
@@ -346,9 +336,9 @@ public:
                          bool normalizePoints = true) override;
 };
 
-extern template class ldt::AUC<true, true>;
-extern template class ldt::AUC<true, false>;
-extern template class ldt::AUC<false, true>;
-extern template class ldt::AUC<false, false>;
+extern template class ldt::ROC<true, true>;
+extern template class ldt::ROC<true, false>;
+extern template class ldt::ROC<false, true>;
+extern template class ldt::ROC<false, false>;
 
 } // namespace ldt

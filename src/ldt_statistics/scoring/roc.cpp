@@ -9,17 +9,17 @@
 
 using namespace ldt;
 
-template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(){};
+template <bool hasWeight, bool isBinary> ROC<hasWeight, isBinary>::ROC(){};
 
-template <bool hasWeight, bool isBinary> AUC<hasWeight, isBinary>::AUC(Ti n){};
+template <bool hasWeight, bool isBinary> ROC<hasWeight, isBinary>::ROC(Ti n){};
 
 template <bool hasWeight, bool isBinary>
-void AUC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
+void ROC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
                                          Matrix<Tv> *weights,
                                          bool normalizePoints) {
   Ti n = y.length();
   if (n == 0)
-    throw std::logic_error("zero number of observations in calculating AUC.");
+    throw std::logic_error("zero number of observations in calculating ROC.");
 
   if constexpr (isBinary) {
     // first column must be the scores (i.e., probability of negative
@@ -79,11 +79,11 @@ void AUC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
     }
 
   } else {
-    throw std::logic_error("Not implemented (AUC).");
+    throw std::logic_error("Not implemented (ROC).");
   }
 }
 
-template class ldt::AUC<true, true>;
-template class ldt::AUC<true, false>;
-template class ldt::AUC<false, true>;
-template class ldt::AUC<false, false>;
+template class ldt::ROC<true, true>;
+template class ldt::ROC<true, false>;
+template class ldt::ROC<false, true>;
+template class ldt::ROC<false, false>;

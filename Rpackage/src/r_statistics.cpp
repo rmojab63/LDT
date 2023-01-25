@@ -149,21 +149,21 @@ double GetAuc(SEXP y, SEXP scores, SEXP weights = R_NilValue)
   double auc = NAN;
   if (hasWeight) {
     if (isBinary) {
-      auto auc0 = AUC<true, true>(y0.length());
+      auto auc0 = ROC<true, true>(y0.length());
       auc0.Calculate(my, mscores, &mweights, nullptr);
       auc = auc0.Result;
     } else {
-      auto auc0 = AUC<true, false>(y0.length());
+      auto auc0 = ROC<true, false>(y0.length());
       auc0.Calculate(my, mscores, &mweights, nullptr);
       auc = auc0.Result;
     }
   } else {
     if (isBinary) {
-      auto auc0 = AUC<false, true>(y0.length());
+      auto auc0 = ROC<false, true>(y0.length());
       auc0.Calculate(my, mscores, &mweights, nullptr);
       auc = auc0.Result;
     } else {
-      auto auc0 = AUC<false, false>(y0.length());
+      auto auc0 = ROC<false, false>(y0.length());
       auc0.Calculate(my, mscores, &mweights, nullptr);
       auc = auc0.Result;
     }

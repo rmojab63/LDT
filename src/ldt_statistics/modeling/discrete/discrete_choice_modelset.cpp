@@ -93,11 +93,11 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
   }
   if (measures.mIndexOfAucIn != -1) {
     if (hasWeight && measures.WeightedEval)
-      AucIn = std::unique_ptr<AucBase>(
-          new AUC<true, modelType == DiscreteChoiceModelType::kBinary>(numObs));
+      AucIn = std::unique_ptr<RocBase>(
+          new ROC<true, modelType == DiscreteChoiceModelType::kBinary>(numObs));
     else
-      AucIn = std::unique_ptr<AucBase>(
-          new AUC<false, modelType == DiscreteChoiceModelType::kBinary>(
+      AucIn = std::unique_ptr<RocBase>(
+          new ROC<false, modelType == DiscreteChoiceModelType::kBinary>(
               numObs));
   }
 }

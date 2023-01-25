@@ -123,18 +123,18 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   }
 
   // works
-  std::unique_ptr<AucBase> auc0;
+  std::unique_ptr<RocBase> auc0;
   std::unique_ptr<CostMatrixBase> costMatrix0;
   if (hasWeight && mWeightedEval) {
-    auc0 = std::unique_ptr<AucBase>(
-        new AUC<true,
+    auc0 = std::unique_ptr<RocBase>(
+        new ROC<true,
                 (modelType == DiscreteChoiceModelType::kBinary ? true : false)>(
             this->N1));
     costMatrix0 =
         std::unique_ptr<CostMatrixBase>(new CostMatrix<true>(costCount));
   } else {
-    auc0 = std::unique_ptr<AucBase>(
-        new AUC<false,
+    auc0 = std::unique_ptr<RocBase>(
+        new ROC<false,
                 (modelType == DiscreteChoiceModelType::kBinary ? true : false)>(
             this->N1));
     costMatrix0 =
