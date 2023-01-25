@@ -43,7 +43,7 @@ TEST(Scoring_T, logNormal) {
 TEST(Scoring_T, auc_binary) {
   auto y = Matrix<Tv>(new Tv[6]{1, 0, 1, 0, 1, 1}, 6, 1);
   auto scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
-  auto auc = AUC<false, true>(6);
+  auto auc = ROC<false, true>(6);
   auc.Calculate(y, scores, nullptr, true);
   ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 

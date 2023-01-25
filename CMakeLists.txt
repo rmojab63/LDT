@@ -68,7 +68,7 @@ file(GLOB SOURCES
 
   src/ldt_statistics/scoring/scoring.cpp
   src/ldt_statistics/scoring/cost_matrix.cpp
-  src/ldt_statistics/scoring/auc.cpp
+  src/ldt_statistics/scoring/roc.cpp
 
  src/ldt_statistics/correlation.cpp
  src/ldt_statistics/pca.cpp
@@ -102,7 +102,7 @@ file(GLOB SOURCES
  src/ldt_math/polynomials/mpolynomial.cpp
  src/ldt_math/polynomials/polynomial.cpp
  src/ldt_math/derivative.cpp
- src/ldt_math/auc_points.cpp
+ src/ldt_math/auc.cpp
 
  src/matrix/matrix_la.cpp
  src/matrix/matrix.cpp
