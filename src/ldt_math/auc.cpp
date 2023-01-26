@@ -12,8 +12,9 @@ template <bool vert>
 AucPoints<vert>::AucPoints(const std::vector<std::tuple<Tv, Tv>> &points,
                            Tv baseLine) {
   Result = 0;
-  if (points.size() == 0)
+  if (points.size() <= 1)
     return;
+
   Tv x0 = std::get<0>(points.at(0)), y0 = std::get<1>(points.at(0)), x = 0,
      y = 0, dx = 0, dy = 0;
   for (auto const &p : points) {

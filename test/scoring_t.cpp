@@ -69,6 +69,26 @@ TEST(Scoring_T, auc_binary) {
   scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
   auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
   ASSERT_NEAR(auc.Result, 0.525, 1e-15);
+
+  // another y (more complex)
+  y = Matrix<Tv>(new Tv[10]{1, 0, 1, 0, 1, 1, 0, 0, 1, 0}, 10, 1);
+  scores = Matrix<Tv>(
+      new Tv[10]{0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1}, 10, 1);
+  auc = ROC<false, true>(10);
+  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  ASSERT_NEAR(auc.Result, 0.44, 1e-15);
+  auc.Calculate(y, scores, nullptr, true, 0.2, 0.4);
+  ASSERT_NEAR(auc.Result, 0.12, 1e-15);
+  auc.Calculate(y, scores, nullptr, true, 0.3, 0.4);
+  ASSERT_NEAR(auc.Result, 0.07, 1e-15);
+  auc.Calculate(y, scores, nullptr, true, 0.3, 0.8);
+  ASSERT_NEAR(auc.Result, 0.39, 1e-15);
+  auc.Calculate(y, scores, nullptr, true, 0.4, 0.6);
+  ASSERT_NEAR(auc.Result, 0.16, 1e-15);
+  auc.Calculate(y, scores, nullptr, true, 0, 1);
+  ASSERT_NEAR(auc.Result, 0.68, 1e-15);
+  auc.Calculate(y, scores, nullptr, true);
+  ASSERT_NEAR(auc.Result, 0.68, 1e-15);
 }
 
 TEST(Scoring_T, costMatrix) {

@@ -88,19 +88,21 @@ void ROC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
           y = std::get<1>(p);
           slope = (y - y0) / (x - x0);
 
-          if (x >= lowerThreshold &&
-              x0 < lowerThreshold) // we should add the first point
-            newPoints.push_back(std::make_tuple(
-                lowerThreshold, y0 + (lowerThreshold - x0) * slope));
+          if (x >= lowerThreshold && x0 <= upperThreshold) {
+            if (x > lowerThreshold &&
+                x0 < lowerThreshold) // don't miss the first point
+              newPoints.push_back(std::make_tuple(
+                  lowerThreshold, y0 + (lowerThreshold - x0) * slope));
 
-          if (x > upperThreshold &&
-              x0 <= upperThreshold) // we should add the last point
-            newPoints.push_back(std::make_tuple(
-                upperThreshold, y - (x - upperThreshold) * slope));
+            if (x >= lowerThreshold && x <= upperThreshold)
+              newPoints.push_back(std::make_tuple(x, y));
 
-          else if (x >= lowerThreshold && x0 >= lowerThreshold) {
-            newPoints.push_back(std::make_tuple(x, y));
+            if (x > upperThreshold &&
+                x0 < upperThreshold) // don't miss the last point
+              newPoints.push_back(std::make_tuple(
+                  upperThreshold, y - (x - upperThreshold) * slope));
           }
+
           x0 = x;
           y0 = y;
         }
