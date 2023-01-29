@@ -60,6 +60,7 @@ void ROC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
 
       //    At the current threshold: this observation and all
       //    previous observations are predicted to be positive
+
       isNeg = yi == 0;
 
       if (isNeg) { // A false-positive -> a horizontal move in ROC
@@ -67,6 +68,16 @@ void ROC<hasWeight, isBinary>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
       } else { // a true-positive -> a vertical move
         verti += w;
       }
+
+      // why don't we calculate the area of a rectangle here?
+      // we should "handle sequences of equally scored instances"
+      // Note that AUC is the probability to rank a randomly chosen positive
+      // (STRICTLY) higher than a randomly chosen negative negative instance.
+      // what do we do when they are equal?
+      // see Fawcett (2006) fig. 6
+      // TODO: add pessimistic and optimistic options
+      // also see https://link.springer.com/article/10.1007/s00357-019-09345-1
+      // for a discussion.
     }
 
     sumTP += verti;
