@@ -298,7 +298,8 @@ extern template class ldt::CostMatrix<false>;
 /// @brief A base class for ROC
 class LDT_EXPORT RocBase {
 public:
-  /// @brief After \ref Calculate, it is AUC
+  /// @brief After \ref Calculate, it is AUC or partial AUC (divided by
+  /// length of the bound)
   Tv Result = -1;
 
   /// @brief After \ref Calculate, it contains the curve points
@@ -306,15 +307,17 @@ public:
 
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
                          bool normalizePoints = true, Tv lowerThreshold = NAN,
-                         Tv upperThreshold = NAN) = 0;
+                         Tv upperThreshold = NAN, Tv epsilon = 0,
+                         bool pessimistic = false, Matrix<Tv> *costs = nullptr,
+                         Matrix<Tv> *costMatrix = nullptr) = 0;
   virtual ~RocBase(){};
 };
 
-/// @brief A class to calculate ROC points and AUC.
+/// @brief A class to calculate ROC points and AUC for binary model.
 /// @tparam hasWeight If true, labels are weighted
-/// @tparam isBinary If true, labels are 0 and 1, otherwise, it has more than 1
-/// number of choices.
-template <bool hasWeight, bool isBinary> class LDT_EXPORT ROC : public RocBase {
+/// @tparam hasCost If true, a vector of variable costs and a cost matrix is
+/// expected
+template <bool hasWeight, bool hasCost> class LDT_EXPORT ROC : public RocBase {
 public:
   /// @brief Initializes a new instance of the class
   ROC();
@@ -325,19 +328,30 @@ public:
 
   /// @brief Calculate the result
   /// @param y Actual labels. Length = N
-  /// @param scores Calculated scores for each label. Dimension : N x P, where P
-  /// is the number of unique choices (E.g., for binary case it must have 2
-  /// columns for 0 and 1). An actual label is an index (i.e., starts from 0.
-  /// E.g., if 2, the element at the 3-rd column is the score for this label)
+  /// @param scores (N x 1) Calculated probabilities for negative observations
+  /// (y=0).
   /// @param weights Weight of each label. Length: N. It should be null if this
   /// is not a weighted class.
   /// @param normalizePoints If false, AUC is calculated without normalizing
   /// \par Points (It is faster, but you can't draw the ROC properly)
   /// @param lowerThreshold Lower bound for calculating partial AUC
   /// @param upperThreshold Upper bound for calculating partial AUC
+  /// @param epsilon A value to ignore small floating point differences.
+  /// @param pessimistic If true, sequences of equally scored instances are
+  /// treated differently and a pessimistic measure is calculated (see Fawcett
+  /// (2006) An introduction to roc analysis, fig. 6).
+  /// @param costs (N x 1) cost of observations (If null, cost of all
+  /// observations will be 1)
+  /// @param costMatrix (2 x 2) cost matrix in which: (1,1) is cost of TN, (2,2)
+  /// is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First column
+  /// is multiplied by the corresponding value in \par costs vector (see Fawcett
+  /// (2006), ROC graphs with instance-varying costs). I do not check negative
+  /// costs so make sure the structure is correct
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
                          bool normalizePoints = true, Tv lowerThreshold = NAN,
-                         Tv upperThreshold = NAN) override;
+                         Tv upperThreshold = NAN, Tv epsilon = 0,
+                         bool pessimistic = false, Matrix<Tv> *costs = nullptr,
+                         Matrix<Tv> *costMatrix = nullptr) override;
 };
 
 extern template class ldt::ROC<true, true>;

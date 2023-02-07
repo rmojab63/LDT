@@ -43,7 +43,7 @@ TEST(Scoring_T, logNormal) {
 TEST(Scoring_T, auc_binary) {
   auto y = Matrix<Tv>(new Tv[6]{1, 0, 1, 0, 1, 1}, 6, 1);
   auto scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
-  auto auc = ROC<false, true>(6);
+  auto auc = ROC<false, false>(6);
   auc.Calculate(y, scores, nullptr, true);
   ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
@@ -64,50 +64,29 @@ TEST(Scoring_T, auc_binary) {
   // partial
   scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
   auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
-  ASSERT_NEAR(auc.Result, 0.3, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.3 / 0.6, 1e-15);
 
   scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
   auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
-  ASSERT_NEAR(auc.Result, 0.525, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.525 / 0.6, 1e-15);
 
   // another y (more complex)
   y = Matrix<Tv>(new Tv[10]{1, 0, 1, 0, 1, 1, 0, 0, 1, 0}, 10, 1);
   scores = Matrix<Tv>(
       new Tv[10]{0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1}, 10, 1);
-  auc = ROC<false, true>(10);
+  auc = ROC<false, false>(10);
   auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
-  ASSERT_NEAR(auc.Result, 0.44, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.44 / 0.6, 1e-15);
   auc.Calculate(y, scores, nullptr, true, 0.2, 0.4);
-  ASSERT_NEAR(auc.Result, 0.12, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.12 / 0.2, 1e-15);
   auc.Calculate(y, scores, nullptr, true, 0.3, 0.4);
-  ASSERT_NEAR(auc.Result, 0.07, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.07 / 0.1, 1e-15);
   auc.Calculate(y, scores, nullptr, true, 0.3, 0.8);
-  ASSERT_NEAR(auc.Result, 0.39, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.39 / 0.5, 1e-15);
   auc.Calculate(y, scores, nullptr, true, 0.4, 0.6);
-  ASSERT_NEAR(auc.Result, 0.16, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.16 / 0.2, 1e-15);
   auc.Calculate(y, scores, nullptr, true, 0, 1);
-  ASSERT_NEAR(auc.Result, 0.68, 1e-15);
+  ASSERT_NEAR(auc.Result, 0.68 / 1, 1e-15);
   auc.Calculate(y, scores, nullptr, true);
   ASSERT_NEAR(auc.Result, 0.68, 1e-15);
-}
-
-TEST(Scoring_T, costMatrix) {
-
-  auto y = Matrix<Tv>(new Tv[8]{0, 1, 0, 1, 0, 1, 0, 1}, 8, 1);
-  auto scores = Matrix<Tv>(new Tv[16]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1,
-                                      0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9},
-                           8, 2);
-
-  Matrix<Tv> cost_table =
-      Matrix<Tv>(new Tv[12]{0.3, 0.5, 0.7, 1.0, 0, 1, 2, 3, 9, 8, 7, 0}, 4, 3);
-  CostMatrix<true>::Check(cost_table, 2);
-  auto weights =
-      Matrix<Tv>(new Tv[8]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1}, 8, 1);
-
-  auto cm = CostMatrix<false>(1);
-  auto S = new Tv[cm.StorageSize];
-  cm.Calculate(std::vector<Matrix<Tv>>({cost_table, cost_table}), y, scores,
-               &weights, S);
-
-  //??!!!
 }
