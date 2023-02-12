@@ -550,7 +550,7 @@ TEST(DiscreteChoice_t, searcherSmall) {
 
   measures.TrainRatio = 0.8;
   measures.SimFixSize = 10;
-  measures.MeasuresOut.push_back(ScoringType::kCostMatrix);
+  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
 
   checks.Estimation = true;
 
@@ -711,8 +711,8 @@ TEST(DiscreteChoice_t, searcherLarager) {
   measures.Seed = -340;
   measures.SimFixSize = 200;
   measures.MeasuresIn.push_back(GoodnessOfFitType::kAuc);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kCostMatrix);
-  measures.MeasuresOut.push_back(ScoringType::kCostMatrix);
+  measures.MeasuresIn.push_back(GoodnessOfFitType::kFrequencyCost);
+  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
   measures.MeasuresOut.push_back(ScoringType::kAuc);
 
   auto gr1 = std::vector<Ti>({0});

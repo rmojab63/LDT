@@ -19,7 +19,7 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
                                         bool normalizePoints, Tv lowerThreshold,
                                         Tv upperThreshold, Tv epsilon,
                                         bool pessimistic, Matrix<Tv> *costs,
-                                        Matrix<Tv> *costMatrix) {
+                                        Matrix<Tv> *frequencyCost) {
   bool isPartial = std::isnan(lowerThreshold) == false &&
                    std::isnan(upperThreshold) == false;
   if (isPartial) {
@@ -31,7 +31,8 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
   }
 
   if constexpr (hasCost) {
-    if (!costMatrix || costMatrix->RowsCount != 2 || costMatrix->ColsCount != 2)
+    if (!frequencyCost || frequencyCost->RowsCount != 2 ||
+        frequencyCost->ColsCount != 2)
       throw std::logic_error("Missing or invalid cost matrix.");
   }
 
@@ -77,11 +78,11 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
 
     if constexpr (hasCost) {
       Tv xi = costs ? costs->Data[ind] : 1;
-      Tv b_tp = costMatrix->Data[0] * xi - costMatrix->Data[2];
+      Tv b_tp = frequencyCost->Data[0] * xi - frequencyCost->Data[2];
       if (b_tp < 0)
         throw std::logic_error("Invalid cost matrix: benefit of TP is "
                                "negative. Check the first row.");
-      Tv c_fp = -(costMatrix->Data[1] * xi - costMatrix->Data[3]);
+      Tv c_fp = -(frequencyCost->Data[1] * xi - frequencyCost->Data[3]);
       if (c_fp < 0)
         throw std::logic_error("Invalid cost matrix: cost of FP is negative. "
                                "Check the second row.");

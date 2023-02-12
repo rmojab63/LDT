@@ -288,7 +288,7 @@ test_that("Discrete choice search (avgCost, one model) works", {
   tratio = 0.8
 
   res <- DcSearch(x[,1], x[,3:4], searchOptions = GetSearchOptions(printMsg = printMsg),
-                  measureOptions = GetMeasureOptions(typesIn = c(), typesOut = c("costMatrix"),
+                  measureOptions = GetMeasureOptions(typesIn = c(), typesOut = c("frequencyCost"),
                                                                                  seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2), costMatrices = list(c1),
                               searchItems = GetSearchItems(bestK = 1, all = FALSE))
@@ -310,7 +310,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
   tratio = 0.8
 
   res <- DcSearch(x[,1], x[,3:20], searchOptions = GetSearchOptions(printMsg = printMsg),
-                  measureOptions = GetMeasureOptions(typesIn = c("sic"), typesOut = c("costMatrix"),
+                  measureOptions = GetMeasureOptions(typesIn = c("sic"), typesOut = c("frequencyCost"),
                                                                                   seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2), costMatrices = list(c1),
                               searchItems = GetSearchItems(bestK = 4, all = TRUE))

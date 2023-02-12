@@ -59,10 +59,10 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     WorkSize = std::max(WorkSize, rows + mNumChoices - 2);
     if (costMatrices) {
       if (hasWeight && weightedEval) {
-        auto cost = CostMatrix<true>(costMatrices->size());
+        auto cost = FrequencyCost<true>(costMatrices->size());
         StorageSize += cost.StorageSize;
       } else {
-        auto cost = CostMatrix<false>(costMatrices->size());
+        auto cost = FrequencyCost<false>(costMatrices->size());
         StorageSize += cost.StorageSize;
       }
     }
@@ -149,34 +149,30 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
 
     if (mHasWeight && mWeightedEval) {
       if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = ROC<true, true>(numObs);
+        auto auc = ROC<true, false>(numObs); // TODO: add cost
         auc.Calculate(Y, Projections, &W, false);
         Auc = auc.Result;
       } else {
-        auto auc = ROC<true, false>(numObs);
-        auc.Calculate(Y, Projections, &W, false);
-        Auc = auc.Result;
+        throw std::logic_error("Not implemented discrete choice model type");
       }
     } else {
       if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = ROC<false, true>(numObs);
-        auc.Calculate(Y, Projections, nullptr, false);
-        Auc = auc.Result;
-      } else {
         auto auc = ROC<false, false>(numObs);
         auc.Calculate(Y, Projections, nullptr, false);
         Auc = auc.Result;
+      } else {
+        throw std::logic_error("Not implemented discrete choice model type");
       }
     }
 
     if (pCostMatrices) {
       if (mHasWeight && mWeightedEval) {
-        auto cost = CostMatrix<true>(pCostMatrices->size());
+        auto cost = FrequencyCost<true>(pCostMatrices->size());
         cost.Calculate(*pCostMatrices, Y, Projections, &W, &storage[p]);
         p += cost.StorageSize;
         CostRatioAvg = cost.AverageRatio;
       } else {
-        auto cost = CostMatrix<false>(pCostMatrices->size());
+        auto cost = FrequencyCost<false>(pCostMatrices->size());
         cost.Calculate(*pCostMatrices, Y, Projections, nullptr, &storage[p]);
         p += cost.StorageSize;
         CostRatioAvg = cost.AverageRatio;

@@ -539,7 +539,7 @@ class LDT_EXPORT DiscreteChoiceSearcher : public Searcher {
   std::vector<Ti> Indexes;
   Matrix<Ti> ExoIndexes;
   Matrix<Tv> Weights;
-  std::unique_ptr<CostMatrixBase> CostIn;
+  std::unique_ptr<FrequencyCostBase> CostIn;
   Matrix<Tv> Probs;
   std::unique_ptr<RocBase> AucIn;
   Matrix<Tv> AucWeightsMc;

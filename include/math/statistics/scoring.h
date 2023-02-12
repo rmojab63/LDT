@@ -18,8 +18,8 @@ enum class GoodnessOfFitType {
   /// @brief Schwartz information criterion
   kSic = 51,
 
-  /// @brief Custom cost matrix, e.g., in binary case
-  kCostMatrix = 100,
+  /// @brief Custom frequency cost matrix, e.g., in binary case
+  kFrequencyCost = 100,
 
   /// @brief Area under ROC
   kAuc = 110,
@@ -36,8 +36,8 @@ inline const char *ToString(GoodnessOfFitType v, bool abr = true) {
     return abr ? "aic" : "Akaike Information Criterion";
   case GoodnessOfFitType::kSic:
     return abr ? "sic" : "Schwartz Information Criterion";
-  case GoodnessOfFitType::kCostMatrix:
-    return abr ? "costMatrixIn" : "Custom Cost Matrix";
+  case GoodnessOfFitType::kFrequencyCost:
+    return abr ? "costMatrixIn" : "Custom Frequency Cost";
   case GoodnessOfFitType::kAuc:
     return abr ? "aucIn" : "Area Under ROC (In-Sample)";
   default:
@@ -53,8 +53,8 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
     return GoodnessOfFitType::kAic;
   else if (StartsWith("sic", v))
     return GoodnessOfFitType::kSic;
-  else if (StartsWith("costm", v))
-    return GoodnessOfFitType::kCostMatrix;
+  else if (StartsWith("freq", v))
+    return GoodnessOfFitType::kFrequencyCost;
   else if (StartsWith("auc", v))
     return GoodnessOfFitType::kAuc;
 
@@ -103,8 +103,8 @@ enum class ScoringType {
   /// @brief Continuous Ranked Probability Score
   kCrps = 20,
 
-  /// @brief Custom cost matrix, e.g., in binary case
-  kCostMatrix = 100,
+  /// @brief Custom frequency cost matrix, e.g., in binary case
+  kFrequencyCost = 100,
 
   /// @brief Area under ROC
   kAuc
@@ -134,8 +134,9 @@ inline const char *ToString(ScoringType v, bool abr = true) {
   case ScoringType::kCrps:
     return abr ? "crps" : "Continuous Ranked Probability Score";
 
-  case ScoringType::kCostMatrix:
-    return abr ? "costMatrixOut" : "Custom Cost Matrix<Tv> (Out-of-Sample)";
+  case ScoringType::kFrequencyCost:
+    return abr ? "frequencyCostOut"
+               : "Custom Frequency Cost<Tv> (Out-of-Sample)";
 
   case ScoringType::kAuc:
     return abr ? "aucOut" : "Area Under ROC";
@@ -166,8 +167,8 @@ inline ScoringType FromString_ScoringType(const char *v) {
   else if (StartsWith("crp", v))
     return ScoringType::kCrps;
 
-  else if (StartsWith("costm", v))
-    return ScoringType::kCostMatrix;
+  else if (StartsWith("freq", v))
+    return ScoringType::kFrequencyCost;
 
   else if (StartsWith("auc", v))
     return ScoringType::kAuc;
@@ -229,18 +230,18 @@ public:
   static Tv FromWeight(const ScoringType &type, const Tv &weight);
 };
 
-/// @brief a base class for CostMatrix
-class LDT_EXPORT CostMatrixBase {
+/// @brief a base class for FrequencyCost
+class LDT_EXPORT FrequencyCostBase {
 public:
   /// @brief Gets the required size of the storage array
   Ti StorageSize = 0;
 
-  /// @brief After calculate, total cost of each cost matrix. Length: number of
-  /// cost matrices
+  /// @brief After calculate, total cost of each frequency cost matrix. Length:
+  /// number of cost matrices
   Matrix<Tv> CostSums;
 
-  /// @brief After calculate, sum of the weights for each cost matrix. Length:
-  /// number of cost matrices
+  /// @brief After calculate, sum of the weights for each frequency cost matrix.
+  /// Length: number of cost matrices
   Matrix<Tv> CostCounts;
 
   /// @brief After calculate, average cost for all cost matrices
@@ -259,19 +260,20 @@ public:
                          const Matrix<Tv> &y, const Matrix<Tv> &scores,
                          const Matrix<Tv> *weights, Tv *storage) = 0;
 
-  virtual ~CostMatrixBase(){};
+  virtual ~FrequencyCostBase(){};
 };
 
-/// @brief A class to calculate expected cost based on a cost matrix
+/// @brief A class to calculate expected cost based on a frequency cost matrix
 /// @tparam hasWeight
-template <bool hasWeight> class LDT_EXPORT CostMatrix : public CostMatrixBase {
+template <bool hasWeight>
+class LDT_EXPORT FrequencyCost : public FrequencyCostBase {
 public:
   /// @brief Initializes a new instance of the class
-  CostMatrix(){};
+  FrequencyCost(){};
 
   /// @briefInitializes a new instance of the class
-  /// @param count Maximum expected number of cost matrixes
-  CostMatrix(Ti count);
+  /// @param count Maximum expected number of frequency cost matrixes
+  FrequencyCost(Ti count);
 
   /// @brief Calculates the results
   /// @param costs List of cost matrices. Length = M
@@ -286,14 +288,14 @@ public:
                          const Matrix<Tv> &y, const Matrix<Tv> &scores,
                          const Matrix<Tv> *weights, Tv *storage) override;
 
-  /// @brief Checks the validity of a cost matrix
-  /// @param costMatrix The cost matrix
+  /// @brief Checks the validity of a frequency cost matrix
+  /// @param frequencyCost The frequency cost matrix
   /// @param numChoices Number of choices in the actual data
-  static void Check(const Matrix<Tv> costMatrix, const Ti &numChoices);
+  static void Check(const Matrix<Tv> frequencyCost, const Ti &numChoices);
 };
 
-extern template class ldt::CostMatrix<true>;
-extern template class ldt::CostMatrix<false>;
+extern template class ldt::FrequencyCost<true>;
+extern template class ldt::FrequencyCost<false>;
 
 /// @brief A base class for ROC
 class LDT_EXPORT RocBase {
@@ -309,7 +311,7 @@ public:
                          bool normalizePoints = true, Tv lowerThreshold = NAN,
                          Tv upperThreshold = NAN, Tv epsilon = 0,
                          bool pessimistic = false, Matrix<Tv> *costs = nullptr,
-                         Matrix<Tv> *costMatrix = nullptr) = 0;
+                         Matrix<Tv> *frequencyCost = nullptr) = 0;
   virtual ~RocBase(){};
 };
 
@@ -342,16 +344,16 @@ public:
   /// (2006) An introduction to roc analysis, fig. 6).
   /// @param costs (N x 1) cost of observations (If null, cost of all
   /// observations will be 1)
-  /// @param costMatrix (2 x 2) cost matrix in which: (1,1) is cost of TN, (2,2)
-  /// is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First column
-  /// is multiplied by the corresponding value in \par costs vector (see Fawcett
-  /// (2006), ROC graphs with instance-varying costs). I do not check negative
-  /// costs so make sure the structure is correct
+  /// @param frequencyCost (2 x 2) cost matrix in which: (1,1) is cost of TN,
+  /// (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
+  /// column is multiplied by the corresponding value in \par costs vector (see
+  /// Fawcett (2006), ROC graphs with instance-varying costs). I do not check
+  /// negative costs so make sure the structure is correct
   virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
                          bool normalizePoints = true, Tv lowerThreshold = NAN,
                          Tv upperThreshold = NAN, Tv epsilon = 0,
                          bool pessimistic = false, Matrix<Tv> *costs = nullptr,
-                         Matrix<Tv> *costMatrix = nullptr) override;
+                         Matrix<Tv> *frequencyCost = nullptr) override;
 };
 
 extern template class ldt::ROC<true, true>;

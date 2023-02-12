@@ -14,7 +14,7 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
     List costMatrices_ = (List)costMatrices;
     for (int i = 0; i < costMatrices_.length(); i++) {
       if (costMatrices_[i] == R_NilValue)
-        throw std::logic_error("A cost matrix is null.");
+        throw std::logic_error("A frequency cost matrix is null.");
       NumericMatrix m =
           internal::convert_using_rfunction(costMatrices_[i], "as.matrix");
       result.push_back(ldt::Matrix<double>(&m[0], m.nrow(), m.ncol()));
@@ -28,8 +28,9 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
               result.at(i).ColsCount);
   }
   if (costMatInMeasures && result.size() == 0)
-    throw std::logic_error("At least one cost matrix is required for this type "
-                           "of out-of-sample evaluation.");
+    throw std::logic_error(
+        "At least one frequency cost matrix is required for this type "
+        "of out-of-sample evaluation.");
 }
 
 void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
@@ -59,7 +60,7 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
 //' @param w (numeric vector) weights of the observations in \code{y}. null means equal weights.
 //' @param xSizes (nullable int vector) Number of exogenous variables in the regressions. E.g., c(1,2) means the model set contains all the regressions with 1 and 2 exogenous variables. If null, c(1) is used.
 //' @param xPartitions (nullable list of int vector) a partition over the indexes of the exogenous variables. No regression is estimated with two variables in the same group. If null, each variable is placed in its own group and the size of the model set is maximized.
-//' @param costMatrices (list ofnumeric matrix) each cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
+//' @param costMatrices (list of numeric matrix) each frequency cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a frequency cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
 //' @param searchLogit (bool) if \code{TRUE}, logit regressions are added to the model set.
 //' @param searchProbit (bool) if \code{TRUE}, probit regressions are added to the model set.
 //' @param optimOptions (list) Newton optimization options. see \code{[GetNewtonOptions()]}. Use null for default values.
@@ -160,7 +161,7 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
 
   std::vector<ldt::Matrix<double>> costMatrices0;
   GetCostMatrices(printMsg, costMatrices0, costMatrices,
-                  Contains(measures.MeasuresOut, ScoringType::kCostMatrix));
+                  Contains(measures.MeasuresOut, ScoringType::kFrequencyCost));
 
   // get parameter names
   std::vector<std::string> paramNames;

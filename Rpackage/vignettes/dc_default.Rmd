@@ -42,7 +42,7 @@ measureOptions <- GetMeasureOptions(
 )
 ```
 
-Note that, we calculate both in-sample and out-of-sample AUC. Also, we calculate the error ratio by using the following cost matrix:
+Note that, we calculate both in-sample and out-of-sample AUC. Also, we calculate the error ratio by using the following frequency cost matrix:
 
 \begin{equation}
 \label{eq:error-ratio}
@@ -55,13 +55,13 @@ Note that, we calculate both in-sample and out-of-sample AUC. Also, we calculate
 which is:
 
 ```{r cost_matrix}
-costMatrix <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
+frequencyCost <- matrix(c(0.5, 1, 1, 0, 1, 0), 2, 3)
 ```
 
 Note that this is not a favorable cost matrix in an actual application. One might want to define more thresholds or increase the costs in the third column. 
 
 <p style="margin-left:40px;">
-What is a cost matrix in **ldt**? The general form of a cost matrix in binary case is:
+What is a frequency cost matrix in **ldt**? The general form of a frequency cost matrix in binary case is:
 \begin{equation}
 \begin{bmatrix}
 t_1 & c_{11} & c_{12}\\
@@ -147,7 +147,7 @@ Note that the out-of-sample simulation depends on random sampling. Finally, we s
 ```{r dc_estimate}
 berka_res <- list(
   logit = DcSearch_s(
-    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = TRUE, searchProbit = FALSE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
@@ -156,7 +156,7 @@ berka_res <- list(
     savePre = NULL
   ),
   probit = DcSearch_s(
-    x = x, y = y, w = weight, costMatrices = list(costMatrix),
+    x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = FALSE, searchProbit = TRUE,
     searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
