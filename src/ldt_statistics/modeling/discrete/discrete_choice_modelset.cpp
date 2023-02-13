@@ -19,7 +19,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
     const std::vector<Ti> &groupSizes, Ti fixFirstG, const Matrix<Tv> &source,
     Ti numChoices, const std::vector<Matrix<Tv>> &costMatrixes,
-    unsigned int seed, Newton &newtonOptions)
+    unsigned int seed, Newton &newtonOptions, RocOptions &aucOptions)
     : Searcher::Searcher(searchOptions, searchItems, measures, checks, SizeG,
                          groupIndexMap, groupSizes, fixFirstG) {
 
@@ -32,6 +32,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
   Ti cols = numExo + (hasWeight ? 2 : 1);
   Data =
       Dataset<Tv>(numObs, cols, true); // size + endogenous, intercept, weight
+
+  pAucOptions = &aucOptions;
 
   if (this->pChecks->Estimation) {
     DModel =
@@ -190,7 +192,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
 
     Model.Calculate(Data.Result, pCostMatrixes, &work[s],
                     &work[s + Model.StorageSize], &workI[this->SizeG + 1],
-                    this->pOptions->RequestCancel,
+                    this->pOptions->RequestCancel, *pAucOptions,
                     this->pMeasures->SimFixSize - this->pChecks->MinOutSim,
                     nullptr, INT32_MAX);
     s += Model.StorageSize;
@@ -232,7 +234,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
         AucIn.get()->Calculate(
             Y, Probs,
             hasWeight ? (measures.WeightedEval ? &W : nullptr) : nullptr,
-            &AucWeightsMc);
+            *pAucOptions);
         Weights.Set0(measures.mIndexOfAucIn, 0, AucIn.get()->Result);
       }
     }
@@ -311,31 +313,35 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     SearchModelChecks &checks, const std::vector<Ti> &sizes,
     const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit, bool addProbit,
-    Newton &newtonOptions) {
+    Newton &newtonOptions, RocOptions &aucOptions) {
   DiscreteChoiceModelsetBase *modelset;
   if (isBinary) {
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kBinary>(
               searchOptions, searchItems, measures, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, addLogit, addProbit);
+              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
+              addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kBinary>(
               searchOptions, searchItems, measures, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, addLogit, addProbit);
+              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
+              addProbit);
     }
   } else {
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kOrdered>(
               searchOptions, searchItems, measures, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, addLogit, addProbit);
+              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
+              addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
               searchOptions, searchItems, measures, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, addLogit, addProbit);
+              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
+              addProbit);
     }
   }
   return modelset;
@@ -354,7 +360,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     const std::vector<Ti> &sizes, const Matrix<Tv> &source,
     std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
-    bool addLogit, bool addProbit) {
+    RocOptions &aucOptions, bool addLogit, bool addProbit) {
 
   // find numChoices
   Ti r = 0;
@@ -455,7 +461,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
                                      DiscreteChoiceDistType::kLogit>(
               searchOptions, searchItems, measures, checks, s, groupIndexMaps,
               this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions));
+              seed, newtonOptions, aucOptions));
     }
     if (addProbit) {
       this->Searchers.push_back(
@@ -463,7 +469,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
                                      DiscreteChoiceDistType::kProbit>(
               searchOptions, searchItems, measures, checks, s, groupIndexMaps,
               this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions));
+              seed, newtonOptions, aucOptions));
     }
   }
 

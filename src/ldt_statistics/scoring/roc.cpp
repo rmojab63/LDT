@@ -14,25 +14,24 @@ template <bool hasWeight, bool hasCost> ROC<hasWeight, hasCost>::ROC(){};
 template <bool hasWeight, bool hasCost> ROC<hasWeight, hasCost>::ROC(Ti n){};
 
 template <bool hasWeight, bool hasCost>
-void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
-                                        Matrix<Tv> *weights,
-                                        bool normalizePoints, Tv lowerThreshold,
-                                        Tv upperThreshold, Tv epsilon,
-                                        bool pessimistic, Matrix<Tv> *costs,
-                                        Matrix<Tv> *frequencyCost) {
-  bool isPartial = std::isnan(lowerThreshold) == false &&
-                   std::isnan(upperThreshold) == false;
+void ROC<hasWeight, hasCost>::Calculate(const Matrix<Tv> &y,
+                                        const Matrix<Tv> &scores,
+                                        const Matrix<Tv> *weights,
+                                        const RocOptions &options) {
+  bool isPartial = std::isnan(options.LowerThreshold) == false &&
+                   std::isnan(options.UpperThreshold) == false;
+  bool normalizePoints = options.NormalizePoints;
   if (isPartial) {
     normalizePoints =
         true; // we should normalize the points before using thresholds
-    if (upperThreshold < lowerThreshold || upperThreshold > 1 ||
-        lowerThreshold < 0)
+    if (options.UpperThreshold < options.LowerThreshold ||
+        options.UpperThreshold > 1 || options.LowerThreshold < 0)
       throw std::logic_error("Invalid bounds in partial AUC.");
   }
 
   if constexpr (hasCost) {
-    if (!frequencyCost || frequencyCost->RowsCount != 2 ||
-        frequencyCost->ColsCount != 2)
+    if (!options.CostMatrix || options.CostMatrix->RowsCount != 2 ||
+        options.CostMatrix->ColsCount != 2)
       throw std::logic_error("Missing or invalid cost matrix.");
   }
 
@@ -60,10 +59,10 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
       w = weights->Data[ind];
     }
 
-    if (std::abs(th - thPre) > epsilon) { // push new point(s)
+    if (std::abs(th - thPre) > options.Epsilon) { // push new point(s)
       sumTP += verti; // overall vertical move (for the rectangle)
       sumFP += horiz;
-      if (pessimistic)
+      if (options.Pessimistic)
         Points.push_back(std::make_tuple(sumFP, 0)); // no vertical move
       Points.push_back(std::make_tuple(sumFP, sumTP));
       thPre = th;
@@ -77,12 +76,13 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
     isNeg = yi == 0;
 
     if constexpr (hasCost) {
-      Tv xi = costs ? costs->Data[ind] : 1;
-      Tv b_tp = frequencyCost->Data[0] * xi - frequencyCost->Data[2];
+      Tv xi = options.Costs ? options.Costs->Data[ind] : 1;
+      Tv b_tp = options.CostMatrix->Data[0] * xi - options.CostMatrix->Data[2];
       if (b_tp < 0)
         throw std::logic_error("Invalid cost matrix: benefit of TP is "
                                "negative. Check the first row.");
-      Tv c_fp = -(frequencyCost->Data[1] * xi - frequencyCost->Data[3]);
+      Tv c_fp =
+          -(options.CostMatrix->Data[1] * xi - options.CostMatrix->Data[3]);
       if (c_fp < 0)
         throw std::logic_error("Invalid cost matrix: cost of FP is negative. "
                                "Check the second row.");
@@ -122,26 +122,28 @@ void ROC<hasWeight, hasCost>::Calculate(Matrix<Tv> &y, Matrix<Tv> &scores,
         y = std::get<1>(p);
         slope = (y - y0) / (x - x0);
 
-        if (x >= lowerThreshold && x0 <= upperThreshold) {
-          if (x > lowerThreshold &&
-              x0 < lowerThreshold) // don't miss the first point
-            newPoints.push_back(std::make_tuple(
-                lowerThreshold, y0 + (lowerThreshold - x0) * slope));
+        if (x >= options.LowerThreshold && x0 <= options.UpperThreshold) {
+          if (x > options.LowerThreshold &&
+              x0 < options.LowerThreshold) // don't miss the first point
+            newPoints.push_back(
+                std::make_tuple(options.LowerThreshold,
+                                y0 + (options.LowerThreshold - x0) * slope));
 
-          if (x >= lowerThreshold && x <= upperThreshold)
+          if (x >= options.LowerThreshold && x <= options.UpperThreshold)
             newPoints.push_back(std::make_tuple(x, y));
 
-          if (x > upperThreshold &&
-              x0 < upperThreshold) // don't miss the last point
-            newPoints.push_back(std::make_tuple(
-                upperThreshold, y - (x - upperThreshold) * slope));
+          if (x > options.UpperThreshold &&
+              x0 < options.UpperThreshold) // don't miss the last point
+            newPoints.push_back(
+                std::make_tuple(options.UpperThreshold,
+                                y - (x - options.UpperThreshold) * slope));
         }
 
         x0 = x;
         y0 = y;
       }
       AucPoints<false> a(newPoints, 0);
-      Result = a.Result / (upperThreshold - lowerThreshold);
+      Result = a.Result / (options.UpperThreshold - options.LowerThreshold);
     } else {
       AucPoints<false> a(Points, 0);
       Result = a.Result;

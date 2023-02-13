@@ -297,6 +297,39 @@ public:
 extern template class ldt::FrequencyCost<true>;
 extern template class ldt::FrequencyCost<false>;
 
+struct LDT_EXPORT RocOptions {
+
+  /// @brief If false, AUC is calculated without normalizing
+  /// \par Points (It is faster, but you can't draw the ROC properly)
+  bool NormalizePoints = true;
+
+  /// @brief Lower bound for calculating partial AUC
+  Tv LowerThreshold = NAN;
+
+  /// @brief Upper bound for calculating partial AUC
+  Tv UpperThreshold = NAN;
+
+  /// @brief A value to ignore small floating point differences in comparing
+  /// scores.
+  Tv Epsilon = 0;
+
+  /// @brief If true, sequences of equally scored instances are
+  /// treated differently and a pessimistic measure is calculated (see Fawcett
+  /// (2006) An introduction to roc analysis, fig. 6).
+  bool Pessimistic = false;
+
+  /// @brief (N x 1) cost of observations (If null, cost of all
+  /// observations will be 1)
+  const Matrix<Tv> *Costs = nullptr;
+
+  /// @brief  (2 x 2) cost matrix in which: (1,1) is cost of TN,
+  /// (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
+  /// column is multiplied by the corresponding value in \par costs vector (see
+  /// Fawcett (2006), ROC graphs with instance-varying costs). I do not check
+  /// negative costs so make sure the structure is correct
+  const Matrix<Tv> *CostMatrix = nullptr;
+};
+
 /// @brief A base class for ROC
 class LDT_EXPORT RocBase {
 public:
@@ -307,11 +340,9 @@ public:
   /// @brief After \ref Calculate, it contains the curve points
   std::vector<std::tuple<Tv, Tv>> Points;
 
-  virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         bool normalizePoints = true, Tv lowerThreshold = NAN,
-                         Tv upperThreshold = NAN, Tv epsilon = 0,
-                         bool pessimistic = false, Matrix<Tv> *costs = nullptr,
-                         Matrix<Tv> *frequencyCost = nullptr) = 0;
+  virtual void Calculate(const Matrix<Tv> &y, const Matrix<Tv> &scores,
+                         const Matrix<Tv> *weights,
+                         const RocOptions &options) = 0;
   virtual ~RocBase(){};
 };
 
@@ -334,26 +365,10 @@ public:
   /// (y=0).
   /// @param weights Weight of each label. Length: N. It should be null if this
   /// is not a weighted class.
-  /// @param normalizePoints If false, AUC is calculated without normalizing
-  /// \par Points (It is faster, but you can't draw the ROC properly)
-  /// @param lowerThreshold Lower bound for calculating partial AUC
-  /// @param upperThreshold Upper bound for calculating partial AUC
-  /// @param epsilon A value to ignore small floating point differences.
-  /// @param pessimistic If true, sequences of equally scored instances are
-  /// treated differently and a pessimistic measure is calculated (see Fawcett
-  /// (2006) An introduction to roc analysis, fig. 6).
-  /// @param costs (N x 1) cost of observations (If null, cost of all
-  /// observations will be 1)
-  /// @param frequencyCost (2 x 2) cost matrix in which: (1,1) is cost of TN,
-  /// (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
-  /// column is multiplied by the corresponding value in \par costs vector (see
-  /// Fawcett (2006), ROC graphs with instance-varying costs). I do not check
-  /// negative costs so make sure the structure is correct
-  virtual void Calculate(Matrix<Tv> &y, Matrix<Tv> &scores, Matrix<Tv> *weights,
-                         bool normalizePoints = true, Tv lowerThreshold = NAN,
-                         Tv upperThreshold = NAN, Tv epsilon = 0,
-                         bool pessimistic = false, Matrix<Tv> *costs = nullptr,
-                         Matrix<Tv> *frequencyCost = nullptr) override;
+  /// @param options Options in calculating AUC
+  virtual void Calculate(const Matrix<Tv> &y, const Matrix<Tv> &scores,
+                         const Matrix<Tv> *weights,
+                         const RocOptions &options) override;
 };
 
 extern template class ldt::ROC<true, true>;

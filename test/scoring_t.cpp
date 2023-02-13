@@ -43,31 +43,36 @@ TEST(Scoring_T, logNormal) {
 TEST(Scoring_T, auc_binary) {
   auto y = Matrix<Tv>(new Tv[6]{1, 0, 1, 0, 1, 1}, 6, 1);
   auto scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
+  RocOptions rocOptions;
   auto auc = ROC<false, false>(6);
-  auc.Calculate(y, scores, nullptr, true);
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
   scores = Matrix<Tv>(new Tv[6]{0.2, 0.2, 0.2, 0.2, 0.2, 0.2}, 6, 1);
-  auc.Calculate(y, scores, nullptr, true);
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
   scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
-  auc.Calculate(y, scores, nullptr, true);
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.875, 1e-15);
   ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.75, 1e-15);
 
   scores = Matrix<Tv>(new Tv[6]{0.9, 0.1, 0.9, 0.1, 0.9, 0.1}, 6, 1);
-  auc.Calculate(y, scores, nullptr, true);
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.125, 1e-15);
   ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.25, 1e-15);
 
   // partial
   scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
-  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.3 / 0.6, 1e-15);
 
   scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
-  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.525 / 0.6, 1e-15);
 
   // another y (more complex)
@@ -75,18 +80,30 @@ TEST(Scoring_T, auc_binary) {
   scores = Matrix<Tv>(
       new Tv[10]{0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1}, 10, 1);
   auc = ROC<false, false>(10);
-  auc.Calculate(y, scores, nullptr, true, 0.2, 0.8);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.44 / 0.6, 1e-15);
-  auc.Calculate(y, scores, nullptr, true, 0.2, 0.4);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.4;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.12 / 0.2, 1e-15);
-  auc.Calculate(y, scores, nullptr, true, 0.3, 0.4);
+  rocOptions.LowerThreshold = 0.3;
+  rocOptions.UpperThreshold = 0.4;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.07 / 0.1, 1e-15);
-  auc.Calculate(y, scores, nullptr, true, 0.3, 0.8);
+  rocOptions.LowerThreshold = 0.3;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.39 / 0.5, 1e-15);
-  auc.Calculate(y, scores, nullptr, true, 0.4, 0.6);
+  rocOptions.LowerThreshold = 0.4;
+  rocOptions.UpperThreshold = 0.6;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.16 / 0.2, 1e-15);
-  auc.Calculate(y, scores, nullptr, true, 0, 1);
+  rocOptions.LowerThreshold = 0;
+  rocOptions.UpperThreshold = 1;
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.68 / 1, 1e-15);
-  auc.Calculate(y, scores, nullptr, true);
+  auc.Calculate(y, scores, nullptr, rocOptions);
   ASSERT_NEAR(auc.Result, 0.68, 1e-15);
 }

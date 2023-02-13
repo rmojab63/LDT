@@ -73,7 +73,8 @@ DiscreteChoiceExtended::~DiscreteChoiceExtended() { delete Model; }
 
 void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
                                        Tv *work, bool olsInitial,
-                                       const Matrix<Tv> *xForecast) {
+                                       const Matrix<Tv> *xForecast,
+                                       RocOptions &aucOptions) {
   // you can add colIndexes as an argument, but as I wrote in the constructor,
   // you should handle forecast indexation too
 
@@ -147,23 +148,20 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     p += numObs * mNumChoices;
     Model->GetProbabilities(X, Projections, work);
 
-    if (mHasWeight && mWeightedEval) {
-      if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = ROC<true, false>(numObs); // TODO: add cost
-        auc.Calculate(Y, Projections, &W, false);
-        Auc = auc.Result;
+    std::unique_ptr<RocBase> auc0;
+    if (mModelType == DiscreteChoiceModelType::kBinary) {
+      if (aucOptions.Costs) {
+        auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
       } else {
-        throw std::logic_error("Not implemented discrete choice model type");
+        auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
       }
     } else {
-      if (mModelType == DiscreteChoiceModelType::kBinary) {
-        auto auc = ROC<false, false>(numObs);
-        auc.Calculate(Y, Projections, nullptr, false);
-        Auc = auc.Result;
-      } else {
-        throw std::logic_error("Not implemented discrete choice model type");
-      }
+      throw std::logic_error("Not implemented discrete choice model type");
     }
+    auto auc = auc0.get();
+    auc->Calculate(Y, Projections, mHasWeight && mWeightedEval ? &W : nullptr,
+                   aucOptions);
+    Auc = auc->Result;
 
     if (pCostMatrices) {
       if (mHasWeight && mWeightedEval) {

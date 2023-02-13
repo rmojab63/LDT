@@ -67,7 +67,7 @@ file(GLOB SOURCES
  src/ldt_statistics/clustering/group_data.cpp
 
   src/ldt_statistics/scoring/scoring.cpp
-  src/ldt_statistics/scoring/cost_matrix.cpp
+  src/ldt_statistics/scoring/frequency_cost.cpp
   src/ldt_statistics/scoring/roc.cpp
 
  src/ldt_statistics/correlation.cpp
