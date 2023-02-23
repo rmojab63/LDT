@@ -150,7 +150,7 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
 
     std::unique_ptr<RocBase> auc0;
     if (mModelType == DiscreteChoiceModelType::kBinary) {
-      if (aucOptions.Costs) {
+      if (aucOptions.Costs.Data) {
         auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
       } else {
         auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));

@@ -95,6 +95,34 @@ std::vector<std::string> GetDefaultColNames(std::string pre, int length);
 // clang-format off
 
 //' Options for Nelder-Mead Optimization
+ //'
+ //' @param lowerThreshold (double) Lower bound for calculating partial AUC.
+ //' @param upperThreshold (double) Upper bound for calculating partial AUC.
+ //' @param epsilon (double) A value to ignore small floating point differences in comparing scores.
+ //' @param pessimistic (bool) If true, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to roc analysis, fig. 6).
+ //' @param costs (numeric vector) cost of each observations. If null, cost of all observations will be 1.
+ //' @param costMatrix (numeric matrix) a 2x2 cost matrix in which: (1,1) is cost of TN,
+ //' (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
+ /// column is multiplied by the corresponding value in costs vector (see
+ /// Fawcett (2006), ROC graphs with instance-varying costs).
+ //'
+ //' @return A list with the given options.
+ //'
+ //' @export
+ // [[Rcpp::export]]
+List GetRocOptions(double lowerThreshold = 0, double upperThreshold = 1, double epsilon = 1e-12,
+                   bool pessimistic = false, SEXP costs = R_NilValue, SEXP costMatrix = R_NilValue);
+
+// clang-format on
+
+void CheckRocOptions(List options);
+
+void UpdateRocOptions(bool printMsg, List &rocOptionsR,
+                      ldt::RocOptions &options, const char *startMsg);
+
+// clang-format off
+
+//' Options for Nelder-Mead Optimization
 //'
 //' @param maxIterations (int) Maximum number of iterations.
 //' @param epsilon (double) A small value to test convergence.

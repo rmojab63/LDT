@@ -318,16 +318,16 @@ struct LDT_EXPORT RocOptions {
   /// (2006) An introduction to roc analysis, fig. 6).
   bool Pessimistic = false;
 
-  /// @brief (N x 1) cost of observations (If null, cost of all
+  /// @brief (N x 1) cost of observations (If its Data is null, cost of all
   /// observations will be 1)
-  const Matrix<Tv> *Costs = nullptr;
+  Matrix<Tv> Costs;
 
   /// @brief  (2 x 2) cost matrix in which: (1,1) is cost of TN,
   /// (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
   /// column is multiplied by the corresponding value in \par costs vector (see
-  /// Fawcett (2006), ROC graphs with instance-varying costs). I do not check
-  /// negative costs so make sure the structure is correct
-  const Matrix<Tv> *CostMatrix = nullptr;
+  /// Fawcett (2006), ROC graphs with instance-varying costs). Its Data must not
+  /// be null if \par Costs's Data is not.
+  Matrix<Tv> CostMatrix;
 };
 
 /// @brief A base class for ROC

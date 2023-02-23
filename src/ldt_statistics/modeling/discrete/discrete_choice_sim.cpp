@@ -135,7 +135,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     if (modelType != DiscreteChoiceModelType::kBinary) {
       throw std::logic_error("not implemented discrete choice model type.");
     }
-    if (aucOptions.Costs) {
+    if (aucOptions.Costs.Data) {
       auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(this->N1));
     } else {
       auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(this->N1));
@@ -143,7 +143,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     freqCost0 =
         std::unique_ptr<FrequencyCostBase>(new FrequencyCost<true>(costCount));
   } else {
-    if (aucOptions.Costs) {
+    if (aucOptions.Costs.Data) {
       auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(this->N1));
     } else {
       auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(this->N1));
