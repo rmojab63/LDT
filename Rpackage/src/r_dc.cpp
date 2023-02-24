@@ -15,8 +15,10 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
     for (int i = 0; i < costMatrices_.length(); i++) {
       if (costMatrices_[i] == R_NilValue)
         throw std::logic_error("A frequency cost matrix is null.");
-      NumericMatrix m =
-          internal::convert_using_rfunction(costMatrices_[i], "as.matrix");
+      if (is<NumericMatrix>(costMatrices_[i]) == false)
+        throw std::logic_error(
+            "A frequency cost matrix must be a 'numeric matrix'.");
+      NumericMatrix m = as<NumericMatrix>(costMatrices_[i]);
       result.push_back(ldt::Matrix<double>(&m[0], m.nrow(), m.ncol()));
     }
   }
@@ -55,7 +57,7 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
 
 //' Discrete Choice Search
 //'
-//' @param y (numeric vector) endogenous data with variables in the columns.
+//' @param y (numeric matrix) endogenous data with variable in the column.
 //' @param x (numeric matrix) exogenous data with variables in the columns.
 //' @param w (numeric vector) weights of the observations in \code{y}. null means equal weights.
 //' @param xSizes (nullable int vector) Number of exogenous variables in the regressions. E.g., c(1,2) means the model set contains all the regressions with 1 and 2 exogenous variables. If null, c(1) is used.
@@ -85,25 +87,32 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
 
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be 'numeric matrix'.");
+  if (is<NumericMatrix>(x) == false)
+    throw std::logic_error("'x' must be 'numeric matrix'.");
 
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
   int numTargets = 1;
 
-  List searchOptions_ =
-      searchOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchOptions, "as.list")
-          : GetSearchOptions();
-  CheckSearchOptions(searchOptions_);
+  List searchOptions_;
+  if (searchOptions != R_NilValue) {
+    if (is<List>(searchOptions) == false)
+      throw std::logic_error("'searchOptions' must be a 'List'.");
+    searchOptions_ = as<List>(searchOptions);
+    CheckSearchOptions(searchOptions_);
+  } else
+    searchOptions_ = GetSearchOptions();
+
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
   UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  x = internal::convert_using_rfunction(
-      x, "as.matrix"); // otherwise, colnames for 'info' does not work
+  y = as<NumericMatrix>(y);
+  x = as<NumericMatrix>(x);
 
   ldt::Matrix<double> my;
   ldt::Matrix<double> mx;
@@ -133,8 +142,9 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
     List optimOptions_ = GetNewtonOptions();
     UpdateNewtonOptions(printMsg, optimOptions_, newton);
   } else {
-    List optimOptions_ =
-        (List)internal::convert_using_rfunction(optimOptions, "as.list");
+    if (is<List>(optimOptions) == false)
+      throw std::logic_error("'optimOptions' must be a 'List'.");
+    List optimOptions_ = as<List>(optimOptions);
     CheckNewtonOptions(optimOptions_);
     UpdateNewtonOptions(printMsg, optimOptions_, newton);
   }
@@ -145,24 +155,41 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
     UpdateRocOptions(printMsg, aucOptions_, aucOptions0, "AUC Options:");
   } else {
     if (is<List>(aucOptions) == false)
-      throw std::logic_error("Invalid 'aucOption'. It is not a list.");
+      throw std::logic_error("'aucOption' must be a 'List'.");
     auto aucOptions_ = as<List>(aucOptions);
     CheckRocOptions(aucOptions_);
     UpdateRocOptions(printMsg, aucOptions_, aucOptions0, "AUC Options:");
   }
 
-  List measureOptions_ =
-      measureOptions != R_NilValue
-          ? (List)internal::convert_using_rfunction(measureOptions, "as.list")
-          : GetMeasureOptions();
-  List modelCheckItems_ =
-      modelCheckItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(modelCheckItems, "as.list")
-          : GetModelCheckItems();
-  List searchItems_ =
-      searchItems != R_NilValue
-          ? (List)internal::convert_using_rfunction(searchItems, "as.list")
-          : GetSearchItems();
+  List measureOptions_;
+  if (measureOptions == R_NilValue)
+    measureOptions_ = GetMeasureOptions();
+  else {
+    if (is<List>(measureOptions) == false)
+      throw std::logic_error("'measureOptions' must be a 'List'.");
+    measureOptions_ = as<List>(measureOptions);
+    CheckMeasureOptions(measureOptions_);
+  }
+
+  List modelCheckItems_;
+  if (modelCheckItems == R_NilValue)
+    modelCheckItems_ = GetModelCheckItems();
+  else {
+    if (is<List>(modelCheckItems) == false)
+      throw std::logic_error("'modelCheckItems' must be a 'List'.");
+    modelCheckItems_ = as<List>(modelCheckItems);
+    CheckModelCheckItems(modelCheckItems_);
+  }
+
+  List searchItems_;
+  if (searchItems == R_NilValue)
+    searchItems_ = GetSearchItems();
+  else {
+    if (is<List>(searchItems) == false)
+      throw std::logic_error("'searchItems' must be a 'List'.");
+    searchItems_ = as<List>(searchItems);
+    CheckSearchItems(searchItems_);
+  }
 
   auto measures = SearchMeasureOptions();
   auto measuresNames = std::vector<std::string>();
@@ -287,9 +314,13 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
 {
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
+  if (is<NumericMatrix>(y) == false)
+    throw std::logic_error("'y' must be 'numeric matrix'.");
+  if (is<NumericMatrix>(x) == false)
+    throw std::logic_error("'x' must be 'numeric matrix'.");
 
-  y = internal::convert_using_rfunction(y, "as.matrix");
-  x = internal::convert_using_rfunction(x, "as.matrix");
+  y = as<NumericMatrix>(y);
+  x = as<NumericMatrix>(x);
 
   if (newX != R_NilValue)
     newX = insert_intercept(
@@ -329,8 +360,9 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
   auto pcaOptions0 = PcaAnalysisOptions();
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
-    List pcaOptionsX_ =
-        (List)internal::convert_using_rfunction(pcaOptionsX, "as.list");
+    if (is<List>(pcaOptionsX) == false)
+      throw std::logic_error("'pcaOptionsX' must be 'List'.");
+    List pcaOptionsX_ = as<List>(pcaOptionsX);
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptions0,
                      "Exogenous PCA options");
     pcaOptions0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
@@ -457,7 +489,7 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
   auto measuresResRowNames = std::vector<std::string>(
       {"logL", "aic", "sic",
        "aucIn", // keep names consistent with the measures in the search
-       "costMatrixIn"});
+       "frequencyCostIn"});
   measuresRes.Set(0, 0, model.Model->LogL);
   measuresRes.Set(1, 0, model.Model->Aic);
   measuresRes.Set(2, 0, model.Model->Sic);
@@ -465,7 +497,7 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
   measuresRes.Set(4, 0, model.CostRatioAvg);
   if (simFixSize > 0) {
     measuresResRowNames.push_back("aucOut");
-    measuresResRowNames.push_back("costMatrixOut");
+    measuresResRowNames.push_back("frequencyCostOut");
     measuresRes.Set(5, 0, simmodel->Auc);
     measuresRes.Set(6, 0, simmodel->CostRatios.Mean());
   }

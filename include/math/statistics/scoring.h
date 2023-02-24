@@ -37,7 +37,7 @@ inline const char *ToString(GoodnessOfFitType v, bool abr = true) {
   case GoodnessOfFitType::kSic:
     return abr ? "sic" : "Schwartz Information Criterion";
   case GoodnessOfFitType::kFrequencyCost:
-    return abr ? "costMatrixIn" : "Custom Frequency Cost";
+    return abr ? "frequencyCostIn" : "Custom Frequency Cost";
   case GoodnessOfFitType::kAuc:
     return abr ? "aucIn" : "Area Under ROC (In-Sample)";
   default:

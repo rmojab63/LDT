@@ -37,8 +37,8 @@ In **ldt**, we _automatically explain_ or _automatically predict_ one or more th
 
 ```{r dc_measure_options}
 measureOptions <- GetMeasureOptions(
-  typesIn = c("aucIn", "costMatrixIn"),
-  typesOut = c("aucOut", "costMatrixOut")
+  typesIn = c("aucIn", "frequencyCostIn"),
+  typesOut = c("aucOut", "frequencyCostOut")
 )
 ```
 
@@ -173,12 +173,12 @@ Since we want to compare the performance of logit and probit models, we run two 
 op <- par(cex = 0.6)
 data_cost <- data.frame(
   cost_in = c(
-    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
-    berka_res$probit$costMatrixOut$target1$model$bests$best1$weight
+    berka_res$logit$frequencyCostIn$target1$model$bests$best1$weight,
+    berka_res$probit$frequencyCostOut$target1$model$bests$best1$weight
   ),
   cost_out = c(
-    berka_res$logit$costMatrixIn$target1$model$bests$best1$weight,
-    berka_res$probit$costMatrixIn$target1$model$bests$best1$weight
+    berka_res$logit$frequencyCostIn$target1$model$bests$best1$weight,
+    berka_res$probit$frequencyCostIn$target1$model$bests$best1$weight
   )
 )
 

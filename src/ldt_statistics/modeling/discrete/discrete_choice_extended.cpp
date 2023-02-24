@@ -151,9 +151,15 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
     std::unique_ptr<RocBase> auc0;
     if (mModelType == DiscreteChoiceModelType::kBinary) {
       if (aucOptions.Costs.Data) {
-        auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
+        if (mHasWeight && mWeightedEval)
+          auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(numObs));
+        else
+          auc0 = std::unique_ptr<RocBase>(new ROC<false, true>(numObs));
       } else {
-        auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
+        if (mHasWeight && mWeightedEval)
+          auc0 = std::unique_ptr<RocBase>(new ROC<true, false>(numObs));
+        else
+          auc0 = std::unique_ptr<RocBase>(new ROC<false, false>(numObs));
       }
     } else {
       throw std::logic_error("Not implemented discrete choice model type");

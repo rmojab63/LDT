@@ -13,17 +13,17 @@ using namespace ldt;
 // clang-format off
 
 //' Converts a Measure to Weight
- //'
- //' @param value (double) the measure
- //' @param measureName (string) measure name
- //'
- //' @return the weight
- //' @export
- //'
- //' @examples
- //' weight <- GetWeightFromMeasure(-3.4, "sic")
- // [[Rcpp::export]]
- SEXP GetWeightFromMeasure(SEXP value, SEXP measureName)
+//'
+//' @param value (double) the measure
+//' @param measureName (string) measure name
+//'
+//' @return the weight
+//' @export
+//'
+//' @examples
+//' weight <- GetWeightFromMeasure(-3.4, "sic")
+// [[Rcpp::export]]
+SEXP GetWeightFromMeasure(SEXP value, SEXP measureName)
 // clang-format on
 {
 
@@ -54,19 +54,19 @@ using namespace ldt;
 
 // clang-format off
 
- //' Converts a Measure to Weight
- //'
- //' @param value (double) the measure
- //' @param measureName (string) measure name
- //'
- //' @return the measure
- //' @export
- //'
- //' @examples
- //' weight <- GetWeightFromMeasure(-3.4, "sic")
- //' measure <- GetMeasureFromWeight(weight, "sic")
- // [[Rcpp::export]]
- SEXP GetMeasureFromWeight(SEXP value, SEXP measureName)
+//' Converts a Measure to Weight
+//'
+//' @param value (double) the measure
+//' @param measureName (string) measure name
+//'
+//' @return the measure
+//' @export
+//'
+//' @examples
+//' weight <- GetWeightFromMeasure(-3.4, "sic")
+//' measure <- GetMeasureFromWeight(weight, "sic")
+// [[Rcpp::export]]
+SEXP GetMeasureFromWeight(SEXP value, SEXP measureName)
 // clang-format on
 {
   double value0 = as<double>(value);
@@ -93,26 +93,37 @@ using namespace ldt;
 
 // clang-format off
 
- //' ROC curve for a binary case
- //'
- //' It does not draw the ROC, but calculatates the required points. It also
- //' Calculates the AUC with different options
- //'
- //' @param y (numeric vector, \code{Nx1}) Actual values
- //' @param scores (numeric vector, \code{Nx1}) Calculated probabilities for the negative observations
- //' @param weights (numeric vector, \code{Nx1}) Weights of the observations. Use \code{NULL} for equal weights.
- //' @param options (list) More options. See [GetRocOptions()] function for details.
- //' @param printMsg (bool) Set true to report some details.
- //'
- //' @return value of the AUC
- //' @export
- //'
- //' @examples
- //' y = c(0,1,0,1,0,1,0,1)
- //' scores = matrix(c( 0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1), 8, 2)
- //' res = GetAuc(y,scores,NULL)
- // [[Rcpp::export]]
- List GetRoc(SEXP y, SEXP scores, SEXP weights = R_NilValue, SEXP options = R_NilValue,
+//' ROC curve for a binary case
+//'
+//' It does not draw the ROC, but calculatates the required points. It also
+//' Calculates the AUC with different options
+//'
+//' @param y (numeric vector, \code{Nx1}) Actual values
+//' @param scores (numeric vector, \code{Nx1}) Calculated probabilities for the negative observations
+//' @param weights (numeric vector, \code{Nx1}) Weights of the observations. Use \code{NULL} for equal weights.
+//' @param options (list) More options. See [GetRocOptions()] function for details.
+//' @param printMsg (bool) Set true to report some details.
+//'
+//' @return A list with the following items:
+//' \item{N}{(integer) Number of observations}
+//' \item{AUC}{(numeric) Value of AUC}
+//' \item{Points}{(numeric matrix) Points for ploting ROC}
+//'
+//' @export
+//'
+//' @examples
+//' y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
+//' scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
+//' res1 = GetRoc(y,scores, printMsg = FALSE)
+//' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
+//' costMatrix = matrix(c(0.02,-1,-3,3),2,2)
+//' opt <- GetRocOptions(costs = costs, costMatrix = costMatrix)
+//' res2 = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+//' #plot(res1$Points)
+//' #lines(res2$Points)
+//'
+// [[Rcpp::export]]
+List GetRoc(SEXP y, SEXP scores, SEXP weights = R_NilValue, SEXP options = R_NilValue,
                bool printMsg = false)
 // clang-format on
 {
@@ -123,7 +134,9 @@ using namespace ldt;
   NumericVector y0 = as<NumericVector>(y);
   auto N = y0.length();
   if (printMsg)
-    Rprintf("Number of observations = ", N);
+    Rprintf("Number of observations = %i\n", N);
+
+
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
     throw std::logic_error(
@@ -132,7 +145,7 @@ using namespace ldt;
   auto my = ldt::Matrix<double>(&y0[0], N, 1);
   auto mscores = ldt::Matrix<double>(&scores0[0], N, 1);
 
-  NumericVector weights0 = R_NilValue;
+  NumericVector weights0;
   auto mweights = ldt::Matrix<double>(N, 1);
   auto hasWeight = weights != R_NilValue;
   if (hasWeight) {
@@ -145,19 +158,19 @@ using namespace ldt;
     mweights.SetData(&weights0[0]);
   }
   if (printMsg)
-    Rprintf("Is Weighted = ", hasWeight ? "TRUE" : "FALSE");
+    Rprintf("Is Weighted = %s\n", hasWeight ? "TRUE" : "FALSE");
 
   auto min_y = min(y0);
   if (min_y != 0)
     throw std::logic_error("Invalid 'y' vector. Minimum must be 0.");
   auto max_y = max(y0);
-  if (max_y != 0)
+  if (max_y != 1)
     throw std::logic_error("Invalid 'y' vector. Maximum must be 1.");
 
   List optionsL;
   if (options == R_NilValue)
     optionsL = GetRocOptions();
-  else{
+  else {
     if (is<List>(options) == FALSE)
       throw std::logic_error("Invalid 'options'. It should be list.");
     optionsL = as<List>(options);
@@ -165,6 +178,7 @@ using namespace ldt;
   }
   ldt::RocOptions options_;
   UpdateRocOptions(printMsg, optionsL, options_, "Options: ");
+
 
   std::unique_ptr<RocBase> auc0;
   if (hasWeight) {
@@ -185,14 +199,14 @@ using namespace ldt;
 
   auto points_d = std::unique_ptr<double[]>(new double[auc->Points.size() * 2]);
   auto points = ldt::Matrix<double>(points_d.get(), auc->Points.size(), 2);
-  auto colnames = std::vector<std::string>({"TP Rate", "FP Rate"});
+  auto colnames = std::vector<std::string>({"FP Rate", "TP Rate"});
   for (auto i = 0; i < (int)auc->Points.size(); i++) {
     points.Set(i, 0, std::get<0>(auc0->Points.at(i)));
-    points.Set(i, 1, std::get<0>(auc0->Points.at(i)));
+    points.Set(i, 1, std::get<1>(auc0->Points.at(i)));
   }
 
   List L = List::create(_["N"] = wrap(N), _["AUC"] = wrap(auc->Result),
-                   _["Points"] = as_matrix(points, nullptr, &colnames));
+                        _["Points"] = as_matrix(points, nullptr, &colnames));
 
   L.attr("class") = std::vector<std::string>({"ldtroc", "list"});
 
@@ -201,41 +215,41 @@ using namespace ldt;
 
 // clang-format off
 
- //' Gets the GLD-FKML Parameters from the moments
- //'
- //' @description Calculates the parameters of the generalized lambda distribution (FKML), given the first four moments of the distribution.
- //'
- //' @details
- //' The type of the distribution is determined by one or two restrictions:
- //' - **type 0:** general
- //' - **type 1:** symmetric 'type 0'
- //' - **type 2:** uni-modal continuous tail: L3<1 & L4<1
- //' - **type 3:** symmetric 'type 2' L3==L4
- //' - **type 4:** uni-modal continuous tail finite slope  L3<=0.5 &  L4<=5
- //' - **type 5:** symmetric 'type 4' L3==L4
- //' - **type 6:** uni-modal truncated density curves: L3>=2 & L4>=2 (includes uniform distribution)
- //' - **type 7:** symmetric 'type 6' L3==L4
- //' - **type 8:** S shaped L3>2 & 1<L4<2 or 1<L3<2 & L4>2
- //' - **type 9:** U shaped 1<L3<=2 and 1<L4<=2
- //' - **type 10:** symmetric 'type 9' L4==L4
- //' - **type 11:** monotone L3>1 & L4<=1
- //'
- //' @param mean (double) mean of the distribution.
- //' @param variance (double) variance of the distribution.
- //' @param skewness (double) skewness of the distribution.
- //' @param excessKurtosis (double) excess kurtosis of the distribution.
- //' @param type (int) The type of the distribution.
- //' @param start (numeric vector, length=2) starting value for L3 and L4. Use null for c(0,0).
- //' @param nelderMeadOptions (list) The optimization parameters. Use null for default.
- //' @param printMsg (bool) If \code{TRUE}, details are printed.
- //'
- //' @return a vector with the parameters of the GLD distribution.
- //' @export
- //'
- //' @examples
- //' res = GetGldFromMoments(0,1,0,0,0,c(0,0))
- // [[Rcpp::export]]
- NumericVector GetGldFromMoments(double mean = 0, double variance = 1,
+//' Gets the GLD-FKML Parameters from the moments
+//'
+//' @description Calculates the parameters of the generalized lambda distribution (FKML), given the first four moments of the distribution.
+//'
+//' @details
+//' The type of the distribution is determined by one or two restrictions:
+//' - **type 0:** general
+//' - **type 1:** symmetric 'type 0'
+//' - **type 2:** uni-modal continuous tail: L3<1 & L4<1
+//' - **type 3:** symmetric 'type 2' L3==L4
+//' - **type 4:** uni-modal continuous tail finite slope  L3<=0.5 &  L4<=5
+//' - **type 5:** symmetric 'type 4' L3==L4
+//' - **type 6:** uni-modal truncated density curves: L3>=2 & L4>=2 (includes uniform distribution)
+//' - **type 7:** symmetric 'type 6' L3==L4
+//' - **type 8:** S shaped L3>2 & 1<L4<2 or 1<L3<2 & L4>2
+//' - **type 9:** U shaped 1<L3<=2 and 1<L4<=2
+//' - **type 10:** symmetric 'type 9' L4==L4
+//' - **type 11:** monotone L3>1 & L4<=1
+//'
+//' @param mean (double) mean of the distribution.
+//' @param variance (double) variance of the distribution.
+//' @param skewness (double) skewness of the distribution.
+//' @param excessKurtosis (double) excess kurtosis of the distribution.
+//' @param type (int) The type of the distribution.
+//' @param start (numeric vector, length=2) starting value for L3 and L4. Use null for c(0,0).
+//' @param nelderMeadOptions (list) The optimization parameters. Use null for default.
+//' @param printMsg (bool) If \code{TRUE}, details are printed.
+//'
+//' @return a vector with the parameters of the GLD distribution.
+//' @export
+//'
+//' @examples
+//' res = GetGldFromMoments(0,1,0,0,0,c(0,0))
+// [[Rcpp::export]]
+NumericVector GetGldFromMoments(double mean = 0, double variance = 1,
                                  double skewness = 0, double excessKurtosis = 0,
                                  int type = 0, SEXP start = R_NilValue,
                                  SEXP nelderMeadOptions = R_NilValue,
@@ -285,18 +299,18 @@ using namespace ldt;
 
 // clang-format off
 
- //' Gets GLD Quantile
- //'
- //' @param data (numeric vector) data
- //' @param L1 (double) First parameter
- //' @param L2 (double) Second parameter
- //' @param L3 (double) Third parameter
- //' @param L4 (double) Fourth parameter
- //'
- //' @return (numeric vector) result
- //' @export
- // [[Rcpp::export]]
- NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
+//' Gets GLD Quantile
+//'
+//' @param data (numeric vector) data
+//' @param L1 (double) First parameter
+//' @param L2 (double) Second parameter
+//' @param L3 (double) Third parameter
+//' @param L4 (double) Fourth parameter
+//'
+//' @return (numeric vector) result
+//' @export
+// [[Rcpp::export]]
+NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
                            double L4)
 // clang-format on
 {
@@ -309,18 +323,18 @@ using namespace ldt;
 
 // clang-format off
 
- //' Gets GLD Density Quantile
- //'
- //' @param data (numeric vector) data
- //' @param L1 (double) First parameter
- //' @param L2 (double) Second parameter
- //' @param L3 (double) Third parameter
- //' @param L4 (double) Fourth parameter
- //'
- //' @return (numeric vector) result
- //' @export
- // [[Rcpp::export]]
- NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
+//' Gets GLD Density Quantile
+//'
+//' @param data (numeric vector) data
+//' @param L1 (double) First parameter
+//' @param L2 (double) Second parameter
+//' @param L3 (double) Third parameter
+//' @param L4 (double) Fourth parameter
+//'
+//' @return (numeric vector) result
+//' @export
+// [[Rcpp::export]]
+NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
                                   double L4)
 // clang-format on
 {
@@ -333,18 +347,18 @@ using namespace ldt;
 
 // clang-format off
 
- //' Combines Two Distributions Defined by their First 4 Moments
- //'
- //' @param mix1 (list) First distribution which is defined by a list with mean, variance, skewness, kurtosis, sumWeights, count
- //' @param mix2 (list) Second distribution (similar to \code{mix1}).
- //'
- //' @return (list) A list similar to \code{mix1}
- //' @export
- //'
- //' @examples
- //' #see its \code{test_that} function
- // [[Rcpp::export]]
- List GetCombination4Moments(SEXP mix1, SEXP mix2)
+//' Combines Two Distributions Defined by their First 4 Moments
+//'
+//' @param mix1 (list) First distribution which is defined by a list with mean, variance, skewness, kurtosis, sumWeights, count
+//' @param mix2 (list) Second distribution (similar to \code{mix1}).
+//'
+//' @return (list) A list similar to \code{mix1}
+//' @export
+//'
+//' @examples
+//' #see its \code{test_that} function
+// [[Rcpp::export]]
+List GetCombination4Moments(SEXP mix1, SEXP mix2)
 // clang-format on
 {
 
@@ -366,24 +380,24 @@ using namespace ldt;
 
 // clang-format off
 
- //' Principle Component Analysis
- //'
- //' @param x (numeric matrix) data with variables in columns.
- //' @param center (bool) if \code{TRUE}, it demeans the variables.
- //' @param scale (bool) if \code{TRUE}, it scales the variables to unit variance.
- //' @param newX (numeric matrix) data to be used in projection. Its structure must be similar to the \code{x}.
- //'
- //' @return (list) results
- //' \item{removed0Var}{(integer vector) Zero-based indices of removed columns with zero variances.}
- //' \item{directions}{(numeric matrix) Directions}
- //' \item{stds}{(integer vector) Standard deviation of the principle components}
- //' \item{stds2Ratio}{(integer vector) stds^2/sum(stds^2)}
- //' \item{projections}{(numeric matrix) Projections if \code{newX} is given.}
- //'
- //' @export
- //'
- // [[Rcpp::export]]
- List GetPca(SEXP x, bool center = true, bool scale = true,
+//' Principle Component Analysis
+//'
+//' @param x (numeric matrix) data with variables in columns.
+//' @param center (bool) if \code{TRUE}, it demeans the variables.
+//' @param scale (bool) if \code{TRUE}, it scales the variables to unit variance.
+//' @param newX (numeric matrix) data to be used in projection. Its structure must be similar to the \code{x}.
+//'
+//' @return (list) results
+//' \item{removed0Var}{(integer vector) Zero-based indices of removed columns with zero variances.}
+//' \item{directions}{(numeric matrix) Directions}
+//' \item{stds}{(integer vector) Standard deviation of the principle components}
+//' \item{stds2Ratio}{(integer vector) stds^2/sum(stds^2)}
+//' \item{projections}{(numeric matrix) Projections if \code{newX} is given.}
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+List GetPca(SEXP x, bool center = true, bool scale = true,
              SEXP newX = R_NilValue)
 // clang-format on
 {

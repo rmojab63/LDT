@@ -70,7 +70,7 @@ void UpdateRocOptions(bool printMsg, List &rocOptionsR, RocOptions &options,
               options.UpperThreshold);
     Rprintf("    - Epsilon = %f\n", options.Epsilon);
     if (options.Costs.Data) {
-      Rprintf("        - Has Cost = TRUE\n");
+      Rprintf("    - Varing Cost\n");
     }
   }
 }
