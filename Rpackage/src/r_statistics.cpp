@@ -136,7 +136,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights = R_NilValue, SEXP options = R_Nil
   if (printMsg)
     Rprintf("Number of observations = %i\n", N);
 
-
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
     throw std::logic_error(
@@ -178,7 +177,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights = R_NilValue, SEXP options = R_Nil
   }
   ldt::RocOptions options_;
   UpdateRocOptions(printMsg, optionsL, options_, "Options: ");
-
 
   std::unique_ptr<RocBase> auc0;
   if (hasWeight) {
