@@ -88,9 +88,9 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w = R_NilValue, SEXP xSizes = R_NilValue,
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be 'numeric matrix'.");
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
   if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be 'numeric matrix'.");
+    throw std::logic_error("'x' must be a 'numeric matrix'.");
 
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
@@ -315,16 +315,19 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
   if (is<NumericMatrix>(y) == false)
-    throw std::logic_error("'y' must be 'numeric matrix'.");
+    throw std::logic_error("'y' must be a 'numeric matrix'.");
   if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be 'numeric matrix'.");
+    throw std::logic_error("'x' must be a 'numeric matrix'.");
 
   y = as<NumericMatrix>(y);
   x = as<NumericMatrix>(x);
 
-  if (newX != R_NilValue)
+  if (newX != R_NilValue){
+    if (is<NumericMatrix>(newX) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
     newX = insert_intercept(
         newX); // Combine function does not handle adding intercept to newX
+  }
 
   ldt::Matrix<double> my;
   ldt::Matrix<double> mx;
@@ -361,7 +364,7 @@ SEXP DcEstim(SEXP y, SEXP x, SEXP w = R_NilValue,
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
     if (is<List>(pcaOptionsX) == false)
-      throw std::logic_error("'pcaOptionsX' must be 'List'.");
+      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
     List pcaOptionsX_ = as<List>(pcaOptionsX);
     UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptions0,
                      "Exogenous PCA options");

@@ -61,7 +61,7 @@ void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
                    const char *length1Informtion = "Coefficients",
                    bool isDc = false);
 
-NumericMatrix insert_intercept(SEXP a);
+NumericMatrix insert_intercept(NumericMatrix a);
 
 NumericMatrix cbind_matrix(NumericMatrix a, NumericMatrix b);
 

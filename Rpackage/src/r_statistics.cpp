@@ -258,15 +258,19 @@ NumericVector GetGldFromMoments(double mean = 0, double variance = 1,
 {
   NumericVector start_ = {0, 0};
   if (start != R_NilValue) {
-    start_ = internal::convert_using_rfunction(start, "as.numeric");
+    if (is<NumericVector>(start) == false)
+      throw std::logic_error("'start' must be a 'numeric vector'.");
+    auto start_ = as<NumericVector>(start);
     if (start_.length() != 2)
       throw std::logic_error("Invalid length: 'start'.");
   }
 
   List nelderMeadOptions_;
   if (nelderMeadOptions != R_NilValue) {
-    nelderMeadOptions_ =
-        internal::convert_using_rfunction(nelderMeadOptions, "as.list");
+
+    if (is<List>(nelderMeadOptions) == false)
+      throw std::logic_error("'nelderMeadOptions' must be a 'List'.");
+    auto nelderMeadOptions_ = as<List>(nelderMeadOptions);
     CheckNelderMeadOptions(nelderMeadOptions_);
   } else
     nelderMeadOptions_ = GetNelderMeadOptions();
@@ -314,7 +318,9 @@ NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
                            double L4)
 // clang-format on
 {
-  NumericVector data0 = internal::convert_using_rfunction(data, "as.numeric");
+  if (is<NumericVector>(data) == false)
+    throw std::logic_error("'data' must be a 'numeric vector'.");
+  NumericVector data0 = as<NumericVector>(data);
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
     result[i] = DistributionGld::GetQuantile(data0[i], L1, L2, L3, L4);
@@ -338,7 +344,10 @@ NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
                                   double L4)
 // clang-format on
 {
-  NumericVector data0 = internal::convert_using_rfunction(data, "as.numeric");
+  if (is<NumericVector>(data) == false)
+    throw std::logic_error("'data' must be a 'numeric vector'.");
+  NumericVector data0 = as<NumericVector>(data);
+
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
     result[i] = DistributionGld::GetDensityQuantile(data0[i], L1, L2, L3, L4);
@@ -362,8 +371,13 @@ List GetCombination4Moments(SEXP mix1, SEXP mix2)
 // clang-format on
 {
 
-  List mix1_ = internal::convert_using_rfunction(mix1, "as.list");
-  List mix2_ = internal::convert_using_rfunction(mix2, "as.list");
+  if (is<List>(mix1) == false)
+    throw std::logic_error("'mix1' must be a 'List'.");
+  List mix1_ = as<List>(mix1);
+
+  if (is<List>(mix2) == false)
+    throw std::logic_error("'mix2' must be a 'List'.");
+  List mix2_ = as<List>(mix2);
 
   auto r = RunningWeighted4();
   r.PushNewDistribution(mix1_["mean"], mix1_["variance"], mix1_["skewness"],
@@ -401,14 +415,18 @@ List GetPca(SEXP x, bool center = true, bool scale = true,
              SEXP newX = R_NilValue)
 // clang-format on
 {
-
-  NumericMatrix x0 = internal::convert_using_rfunction(x, "as.matrix");
+  if (is<NumericMatrix>(x) == false)
+    throw std::logic_error("'x' must be a 'numeric matrix'.");
+  NumericMatrix x0 = as<NumericMatrix>(x);
 
   auto mx = ldt::Matrix<double>(&x0[0], x0.nrow(), x0.ncol());
   auto mnewX = ldt::Matrix<double>();
   bool hasNewX = newX != R_NilValue;
   if (hasNewX) {
-    NumericMatrix newX_ = internal::convert_using_rfunction(newX, "as.matrix");
+    if (is<NumericMatrix>(newX) == false)
+      throw std::logic_error("'newX' must be a 'numeric matrix'.");
+    NumericMatrix newX_ = as<NumericMatrix>(newX);
+
     if (newX_.ncol() != x0.ncol())
       throw std::logic_error(
           "number of columns in 'newX' and 'x' are different.");

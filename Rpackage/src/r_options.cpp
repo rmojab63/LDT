@@ -266,7 +266,11 @@ List GetSearchItems(bool model, bool type1, bool type2, int bestK, bool all,
                     bool mixture4) {
   NumericVector cdfs_;
   if (cdfs != R_NilValue)
-    cdfs_ = internal::convert_using_rfunction(cdfs, "as.numeric");
+  {
+    if (is<NumericVector>(cdfs) == false)
+      throw std::logic_error("'cdfs' must be a 'numeric vector'.");
+    cdfs_ = as<NumericVector>(cdfs);
+  }
   else
     cdfs_ = NumericVector();
 
@@ -523,8 +527,11 @@ List GetMeasureOptions(SEXP typesIn, SEXP typesOut, int simFixSize,
     typesOut_ = StringVector(0);
 
   IntegerVector horizons_;
-  if (horizons != R_NilValue)
-    horizons_ = internal::convert_using_rfunction(horizons, "as.integer");
+  if (horizons != R_NilValue){
+    if (is<IntegerVector>(horizons) == false)
+      throw std::logic_error("'horizons' must be an 'integer vector'.");
+    horizons_ = as<IntegerVector>(horizons);
+  }
   else
     horizons_ = {1};
 
