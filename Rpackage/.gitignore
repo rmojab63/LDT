@@ -14,4 +14,4 @@ inst/copyrights/*
 src/*
 !src/r_*.cpp
 !src/r_*.h
-!src/Makevar
+!src/Makevars
