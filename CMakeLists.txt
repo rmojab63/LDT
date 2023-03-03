@@ -67,8 +67,8 @@ file(GLOB SOURCES
  src/ldt_statistics/clustering/group_data.cpp
 
   src/ldt_statistics/scoring/scoring.cpp
-  src/ldt_statistics/scoring/cost_matrix.cpp
-  src/ldt_statistics/scoring/auc.cpp
+  src/ldt_statistics/scoring/frequency_cost.cpp
+  src/ldt_statistics/scoring/roc.cpp
 
  src/ldt_statistics/correlation.cpp
  src/ldt_statistics/pca.cpp
@@ -102,6 +102,7 @@ file(GLOB SOURCES
  src/ldt_math/polynomials/mpolynomial.cpp
  src/ldt_math/polynomials/polynomial.cpp
  src/ldt_math/derivative.cpp
+ src/ldt_math/auc.cpp
 
  src/matrix/matrix_la.cpp
  src/matrix/matrix.cpp
@@ -157,7 +158,7 @@ if(MSVC)
 	target_compile_options(ldt PRIVATE "/wd4251;/wd4661")
 endif()
 if ( CMAKE_COMPILER_IS_GNUCC )
-    target_compile_options(ldt PRIVATE -DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2 -fpic  -g -O3 -Wall -pedantic)
+    #target_compile_options(ldt PRIVATE -DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2 -fpic  -g -O3 -Wall -pedantic)
 endif()
  
   if (CMAKEPRESETS)

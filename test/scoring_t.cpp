@@ -41,40 +41,69 @@ TEST(Scoring_T, logNormal) {
 }
 
 TEST(Scoring_T, auc_binary) {
+  auto y = Matrix<Tv>(new Tv[6]{1, 0, 1, 0, 1, 1}, 6, 1);
+  auto scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
+  RocOptions rocOptions;
+  auto auc = ROC<false, false>(6);
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
-  auto y = Matrix<Tv>(new Tv[8]{0, 1, 0, 1, 0, 1, 0, 1}, 8, 1);
-  auto scores = Matrix<Tv>(new Tv[16]{0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9,
-                                      0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1},
-                           8, 2);
+  scores = Matrix<Tv>(new Tv[6]{0.2, 0.2, 0.2, 0.2, 0.2, 0.2}, 6, 1);
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.5, 1e-15);
 
-  auto auc = AUC<false, true>(8);
-  auc.Calculate(y, scores, nullptr, nullptr);
+  scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.875, 1e-15);
+  ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.75, 1e-15);
 
-  ASSERT_NEAR(auc.Result, 0.53125, 1e-8);
+  scores = Matrix<Tv>(new Tv[6]{0.9, 0.1, 0.9, 0.1, 0.9, 0.1}, 6, 1);
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.125, 1e-15);
+  ASSERT_NEAR(std::get<1>(auc.Points.at(1)), 0.25, 1e-15);
 
-  auto weights =
-      Matrix<Tv>(new Tv[8]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1}, 8, 1);
-  auc = AUC<false, true>(8);
-  auc.Calculate(y, scores, &weights, nullptr);
-}
+  // partial
+  scores = Matrix<Tv>(new Tv[6]{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}, 6, 1);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.3 / 0.6, 1e-15);
 
-TEST(Scoring_T, costMatrix) {
+  scores = Matrix<Tv>(new Tv[6]{0.1, 0.9, 0.1, 0.9, 0.1, 0.9}, 6, 1);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.525 / 0.6, 1e-15);
 
-  auto y = Matrix<Tv>(new Tv[8]{0, 1, 0, 1, 0, 1, 0, 1}, 8, 1);
-  auto scores = Matrix<Tv>(new Tv[16]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1,
-                                      0.6, 0.4, 0.55, 0.1, 0.4, 0.7, 0.5, 0.9},
-                           8, 2);
-
-  Matrix<Tv> cost_table =
-      Matrix<Tv>(new Tv[12]{0.3, 0.5, 0.7, 1.0, 0, 1, 2, 3, 9, 8, 7, 0}, 4, 3);
-  CostMatrix<true>::Check(cost_table, 2);
-  auto weights =
-      Matrix<Tv>(new Tv[8]{0.4, 0.6, 0.45, 0.9, 0.6, 0.3, 0.5, 0.1}, 8, 1);
-
-  auto cm = CostMatrix<false>(1);
-  auto S = new Tv[cm.StorageSize];
-  cm.Calculate(std::vector<Matrix<Tv>>({cost_table, cost_table}), y, scores,
-               &weights, S);
-
-  //??!!!
+  // another y (more complex)
+  y = Matrix<Tv>(new Tv[10]{1, 0, 1, 0, 1, 1, 0, 0, 1, 0}, 10, 1);
+  scores = Matrix<Tv>(
+      new Tv[10]{0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1}, 10, 1);
+  auc = ROC<false, false>(10);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.44 / 0.6, 1e-15);
+  rocOptions.LowerThreshold = 0.2;
+  rocOptions.UpperThreshold = 0.4;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.12 / 0.2, 1e-15);
+  rocOptions.LowerThreshold = 0.3;
+  rocOptions.UpperThreshold = 0.4;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.07 / 0.1, 1e-15);
+  rocOptions.LowerThreshold = 0.3;
+  rocOptions.UpperThreshold = 0.8;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.39 / 0.5, 1e-15);
+  rocOptions.LowerThreshold = 0.4;
+  rocOptions.UpperThreshold = 0.6;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.16 / 0.2, 1e-15);
+  rocOptions.LowerThreshold = 0;
+  rocOptions.UpperThreshold = 1;
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.68 / 1, 1e-15);
+  auc.Calculate(y, scores, nullptr, rocOptions);
+  ASSERT_NEAR(auc.Result, 0.68, 1e-15);
 }

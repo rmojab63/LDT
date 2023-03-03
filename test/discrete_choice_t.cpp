@@ -388,7 +388,8 @@ TEST(DiscreteChoice_t, CrossValidate) {
   auto S = new Tv[model.StorageSize];
   auto Wi = new Ti[model.WorkSizeI];
   bool cancel = false;
-  model.Calculate(source, &ct_vec, S, W, Wi, cancel);
+  RocOptions rocOptions;
+  model.Calculate(source, &ct_vec, S, W, Wi, cancel, rocOptions);
 
   ASSERT_NEAR(model.CostRatios.Data[0], 0.3320, 1e-14); // self
   ASSERT_NEAR(model.CostRatios.Data[0], model.CostRatios.Data[1], 1e-16);
@@ -518,7 +519,8 @@ TEST(DiscreteChoice_t, CrossValidate_pca) {
   auto S = new Tv[model.StorageSize];
   auto Wi = new Ti[model.WorkSizeI];
   bool cancel = false;
-  model.Calculate(source, &ct_vec, S, W, Wi, cancel);
+  RocOptions rocOptions;
+  model.Calculate(source, &ct_vec, S, W, Wi, cancel, rocOptions);
 
   delete[] S;
   delete[] Wi;
@@ -550,7 +552,7 @@ TEST(DiscreteChoice_t, searcherSmall) {
 
   measures.TrainRatio = 0.8;
   measures.SimFixSize = 10;
-  measures.MeasuresOut.push_back(ScoringType::kCostMatrix);
+  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
 
   checks.Estimation = true;
 
@@ -567,10 +569,11 @@ TEST(DiscreteChoice_t, searcherSmall) {
   auto costs = std::vector<Matrix<Tv>>({cost1, cost2});
   auto groups = std::vector<std::vector<Ti>>({gr1, gr2});
   auto newton = Newton();
+  RocOptions rocOptions;
   auto modelset =
       DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
           searchOptions, items, measures, checks, sizes, source, costs, groups,
-          newton, true, true);
+          newton, rocOptions, true, true);
 
   auto W = new Tv[modelset.Modelset.WorkSize];
   auto Wi = new Ti[modelset.Modelset.WorkSizeI];
@@ -711,8 +714,8 @@ TEST(DiscreteChoice_t, searcherLarager) {
   measures.Seed = -340;
   measures.SimFixSize = 200;
   measures.MeasuresIn.push_back(GoodnessOfFitType::kAuc);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kCostMatrix);
-  measures.MeasuresOut.push_back(ScoringType::kCostMatrix);
+  measures.MeasuresIn.push_back(GoodnessOfFitType::kFrequencyCost);
+  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
   measures.MeasuresOut.push_back(ScoringType::kAuc);
 
   auto gr1 = std::vector<Ti>({0});
@@ -722,9 +725,10 @@ TEST(DiscreteChoice_t, searcherLarager) {
   auto costs = std::vector<Matrix<Tv>>({cost1});
   auto groups = std::vector<std::vector<Ti>>({gr1, gr2});
   auto newton = Newton();
+  RocOptions rocOptions;
   auto modelset = *DiscreteChoiceModelsetBase::GetFromTypes(
       true, true, searchOptions, items, measures, checks, sizes, source, costs,
-      groups, true, false, newton);
+      groups, true, false, newton, rocOptions);
 
   // add groups
 
@@ -809,12 +813,13 @@ TEST(DiscreteChoice_t, searcherNan) {
   auto groups = std::vector<std::vector<Ti>>({gr1, gr2});
   auto newton = Newton();
   auto vms = std::vector<Matrix<Tv>>();
+  RocOptions rocOptions;
   auto modelset1 = *DiscreteChoiceModelsetBase::GetFromTypes(
       true, true, searchOptions, items, measures, checks, sizes, source1, vms,
-      groups, true, false, newton);
+      groups, true, false, newton, rocOptions);
   auto modelset2 = *DiscreteChoiceModelsetBase::GetFromTypes(
       true, true, searchOptions, items, measures, checks, sizes, source2, vms,
-      groups, true, false, newton);
+      groups, true, false, newton, rocOptions);
 
   // add groups
 
@@ -905,8 +910,10 @@ TEST(DiscreteChoice_t, extended) {
   auto W2 = new Tv[model2.WorkSize];
   auto S2 = new Tv[model2.StorageSize];
 
-  model1.Calculate(source1, S1, W1, true, &xforecast);
-  model2.Calculate(source2, S2, W2, true, &xforecast);
+  RocOptions rocOptions;
+
+  model1.Calculate(source1, S1, W1, true, &xforecast, rocOptions);
+  model2.Calculate(source2, S2, W2, true, &xforecast, rocOptions);
 
   ASSERT_EQ(true, model1.Model->Beta.Equals(model2.Model->Beta, 1e-15));
 
@@ -1717,9 +1724,11 @@ TEST(DiscreteChoice_t, extended_pca) {
   auto W3 = new Tv[model3.WorkSize];
   auto S3 = new Tv[model3.StorageSize];
 
-  model1.Calculate(source1, S1, W1, true, &xforecast);
-  model2.Calculate(source2, S2, W2, true, &xforecast);
-  model3.Calculate(source3, S3, W3, true, &xforecast3);
+  RocOptions rocOptions;
+
+  model1.Calculate(source1, S1, W1, true, &xforecast, rocOptions);
+  model2.Calculate(source2, S2, W2, true, &xforecast, rocOptions);
+  model3.Calculate(source3, S3, W3, true, &xforecast3, rocOptions);
 
   ASSERT_EQ(true, model1.Model->Beta.Equals(model2.Model->Beta, 1e-10));
   ASSERT_EQ(true, model1.Model->Beta.Equals(model3.Model->Beta, 1e-10));
