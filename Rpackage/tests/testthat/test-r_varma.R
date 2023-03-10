@@ -227,20 +227,6 @@ test_that("ARMA search works for In-Sample with exogenous", {
   expect_equal(exp(-0.5 * res1$measures[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
 })
 
-test_that("ARMA search works for In-Sample with Interpolation", {
-  skip_on_cran()
-
-  Z=x[,1, drop = FALSE]
-  Z[[2]]=(Z[[1]]+Z[[3]])/2
-  res0 = VarmaSearch(Z, maxParams = c(2,2,2,0,0,0),  searchOptions = GetSearchOptions(printMsg = printMsg),
-                     measureOptions = GetMeasureOptions(c("aic"),c()))
-  Z[[2]] = NA
-  res1 = VarmaSearch(Z, maxParams = c(2,2,2,0,0,0),  searchOptions = GetSearchOptions(printMsg = printMsg),
-                     measureOptions = GetMeasureOptions(c("aic"),c()))
-
-  expect_equal(res0$aic$target1$model$bests$best1$weight, res1$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
-})
-
 test_that("VARMA search works for In-Sample with exogenous", {
   skip_on_cran()
 
@@ -653,7 +639,7 @@ test_that("SurEstim SplitSearch works (no subsetting)", {
                       numTargets = numTargets,  xGroups = xGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, modelCheckItems = modelCheckItems,
-                      newX = newX, maxHorizon = maxHorizon, savePre = NULL, printMsg = printMsg)
+                      newX = newX, maxHorizon = maxHorizon, savePre = NULL)
 
   whole = VarmaSearch(y = Endo, x = Exo, ySizes = as.integer(c(1,2,3)),
                     numTargets = numTargets,  xGroups = xGroups,

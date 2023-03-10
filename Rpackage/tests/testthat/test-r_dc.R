@@ -622,7 +622,7 @@ test_that("Discrete choice SplitSearch works (no subsetting)", {
   split = DcSearch_s(x = Exo, y = y, xSizes = list(as.integer(c(1,2)), as.integer(c(3))), counts = c(NA, NA),
                      costMatrices = list(c1, c2),
                       searchItems = searchItems, measureOptions = measureOptions,
-                      searchOptions = searchOptions, savePre = NULL, printMsg = printMsg)
+                      searchOptions = searchOptions, savePre = NULL)
 
   whole = DcSearch(y, Exo, xSizes = as.integer(c(1,2,3)),
                    costMatrices = list(c1, c2),

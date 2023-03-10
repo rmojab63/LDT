@@ -638,7 +638,7 @@ test_that("SUR SplitSearch works (no subsetting)", {
   split = SurSearch_s(x = Exo, y = y, xSizes = list(as.integer(c(1,2)), as.integer(c(3))), counts = c(NA, NA),
                       numTargets = numTargets,  yGroups = yGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
-                      searchOptions = searchOptions, savePre = NULL, printMsg = printMsg)
+                      searchOptions = searchOptions, savePre = NULL)
 
   whole = SurSearch(y, Exo, xSizes = as.integer(c(1,2,3)),
                     numTargets = numTargets,  yGroups = yGroups,

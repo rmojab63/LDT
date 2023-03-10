@@ -53,10 +53,13 @@ template <bool byRow = true, class Tw = Tv> class LDT_EXPORT DatasetTs {
   bool mHasNaN = true;
   bool mSelect = false;
   bool mInterpolate = false;
-  Ti mAdjustLeadLagsCount = 0;
+  Ti mEndoCount = 0;
+  Ti mExoCount = 0;
+  Ti mHorizon = 0;
 
 public:
-  /// @brief A pointer to the given data in \ref Calculate
+  /// @brief A pointer to the given data in \ref Calculate. After \ref Data(),
+  /// it might change.
   Matrix<Tw> *pData = nullptr;
 
   /// @brief Initializes a new instance of the class
@@ -70,17 +73,40 @@ public:
   /// selected.
   /// @param interpolate If true, missing data might exist in which case
   /// interpolation is used
-  /// @param adjustLeadLagsCount If not zero, leads and lags are adjusted by
-  /// removing the given number of extra data at the end of the variables.
+  /// @param endoCount If 'm>0', leads and lags of 'm' variables are
+  /// adjusted with respect to the first variable.
+  /// @param exoCount If 'm>0', leads of lags of the last 'm' variables
+  /// are adjusted for the given \par horizon.
+  /// @param horizon Required number of out-of-sample data in \par exoCount.
   DatasetTs(Ti rows, Ti cols, bool hasNan = true, bool select = true,
-            bool interpolate = false, Ti adjustLeadLagsCount = 0);
+            bool interpolate = false, Ti endoCount = 0, Ti exoCount = 0,
+            Ti horizon = 0);
 
   /// @brief Gets the storage size
   Ti StorageSize = 0;
 
-  /// @brief After \ref Update, if false and \ref WithMissingIndexes is not
+  /// @brief After \ref Data(), if false and \ref WithMissingIndexes is not
   /// empty, it means interpolation
   bool HasMissingData = false;
+
+  /// @brief After Data(), it contains index of variables with missing data and
+  /// number of interpolations.
+  std::vector<std::tuple<Ti, Ti>> WithMissingIndexes;
+
+  /// @brief After Data(), it contains the range of available data.
+  std::vector<IndexRange> Ranges;
+
+  /// @brief After \ref Data(), it is variables with leads relative to the first
+  /// variable and the value of lead
+  std::vector<std::tuple<Ti, Ti>> WithLeads;
+
+  /// @brief After \ref Data(), it is variables with lags relative to the first
+  /// variable and the value of lag
+  std::vector<std::tuple<Ti, Ti>> WithLags;
+
+  /// @brief After \ref Data(), it is the number of NANs set to adjust
+  /// out-of-sample data.
+  Ti CountNanSets = 0;
 
   /// @brief After \ref Update, Gets the start index of the final data
   Ti Start = 0;
@@ -88,21 +114,7 @@ public:
   /// @brief After \ref Update, Gets the end index of the final data
   Ti End = 0;
 
-  std::vector<Ti> WithMissingIndexes;
-
-  std::vector<IndexRange> Ranges;
-
-  std::vector<Ti> InterpolationCounts;
-
-  /// @brief After \ref Update, it is variables with leads relative to the first
-  /// variable
-  std::vector<Ti> WithLeads;
-
-  /// @brief After \ref Update, it is variables with lags relative to the first
-  /// variable
-  std::vector<Ti> WithLags;
-
-  /// @brief After \ref Update, a matrix with given rows and no NaN
+  /// @brief After \ref Update(), a matrix with given rows and no NaN
   Matrix<Tw> Result;
 
   void Data(Matrix<Tw> &data);

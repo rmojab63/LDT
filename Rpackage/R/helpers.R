@@ -1,28 +1,4 @@
 
-
-#' Determines if an email address is valid (this is not exact. Just use it to avoid mistakes)
-#'
-#' @param x email
-#'
-#' @return \code{TRUE} if email is valid, \code{FALSE} otherwise.
-IsEmailValid <- function(x) {
-  x <- as.character(x)
-  grepl("^[A-Z0-9._%+-]+@[A-Z0-9._%+-]+\\.[A-Z0-9._%+-]+$", x, ignore.case = TRUE)
-}
-
-#' Determines if a GUID is valid
-#'
-#' @param x GUID
-#'
-#' @return \code{TRUE} if GUID is valid, \code{FALSE} otherwise.
-IsGuidValid <- function(x) {
-  x <- as.character(x)
-  grepl("^[{]?[A-F0-9]{8}-([A-F0-9]{4}-){3}[A-F0-9]{12}[}]?$", x, ignore.case = TRUE)
-}
-
-
-
-
 #' Remove NA and Count the Number of Observations in Different Scenarios
 #'
 #' When a matrix has NA, one can omit columns with NA or rows with NA or a combination of these two.
@@ -409,19 +385,20 @@ combineSearch <- function(list, type1Name = "coefs") {
 #'
 #' @param method sur, dc or varma
 #' @param data exogenous (for sur and dc) or endogenous (for varma)
-#' @param sizes detemines the steps
+#' @param sizes determines the steps
 #' @param counts determines the size in each step
 #' @param savePre if not \code{NULL}, it saves and tries to load the
 #' progress of search step in a file (name=\code{paste0(savePre,i)} where
 #' \code{i} is the index of the step).
-#' @param printMsg If true, some information about the steps is printed.
-#' Note that it is different from searchers' \code{printMsg}.
 #' @param ... Additional arguments
 #'
 #' @return the result
 Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                     counts = c(NA, 40, 30, 20), savePre, printMsg = FALSE, ...) {
+                     counts = c(NA, 40, 30, 20), savePre, ...) {
   dots <- list(...)
+  printMsg = dots$searchOptions$printMsg
+  if (is.null(printMsg))
+    printMsg = FALSE
 
   # TODO: check search items here
   # dots <- list(...)
@@ -487,7 +464,12 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
           if (is.null(tar$model$bests) == FALSE && length(tar$model$bests) > 0) {
             for (b in c(1:length(tar$model$bests))) {
               bst <- tar$model$bests[[b]]
-              bests[[length(bests) + 1]] <- list(index = b, names = x_i_names[bst$exoIndices])
+              names <- NULL
+              if (method == "sur" || method == "dc")
+                names <- x_i_names[bst$exoIndices]
+              else
+                names <- x_i_names[bst$depIndices]
+              bests[[length(bests) + 1]] <- list(index = b, names = names)
             }
           }
         }
@@ -522,6 +504,9 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       'bestK' or if you have fix variables, adjust the sizes.")
     }
 
+    if (printMsg)
+      cat("\n=================\n")
+
     if (method == "sur") {
       estims[[i]] <- SurSearch(x = data_i, xSizes = size_i, ...)
     } else if (method == "dc") {
@@ -531,6 +516,9 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
     } else {
       stop("invalid method")
     }
+
+    if (printMsg)
+      cat("\n=================\n")
 
     if (estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount) {
       if (printMsg){

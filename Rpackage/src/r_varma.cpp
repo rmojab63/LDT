@@ -5,51 +5,6 @@
 using namespace Rcpp;
 using namespace ldt;
 
-std::unique_ptr<ldt::DatasetTs<true>> GetDs(bool printMsg,
-                                            ldt::Matrix<double> &source,
-                                            int exoStart, bool interpolate,
-                                            bool adjustLeadLags) {
-
-  auto adjustLeadLags0 = adjustLeadLags ? exoStart : 0;
-  auto dataset0 = new DatasetTs<true>(source.RowsCount, source.ColsCount, true,
-                                      true, interpolate, adjustLeadLags0);
-  auto ds = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
-
-  dataset0->Data(source);
-  if (printMsg)
-    Rprintf("Data Adjustments:\n");
-  bool adjust = false;
-  if (dataset0->WithMissingIndexes.size() > 0) {
-    adjust = true;
-    if (printMsg)
-      Rprintf("    - Variables with Missing Data: %s\n",
-              VectorToCsv(dataset0->WithMissingIndexes).c_str());
-    int cc = 0;
-    for (auto &c : dataset0->InterpolationCounts)
-      cc += c;
-    if (printMsg)
-      Rprintf("    - Interpolation Points Count: %i\n", cc);
-  }
-  if (dataset0->WithLags.size() > 0) {
-    if (printMsg)
-      adjust = true;
-    Rprintf("    - Variables with Lags: %s\n",
-            VectorToCsv(dataset0->WithLags).c_str());
-  }
-  if (dataset0->WithLeads.size() > 0) {
-    adjust = true;
-    if (printMsg)
-      Rprintf("    - Variables with Leads: %s\n",
-              VectorToCsv(dataset0->WithLeads).c_str());
-  }
-  if (adjust == false) {
-    if (printMsg)
-      Rprintf("    - none\n");
-  }
-
-  return ds;
-}
-
 // clang-format off
 
 //' VARMA Search
@@ -64,8 +19,6 @@ std::unique_ptr<ldt::DatasetTs<true>> GetDs(bool printMsg,
 //' @param seasonsCount (integer) number of observations per unit of time
 //' @param maxHorizon (integer) maximum value for the prediction horizon if \code{type1} is \code{TRUE} in \code{checkItems}. Also, it is used as the maximum prediction horizon in checking the predictions.
 //' @param newX (matrix) New exogenous data for out-of-sample prediction. It must have the same number of columns as \code{x}.
-//' @param interpolate (logical) if \code{TRUE}, missing observations are interpolated.
-//' @param adjustLeadsLags (logical) if \code{TRUE}, leads and lags in the sample are adjusted.
 //' @param simUsePreviousEstim (logical) if \code{TRUE}, parameters are initialized in just the first step of the simulation. The initial values of the n-th simulation (with one more observation) is the estimations in the previous step.
 //' @param olsStdMultiplier (numeric) a multiplier for the standard deviation of OLS, used for restricting the maximum likelihood estimation.
 //' @param lmbfgsOptions (list) Optimization options. see \code{[GetLmbfgsOptions()]}. Use null for default values.
@@ -82,8 +35,7 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
                  SEXP ySizes = R_NilValue, SEXP yPartitions = R_NilValue,
                  SEXP xGroups = R_NilValue, SEXP maxParams = R_NilValue,
                  int seasonsCount = 0, int maxHorizon = 0,
-                 SEXP newX = R_NilValue, bool interpolate = true,
-                 int adjustLeadsLags = true, bool simUsePreviousEstim = true,
+                 SEXP newX = R_NilValue, bool simUsePreviousEstim = true,
                  double olsStdMultiplier = 2.0, SEXP lmbfgsOptions = R_NilValue,
                  SEXP measureOptions = R_NilValue,
                  SEXP modelCheckItems = R_NilValue,
@@ -146,8 +98,14 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
 
   mat.Transpose();
 
-  auto dataset =
-      GetDs(printMsg, mat, my.ColsCount, interpolate, adjustLeadsLags);
+  auto dataset0 = new DatasetTs<true>(mat.RowsCount, mat.ColsCount, true,
+                                      true, false, 0);
+  auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
+  dataset0->Data(mat);
+  bool adjust = false;
+  if (dataset0->HasMissingData)
+    throw std::logic_error("Missing observation exists.");
+
 
   std::vector<int> ySizes_;
   GetSizes(printMsg, ySizes_, ySizes, my.ColsCount, false);
@@ -242,7 +200,7 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   // Modelset
   auto model =
       VarmaModelset(options, items, measures, checks, ySizes_, yPartitions_,
-                    *dataset.get(), maxParams_, seasonsCount, xGroups_,
+                    *dataset0, maxParams_, seasonsCount, xGroups_,
                     simUsePreviousEstim, &optim, olsStdMultiplier, maxHorizon);
 
   bool estimating = true;

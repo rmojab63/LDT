@@ -16,7 +16,7 @@
 
 using namespace ldt;
 
-//#pragma region Dataset
+// #pragma region Dataset
 
 template <typename Tw>
 Dataset<Tw>::Dataset(Ti rows, Ti cols, bool hasNan, bool selectColumn) {
@@ -58,19 +58,22 @@ void Dataset<Tw>::Calculate(const Matrix<Tw> &data, std::vector<Ti> *colIndexes,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Dataset Time - Series
+// #pragma region Dataset Time - Series
 
 template <bool byRow, typename Tw>
 DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select,
-                                bool interpolate, Ti adjustLeadLagsCount) {
+                                bool interpolate, Ti endoCount, Ti exoCount,
+                                Ti horizon) {
   if (cols <= 0 || rows <= 0)
     throw std::logic_error("invalid size in 'datasetT'.");
   mHasNaN = hasNan;
   mSelect = select;
   mInterpolate = interpolate;
-  mAdjustLeadLagsCount = adjustLeadLagsCount;
+  mEndoCount = endoCount;
+  mExoCount = exoCount;
+  mHorizon = horizon;
 
   StorageSize = rows * cols; // Results
 
@@ -87,16 +90,23 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
 
   // find indexes
   Ranges.clear();
-  InterpolationCounts.clear();
+  CountNanSets = 0;
+  WithLeads.clear();
+  WithLags.clear();
+  WithMissingIndexes.clear();
+
+  Ti count, length;
+  if constexpr (byRow) {
+    count = data.RowsCount;
+    length = data.ColsCount;
+  } else if constexpr (true) {
+    count = data.ColsCount;
+    length = data.RowsCount;
+  }
+
   if (mHasNaN) {
 
     bool hasmissing;
-    Ti count;
-    if constexpr (byRow) {
-      count = data.RowsCount;
-    } else if constexpr (true) {
-      count = data.ColsCount;
-    }
     for (Ti i = 0; i < count; i++) {
       if constexpr (byRow) {
         Ranges.push_back(pData->GetRangeRow(hasmissing, i));
@@ -106,8 +116,7 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
 
       if (hasmissing) {
         HasMissingData = true;
-        WithMissingIndexes.push_back(i);
-        InterpolationCounts.push_back(0);
+        WithMissingIndexes.push_back(std::tuple<Ti, Ti>(i, 0));
       }
     }
 
@@ -120,8 +129,9 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
 
     if (HasMissingData && mInterpolate) {
       Ti q = -1;
-      for (auto &p : WithMissingIndexes) {
+      for (auto &pp : WithMissingIndexes) {
         q++;
+        auto p = std::get<0>(pp);
         bool inMissing = false;
         Tw first = NAN, last = NAN, d;
         Ti length = 1;
@@ -143,7 +153,7 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
               Tw step = (last - first) / length;
               for (int j = 1; j < length; j++) {
                 data.Set0(p, i - j, d - j * step);
-                InterpolationCounts.at(q)++;
+                std::get<1>(WithMissingIndexes.at(q))++;
               }
 
               length = 1;
@@ -172,7 +182,7 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
               Tw step = (last - first) / length;
               for (int j = 1; j < length; j++) {
                 col[i - j] = col[i] - j * step;
-                InterpolationCounts.at(q)++;
+                std::get<1>(WithMissingIndexes.at(q))++;
               }
 
               length = 1;
@@ -192,44 +202,103 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
       // keep information
     }
 
-    if (mAdjustLeadLagsCount > 0) { // with respect to the first variable
-      Ti count;
-      if constexpr (byRow) {
-        count = data.RowsCount;
-      } else if constexpr (true) {
-        count = data.ColsCount;
-      }
+    if (mEndoCount > 0) {
+
+      if (mEndoCount > data.ColsCount)
+        throw std::logic_error("Inconsistent number of columns.");
+
       Ti lastIndex = Ranges.at(0).EndIndex;
-      for (Ti i = 1; i < std::min(mAdjustLeadLagsCount, count); i++) {
-        auto index = Ranges.at(i).EndIndex;
-        auto len = lastIndex - index;
+      for (Ti i = 1; i < mEndoCount; i++) {
+        // 1? with respect to the first variable
+        auto len = lastIndex - Ranges.at(i).EndIndex;
         if (len > 0) { // lag ... move data forward (create a lagged variable)
-          WithLags.push_back(i);
+          WithLags.push_back(std::make_tuple(i, len));
           for (Ti j = lastIndex; j >= 0; j--) {
             if constexpr (byRow) {
               if (j >= len)
-                data.Set0(i, j, data.Get0(i, j - len));
+                data.Set(i, j, data.Get0(i, j - len));
               else
                 data.Set(i, j, NAN);
             } else if constexpr (true) {
               if (j >= len)
-                data.Set0(j, i, data.Get0(j - len, i));
+                data.Set(j, i, data.Get0(j - len, i));
               else
                 data.Set(j, i, NAN);
             }
           }
           Ranges.at(i).StartIndex = Ranges.at(i).StartIndex + len;
           Ranges.at(i).EndIndex = lastIndex;
-        } else if (len < 0) { // lead ... just set NAN
-          WithLeads.push_back(i);
-          for (Ti j = 0; j < -len; j++) {
+        } else if (len < 0) { // lead ... move data backward
+          WithLeads.push_back(std::make_tuple(i, -len));
+          for (Ti j = 0; j <= Ranges.at(i).EndIndex; j++) {
             if constexpr (byRow) {
-              data.Set(i, lastIndex + j + 1, NAN);
+              if (j <= lastIndex)
+                data.Set(i, j, data.Get0(i, j - len));
+              else
+                data.Set(i, j, NAN);
             } else if constexpr (true) {
-              data.Set(lastIndex + j + 1, i, NAN);
+              if (j <= lastIndex)
+                data.Set(j, i, data.Get0(j - len, i));
+              else
+                data.Set(j, i, NAN);
             }
           }
           Ranges.at(i).EndIndex = lastIndex;
+          Ranges.at(i).StartIndex = std::max(0, Ranges.at(i).StartIndex + len);
+        }
+      }
+    }
+
+    if (mExoCount > 0) {
+
+      if (mEndoCount + mExoCount > data.ColsCount)
+        throw std::logic_error("Inconsistent number of columns.");
+
+      Ti lastIndexHor = Ranges.at(0).EndIndex + mHorizon;
+
+      if (length <= lastIndexHor)
+        throw std::logic_error("There is not enough rows in the given horizon. "
+                               "Add more NAN rows.");
+
+      for (Ti ii = 0; ii < mEndoCount; ii++) {
+        Ti i = ii + mEndoCount;
+
+        auto len = lastIndexHor - Ranges.at(i).EndIndex;
+
+        // we move the data forward and create lags, but we do not move data
+        // backward if extra data is available. We set NAN. However, note that
+        // these are information we are discarding. We might want to create new
+        // lead variables and use them
+
+        if (len > 0) {
+          WithLags.push_back(std::make_tuple(i, len));
+          for (Ti j = lastIndexHor; j >= 0; j--) {
+            if constexpr (byRow) {
+              if (j >= len)
+                data.Set(i, j, data.Get0(i, j - len));
+              else
+                data.Set(i, j, NAN);
+            } else if constexpr (true) {
+              if (j >= len)
+                data.Set(j, i, data.Get0(j - len, i));
+              else
+                data.Set(j, i, NAN);
+            }
+          }
+          Ranges.at(i).StartIndex = Ranges.at(i).StartIndex + len;
+          Ranges.at(i).EndIndex = lastIndexHor;
+        } else if (len < 0) {
+          // WithLeads.push_back(std::make_tuple(i, -len)); This is not actually
+          // a lead
+          for (Ti j = 0; j < -len; j++) {
+            if constexpr (byRow) {
+              data.Set(i, lastIndexHor + j + 1, NAN);
+            } else if constexpr (true) {
+              data.Set(lastIndexHor + j + 1, i, NAN);
+            }
+            CountNanSets++;
+          }
+          Ranges.at(i).EndIndex = lastIndexHor;
         }
       }
     }
@@ -307,9 +376,9 @@ void DatasetTs<byRow, Tw>::Update(std::vector<Ti> *indexes, Tw *storage) {
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Standardize
+// #pragma region Standardize
 
 template <typename Tw>
 MatrixStandardized<Tw>::MatrixStandardized(Ti rows, Ti cols, bool removeZeroVar,
@@ -411,7 +480,7 @@ void MatrixStandardized<Tw>::Calculate(const Matrix<Tw> &mat, Tw *storage,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
 template class ldt::Dataset<Tv>;
 template class ldt::Dataset<Ti>;
