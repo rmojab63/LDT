@@ -3,6 +3,7 @@
 #include "frequency.h"
 #include "helpers.h"
 #include "ldt_base.h"
+#include "matrix.h"
 #include <map>
 #include <random>
 #include <string>
@@ -67,6 +68,11 @@ public:
                        std::vector<std::string> &listItemsString,
                        std::vector<boost::gregorian::date> &listItemsDate,
                        std::mt19937 &eng);
+
+  /// @brief Removes leading and trailing  NAN and adjusts the \ref
+  /// StartFrequency
+  /// @return Range of original data. It might be invalid.
+  IndexRange Trim();
 };
 
 /// @brief A class for grouping a list of variables with similar frequencies
@@ -86,6 +92,9 @@ public:
 
   /// @brief Names of the variables
   std::vector<std::string> Names;
+
+  /// @brief Initializes a new instance of this class
+  Variables();
 
   /// @brief Initializes a new instance of this class
   /// @param vars List of variables

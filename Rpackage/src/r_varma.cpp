@@ -98,11 +98,9 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
 
   mat.Transpose();
 
-  auto dataset0 = new DatasetTs<true>(mat.RowsCount, mat.ColsCount, true,
-                                      true, false, 0);
+  auto dataset0 = new DatasetTs<true>(mat.RowsCount, mat.ColsCount, true, true);
   auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
   dataset0->Data(mat);
-  bool adjust = false;
   if (dataset0->HasMissingData)
     throw std::logic_error("Missing observation exists.");
 

@@ -1299,63 +1299,32 @@ TEST(Matrix_T, datasetTs) {
   ds22.Update(&v, S);
   ASSERT_EQ(ds22.Result.Get(0, 1), 7);
   delete[] S;
+}
 
-  // interpolate
-  Tv data3[] = {NAN, NAN, 2,   3,   NAN, 4, 5, NAN, NAN, NAN, 6, 7,  NAN,
-                NAN, NAN, 3,   NAN, 2,   1, 2, 3,   2,   4,   5, 1,  7,
-                5,   6,   7,   4,   3,   3, 3, 3,   NAN, NAN, 2, 3,  NAN,
-                4,   5,   NAN, NAN, NAN, 6, 7, NAN, NAN, NAN, 3, NAN};
-  auto mat3 = Matrix<Tv>(data3, 17, 3);
-  auto ds31 = DatasetTs<false>(17, 3, true, true, true);
-  ds31.Data(mat3);
-  auto res = Matrix<Tv>(
-      new Tv[51]{NAN, NAN, 2,    3,   3.5,  4, 5, 5.25, 5.5, 5.75, 6, 7,  6,
-                 5,   4,   3,    NAN, 2,    1, 2, 3,    2,   4,    5, 1,  7,
-                 5,   6,   7,    4,   3,    3, 3, 3,    NAN, NAN,  2, 3,  3.5,
-                 4,   5,   5.25, 5.5, 5.75, 6, 7, 6,    5,   4,    3, NAN},
-      17, 3);
-  ASSERT_EQ(true, ds31.pData->Equals(res, 1e-16, true, true));
+TEST(Matrix_T, Interpolate) {
 
-  // by row
-  Tv data4[] = {// data is overridden
-                NAN, NAN, 2,   3,   NAN, 4, 5, NAN, NAN, NAN, 6, 7,  NAN,
-                NAN, NAN, 3,   NAN, 2,   1, 2, 3,   2,   4,   5, 1,  7,
-                5,   6,   7,   4,   3,   3, 3, 3,   NAN, NAN, 2, 3,  NAN,
-                4,   5,   NAN, NAN, NAN, 6, 7, NAN, NAN, NAN, 3, NAN};
-  mat3 = Matrix<Tv>(data4, 17, 3);
-  mat3.Transpose();
-  res.Transpose();
-  auto ds32 = DatasetTs<true>(3, 17, true, true, true);
-  ds32.Data(mat3);
-  ASSERT_EQ(true, ds32.pData->Equals(res, 1e-16, true, true));
+  // by column
 
-  // test adjusting lags leads
-  Tv data5[] = {NAN, NAN, 3,   4,   5,   6,   7,   8,   9,  NAN, 11, 12, 13,
-                14,  15,  16,  NAN, NAN, NAN, NAN, NAN, 22, 23,  24, 25, 26,
-                27,  28,  NAN, NAN, 31,  32,  33,  34,  35, 36,  37, 38, 39,
-                40,  41,  42,  43,  44,  45,  46,  47,  48, 49,  50};
-  auto mat5 = Matrix<Tv>(data5, 10, 5);
-  auto res1 = Matrix<Tv>(new Tv[50]{NAN, NAN, 3,   4,  5,  6,  7,  8,  9,  NAN,
-                                    NAN, NAN, NAN, 11, 12, 13, 14, 15, 16, NAN,
-                                    NAN, NAN, 22,  23, 24, 25, 26, 27, 28, NAN,
-                                    32,  33,  34,  35, 36, 37, 38, 39, 40, NAN,
-                                    42,  43,  44,  45, 46, 47, 48, 49, 50, NAN},
-                         10, 5);
-  auto ds41 = DatasetTs<false>(10, 5, true, false, false, 4);
-  ds41.Data(mat5);
-  // ASSERT_EQ(true, ds41.pData->Equals(res1, 1e-16, true, true));
+  Tv data[] = {NAN, NAN, 2,   3,   NAN, 4, 5, NAN, NAN, NAN, 9, 7,  NAN,
+               NAN, NAN, 3,   NAN, 2,   1, 2, 3,   2,   4,   5, 1,  7,
+               5,   6,   7,   4,   3,   3, 3, 3,   NAN, NAN, 2, 3,  NAN,
+               4,   5,   NAN, NAN, NAN, 9, 7, NAN, NAN, NAN, 3, NAN};
+  auto mat = Matrix<Tv>(data, 17, 3);
+  Ti count = 0;
+  auto range = mat.InterpolateColumn(count, 0);
+  ASSERT_NEAR(mat.Get(7, 0), 6.0, 1e-16);
+  ASSERT_NEAR(mat.Get(8, 0), 7.0, 1e-16);
+  ASSERT_NEAR(mat.Get(9, 0), 8.0, 1e-16);
+
+  range = mat.InterpolateColumn(count, 1);
+  ASSERT_EQ(count, 0);
 
   // by row
-  Tv data6[] = {NAN, NAN, 3,   4,   5,   6,   7,   8,   9,  NAN, 11, 12, 13,
-                14,  15,  16,  NAN, NAN, NAN, NAN, NAN, 22, 23,  24, 25, 26,
-                27,  28,  NAN, NAN, 31,  32,  33,  34,  35, 36,  37, 38, 39,
-                40,  41,  42,  43,  44,  45,  46,  47,  48, 49,  50};
-  auto mat6 = Matrix<Tv>(data6, 10, 5);
-  mat6.Transpose();
-  auto ds42 = DatasetTs<true>(5, 10, true, false, false, 4);
-  ds42.Data(mat6);
-  mat6.Transpose();
-  // ASSERT_EQ(true, ds42.pData->Equals(res1, 1e-16, true, true));
+  mat.Transpose();
+  range = mat.InterpolateRow(count, 2);
+  ASSERT_NEAR(mat.Get(2, 7), 6.0, 1e-16);
+  ASSERT_NEAR(mat.Get(2, 8), 7.0, 1e-16);
+  ASSERT_NEAR(mat.Get(2, 9), 8.0, 1e-16);
 }
 
 TEST(Matrix_T, standardized) {

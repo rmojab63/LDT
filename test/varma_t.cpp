@@ -1281,8 +1281,7 @@ TEST(Varma_T, var_search) {
           1,     1,     1,     1,     1},
       25, 7);
   data0.Transpose();
-  auto data =
-      DatasetTs<true>(data0.RowsCount, data0.ColsCount, true, true, true);
+  auto data = DatasetTs<true>(data0.RowsCount, data0.ColsCount, true, true);
   data.Data(data0);
 
   auto items = SearchItems();

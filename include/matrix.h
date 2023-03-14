@@ -299,6 +299,18 @@ public:
   /// @return range of data in the row
   IndexRange GetRangeRow(bool &hasMissing, Ti i = 0) const;
 
+  /// @brief Interpolates missing data in a specific column
+  /// @param count On exit it is the number of interpolated points
+  /// @param j Index of the column
+  /// @return Range of data in that column
+  IndexRange InterpolateColumn(Ti &count, Ti j = 0);
+
+  /// @brief Interpolates missing data in a specific row
+  /// @param count On exit it is the number of interpolated points
+  /// @param i Index of the row
+  /// @return Range of data in that row
+  IndexRange InterpolateRow(Ti &count, Ti i = 0);
+
   /// @brief Gets the range of data in the columns
   /// @param anyColumnHasMissing (updated on exit) true if missing observation
   /// is found in any column

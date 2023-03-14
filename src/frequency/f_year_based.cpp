@@ -83,6 +83,8 @@ std::unique_ptr<Frequency> FrequencyYearBased::Clone() const {
 }
 
 void FrequencyYearBased::Next(Ti steps) {
+  if (steps == 0)
+    return;
   Ti absCount = std::abs(steps);
   Ti years = (Ti)absCount / mPartitionCount;
   Ti rem = absCount % mPartitionCount;

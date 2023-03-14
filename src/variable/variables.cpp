@@ -10,27 +10,22 @@ Variables<Tw>::Variables(const std::vector<Variable<Tw> *> vars) {
   if (vars.size() == 0)
     throw std::logic_error("Variables: No variable is available.");
 
-  auto minStarts = vars.at(0)->StartFrequency.get();
-  auto temp = vars.at(0)->GetEndFrequency(); // we should define temp and then
-                                             // .get() in a separate variable
-  auto maxEnds = temp.get();
-  std::unique_ptr<Frequency> temp1;
+  StartFrequency = vars.at(0)->StartFrequency.get()->Clone();
+  auto maxEnds = vars.at(0)->GetEndFrequency();
 
   for (auto const &v : vars) {
     try {
-      if (minStarts->IsNewerThan(*v->StartFrequency.get()))
-        minStarts = v->StartFrequency.get();
-      temp1 = v->GetEndFrequency();
-      auto e = temp1.get();
-      if (maxEnds->IsOlderThan(*e))
-        maxEnds = e;
+      if (StartFrequency.get()->IsNewerThan(*v->StartFrequency.get()))
+        StartFrequency = std::move(v->StartFrequency.get()->Clone());
+      auto temp = v->GetEndFrequency();
+      if (maxEnds->IsOlderThan(*temp.get()))
+        maxEnds = std::move(temp);
     } catch (...) {
       Rethrow("Mixed frequency is not supported in 'Variables'.");
     }
     Names.push_back(v->Name);
   }
-  StartFrequency = minStarts->Clone();
-  NumObs = maxEnds->Minus(*minStarts);
+  NumObs = maxEnds.get()->Minus(*StartFrequency.get());
   if (NumObs == 0)
     throw std::logic_error("Variables: No observation is available.");
 
@@ -38,7 +33,7 @@ Variables<Tw>::Variables(const std::vector<Variable<Tw> *> vars) {
   Ti i = 0;
   std::unique_ptr<Frequency> temp2;
   for (auto const &v : vars) {
-    auto start = v->StartFrequency.get()->Minus(*minStarts);
+    auto start = v->StartFrequency.get()->Minus(*StartFrequency.get());
     temp2 = v->GetEndFrequency();
     auto e = temp2.get();
     auto end = maxEnds->Minus(*e);

@@ -63,23 +63,17 @@ void Dataset<Tw>::Calculate(const Matrix<Tw> &data, std::vector<Ti> *colIndexes,
 // #pragma region Dataset Time - Series
 
 template <bool byRow, typename Tw>
-DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select,
-                                bool interpolate, Ti endoCount, Ti exoCount,
-                                Ti horizon) {
+DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
   if (cols <= 0 || rows <= 0)
     throw std::logic_error("invalid size in 'datasetT'.");
   mHasNaN = hasNan;
   mSelect = select;
-  mInterpolate = interpolate;
-  mEndoCount = endoCount;
-  mExoCount = exoCount;
-  mHorizon = horizon;
 
   StorageSize = rows * cols; // Results
 
-  if (interpolate) {
+  if (hasNan) {
     if constexpr (std::numeric_limits<Tw>::has_quiet_NaN == false) {
-      throw std::logic_error("invalid type. disable interpolation, etc.");
+      throw std::logic_error("invalid type. Cannot check NAN.");
     }
   }
 }
@@ -87,21 +81,13 @@ DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select,
 template <bool byRow, typename Tw>
 void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
   pData = &data;
-
-  // find indexes
   Ranges.clear();
-  CountNanSets = 0;
-  WithLeads.clear();
-  WithLags.clear();
-  WithMissingIndexes.clear();
 
-  Ti count, length;
+  Ti count;
   if constexpr (byRow) {
     count = data.RowsCount;
-    length = data.ColsCount;
   } else if constexpr (true) {
     count = data.ColsCount;
-    length = data.RowsCount;
   }
 
   if (mHasNaN) {
@@ -123,185 +109,6 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
     for (auto &r : Ranges)
       if (r.IsNotValid())
         throw std::logic_error("Data is not valid. Check missing data points.");
-  }
-
-  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-
-    if (HasMissingData && mInterpolate) {
-      Ti q = -1;
-      for (auto &pp : WithMissingIndexes) {
-        q++;
-        auto p = std::get<0>(pp);
-        bool inMissing = false;
-        Tw first = NAN, last = NAN, d;
-        Ti length = 1;
-        auto range = Ranges.at(p);
-
-        if constexpr (byRow) {
-
-          for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
-            d = data.Get0(p, i);
-            auto isNaN = std::isnan(d);
-
-            if (isNaN)
-              length++;
-
-            if (isNaN == false && inMissing) {
-              last = d;
-
-              // calculate and set
-              Tw step = (last - first) / length;
-              for (int j = 1; j < length; j++) {
-                data.Set0(p, i - j, d - j * step);
-                std::get<1>(WithMissingIndexes.at(q))++;
-              }
-
-              length = 1;
-              inMissing = false;
-            }
-
-            if (isNaN && inMissing == false) {
-              first = data.Get0(p, i - 1);
-              inMissing = true;
-            }
-          }
-
-        } else if constexpr (true) {
-
-          Tw *col = &data.Data[data.RowsCount * p];
-          for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
-            auto isNaN = std::isnan(col[i]);
-
-            if (isNaN)
-              length++;
-
-            if (isNaN == false && inMissing) {
-              last = col[i];
-
-              // calculate and set
-              Tw step = (last - first) / length;
-              for (int j = 1; j < length; j++) {
-                col[i - j] = col[i] - j * step;
-                std::get<1>(WithMissingIndexes.at(q))++;
-              }
-
-              length = 1;
-              inMissing = false;
-            }
-
-            if (isNaN && inMissing == false) {
-              first = col[i - 1];
-              inMissing = true;
-            }
-          }
-        }
-      }
-
-      HasMissingData = false;
-      // do not clear 'WithMissingIndexes'  to both signal interpolation and
-      // keep information
-    }
-
-    if (mEndoCount > 0) {
-
-      if (mEndoCount > data.ColsCount)
-        throw std::logic_error("Inconsistent number of columns.");
-
-      Ti lastIndex = Ranges.at(0).EndIndex;
-      for (Ti i = 1; i < mEndoCount; i++) {
-        // 1? with respect to the first variable
-        auto len = lastIndex - Ranges.at(i).EndIndex;
-        if (len > 0) { // lag ... move data forward (create a lagged variable)
-          WithLags.push_back(std::make_tuple(i, len));
-          for (Ti j = lastIndex; j >= 0; j--) {
-            if constexpr (byRow) {
-              if (j >= len)
-                data.Set(i, j, data.Get0(i, j - len));
-              else
-                data.Set(i, j, NAN);
-            } else if constexpr (true) {
-              if (j >= len)
-                data.Set(j, i, data.Get0(j - len, i));
-              else
-                data.Set(j, i, NAN);
-            }
-          }
-          Ranges.at(i).StartIndex = Ranges.at(i).StartIndex + len;
-          Ranges.at(i).EndIndex = lastIndex;
-        } else if (len < 0) { // lead ... move data backward
-          WithLeads.push_back(std::make_tuple(i, -len));
-          for (Ti j = 0; j <= Ranges.at(i).EndIndex; j++) {
-            if constexpr (byRow) {
-              if (j <= lastIndex)
-                data.Set(i, j, data.Get0(i, j - len));
-              else
-                data.Set(i, j, NAN);
-            } else if constexpr (true) {
-              if (j <= lastIndex)
-                data.Set(j, i, data.Get0(j - len, i));
-              else
-                data.Set(j, i, NAN);
-            }
-          }
-          Ranges.at(i).EndIndex = lastIndex;
-          Ranges.at(i).StartIndex = std::max(0, Ranges.at(i).StartIndex + len);
-        }
-      }
-    }
-
-    if (mExoCount > 0) {
-
-      if (mEndoCount + mExoCount > data.ColsCount)
-        throw std::logic_error("Inconsistent number of columns.");
-
-      Ti lastIndexHor = Ranges.at(0).EndIndex + mHorizon;
-
-      if (length <= lastIndexHor)
-        throw std::logic_error("There is not enough rows in the given horizon. "
-                               "Add more NAN rows.");
-
-      for (Ti ii = 0; ii < mEndoCount; ii++) {
-        Ti i = ii + mEndoCount;
-
-        auto len = lastIndexHor - Ranges.at(i).EndIndex;
-
-        // we move the data forward and create lags, but we do not move data
-        // backward if extra data is available. We set NAN. However, note that
-        // these are information we are discarding. We might want to create new
-        // lead variables and use them
-
-        if (len > 0) {
-          WithLags.push_back(std::make_tuple(i, len));
-          for (Ti j = lastIndexHor; j >= 0; j--) {
-            if constexpr (byRow) {
-              if (j >= len)
-                data.Set(i, j, data.Get0(i, j - len));
-              else
-                data.Set(i, j, NAN);
-            } else if constexpr (true) {
-              if (j >= len)
-                data.Set(j, i, data.Get0(j - len, i));
-              else
-                data.Set(j, i, NAN);
-            }
-          }
-          Ranges.at(i).StartIndex = Ranges.at(i).StartIndex + len;
-          Ranges.at(i).EndIndex = lastIndexHor;
-        } else if (len < 0) {
-          // WithLeads.push_back(std::make_tuple(i, -len)); This is not actually
-          // a lead
-          for (Ti j = 0; j < -len; j++) {
-            if constexpr (byRow) {
-              data.Set(i, lastIndexHor + j + 1, NAN);
-            } else if constexpr (true) {
-              data.Set(lastIndexHor + j + 1, i, NAN);
-            }
-            CountNanSets++;
-          }
-          Ranges.at(i).EndIndex = lastIndexHor;
-        }
-      }
-    }
   }
 }
 

@@ -52,10 +52,6 @@ public:
 template <bool byRow = true, class Tw = Tv> class LDT_EXPORT DatasetTs {
   bool mHasNaN = true;
   bool mSelect = false;
-  bool mInterpolate = false;
-  Ti mEndoCount = 0;
-  Ti mExoCount = 0;
-  Ti mHorizon = 0;
 
 public:
   /// @brief A pointer to the given data in \ref Calculate. After \ref Data(),
@@ -71,16 +67,7 @@ public:
   /// @param hasNan If true, NaN is expected in the data
   /// @param selectColumn If true, a subset of columns or rows might be
   /// selected.
-  /// @param interpolate If true, missing data might exist in which case
-  /// interpolation is used
-  /// @param endoCount If 'm>0', leads and lags of 'm' variables are
-  /// adjusted with respect to the first variable.
-  /// @param exoCount If 'm>0', leads of lags of the last 'm' variables
-  /// are adjusted for the given \par horizon.
-  /// @param horizon Required number of out-of-sample data in \par exoCount.
-  DatasetTs(Ti rows, Ti cols, bool hasNan = true, bool select = true,
-            bool interpolate = false, Ti endoCount = 0, Ti exoCount = 0,
-            Ti horizon = 0);
+  DatasetTs(Ti rows, Ti cols, bool hasNan = true, bool select = true);
 
   /// @brief Gets the storage size
   Ti StorageSize = 0;
@@ -95,18 +82,6 @@ public:
 
   /// @brief After Data(), it contains the range of available data.
   std::vector<IndexRange> Ranges;
-
-  /// @brief After \ref Data(), it is variables with leads relative to the first
-  /// variable and the value of lead
-  std::vector<std::tuple<Ti, Ti>> WithLeads;
-
-  /// @brief After \ref Data(), it is variables with lags relative to the first
-  /// variable and the value of lag
-  std::vector<std::tuple<Ti, Ti>> WithLags;
-
-  /// @brief After \ref Data(), it is the number of NANs set to adjust
-  /// out-of-sample data.
-  Ti CountNanSets = 0;
 
   /// @brief After \ref Update, Gets the start index of the final data
   Ti Start = 0;

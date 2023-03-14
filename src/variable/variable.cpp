@@ -177,5 +177,20 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
   }
 }
 
+template <typename Tw> IndexRange Variable<Tw>::Trim() {
+  auto v = Matrix<Tw>(&Data[0], Data.size(), 1);
+  bool hasMissing = false;
+  auto range = v.GetRangeColumn(hasMissing, 0);
+  if (range.IsNotValid())
+    return range;
+
+  auto count = range.Count();
+  if (count != (Ti)Data.size()) {
+    Data = {Data.begin() + range.StartIndex, Data.begin() + range.EndIndex + 1};
+    StartFrequency.get()->Next(range.StartIndex);
+  }
+  return range;
+}
+
 template class ldt::Variable<Tv>;
 // template class ldt::Variable < Ti>;

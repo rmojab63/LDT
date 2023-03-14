@@ -375,7 +375,7 @@ IndexRange Matrix<Tw>::GetRangeColumn(bool &hasMissing, Ti j) const {
         break;
       }
     return range;
-  } else
+  } else if constexpr (true)
     throw std::logic_error("invalid operation"); // there is no NAN
 }
 
@@ -406,7 +406,88 @@ IndexRange Matrix<Tw>::GetRangeRow(bool &hasMissing, Ti i) const {
         break;
       }
     return range;
-  } else
+  } else if constexpr (true)
+    throw std::logic_error("invalid operation"); // there is no NAN
+}
+
+template <typename Tw>
+IndexRange Matrix<Tw>::InterpolateColumn(Ti &count, Ti colIndex) {
+  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
+    bool hasMissing = false;
+    auto range = GetRangeColumn(hasMissing, colIndex);
+    count = 0;
+    if (hasMissing) {
+      bool inMissing = false;
+      Tw first = NAN, last = NAN;
+      Ti length = 1;
+
+      Tw *col = &Data[RowsCount * colIndex];
+      for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
+        auto isNaN = std::isnan(col[i]);
+        if (isNaN)
+          length++;
+        if (isNaN == false && inMissing) {
+          last = col[i];
+          // calculate and set
+          Tw step = (last - first) / length;
+          for (int p = 1; p < length; p++) {
+            col[i - p] = col[i] - p * step;
+            count++;
+          }
+          length = 1;
+          inMissing = false;
+        }
+        if (isNaN && inMissing == false) {
+          first = col[i - 1];
+          inMissing = true;
+        }
+      }
+    }
+    return range;
+  } else if constexpr (true)
+    throw std::logic_error("invalid operation"); // there is no NAN
+}
+
+template <typename Tw>
+IndexRange Matrix<Tw>::InterpolateRow(Ti &count, Ti rowIndex) {
+  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
+    bool hasMissing = false;
+    auto range = GetRangeRow(hasMissing, rowIndex);
+    count = 0;
+    if (hasMissing) {
+      bool inMissing = false;
+      Tw first = NAN, last = NAN;
+      Ti length = 1;
+
+      for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
+        d = Get0(rowIndex, i);
+        auto isNaN = std::isnan(d);
+
+        if (isNaN)
+          length++;
+
+        if (isNaN == false && inMissing) {
+          last = d;
+
+          // calculate and set
+          Tw step = (last - first) / length;
+          for (int j = 1; j < length; j++) {
+            Set0(rowIndex, i - j, d - j * step);
+            count++;
+          }
+
+          length = 1;
+          inMissing = false;
+        }
+
+        if (isNaN && inMissing == false) {
+          first = Get0(rowIndex, i - 1);
+          inMissing = true;
+        }
+      }
+    }
+    return range;
+  } else if constexpr (true)
     throw std::logic_error("invalid operation"); // there is no NAN
 }
 
