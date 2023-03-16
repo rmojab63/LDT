@@ -226,7 +226,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                               addModelAll = FALSE, addItem1Bests = FALSE,
                               printMsg = FALSE, w = NULL, newX = NULL,
                               test = FALSE, ...) {
-  test_perc <- 1e-12
+  test_perc <- 1e-8
 
   if (is.null(object)) {
     stop("argument is null.")

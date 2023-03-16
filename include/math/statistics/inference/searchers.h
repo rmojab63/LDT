@@ -318,8 +318,6 @@ public:
 /// @brief A searcher class with 3 types of summaries: Model, Type1, Type2.
 class LDT_EXPORT Searcher {
 private:
-  Ti mFixFirstG;
-
   bool mIsFinished = false;
 
   void AddState(std::string state);
@@ -329,6 +327,12 @@ private:
   void UpdateCurrent();
 
 protected:
+  /// @brief Number of fixed groups
+  Ti mFixFirstGroups;
+
+  /// @brief Number of fixed first items
+  Ti mFixFirstItems;
+
   /// @brief Group size of this searcher. See the constructor
   Ti SizeG = 0;
 
@@ -390,8 +394,8 @@ public:
   /// @brief Pointer to the provided group mapping
   const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
 
-  /// @brief Pointer to the provided group sizes
-  const std::vector<Ti> *pGroupSizes = nullptr;
+  /// @brief Sizes of \ref pGroupIndexMap
+  std::vector<Ti> GroupSizes;
 
   Matrix<Ti> GroupIndexes;
 
@@ -434,14 +438,15 @@ public:
   ///      Group=[1,2,3], Group=[1,2,4], [1,2,5], ..., [1,3,4], [1,3,5], ...,
   ///      [2,3,4], [2,3,5], ...
   /// @param GroupIndexMap Determines a grouping for the indices
-  /// @param groupSizes Sizes of each groups in \p GroupIndexMap
-  /// @param mFixFirstG Number of fixed groups. \ref CurrentIndices always
+  /// @param fixFirstGroups Number of fixed groups. \ref CurrentIndices always
+  /// contains these indices
+  /// @param fixFirstItems Number of fixed items. \ref CurrentIndices always
   /// contains these indices
   Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
            const SearchMeasureOptions &measures,
            const SearchModelChecks &checks, Ti SizeG,
            const std::vector<std::vector<Ti>> &GroupIndexMap,
-           const std::vector<Ti> &groupSizes, Ti mFixFirstG = 0);
+           Ti fixFirstGroups = 0, Ti fixFirstItems = 0);
   virtual ~Searcher();
 
   /// @brief Call this function before using 'Start' in an async function
@@ -493,9 +498,6 @@ public:
   /// @brief A pointer to the given list in the constructor
   const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
 
-  /// @brief A pointer to the given list in the constructor
-  const std::vector<Ti> *pGroupSizes = nullptr;
-
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;
 
@@ -508,14 +510,12 @@ public:
   /// @brief Initializes a new instance of this class
   /// @param searchers List of searchers
   /// @param groupIndexMap Determines a grouping for the indices
-  /// @param groupSizes Sizes of each groups in \p GroupIndexMap
   /// @param searchOptions Search options in the project
   /// @param searchItems Search items in the project
   /// @param measures Measures in the project
   /// @param checks Model checks in the project
   ModelSet(std::vector<Searcher *> &searchers,
            const std::vector<std::vector<Ti>> &groupIndexMap,
-           const std::vector<Ti> &groupSizes,
            const SearchOptions &searchOptions, const SearchItems &searchItems,
            const SearchMeasureOptions &measures,
            const SearchModelChecks &checks);

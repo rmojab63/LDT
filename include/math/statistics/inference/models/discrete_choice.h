@@ -554,7 +554,6 @@ public:
   /// @param checks It is passed to the base class
   /// @param SizeG It is passed to the base class
   /// @param groupIndexMap It is passed to the base class
-  /// @param groupSizes It is passed to the base class
   /// @param fixFirstG It is passed to the base class
   /// @param source Data with variables in the columns
   /// @param numChoices Number of unique labels
@@ -563,13 +562,15 @@ public:
   /// the results
   /// @param newtonOptions Optimization options
   /// @param aucOptions Options for calculating AUC
-  DiscreteChoiceSearcher(
-      SearchOptions &searchOptions, const SearchItems &searchItems,
-      const SearchMeasureOptions &measures, const SearchModelChecks &checks,
-      Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
-      const std::vector<Ti> &groupSizes, Ti fixFirstG, const Matrix<Tv> &source,
-      Ti numChoices, const std::vector<Matrix<Tv>> &costMatrixes,
-      unsigned int seed, Newton &newtonOptions, RocOptions &aucOptions);
+  DiscreteChoiceSearcher(SearchOptions &searchOptions,
+                         const SearchItems &searchItems,
+                         const SearchMeasureOptions &measures,
+                         const SearchModelChecks &checks, Ti SizeG,
+                         const std::vector<std::vector<Ti>> &groupIndexMap,
+                         Ti fixFirstG, const Matrix<Tv> &source, Ti numChoices,
+                         const std::vector<Matrix<Tv>> &costMatrixes,
+                         unsigned int seed, Newton &newtonOptions,
+                         RocOptions &aucOptions);
 };
 
 /// @brief A base class for a model set for discrete choice
@@ -597,9 +598,6 @@ public:
   /// @brief List of searchers. This is passed to the \ref Modelset and it will
   /// be the owner
   std::vector<Searcher *> Searchers;
-
-  /// @brief Size of each member of \ref pGroupIndexMap
-  std::vector<Ti> GroupSizes;
 
   DiscreteChoiceModelsetBase(){};
 

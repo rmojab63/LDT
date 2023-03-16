@@ -16,12 +16,12 @@ template <bool hasWeight, DiscreteChoiceModelType modelType,
 DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     SearchOptions &searchOptions, const SearchItems &searchItems,
     const SearchMeasureOptions &measures, const SearchModelChecks &checks,
-    Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
-    const std::vector<Ti> &groupSizes, Ti fixFirstG, const Matrix<Tv> &source,
-    Ti numChoices, const std::vector<Matrix<Tv>> &costMatrixes,
-    unsigned int seed, Newton &newtonOptions, RocOptions &aucOptions)
+    Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
+    const Matrix<Tv> &source, Ti numChoices,
+    const std::vector<Matrix<Tv>> &costMatrixes, unsigned int seed,
+    Newton &newtonOptions, RocOptions &aucOptions)
     : Searcher::Searcher(searchOptions, searchItems, measures, checks, SizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+                         groupIndexMap, fixFirstG, 0) {
 
   pCostMatrixes = &costMatrixes;
   pSource =
@@ -422,7 +422,6 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    this->GroupSizes.push_back((Ti)b.size());
   }
 
   // check cost tables
@@ -460,21 +459,21 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kLogit>(
               searchOptions, searchItems, measures, checks, s, groupIndexMaps,
-              this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions, aucOptions));
+              0, source, this->mNumChoices, costMatrixes, seed, newtonOptions,
+              aucOptions));
     }
     if (addProbit) {
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kProbit>(
               searchOptions, searchItems, measures, checks, s, groupIndexMaps,
-              this->GroupSizes, 0, source, this->mNumChoices, costMatrixes,
-              seed, newtonOptions, aucOptions));
+              0, source, this->mNumChoices, costMatrixes, seed, newtonOptions,
+              aucOptions));
     }
   }
 
-  this->Modelset = ModelSet(this->Searchers, groupIndexMaps, this->GroupSizes,
-                            searchOptions, searchItems, measures, checks);
+  this->Modelset = ModelSet(this->Searchers, groupIndexMaps, searchOptions,
+                            searchItems, measures, checks);
 }
 
 // #pragma endregion

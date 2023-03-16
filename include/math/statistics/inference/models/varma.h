@@ -519,8 +519,7 @@ public:
   VarmaSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
                 const SearchMeasureOptions &measures,
                 const SearchModelChecks &checks, Ti sizeG,
-                const std::vector<std::vector<Ti>> &groupIndexMap,
-                const std::vector<Ti> &groupSizes, Ti fixFirstG,
+                const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
                 DatasetTs<true> &source, const VarmaSizes sizes,
                 const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
                 Matrix<Tv> *forUpperBounds,
@@ -536,8 +535,6 @@ public:
   ModelSet Modelset;
 
   std::vector<Searcher *> Searchers;
-
-  std::vector<Ti> GroupSizes;
 
   Matrix<Tv> ForecastLowers;
   Matrix<Tv> ForecastUppers;

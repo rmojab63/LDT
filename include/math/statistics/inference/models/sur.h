@@ -396,7 +396,6 @@ public:
   /// @param checks Passed to the base constructor
   /// @param sizeG Passed to the base constructor
   /// @param groupIndexMap Passed to the base constructor
-  /// @param groupSizes Passed to the base constructor
   /// @param fixFirstG Passed to the base constructor
   /// @param source Data with variables in columns
   /// @param endoIndices Endogenous indices in this searcher
@@ -406,8 +405,7 @@ public:
   SurSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
               const SearchMeasureOptions &measures,
               const SearchModelChecks &checks, Ti sizeG,
-              const std::vector<std::vector<Ti>> &groupIndexMap,
-              const std::vector<Ti> &groupSizes, Ti fixFirstG,
+              const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
               Matrix<Tv> &source, std::vector<Ti> &endoIndices,
               Ti sigSearchMaxIter, Tv sigSearchMaxProb, unsigned int seed);
 };
@@ -420,9 +418,6 @@ public:
 
   /// @brief List of searchers
   std::vector<Searcher *> Searchers;
-
-  /// @brief Sizes of groups
-  std::vector<Ti> GroupSizes;
 
   /// @brief Initializes a new instance of this class
   SurModelset(){};

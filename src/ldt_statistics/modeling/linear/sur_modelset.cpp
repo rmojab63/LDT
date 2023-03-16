@@ -16,12 +16,11 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
                          const SearchMeasureOptions &measures,
                          const SearchModelChecks &checks, Ti sizeG,
                          const std::vector<std::vector<Ti>> &groupIndexMap,
-                         const std::vector<Ti> &groupSizes, Ti fixFirstG,
-                         Matrix<Tv> &source, std::vector<Ti> &endoIndexes,
-                         Ti sigSearchMaxIter, Tv sigSearchMaxProb,
-                         unsigned int seed)
+                         Ti fixFirstG, Matrix<Tv> &source,
+                         std::vector<Ti> &endoIndexes, Ti sigSearchMaxIter,
+                         Tv sigSearchMaxProb, unsigned int seed)
     : Searcher::Searcher(searchOptions, searchItems, measures, checks, sizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+                         groupIndexMap, fixFirstG, 0) {
   Seed = seed;
   pSource = &source; // copy ?!
   EndoIndexes = Matrix<Ti>(&endoIndexes[0], (Ti)endoIndexes.size(), 1);
@@ -243,7 +242,6 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    GroupSizes.push_back((Ti)b.size());
   }
 
   unsigned int co = 0;
@@ -266,15 +264,14 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
               : (unsigned int)(measures.Seed < 0 ? -measures.Seed
                                                  : (measures.Seed + co));
       co++;
-      auto se =
-          new SurSearcher(searchOptions, searchItems, measures, checks, s,
-                          groupIndexMap, GroupSizes, numFixXPartitions, source,
-                          e, sigSearchMaxIter, sigSearchMaxProb, seed);
+      auto se = new SurSearcher(searchOptions, searchItems, measures, checks, s,
+                                groupIndexMap, numFixXPartitions, source, e,
+                                sigSearchMaxIter, sigSearchMaxProb, seed);
       Searchers.push_back(se);
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, GroupSizes, searchOptions,
+  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
                             searchItems, measures, checks);
 }
 

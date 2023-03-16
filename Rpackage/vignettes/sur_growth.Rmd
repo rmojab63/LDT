@@ -133,7 +133,7 @@ Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt:
 The steps of `SurSearch\_s()` function is defined by a list of indices and a vector of sizes: 
 
 ```{r modelset_steps}
-xSizes <- list(as.integer(c(2,3)), as.integer(c(4)))
+xSizes <- list(c(2L,3L), c(4L))
 xCounts <- c(NA, 5)
 ```
 

@@ -17,14 +17,12 @@ using namespace ldt;
 
 ModelSet::ModelSet(std::vector<Searcher *> &searchers,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
-                   const std::vector<Ti> &groupSizes,
                    const SearchOptions &searchOptions,
                    const SearchItems &searchItems,
                    const SearchMeasureOptions &measures,
                    const SearchModelChecks &checks) {
   pSearchers = &searchers;
   pGroupIndexMap = &groupIndexMap;
-  pGroupSizes = &groupSizes;
 
   pOptions = &searchOptions;
   pItems = &searchItems;

@@ -68,7 +68,7 @@ optimOptions <- GetNewtonOptions(maxIterations = 10, functionTol = 1e-2)
 We also choose to search a small subset of the model set:
 
 ```{r}
-xSizes <- list(as.integer(c(1)), as.integer(c(2)), as.integer(c(3)), as.integer(c(4:10)))
+xSizes <- list(c(1L), c(2L), c(3L), c(4L:10L))
 xCounts <- c(NA, 20, 15, 10)
 ```
 

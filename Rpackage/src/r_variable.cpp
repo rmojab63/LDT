@@ -97,13 +97,8 @@ std::string VariableToString(List w)
 //' or omits \code{NaN}s to make data available.
 //'
 //' @return (list) results
-//' \item{hasMissing}{(logical) If \code{TRUE}, missing observation exists in the original data.}
-//' \item{hasMissingIndices}{(numeric matrix) Indices of variables with missing data (first column) and the number of missing data points (second column).}
-//' \item{hasLags}{(numeric matrix) Indices of variables with lags (first column) and the value of lag (second column).}
-//' \item{hasLeads}{Similar to \code{hasLags} but for leads.}
 //' \item{data}{(numeric matrix) Final data after the requested fixes. It is a matrix with variables in the columns and frequencies as the row names.}
-//' \item{ranges}{(numeric matrix) Start and end of the final data.}
-//' \item{countNansSet}{(integer) Number of generated \code{NAN}s for adjusting out-of-sample data.}
+//' \item{info}{(integer matrix) Information about the columns of the final data. E.g., Range of data, missing data, lags/leads, etc.}
 //'
 //' @export
 //' @examples

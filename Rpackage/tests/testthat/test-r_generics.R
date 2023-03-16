@@ -24,7 +24,7 @@ x <- matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
                          nrow =22, ncol=7)
 colnames(x) <- paste0("V", c(1:ncol(x)))
 
-RES = SurSearch(x[,c(1,2)], x[,3:7], 2, yGroups = list(as.integer(c(1,2))), xSizes = as.integer(c(1,2,3,4,5)),
+RES = SurSearch(x[,c(1,2)], x[,3:7], 2, yGroups = list(c(1L,2L)), xSizes = c(1L,2L,3L,4L,5L),
                 searchOptions = GetSearchOptions(printMsg = FALSE),
                 searchItems = GetSearchItems(type1 = TRUE, cdfs = c(0,1),
                                              all = TRUE, bestK = 3,inclusion = TRUE,

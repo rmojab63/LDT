@@ -456,7 +456,7 @@ IndexRange Matrix<Tw>::InterpolateRow(Ti &count, Ti rowIndex) {
     count = 0;
     if (hasMissing) {
       bool inMissing = false;
-      Tw first = NAN, last = NAN;
+      Tw first = NAN, d, last = NAN;
       Ti length = 1;
 
       for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {

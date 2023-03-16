@@ -130,7 +130,7 @@ weight <- as.matrix((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 There are `r ncol(x) ` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `DcSearch_s()` function:
 
 ```{r modelset_steps}
-xSizes <- list(as.integer(c(1, 2)), as.integer(c(3)))
+xSizes <- list(c(1L,2L)), c(3L))
 xCounts <- c(NA, 4)
 ```
 

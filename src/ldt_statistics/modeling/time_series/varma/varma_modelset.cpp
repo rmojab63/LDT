@@ -14,16 +14,17 @@ using namespace ldt;
 VarmaSearcher::VarmaSearcher(
     SearchOptions &searchOptions, const SearchItems &searchItems,
     const SearchMeasureOptions &measures, const SearchModelChecks &checks,
-    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap,
-    const std::vector<Ti> &groupSizes, Ti fixFirstG, DatasetTs<true> &source,
-    const VarmaSizes sizes, const std::vector<Ti> &exoIndexes,
-    Matrix<Tv> *forLowerBounds, Matrix<Tv> *forUpperBounds,
-    LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
-    bool usePreviousEstim, Ti maxHorizonCheck)
+    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
+    DatasetTs<true> &source, const VarmaSizes sizes,
+    const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
+    Matrix<Tv> *forUpperBounds, LimitedMemoryBfgsbOptions *optimOptions,
+    Tv stdMultiplier, bool usePreviousEstim, Ti maxHorizonCheck)
     : Searcher::Searcher(searchOptions, searchItems, measures, checks, sizeG,
-                         groupIndexMap, groupSizes, fixFirstG) {
+                         groupIndexMap, fixFirstG, 0) {
   Source = source; // copy for parallel (It uses the indexes)
   pExoIndexes = &exoIndexes;
+  this->mFixFirstItems =
+      searchItems.LengthTargets; // don't estimate models without targets
 
   UsePreviousEstim = usePreviousEstim;
   StdMultiplier = stdMultiplier;
@@ -404,7 +405,6 @@ VarmaModelset::VarmaModelset(
         throw std::logic_error(
             "Invalid exogenous group element (it is negative).");
     }
-    GroupSizes.push_back((Ti)b.size());
   }
 
   if (varmaMaxParameters6.size() != 6)
@@ -479,7 +479,7 @@ VarmaModelset::VarmaModelset(
 
                   auto se = new VarmaSearcher(
                       searchOptions, searchItems, measures, checks, s,
-                      groupIndexMap, GroupSizes, 0, source, vsizes, exo,
+                      groupIndexMap, 0, source, vsizes, exo,
                       hasBounds ? &ForecastLowers : nullptr,
                       hasBounds ? &ForecastUppers : nullptr, optimOptions,
                       stdMultiplier, usePreviousEstim, maxHorizonCheck);
@@ -493,7 +493,7 @@ VarmaModelset::VarmaModelset(
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, GroupSizes, searchOptions,
+  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
                             searchItems, measures, checks);
 }
 
