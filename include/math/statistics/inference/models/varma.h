@@ -289,7 +289,12 @@ public:
 
   Ti StorageSize = 0;
 
+  /// @brief Determines where forecasts start in \ref Forecast
   Ti StartIndex = 0;
+
+  /// @brief Determines the number of observations and the first observation in
+  /// forecast. Use it e.g. for setting the frequency.
+  Ti StartDiff = 0;
 
   Ti mHorizon = 0;
   Ti mDoVariance = 0;

@@ -3,6 +3,15 @@
 using namespace Rcpp;
 using namespace ldt;
 
+// [[Rcpp::export(.SupportsParallel)]]
+bool SupportsParallel() {
+#ifndef _OPENMP
+  return false;
+#else
+  return true;
+#endif
+}
+
 std::unique_ptr<double[]>
 CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
                std::vector<std::string> &colNames, ldt::Matrix<double> &my,
@@ -338,8 +347,6 @@ void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
                    int exoCount, int numTargets, int numDependents,
                    bool isTimeSeries, bool type1NeedsModelEstim,
                    const char *length1Informtion, bool isDc) {
-
-  CheckMeasureOptions(measureOptions);
   if (as<int>(measureOptions["simFixSize"]) == 0)
     measureOptions["typesOut"] = List();
   auto molist = as<List>(measureOptions["typesOut"]);
@@ -348,9 +355,6 @@ void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
     measureOptions["trainFixSize"] = 0;
     measureOptions["trainRatio"] = 0;
   }
-
-  CheckSearchItems(searchItems);
-  CheckModelCheckItems(modelCheckItems);
 
   UpdateMeasureOptions(printMsg, measureOptions, res_measure, measuresNames,
                        isTimeSeries, isDc);
@@ -826,4 +830,403 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
   }
 
   return L;
+}
+
+// Update Options:
+
+void UpdateRocOptions(bool printMsg, List &rocOptionsR, RocOptions &options,
+                      const char *startMsg) {
+
+  if (printMsg)
+    Rprintf("%s:\n", startMsg);
+
+  options.NormalizePoints = true;
+  options.LowerThreshold = as<double>(rocOptionsR["lowerThreshold"]);
+  options.UpperThreshold = as<double>(rocOptionsR["upperThreshold"]);
+  options.Epsilon = as<double>(rocOptionsR["epsilon"]);
+
+  if (rocOptionsR["costs"] != R_NilValue) {
+    auto costs0 = as<NumericVector>(rocOptionsR["costs"]);
+    auto costMatrix0 = as<NumericMatrix>(rocOptionsR["costMatrix"]);
+    options.Costs.SetData(&costs0[0], costs0.length(), 1);
+    options.CostMatrix.SetData(&costMatrix0[0], 2, 2);
+  }
+
+  if (printMsg) {
+    if ((std::isnan(options.LowerThreshold) || options.LowerThreshold == 0) &&
+        (std::isnan(options.UpperThreshold) || options.UpperThreshold == 1))
+      Rprintf("    - Not Partial\n");
+    else
+      Rprintf("    - Partial (%f, %f):\n", options.LowerThreshold,
+              options.UpperThreshold);
+    Rprintf("    - Epsilon = %f\n", options.Epsilon);
+    if (options.Costs.Data) {
+      Rprintf("    - Varing Cost\n");
+    }
+  }
+}
+
+void UpdatePcaOptions(bool printMsg, List pcaOptionsR, bool hasPca,
+                      PcaAnalysisOptions &options, const char *startMsg) {
+
+  if (printMsg)
+    Rprintf("%s:\n", startMsg);
+  if (hasPca) {
+    options.IgnoreFirstCount = as<int>(pcaOptionsR["ignoreFirst"]);
+    options.ExactCount = as<int>(pcaOptionsR["exactCount"]);
+    options.CutoffRate = as<double>(pcaOptionsR["cutoffRate"]);
+    options.CutoffCountMax = as<int>(pcaOptionsR["max"]);
+    if (options.IsEnabled()) {
+      options.CheckValidity();
+
+      if (printMsg) {
+        if (options.IgnoreFirstCount == 1)
+          Rprintf("    - Ignores the first variable.\n");
+        else if (options.IgnoreFirstCount > 1)
+          Rprintf("    - Ignores the first %i variables.\n",
+                  options.IgnoreFirstCount);
+
+        if (options.ExactCount == 1)
+          Rprintf("    - Uses the first component.\n");
+        else if (options.ExactCount > 1)
+          Rprintf("    - Uses the first %i components.\n", options.ExactCount);
+        else {
+          Rprintf("    - Uses a cutoff rate of %f to select the number of the "
+                  "components.\n",
+                  options.CutoffRate);
+          Rprintf("    - Uses at most %i number of the components.\n",
+                  options.CutoffCountMax);
+        }
+      }
+    } else if (printMsg) {
+      Rprintf("    - PCA options is given, but it is not effective.\n");
+      Rprintf("    - Arguments are: %i, %i, %f, %i\n", options.IgnoreFirstCount,
+              options.ExactCount, options.CutoffRate, options.CutoffCountMax);
+    }
+  } else if (printMsg)
+    Rprintf("    - disabled.\n");
+}
+
+void UpdateLmbfgsOptions(bool printMsg, List &lmbfgsOptions,
+                         LimitedMemoryBfgsbOptions &options) {
+  if (printMsg)
+    Rprintf("LMBFGS options:\n");
+  options.Factor = as<double>(lmbfgsOptions["factor"]);
+  options.IterationMax = as<int>(lmbfgsOptions["maxIterations"]);
+  options.ProjectedGradientTol =
+      as<double>(lmbfgsOptions["projectedGradientTol"]);
+  options.mMaxCorrections = as<int>(lmbfgsOptions["maxCorrections"]);
+  ;
+
+  if (printMsg) {
+    Rprintf("    - Maximum Number of Iterations=%i\n", options.IterationMax);
+    Rprintf("    - Factor=%f\n", options.Factor);
+    Rprintf("    - Projected Gradient Tolerance=%f\n",
+            options.ProjectedGradientTol);
+    Rprintf("    - Maximum Corrections=%i\n", options.mMaxCorrections);
+  }
+}
+
+void UpdateNewtonOptions(bool printMsg, List &newtonR, Newton &newton) {
+
+  if (printMsg)
+    Rprintf("Newton Optimization Parameters:\n");
+
+  newton.IterationMax = as<int>(newtonR["maxIterations"]);
+  newton.TolFunction = as<double>(newtonR["functionTol"]);
+  newton.TolGradient = as<double>(newtonR["gradientTol"]);
+  newton.UseLineSearch = as<bool>(newtonR["useLineSearch"]);
+
+  if (printMsg) {
+    Rprintf("    - Iterations (Maximum)=%i\n", newton.IterationMax);
+    Rprintf("    - Function Tolerance=%f\n", newton.TolFunction);
+    Rprintf("    - Gradient Tolerance=%f\n", newton.TolGradient);
+    Rprintf("    - Use Line Search=%s\n",
+            newton.UseLineSearch ? "TRUE" : "FALSE");
+  }
+}
+
+void UpdateSearchItems(bool printMsg, List &searchItems, SearchItems &items,
+                       int length1, int length2, const char *length1Informtion,
+                       const char *length2Informtion, bool type1NeedsModelEstim,
+                       bool type2NeedsModelEstim) {
+
+  items.KeepModelEvaluations = as<bool>(searchItems["model"]);
+  items.KeepAll = as<bool>(searchItems["all"]);
+  items.KeepMixture = as<bool>(searchItems["mixture4"]);
+  items.KeepInclusionWeights = as<bool>(searchItems["inclusion"]);
+  items.KeepBestCount = as<int>(searchItems["bestK"]);
+  items.ExtremeBoundsMultiplier = as<double>(searchItems["extremeMultiplier"]);
+
+  items.CdfsAt = as<std::vector<double>>(searchItems["cdfs"]);
+
+  // update length1 and 2
+  bool type1 = as<bool>(searchItems["type1"]);
+  bool type2 = as<bool>(searchItems["type2"]);
+  items.Length1 = type1 ? length1 : 0;
+  items.Length2 = type2 ? length2 : 0;
+
+  if (type1NeedsModelEstim && items.Length1 > 0)
+    items.KeepModelEvaluations = true;
+  if (type2NeedsModelEstim && items.Length2 > 0)
+    items.KeepModelEvaluations = true;
+
+  if (items.KeepInclusionWeights)
+    items.KeepModelEvaluations = true;
+  if (items.KeepModelEvaluations == false && items.Length1 == 0 &&
+      items.Length2 == 0)
+    throw std::logic_error("No evaluation data is saved");
+
+  if (printMsg) {
+
+    Rprintf("Saves:\n");
+    if (items.KeepModelEvaluations)
+      Rprintf("    - models\n");
+    if (items.Length1 > 0)
+      Rprintf("    - %s\n", length1Informtion);
+    if (items.Length2 > 0)
+      Rprintf("    - %s\n", length2Informtion);
+  }
+
+  bool hasGoal = false;
+
+  if (printMsg)
+    Rprintf("Goals:\n");
+
+  if (items.KeepBestCount > 0) {
+    hasGoal = true;
+    if (printMsg) {
+      if (items.KeepBestCount == 1)
+        Rprintf("    - Find best model\n");
+      else
+        Rprintf("    - Find first %i best models\n", items.KeepBestCount);
+    }
+  }
+  if (items.KeepAll) {
+    hasGoal = true;
+    if (printMsg)
+      Rprintf("    - Keep everything\n");
+  }
+  if (items.CdfsAt.size() > 0) {
+    hasGoal = true;
+    if (printMsg)
+      Rprintf("    - Keep CDFs at %s\n", VectorToCsv(items.CdfsAt).c_str());
+  }
+  if (items.KeepMixture) {
+    hasGoal = true;
+    if (printMsg)
+      Rprintf("    - Keep mixture distribution\n");
+  }
+  if (items.ExtremeBoundsMultiplier > 0) {
+    hasGoal = true;
+    if (printMsg)
+      Rprintf("    - Keep extreme bounds (multiplier=%f)\n",
+              items.ExtremeBoundsMultiplier);
+  }
+  if (items.KeepInclusionWeights) {
+    hasGoal = true;
+    if (printMsg)
+      Rprintf("    - Keep inclusion weights\n");
+  }
+
+  if (hasGoal == false)
+    throw std::logic_error("No goal is set.");
+}
+
+void UpdateSearchOptions(List &searchOptions, SearchOptions &options,
+                         int &reportInterval, bool &printMsg) {
+
+  options.Parallel = as<bool>(searchOptions["parallel"]);
+  reportInterval = as<int>(searchOptions["reportInterval"]);
+  printMsg = as<bool>(searchOptions["printMsg"]);
+
+  if (printMsg) {
+    Rprintf("Search Options:\n");
+    Rprintf("    - Is Parallel = %s\n", options.Parallel ? "TRUE" : "FALSE");
+    Rprintf("    - Report Interval (seconds) = %i\n", reportInterval);
+  }
+}
+
+void UpdateModelCheckItems(bool printMsg, List &checkOptions,
+                           SearchModelChecks &checks,
+                           const SearchMeasureOptions &measures,
+                           const SearchItems &items) {
+
+  checks.Estimation = as<bool>(checkOptions["estimation"]);
+  checks.MinObsCount = as<int>(checkOptions["minObsCount"]);
+  checks.MinDof = as<int>(checkOptions["minDof"]);
+  checks.MinOutSim = as<int>(checkOptions["minOutSim"]);
+  checks.PredictionBoundMultiplier =
+      as<double>(checkOptions["predictionBoundMultiplier"]);
+
+  checks.MinR2 = as<double>(checkOptions["minR2"]);
+  checks.MaxAic = as<double>(checkOptions["maxAic"]);
+  checks.MaxSic = as<double>(checkOptions["maxSic"]);
+  checks.MaxConditionNumber = as<double>(checkOptions["maxConditionNumber"]);
+  checks.Prediction = as<bool>(checkOptions["prediction"]);
+
+  checks.Update(measures);
+
+  if (printMsg) {
+
+    Rprintf("Checks:\n");
+    if (checks.Estimation) {
+      Rprintf("- Given All Data:\n");
+      Rprintf("    - Model Is Estimated\n");
+      if (checks.MinObsCount > 0)
+        Rprintf("        - Number of Obs. > %i\n", checks.MinObsCount);
+      if (checks.MinDof > 0)
+        Rprintf("        - DoF > %i\n", checks.MinDof);
+      if (std::isinf(checks.MaxAic) == false)
+        Rprintf("        - AIC < %.1e\n", checks.MaxAic);
+      if (std::isinf(checks.MaxSic) == false)
+        Rprintf("        - SIC < %.1e\n", checks.MaxSic);
+      if (std::isinf(-checks.MinR2) == false)
+        Rprintf("        - R2 > %.1e\n", checks.MinR2);
+      if (checks.mCheckCN_all)
+        Rprintf("        - CN < %.1e\n", checks.MaxConditionNumber);
+    }
+    if (measures.SimFixSize > 0) {
+      Rprintf("    - Out-of-Sample:\n");
+      bool has = false;
+      if (checks.mCheckCN) {
+        has = true;
+        Rprintf("        - CN(s) < %.1e\n", checks.MaxConditionNumber);
+      }
+      if (checks.MinOutSim > 0) {
+        has = true;
+        Rprintf("        - Number of Valid Simulations > %i\n",
+                checks.MinOutSim);
+      }
+      if (has == false)
+        Rprintf("        - none\n");
+    }
+    if (checks.Prediction) {
+      Rprintf("    - Model is Used for Prediction\n");
+      if (checks.mCheckPredBound)
+        Rprintf("        - Predictions must lie in a bound (multiplier = %f)\n",
+                checks.PredictionBoundMultiplier);
+    }
+  }
+}
+
+void UpdateMeasureOptions(bool printMsg, List &measureOptions,
+                          SearchMeasureOptions &measures,
+                          std::vector<std::string> &measureNames,
+                          bool isTimeSeries, bool isDc) {
+
+  bool isOutOfSampleRandom = isTimeSeries == false;
+  // bool supportsSimRatio = isTimeSeries;
+
+  auto measuresOut0 = as<StringVector>(measureOptions["typesOut"]);
+  auto measuresIn0 = as<StringVector>(measureOptions["typesIn"]);
+  auto lmeasureOut = measuresOut0.length();
+  auto lmeasureIn = measuresIn0.length();
+
+  if (lmeasureIn == 0 && lmeasureOut == 0)
+    throw std::logic_error(
+        "No measure is specified. Check the inputs (also, check the number "
+        "of simulations).");
+  if (lmeasureIn > 0) {
+    for (auto i = 0; i < lmeasureIn; i++) {
+      auto a = as<std::string>(measuresIn0[i]);
+      boost::algorithm::to_lower(a);
+      auto eval = FromString_GoodnessOfFitType(a.c_str());
+      measures.MeasuresIn.push_back(eval);
+    }
+  }
+  if (lmeasureOut > 0) {
+    for (auto i = 0; i < lmeasureOut; i++) {
+      auto a = as<std::string>(measuresOut0[i]);
+      boost::algorithm::to_lower(a);
+      auto eval = FromString_ScoringType(a.c_str());
+      measures.MeasuresOut.push_back(eval);
+    }
+  }
+
+  measures.SimFixSize = as<int>(measureOptions["simFixSize"]);
+  // measures.SimRatio = Rf_asInteger(GetListElement(measureOptions,
+  // "simratio"));
+  measures.Seed = as<int>(measureOptions["seed"]);
+
+  if (isTimeSeries && lmeasureOut > 0) {
+
+    IntegerVector hors = measureOptions["horizons"];
+    for (auto i = 0; i < hors.length(); i++)
+      measures.Horizons.push_back(hors[i]);
+
+    measures.TrainFixSize = 0;
+    measures.TrainRatio = 0;
+  } else {
+    measures.TrainFixSize = as<int>(measureOptions["trainFixSize"]);
+    measures.TrainRatio = as<double>(measureOptions["trainRatio"]);
+  }
+
+  measures.Update(isOutOfSampleRandom,
+                  isTimeSeries); // update after filling measure vectors
+
+  if (printMsg) {
+    Rprintf("Measuring Options:\n");
+    Rprintf("    - In-Sample:");
+  }
+  if (measures.MeasuresIn.size() > 0) {
+    for (auto i = 0; i < lmeasureIn; i++) {
+      auto str = ToString(measures.MeasuresIn.at(i), true);
+      measureNames.push_back(str);
+      if (printMsg) {
+        Rprintf(str);
+        if (i != lmeasureIn - 1)
+          Rprintf(", ");
+      }
+    }
+    if (printMsg)
+      Rprintf("\n");
+  } else if (printMsg)
+    Rprintf("none\n");
+
+  if (printMsg)
+    Rprintf("    - Out-Of-Sample:");
+
+  if (measures.MeasuresOut.size() > 0) {
+
+    for (auto i = 0; i < lmeasureOut; i++) {
+      auto str = ToString(measures.MeasuresOut.at(i), true);
+      measureNames.push_back(str);
+      if (printMsg) {
+        Rprintf(str);
+        if (i != lmeasureOut - 1)
+          Rprintf(", ");
+      }
+    }
+    if (printMsg)
+      Rprintf("\n");
+
+    if (printMsg) {
+      // if (supportsSimRatio && measures.SimRatio > 0)
+      //	Rprintf("        - Simulation (Ratio) = %i\n",
+      // measures.SimRatio); else
+      Rprintf("        - Simulation Count = %i\n", measures.SimFixSize);
+
+      if (isTimeSeries == false) {
+        if (measures.TrainRatio > 0)
+          Rprintf("        - Train Size (Ratio) = %f\n", measures.TrainRatio);
+        else
+          Rprintf("        - Train Size = %i (fixed)\n", measures.TrainFixSize);
+      }
+      if (isOutOfSampleRandom)
+        Rprintf("        - Seed = %i\n", measures.Seed);
+
+      if (measures.Horizons.size() > 0)
+        Rprintf("        - Horizons = %s\n",
+                VectorToCsv(measures.Horizons).c_str());
+    }
+  } else if (printMsg)
+    Rprintf("none\n");
+
+  if (isDc) {
+    measures.WeightedEval = as<bool>(measureOptions["weightedEval"]);
+    if (printMsg)
+      Rprintf("    - Weighted = %s\n",
+              measures.WeightedEval ? "true" : "false");
+  }
 }

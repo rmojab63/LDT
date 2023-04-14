@@ -3,25 +3,9 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// clang-format off
-
-//' Creates a Variable
-//'
-//' @param data Data of the variable
-//' @param name Name of the variable
-//' @param startFrequency Frequency of the first data-point. It is an \code{ldtf} object. See \code{F_?} functions.
-//' @param fields Named list of any other fields
-//'
-//' @return An object of class \code{ldtv}.
-//' @export
-//' @examples
-//' v1 = ldt::Variable(c(1,2,3,2,3,4,5),"V1",F_Monthly(2022,12),
-//'      list(c("key1","value1"), c("key2", "value2")))
-// [[Rcpp::export]]
+// [[Rcpp::export(.Variable)]]
 List Variable(std::vector<double> data, std::string name, SEXP startFrequency,
-              List fields)
-// clang-format on
-{
+              List fields) {
   List V =
       List::create(_["data"] = data, _["name"] = name,
                    _["startFrequency"] = startFrequency, _["fields"] = fields);
@@ -29,15 +13,16 @@ List Variable(std::vector<double> data, std::string name, SEXP startFrequency,
   return V;
 }
 
-void UpdateVariableFromSEXP(Rcpp::List w, ldt::Variable<double>& variable,
-                         std::vector<std::string>& listItems,
-                         std::vector<boost::gregorian::date>& listItemsDate) {
+void UpdateVariableFromSEXP(
+    Rcpp::List w, ldt::Variable<double> &variable,
+    std::vector<std::string> &listItems,
+    std::vector<boost::gregorian::date> &listItemsDate) {
 
   variable.Name = as<std::string>(w["name"]);
 
   try {
-    variable.StartFrequency =
-        std::move(GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate));
+    variable.StartFrequency = std::move(
+        GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate));
   } catch (...) {
     throw std::logic_error("Invalid 'startFrequency'.");
   }
@@ -64,53 +49,18 @@ void UpdateVariableFromSEXP(Rcpp::List w, ldt::Variable<double>& variable,
   }
 }
 
-// clang-format off
-
-//' Converts a Variable to String
-//'
-//' @param w The variable
-//'
-//' @return String representation of the variable in compact form
-//' @export
-// [[Rcpp::export]]
-std::string VariableToString(List w)
-// clang-format on
-{
+// [[Rcpp::export(.VariableToString)]]
+std::string VariableToString(List w) {
   std::vector<std::string> listItems;
   std::vector<boost::gregorian::date> listItemsDate;
   ldt::Variable v;
-  UpdateVariableFromSEXP(w,v,listItems,listItemsDate);
+  UpdateVariableFromSEXP(w, v, listItems, listItemsDate);
   return v.ToString();
 }
 
-// clang-format off
-
-//' Binds a List of Variables
-//'
-//' @param varList A list of variables ((i.e., \code{ldtv} objects)) with similar frequency class
-//' @param interpolate If \code{TRUE} missing observations are interpolated.
-//' @param adjustLeadLags If \code{TRUE} leads and lags are adjusted with respect to the first variable.
-//' @param numEndo (integer) If \code{adjustLeadLags} is \code{TRUE}, this must be
-//' the number of endogenous variables. The rest is exogenous.
-//' @param horizon (integer) If \code{adjustLeadLags} is \code{TRUE} and there is exogenous variables,
-//' this determines the required length of out-of-sample data. It creates lag of exogenous variables
-//' or omits \code{NaN}s to make data available.
-//'
-//' @return (list) results
-//' \item{data}{(numeric matrix) Final data after the requested fixes. It is a matrix with variables in the columns and frequencies as the row names.}
-//' \item{info}{(integer matrix) Information about the columns of the final data. E.g., Range of data, missing data, lags/leads, etc.}
-//'
-//' @export
-//' @examples
-//' v1 = ldt::Variable(c(1,2,3,2,3,4,5),"V1",F_Monthly(2022,12), list())
-//' v2 = ldt::Variable(c(10,20,30,20,30,40,50),"V2",F_Monthly(2022,8), list())
-//' L = ldt::BindVariables(list(v1,v2))
-// [[Rcpp::export]]
-List BindVariables(SEXP varList, bool interpolate = false,
-                            bool adjustLeadLags = false, int numExo = 0,
-                            int horizon = 0)
-// clang-format on
-{
+// [[Rcpp::export(.BindVariables)]]
+List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
+                   int numExo, int horizon) {
   auto vars = as<List>(varList);
   int n = vars.length();
   if (n == 0)
@@ -118,33 +68,36 @@ List BindVariables(SEXP varList, bool interpolate = false,
 
   int numEndo = n - numExo;
   if (numExo < 0 || numEndo < 0)
-    throw std::logic_error("Invalid number of exogenous/exogenous variables (check 'numExo').");
-  if (numExo >0 && horizon < 0)
+    throw std::logic_error(
+        "Invalid number of exogenous/exogenous variables (check 'numExo').");
+  if (numExo > 0 && horizon < 0)
     throw std::logic_error("Invalid out-of-sample size (check 'horizon').");
 
   auto info = IntegerMatrix(n, 5);
-  colnames(info) = wrap(std::vector<const char*>({"Start_Index","End_Index", "Has_Missing", "Interpolated_Count", "Lags_Leads"}));
+  colnames(info) =
+      wrap(std::vector<const char *>({"Start_Index", "End_Index", "Has_Missing",
+                                      "Interpolated_Count", "Lags_Leads"}));
 
   auto listItems = std::vector<std::vector<std::string>>(n);
   auto listItemsDate = std::vector<std::vector<boost::gregorian::date>>(n);
 
-  auto list =  std::vector<ldt::Variable<double>>(n);
-  auto list0 =  std::vector<ldt::Variable<double>*>(n);
+  auto list = std::vector<ldt::Variable<double>>(n);
+  auto list0 = std::vector<ldt::Variable<double> *>(n);
   try {
     for (int i = 0; i < n; i++) {
       if (is<List>(vars[i]) == false)
         throw std::logic_error("Invalid variable type.");
-      UpdateVariableFromSEXP(as<List>(vars[i]),
-                             list.at(i),listItems.at(i),listItemsDate.at(i));
+      UpdateVariableFromSEXP(as<List>(vars[i]), list.at(i), listItems.at(i),
+                             listItemsDate.at(i));
       list.at(i).Trim();
       list0.at(i) = &list.at(i);
 
       int count = 0;
-      if (interpolate){
-        auto vec = ldt::Matrix(&list.at(i).Data[0],list.at(i).Data.size(),1);
+      if (interpolate) {
+        auto vec = ldt::Matrix(&list.at(i).Data[0], list.at(i).Data.size(), 1);
         vec.InterpolateColumn(count, 0);
       }
-      info(i,3) = count;
+      info(i, 3) = count;
     }
   } catch (...) {
     throw std::logic_error(
@@ -152,22 +105,22 @@ List BindVariables(SEXP varList, bool interpolate = false,
         "'ldtv' objects.");
   }
   auto vs = Variables<double>(list0);
-  auto vs_data = ldt::Matrix<double>(&vs.Data[0],vs.NumObs, n);
+  auto vs_data = ldt::Matrix<double>(&vs.Data[0], vs.NumObs, n);
 
   std::vector<IndexRange> ranges;
 
   for (int i = 0; i < n; i++) {
     bool hasMissing = false;
     IndexRange range = vs_data.GetRangeColumn(hasMissing, i);
-    info(i,0) = range.StartIndex + 1;
-    info(i,1) = range.EndIndex + 1;
-    info(i,2) = hasMissing ? 1 : 0;
+    info(i, 0) = range.StartIndex + 1;
+    info(i, 1) = range.EndIndex + 1;
+    info(i, 2) = hasMissing ? 1 : 0;
     ranges.push_back(range);
 
-    if (adjustLeadLags){
+    if (adjustLeadLags) {
       // we should update data of the variable
-      auto a = &vs_data.Data[i*vs_data.RowsCount];
-      list.at(i).Data = std::vector<double>(a,a + vs_data.RowsCount);
+      auto a = &vs_data.Data[i * vs_data.RowsCount];
+      list.at(i).Data = std::vector<double>(a, a + vs_data.RowsCount);
       list.at(i).StartFrequency = vs.StartFrequency.get()->Clone();
       list0.at(i) = &list.at(i);
       list.at(i).Trim();
@@ -175,7 +128,7 @@ List BindVariables(SEXP varList, bool interpolate = false,
   }
 
   // lags, leads
-  info(0,5) = 0;
+  info(0, 5) = 0;
   int lastIndex = ranges.at(0).EndIndex;
   int lastIndexHor = lastIndex + horizon;
   int len;
@@ -184,29 +137,28 @@ List BindVariables(SEXP varList, bool interpolate = false,
       len = lastIndex - ranges.at(i).EndIndex;
     else
       len = lastIndexHor - ranges.at(i).EndIndex;
-    len*=-1;
-    info(i,4) = len;
+    len *= -1;
+    info(i, 4) = len;
 
-    if (adjustLeadLags && len != 0){
+    if (adjustLeadLags && len != 0) {
       auto v = list0.at(i);
       v->StartFrequency.get()->Next(-len);
       v->Name = v->Name + std::string("(") +
-        (len > 0 ? std::string("+") : std::string("")) +
-        std::to_string(len) + std::string(")");
+                (len > 0 ? std::string("+") : std::string("")) +
+                std::to_string(len) + std::string(")");
     }
-
   }
 
-  if (adjustLeadLags){
+  if (adjustLeadLags) {
     vs = Variables<double>(list0);
-    vs_data = ldt::Matrix<double>(&vs.Data[0],vs.NumObs, n);
+    vs_data = ldt::Matrix<double>(&vs.Data[0], vs.NumObs, n);
     // update
-    for (auto j=0;j<vs_data.ColsCount;j++){
+    for (auto j = 0; j < vs_data.ColsCount; j++) {
       bool hasMissing = false;
       IndexRange range = vs_data.GetRangeColumn(hasMissing, j);
-      info(j,0) = range.StartIndex + 1;
-      info(j,1) = range.EndIndex + 1;
-      info(j,4) = 0; // it is adjusted now
+      info(j, 0) = range.StartIndex + 1;
+      info(j, 1) = range.EndIndex + 1;
+      info(j, 4) = 0; // it is adjusted now
     }
   }
 
@@ -221,9 +173,9 @@ List BindVariables(SEXP varList, bool interpolate = false,
   }
   rownames(res) = wrap(rns);
 
-  auto L = List::create(
-    _["data"] = res,
-    _["info"] = info
-  );
+  auto L =
+      List::create(_["data"] = res, _["info"] = info,
+                   _["startFrequency"] = vs.StartFrequency.get()->ToString(),
+                   _["startClass"] = vs.StartFrequency.get()->ToClassString());
   return L;
 }

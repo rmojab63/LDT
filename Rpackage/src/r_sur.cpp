@@ -4,36 +4,11 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// clang-format off
-
-//' SUR Search
-//'
-//' @param y (numeric matrix) endogenous data with variables in the columns.
-//' @param x (numeric matrix) exogenous data with variables in the columns.
-//' @param numTargets (int) determines the number of variable in the first columns of \code{y} for which the information is saved. It must be positive and cannot be larger than the number of endogenous variables.
-//' @param xSizes (nullable integer vector) Number of exogenous variables in the regressions. E.g., c(1,2) means the model set contains all the regressions with 1 and 2 exogenous variables. If null, c(1) is used.
-//' @param xPartitions (nullable list of integer vector) a partition over the indexes of the exogenous variables. No regression is estimated with two variables in the same group. If \code{NULL}, each variable is placed in its own group and the size of the model set is maximized.
-//' @param numFixXPartitions (int) number of partitions at the beginning of \code{xPartitions} to be included in all regressions.
-//' @param yGroups (nullable list of integer vector) different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.
-//' @param searchSigMaxIter (int) maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
-//' @param searchSigMaxProb (double) maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
-//' @param measureOptions (nullable list) see \code{[GetMeasureOptions()]}.
-//' @param modelCheckItems (nullable list) see \code{[GetModelCheckItems()]}.
-//' @param searchItems (nullable list) see \code{[GetSearchItems()]}.
-//' @param searchOptions (nullable list) see \code{[GetSearchOptions()]}.
-//'
-//' @return A list
-//'
-//' @export
-// [[Rcpp::export]]
-SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
-               SEXP xPartitions = R_NilValue, int numFixXPartitions = 0,
-               SEXP yGroups = R_NilValue, int searchSigMaxIter = 0,
-               double searchSigMaxProb = 0.1, SEXP measureOptions = R_NilValue,
-               SEXP modelCheckItems = R_NilValue, SEXP searchItems = R_NilValue,
-               SEXP searchOptions = R_NilValue)
-// clang-format on
-{
+// [[Rcpp::export(.SurSearch)]]
+SEXP SurSearch(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
+               int numFixXPartitions, SEXP yGroups, int searchSigMaxIter,
+               double searchSigMaxProb, List measureOptions,
+               List modelCheckItems, List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
@@ -50,22 +25,12 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  List searchOptions_;
-  if (searchOptions != R_NilValue) {
-    if (is<List>(searchOptions) == false)
-      throw std::logic_error("'searchOptions' must be a 'List'.");
-    searchOptions_ = as<List>(searchOptions);
-    CheckSearchOptions(searchOptions_);
-  } else
-    searchOptions_ = GetSearchOptions();
-
-
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
-  UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
+  UpdateSearchOptions(searchOptions, options, reportInterval, printMsg);
 
-  if (x != R_NilValue){
+  if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
       throw std::logic_error("'x' must be a 'numeric matrix'.");
     x = as<NumericMatrix>(x);
@@ -118,41 +83,11 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
       Rprintf("    - disabled\n");
   }
 
-  List measureOptions_;
-  if (measureOptions == R_NilValue)
-    measureOptions_ = GetMeasureOptions();
-  else {
-    if (is<List>(measureOptions) == false)
-      throw std::logic_error("'measureOptions' must be a 'List'.");
-    measureOptions_ = as<List>(measureOptions);
-    CheckMeasureOptions(measureOptions_);
-  }
-
-  List modelCheckItems_;
-  if (modelCheckItems == R_NilValue)
-    modelCheckItems_ = GetModelCheckItems();
-  else {
-    if (is<List>(modelCheckItems) == false)
-      throw std::logic_error("'modelCheckItems' must be a 'List'.");
-    modelCheckItems_ = as<List>(modelCheckItems);
-    CheckModelCheckItems(modelCheckItems_);
-  }
-
-  List searchItems_;
-  if (searchItems == R_NilValue)
-    searchItems_ = GetSearchItems();
-  else {
-    if (is<List>(searchItems) == false)
-      throw std::logic_error("'searchItems' must be a 'List'.");
-    searchItems_ = as<List>(searchItems);
-    CheckSearchItems(searchItems_);
-  }
-
   auto measures = SearchMeasureOptions();
   auto measuresNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems_, measureOptions_, modelCheckItems_,
+  UpdateOptions(printMsg, searchItems, measureOptions, modelCheckItems,
                 measures, items, checks, measuresNames, mx.ColsCount,
                 mx.ColsCount, numTargets, my.ColsCount, false, true,
                 "Coefficients", false);
@@ -197,9 +132,9 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["searchSigMaxIter"] = wrap(searchSigMaxIter),
       _["searchSigMaxProb"] = wrap(searchSigMaxProb),
-      _["measureOptions"] = measureOptions_,
-      _["modelCheckItems"] = modelCheckItems_, _["searchItems"] = searchItems_,
-      _["searchOptions"] = searchOptions_, _["numTargets"] = wrap(numTargets));
+      _["measureOptions"] = measureOptions,
+      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
+      _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
   L.attr("class") =
       std::vector<std::string>({"ldtsearchsur", "ldtsearch", "list"});
@@ -208,39 +143,12 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets = 1, SEXP xSizes = R_NilValue,
   return L;
 }
 
-// clang-format off
-
-//' Estimates an SUR Model
-//'
-//' @param y (numeric matrix) Endogenous data with variables in the columns.
-//' @param x (numeric matrix) Exogenous data with variables in the columns.
-//' @param addIntercept (bool) If true, intercept is added automatically to x.
-//' @param searchSigMaxIter (int) Maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
-//' @param searchSigMaxProb (double) Maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant and removed in the next iteration (if any exists).
-//' @param restriction (nullable numeric matrix) A km x q matrix in which m=ncols(y), k=ncols(x) and q is the number of unrestricted coefficients.
-//' @param newX (nullable numeric matrix) Data of new exogenous variables to be used in the predictions. Its columns must be the same as \code{x}. If null, projection is disabled.
-//' @param pcaOptionsY (nullable list) A list of options in order to use principal components of the \code{y}, instead of the actual values. Set null to disable. Use \code{[GetPcaOptions()]} for initialization.
-//' @param pcaOptionsX (nullable list) Similar to \code{pcaOptionsY} but for \code{x}. see \code{pcaOptionsY}.
-//' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. See also \code{GetMeasureOptions()]}.
-//' @param simTrainRatio (double) Size of the training sample as a ratio of the number of the observations. It is effective only if \code{simTrainFixSize} is zero.
-//' @param simTrainFixSize (int) A fixed size for the training sample. If zero, \code{simTrainRatio} is used.
-//' @param simSeed (int) A seed for the pseudo out-of-sample simulation.
-//' @param simMaxConditionNumber (double) Maximum value for the condition number in the simulation.
-//' @param printMsg (bool) Set true to enable printing details.
-//'
-//' @return A list:
-//'
-//' @export
-// [[Rcpp::export]]
-SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
-              int searchSigMaxIter = 0, double searchSigMaxProb = 0.1,
-              SEXP restriction = R_NilValue, SEXP newX = R_NilValue,
-              SEXP pcaOptionsY = R_NilValue, SEXP pcaOptionsX = R_NilValue,
-              int simFixSize = 0, double simTrainRatio = 0.75,
-              int simTrainFixSize = 0, int simSeed = 0,
-              double simMaxConditionNumber = 1.7e308, bool printMsg = false)
-// clang-format on
-{
+// [[Rcpp::export(.SurEstim)]]
+SEXP SurEstim(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
+              double searchSigMaxProb, SEXP restriction, SEXP newX,
+              SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize,
+              double simTrainRatio, int simTrainFixSize, int simSeed,
+              double simMaxConditionNumber, bool printMsg) {
 
   if (y == R_NilValue || x == R_NilValue)
     throw std::logic_error("Invalid data: 'y' or 'x' is null.");
@@ -253,7 +161,7 @@ SEXP SurEstim(SEXP y, SEXP x, bool addIntercept = true,
   y = as<NumericMatrix>(y);
   x = as<NumericMatrix>(x);
 
-  if (newX != R_NilValue && addIntercept){
+  if (newX != R_NilValue && addIntercept) {
     if (is<NumericMatrix>(y) == false)
       throw std::logic_error("'newX' must be a 'numeric matrix'.");
     NumericMatrix newX0 = as<NumericMatrix>(newX);

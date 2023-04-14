@@ -324,7 +324,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
     # note that in the indexes, we should adjust the indexes too
     aa<-a$exoIndices+2
     resB = DcEstim(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, distType = "logit",
-                          costMatrices = list(c1), simSeed = 340,
+                          costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                           simTrainRatio = tratio, printMsg = printMsg)
     expect_equal(a[[1]], 1 - resB$simulation$costRatios[[1]]) # note that in search, it is 1-cost score
     j=j+1

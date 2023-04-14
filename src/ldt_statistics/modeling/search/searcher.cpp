@@ -243,7 +243,7 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
       return true;
     else { // does it contain any fixed items?
       auto g = &groupIndexMap.at(groupIndexes.Data[0]);
-      if (g->size() > innerIndexes.Data[0] &&
+      if ((Ti)g->size() > innerIndexes.Data[0] &&
           g->at(innerIndexes.Data[0]) < fixFirstI)
         return true;
     }

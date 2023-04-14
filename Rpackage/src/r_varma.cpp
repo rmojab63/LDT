@@ -5,44 +5,12 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// clang-format off
-
-//' VARMA Search
-//'
-//' @param y (numeric vector) Endogenous data with variables in the columns.
-//' @param x (nullable numeric matrix) Exogenous data with variables in the columns. It can be null.
-//' @param numTargets (int) Number of variables in the first columns of \code{y}, regarded as targets. It must be positive and cannot be larger than the number of endogenous variables.
-//' @param ySizes (nullable integer vector) Determines the number of endogenous variables (or equations) in the regressions.
-//' @param yPartitions (nullable list of int vector) A partition over the indexes of the endogenous variables. No regression is estimated with two variables in the same group. If \code{NULL}, each variable is placed in its own group.
-//' @param xGroups (nullable list of int vector) different combinations of the indexes of the exogenous variables to be used as exogenous variables in the SUR regressions.
-//' @param maxParams (integer vector, length=6) Maximum values for the parameters of the VARMA model (p,d,q,P,D,Q). If null, c(1,1,1,0,0,0) is used.
-//' @param seasonsCount (integer) number of observations per unit of time
-//' @param maxHorizon (integer) maximum value for the prediction horizon if \code{type1} is \code{TRUE} in \code{checkItems}. Also, it is used as the maximum prediction horizon in checking the predictions.
-//' @param newX (matrix) New exogenous data for out-of-sample prediction. It must have the same number of columns as \code{x}.
-//' @param simUsePreviousEstim (logical) if \code{TRUE}, parameters are initialized in just the first step of the simulation. The initial values of the n-th simulation (with one more observation) is the estimations in the previous step.
-//' @param olsStdMultiplier (numeric) a multiplier for the standard deviation of OLS, used for restricting the maximum likelihood estimation.
-//' @param lmbfgsOptions (list) Optimization options. see \code{[GetLmbfgsOptions()]}. Use null for default values.
-//' @param measureOptions (nullable list) see \code{[GetMeasureOptions()]}.
-//' @param modelCheckItems (nullable list) see \code{[GetModelCheckItems()]}.
-//' @param searchItems (nullable list) see \code{[GetSearchItems()]}.
-//' @param searchOptions (nullable list) see \code{[GetSearchOptions()]}.
-//'
-//' @return A list
-//'
-//' @export
-// [[Rcpp::export]]
-SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
-                 SEXP ySizes = R_NilValue, SEXP yPartitions = R_NilValue,
-                 SEXP xGroups = R_NilValue, SEXP maxParams = R_NilValue,
-                 int seasonsCount = 0, int maxHorizon = 0,
-                 SEXP newX = R_NilValue, bool simUsePreviousEstim = true,
-                 double olsStdMultiplier = 2.0, SEXP lmbfgsOptions = R_NilValue,
-                 SEXP measureOptions = R_NilValue,
-                 SEXP modelCheckItems = R_NilValue,
-                 SEXP searchItems = R_NilValue,
-                 SEXP searchOptions = R_NilValue)
-// clang-format on
-{
+// [[Rcpp::export(.VarmaSearch)]]
+SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
+                 SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
+                 SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
+                 List lmbfgsOptions, List measureOptions, List modelCheckItems,
+                 List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
@@ -56,27 +24,17 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  List searchOptions_;
-  if (searchOptions != R_NilValue) {
-    if (is<List>(searchOptions) == false)
-      throw std::logic_error("'searchOptions' must be a 'List'.");
-    searchOptions_ = as<List>(searchOptions);
-    CheckSearchOptions(searchOptions_);
-  } else
-    searchOptions_ = GetSearchOptions();
-
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
-  UpdateSearchOptions(searchOptions_, options, reportInterval, printMsg);
+  UpdateSearchOptions(searchOptions, options, reportInterval, printMsg);
 
-
-  if (x != R_NilValue){
+  if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
       throw std::logic_error("'x' must be a 'numeric matrix'.");
     x = as<NumericMatrix>(x);
   }
-  if (newX != R_NilValue){
+  if (newX != R_NilValue) {
     if (is<NumericMatrix>(newX) == false)
       throw std::logic_error("'newX' must be a 'numeric matrix'.");
     newX = as<NumericMatrix>(newX);
@@ -104,7 +62,6 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   if (dataset0->HasMissingData)
     throw std::logic_error("Missing observation exists.");
 
-
   std::vector<int> ySizes_;
   GetSizes(printMsg, ySizes_, ySizes, my.ColsCount, false);
 
@@ -129,57 +86,18 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   }
 
   LimitedMemoryBfgsbOptions optim;
-  if (lmbfgsOptions == R_NilValue) {
-    List optimOptions_ = GetLmbfgsOptions();
-    UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
-  } else {
-    if (is<List>(lmbfgsOptions) == false)
-      throw std::logic_error("'lmbfgsOptions' must be a 'List'.");
-    List optimOptions_ = as<List>(lmbfgsOptions);
-    CheckLmbfgsOptions(optimOptions_);
-    UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
-  }
+  UpdateLmbfgsOptions(printMsg, lmbfgsOptions, optim);
 
   // if (maxHorizon > 0 && items.Length1 > 0){ // model must provide predictions
   //   checks.Prediction = true;
   //   checks.Estimation = true;
   // }
 
-  List measureOptions_;
-  if (measureOptions == R_NilValue)
-    measureOptions_ = GetMeasureOptions();
-  else {
-    if (is<List>(measureOptions) == false)
-      throw std::logic_error("'measureOptions' must be a 'List'.");
-    measureOptions_ = as<List>(measureOptions);
-    CheckMeasureOptions(measureOptions_);
-  }
-
-  List modelCheckItems_;
-  if (modelCheckItems == R_NilValue)
-    modelCheckItems_ = GetModelCheckItems();
-  else {
-    if (is<List>(modelCheckItems) == false)
-      throw std::logic_error("'modelCheckItems' must be a 'List'.");
-    modelCheckItems_ = as<List>(modelCheckItems);
-    CheckModelCheckItems(modelCheckItems_);
-  }
-
-  List searchItems_;
-  if (searchItems == R_NilValue)
-    searchItems_ = GetSearchItems();
-  else {
-    if (is<List>(searchItems) == false)
-      throw std::logic_error("'searchItems' must be a 'List'.");
-    searchItems_ = as<List>(searchItems);
-    CheckSearchItems(searchItems_);
-  }
-
   auto measures = SearchMeasureOptions();
   auto measuresNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems_, measureOptions_, modelCheckItems_,
+  UpdateOptions(printMsg, searchItems, measureOptions, modelCheckItems,
                 measures, items, checks, measuresNames, maxHorizon,
                 mx.ColsCount, numTargets, my.ColsCount, true, false, "Horizon",
                 false);
@@ -241,9 +159,9 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
       _["olsStdMultiplier"] = wrap(olsStdMultiplier),
       _["simUsePreviousEstim"] = wrap(simUsePreviousEstim),
       _["maxHorizon"] = wrap(checks.Prediction ? maxHorizon : 0),
-      _["lmbfgsOptions"] = lmbfgsOptions, _["measureOptions"] = measureOptions_,
-      _["modelCheckItems"] = modelCheckItems_, _["searchItems"] = searchItems_,
-      _["searchOptions"] = searchOptions_, _["numTargets"] = wrap(numTargets));
+      _["lmbfgsOptions"] = lmbfgsOptions, _["measureOptions"] = measureOptions,
+      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
+      _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
   L.attr("class") =
       std::vector<std::string>({"ldtsearchvarma", "ldtsearch", "list"});
@@ -252,40 +170,12 @@ SEXP VarmaSearch(SEXP y, SEXP x = R_NilValue, int numTargets = 1,
   return L;
 }
 
-// clang-format off
-
-//' Estimates an VARMA Model
-//'
-//' @param y (matrix) endogenous data with variables in the columns.
-//' @param x (matrix) exogenous data with variables in the columns.
-//' @param params (integer vector, length=6) parameters of the VARMA model (p,d,q,P,D,Q).
-//' @param seasonsCount (integer) number of observations per unit of time
-//' @param addIntercept (logical) if \code{TRUE}, intercept is added automatically to x.
-//' @param lmbfgsOptions (list) optimization options. See \code{[GetLmbfgsOptions()]}.
-//' @param olsStdMultiplier (numeric) a multiplier for the standard deviation of OLS, used for restricting the maximum likelihood estimation.
-//' @param pcaOptionsY (list) a list of options in order to use principal components of the \code{y}, instead of the actual values. set \code{NULL} to disable. Use \code{[GetPcaOptions()]} for initialization.
-//' @param pcaOptionsX (list) similar to \code{pcaOptionsY} but for \code{x}. see \code{pcaOptionsY}.
-//' @param maxHorizon (integer) maximum prediction horizon. Set zero to disable.
-//' @param newX (matrix) data of new exogenous variables to be used in the predictions. Its columns must be the same as \code{x}.
-//' @param simFixSize (integer) number of pseudo out-of-sample simulations. Use zero to disable the simulation. see also \code{[GetMeasureOptions()]}.
-//' @param simHorizons (integer vector) prediction horizons to be used in pseudo out-of-sample simulations. see also \code{[GetMeasureOptions()]}.
-//' @param simUsePreviousEstim (logical) if \code{TRUE}, parameters are initialized in just the first step of the simulation. The initial values of the n-th simulation (with one more observation) is the estimations in the previous step.
-//' @param simMaxConditionNumber (numeric) maximum value for the condition number in the pseudo out-of-sample simulations.
-//' @param printMsg (logical) set \code{FALSE} to disable printing the details.
-//'
-//' @return A list:
-//'
-//' @export
-// [[Rcpp::export]]
-SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
-                int seasonsCount = 0, bool addIntercept = true,
-                SEXP lmbfgsOptions = R_NilValue, double olsStdMultiplier = 2,
-                SEXP pcaOptionsY = R_NilValue, SEXP pcaOptionsX = R_NilValue,
-                int maxHorizon = 0, SEXP newX = R_NilValue, int simFixSize = 0,
-                SEXP simHorizons = R_NilValue, bool simUsePreviousEstim = true,
-                double simMaxConditionNumber = 1e20, bool printMsg = false)
-// clang-format on
-{
+// [[Rcpp::export(.VarmaEstim)]]
+SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
+                bool addIntercept, List lmbfgsOptions, double olsStdMultiplier,
+                SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX,
+                int simFixSize, SEXP simHorizons, bool simUsePreviousEstim,
+                double simMaxConditionNumber, bool printMsg) {
 
   if (y == R_NilValue)
     throw std::logic_error("Invalid data: 'y' is null.");
@@ -296,22 +186,21 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
   auto startTime = boost::posix_time::to_simple_string(
       boost::posix_time::second_clock::local_time());
 
-  if (x != R_NilValue){
+  if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
       throw std::logic_error("'x' must be a 'numeric matrix'.");
     x = as<NumericMatrix>(x);
   }
 
-  if (newX != R_NilValue){
+  if (newX != R_NilValue) {
     if (is<NumericMatrix>(newX) == false)
       throw std::logic_error("'newX' must be a 'numeric matrix'.");
   }
   if (addIntercept && maxHorizon > 0) {
-    if (newX == R_NilValue){
+    if (newX == R_NilValue) {
       auto newX0 = NumericMatrix(maxHorizon, 0);
       newX = insert_intercept(newX0);
-    }
-    else{
+    } else {
       auto newX0 = as<NumericMatrix>(newX);
       newX = insert_intercept(newX0);
     }
@@ -351,10 +240,7 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
   auto pcaOptionsX0 = PcaAnalysisOptions();
   bool hasPcaX = pcaOptionsX != R_NilValue;
   if (hasPcaX) {
-    if (is<List>(pcaOptionsX) == false)
-      throw std::logic_error("'pcaOptionsX' must be a 'List'.");
-    List pcaOptionsX_ = as<List>(pcaOptionsX);
-    UpdatePcaOptions(printMsg, pcaOptionsX_, hasPcaX, pcaOptionsX0,
+    UpdatePcaOptions(printMsg, as<List>(pcaOptionsX), hasPcaX, pcaOptionsX0,
                      "Exogenous PCA options");
     if (addIntercept)
       pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
@@ -362,13 +248,9 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
 
   auto pcaOptionsY0 = PcaAnalysisOptions();
   bool hasPcaY = pcaOptionsY != R_NilValue;
-  if (hasPcaY) {
-    if (is<List>(pcaOptionsY) == false)
-      throw std::logic_error("'pcaOptionsY' must be a 'List'.");
-    List pcaOptionsY_ = as<List>(pcaOptionsY);
-    UpdatePcaOptions(printMsg, pcaOptionsY_, hasPcaY, pcaOptionsY0,
+  if (hasPcaY)
+    UpdatePcaOptions(printMsg, as<List>(pcaOptionsY), hasPcaY, pcaOptionsY0,
                      "Endogenous PCA options");
-  }
 
   auto restriction = VarmaRestrictionType::kMaFinal; // TODO: as an option
   auto sizes = VarmaSizes(my.RowsCount, my.ColsCount, k, params_.at(0),
@@ -378,16 +260,7 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
   // LMBFGS
   LimitedMemoryBfgsbOptions optim;
   if (sizes.HasMa) {
-    if (lmbfgsOptions == R_NilValue) {
-      List optimOptions_ = GetLmbfgsOptions();
-      UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
-    } else {
-      if (is<List>(lmbfgsOptions) == false)
-        throw std::logic_error("'lmbfgsOptions' must be a 'List'.");
-      List optimOptions_ = as<List>(lmbfgsOptions);
-      CheckLmbfgsOptions(optimOptions_);
-      UpdateLmbfgsOptions(printMsg, optimOptions_, optim);
-    }
+    UpdateLmbfgsOptions(printMsg, lmbfgsOptions, optim);
   } else if (printMsg)
     Rprintf("LMBFGS (skipped).\n");
 
@@ -492,11 +365,12 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
   // Names
   std::vector<std::string> exoNames;
   std::vector<std::string> endoNames;
-  for (int i = 0; i < (int)colNames.size(); i++)
+  for (int i = 0; i < (int)colNames.size(); i++) {
     if (i < my.ColsCount)
       endoNames.push_back(colNames.at(i));
     else
       exoNames.push_back(colNames.at(i));
+  }
 
   std::vector<std::string> exoNames_pca;
   if (hasPcaX) {
@@ -551,9 +425,9 @@ SEXP VarmaEstim(SEXP y, SEXP x = R_NilValue, SEXP params = R_NilValue,
 
   List L = List::create(
       _["counts"] = List::create(
-          _["obs"] = wrap(model.Y.RowsCount), _["eq"] = wrap(model.Y.ColsCount),
+          _["obs"] = wrap(model.Y.ColsCount), _["eq"] = wrap(model.Y.RowsCount),
           _["exoEq"] = wrap(model.X.ColsCount),
-          _["exoAll"] = wrap(model.Model.Result.gamma.length())),
+          _["expAll"] = wrap(model.Model.Result.gamma.length())),
       _["estimations"] = List::create(
           _["coefs"] =
               as_matrix(model.Model.Result.coef, &endoNames_pca, &expNames),
