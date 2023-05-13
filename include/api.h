@@ -43,6 +43,11 @@ LDT_C_EXPORT double LDT_GetDistributionProperty(int distributionType,
                                                 double param2, double param3,
                                                 double param4);
 
+LDT_C_EXPORT void LDT_GetDistributionCDFs(int distributionType, double *probs,
+                                          int probsLength, double *result,
+                                          double param1, double param2,
+                                          double param3, double param4);
+
 // #pragma endregion
 
 // #pragma region Frequency
@@ -69,31 +74,11 @@ LDT_C_EXPORT void LDT_DisposeFrequency(ldt::Frequency *f);
 
 // #pragma region Variable
 
-LDT_C_EXPORT ldt::Variable<double> *
-LDT_VariableCreate(const char *name, const double *data, int dataLength,
-                   ldt::Frequency *startFrequency);
-
-LDT_C_EXPORT ldt::Frequency *LDT_VariableGetFrequency(ldt::Variable<double> *v);
-
-LDT_C_EXPORT void LDT_VariableAddNewField(ldt::Variable<double> *v,
-                                          const char *key, const char *value);
-
-LDT_C_EXPORT void LDT_VariableGetField(ldt::Variable<double> *v, int index,
-                                       char *key, char *value);
-
-LDT_C_EXPORT ldt::Frequency *LDT_VariableGetData(ldt::Variable<double> *v,
-                                                 char *name, double *data,
-                                                 int dataLength);
-
-LDT_C_EXPORT void LDT_VariableToString(ldt::Variable<double> *v, char *result,
-                                       int &length);
-
-LDT_C_EXPORT ldt::Variable<double> *
-LDT_VariableParse(const char *str, int &dataLength, int &nameLength,
-                  int &fieldsCount, int &maxFieldKeyLength,
-                  int &maxFieldValueLength);
-
-LDT_C_EXPORT void LDT_VariableDispose(ldt::Variable<double> *v);
+LDT_C_EXPORT ldt::Frequency *
+LDT_VariableCombine(double *data1, int dataLength1,
+                    ldt::Frequency *startFrequency1, double *data2,
+                    int dataLength2, ldt::Frequency *startFrequency2,
+                    double *result, int &resultLength, double &maxDiff_perc);
 
 // #pragma endregion
 

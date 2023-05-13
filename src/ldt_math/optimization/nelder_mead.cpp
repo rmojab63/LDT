@@ -366,3 +366,76 @@ Tv NelderMead::Minimize(const std::function<Tv(const Matrix<Tv> &)> &objective,
   Iter--;
   return min;
 }
+
+std::tuple<Tv, Ti>
+NelderMead::Minimize1(const std::function<Tv(const Tv &)> &objective, Tv x0,
+                      Tv step, int max_iter, Tv tol, Tv x_min, Tv x_max) {
+
+  // set constraints:
+
+  std::function<Tv(const Tv &)> f;
+  if (std::isnan(x_min) && std::isnan(x_max))
+    f = objective;
+  else if (std::isnan(x_min)) {
+    if (x0 < x_min)
+      x0 = x_min;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x > x_max) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
+  } else if (std::isnan(x_max)) {
+    if (x0 > x_max)
+      x0 = x_max;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x < x_min) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
+  } else {
+    if (x0 < x_min)
+      x0 = x_min;
+    if (x0 > x_max)
+      x0 = x_max;
+    f = [&](Tv x) {
+      Tv P = 0.0;
+      if (x > x_max || x < x_min) {
+        P = 1e5 * std::pow(x, 2);
+      }
+      return objective(x) + P;
+    };
+  }
+
+  // optimization:
+
+  Tv x1 = x0 + step;
+  Tv x2 = x0 - step;
+  int iter = 0;
+  while (iter < max_iter) {
+    iter++;
+    Tv f1 = f(x1);
+    Tv f2 = f(x2);
+    Tv f0 = f(x0);
+    if (f1 <= f2 && f1 <= f0) {
+      x0 = x1;
+      x2 = x1 - step;
+      x1 = x0 + step;
+    } else if (f2 <= f1 && f2 <= f0) {
+      x0 = x2;
+      x1 = x0 + step;
+      x2 = x0 - step;
+    } else {
+      if (abs(x0 - x1) < tol && abs(x0 - x2) < tol) {
+        break;
+      }
+      step /= 2.0;
+      x1 = x0 + step;
+      x2 = x0 - step;
+    }
+  }
+  return std::tuple<Tv, Ti>(x0, iter);
+}

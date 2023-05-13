@@ -225,3 +225,22 @@ TEST(Newton_T, rosenbrock) {
   delete[] W;
   delete[] S;
 }
+
+TEST(NelderMead_T, univariate) {
+  auto quandratic = [](Tv x) { return std::pow(x - 2, 2); };
+  auto res = NelderMead::Minimize1(quandratic, 0.0);
+  ASSERT_NEAR(2.0, std::get<0>(res), 1e-6);
+
+  auto absf = [](Tv x) { return std::abs(x - 4.5); };
+  res = NelderMead::Minimize1(absf, 0.0);
+  ASSERT_NEAR(4.5, std::get<0>(res), 1e-6);
+
+  auto absf_sin = [](Tv x) { return std::abs(std::sin(x)); };
+
+  res = NelderMead::Minimize1(absf_sin, M_PI / 2);
+  ASSERT_NEAR(M_PI, std::get<0>(res), 1e-4);
+
+  res =
+      NelderMead::Minimize1(absf_sin, 0.0, 0.1, 100, 1e-7, M_PI, 3 * M_PI / 2);
+  ASSERT_NEAR(M_PI, std::get<0>(res), 1e-4);
+}

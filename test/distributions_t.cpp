@@ -11,6 +11,143 @@
 
 using namespace ldt;
 
+TEST(Distributions_T, empirical103_quantile) {
+
+  double probs[103];
+  probs[0] = 0.0001;
+  probs[1] = 0.001;
+  int j = 2;
+  for (double d = 0.01; d < 0.999; d += 0.01)
+    probs[j++] = d;
+  probs[101] = 0.999;
+  probs[102] = 0.9999;
+
+  auto normal_cdfs = std::vector<double>(103);
+  auto dis = Distribution<DistributionType::kNormal>(0.0, 1.0);
+  for (int i = 0; i < 103; i++)
+    normal_cdfs[i] = dis.GetQuantile(probs[i]);
+
+  auto emp103 = DistributionEmpirical103(normal_cdfs);
+
+  ASSERT_NEAR(dis.GetQuantile(0.0001), emp103.GetQuantileApprox(0.0001), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.0001 - 0.0000000001),
+              emp103.GetQuantileApprox(0.0001 - 0.0000000001), 1e-6);
+  ASSERT_NEAR(dis.GetQuantile(0.0001 + 0.0000000001),
+              emp103.GetQuantileApprox(0.0001 + 0.0000000001), 1e-6);
+
+  ASSERT_NEAR(dis.GetQuantile(0.9999), emp103.GetQuantileApprox(0.9999), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.9999 + 0.0000000001),
+              emp103.GetQuantileApprox(0.9999 + 0.0000000001), 1e-6);
+  ASSERT_NEAR(dis.GetQuantile(0.9999 - 0.0000000001),
+              emp103.GetQuantileApprox(0.9999 - 0.0000000001), 1e-6);
+
+  ASSERT_NEAR(dis.GetQuantile(0.001), emp103.GetQuantileApprox(0.001), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.25), emp103.GetQuantileApprox(0.25), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.5), emp103.GetQuantileApprox(0.5), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.75), emp103.GetQuantileApprox(0.75), 1e-14);
+  ASSERT_NEAR(dis.GetQuantile(0.999), emp103.GetQuantileApprox(0.999), 1e-14);
+
+  ASSERT_NEAR(dis.GetQuantile(0.2500001), emp103.GetQuantileApprox(0.2500001),
+              1e-6);
+  ASSERT_NEAR(dis.GetQuantile(0.89999999), emp103.GetQuantileApprox(0.89999999),
+              1e-6);
+}
+
+TEST(Distributions_T, empirical103_cdf) {
+
+  double probs[103];
+  probs[0] = 0.0001;
+  probs[1] = 0.001;
+  int j = 2;
+  for (double d = 0.01; d < 0.999; d += 0.01)
+    probs[j++] = d;
+  probs[101] = 0.999;
+  probs[102] = 0.9999;
+
+  auto normal_cdfs = std::vector<double>(103);
+  auto dis = Distribution<DistributionType::kNormal>(0.0, 1.0);
+  for (int i = 0; i < 103; i++)
+    normal_cdfs[i] = dis.GetQuantile(probs[i]);
+
+  auto emp103 = DistributionEmpirical103(normal_cdfs);
+
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[0]), emp103.GetCDFApprox(normal_cdfs[0]),
+              1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[0] - 0.0000000001),
+              emp103.GetCDFApprox(normal_cdfs[0] - 0.0000000001), 1e-6);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[0] + 0.0000000001),
+              emp103.GetCDFApprox(normal_cdfs[0] + 0.0000000001), 1e-6);
+
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[102]),
+              emp103.GetCDFApprox(normal_cdfs[102]), 1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[102] + 0.0000000001),
+              emp103.GetCDFApprox(normal_cdfs[102] + 0.0000000001), 1e-6);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[102] - 0.0000000001),
+              emp103.GetCDFApprox(normal_cdfs[102] - 0.0000000001), 1e-6);
+
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[1]), emp103.GetCDFApprox(normal_cdfs[1]),
+              1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[1] - 0.01),
+              emp103.GetCDFApprox(normal_cdfs[1] - 0.01), 1e-4);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[1] + 0.01),
+              emp103.GetCDFApprox(normal_cdfs[1] + 0.01), 1e-4);
+
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[25]), emp103.GetCDFApprox(normal_cdfs[25]),
+              1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[52]), emp103.GetCDFApprox(normal_cdfs[52]),
+              1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[75]), emp103.GetCDFApprox(normal_cdfs[75]),
+              1e-14);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[101]),
+              emp103.GetCDFApprox(normal_cdfs[101]), 1e-14);
+
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[101] + 0.001),
+              emp103.GetCDFApprox(normal_cdfs[101] + 0.001), 1e-5);
+  ASSERT_NEAR(dis.GetCdf(normal_cdfs[101] - 0.001),
+              emp103.GetCDFApprox(normal_cdfs[101] - 0.001), 1e-5);
+
+  ASSERT_NEAR(dis.GetCdf(2.434), emp103.GetCDFApprox(2.434), 1e-2);
+  ASSERT_NEAR(dis.GetCdf(0.89999999), emp103.GetCDFApprox(0.89999999), 1e-4);
+  ASSERT_NEAR(dis.GetCdf(0.12), emp103.GetCDFApprox(0.12), 1e-5);
+}
+
+TEST(Distributions_T, empirical103_combine) {
+
+  double probs[103];
+  probs[0] = 0.0001;
+  probs[1] = 0.001;
+  int j = 2;
+  for (double d = 0.01; d < 0.999; d += 0.01)
+    probs[j++] = d;
+  probs[101] = 0.999;
+  probs[102] = 0.9999;
+
+  auto normal_cdfs1 = std::vector<double>(103);
+  auto normal_cdfs2 = std::vector<double>(103);
+  auto dis1 = Distribution<DistributionType::kNormal>(0.0, 1.0);
+  auto dis2 = Distribution<DistributionType::kNormal>(0.0, 1.0);
+  for (int i = 0; i < 103; i++) {
+    normal_cdfs1[i] = dis1.GetQuantile(probs[i]);
+    normal_cdfs2[i] = dis2.GetQuantile(probs[i]);
+  }
+
+  auto emp103_1 = DistributionEmpirical103(normal_cdfs1);
+  auto emp103_2 = DistributionEmpirical103(normal_cdfs2);
+
+  auto dists = std::vector<DistributionEmpirical103 *>({&emp103_1, &emp103_2});
+  auto weights = std::vector<Tv>();
+  auto result = std::vector<double>(103);
+  DistributionEmpirical103::Combine(dists, weights, result);
+  auto res_dis = DistributionEmpirical103(result);
+  auto cdf_0 = res_dis.CDFs->at(62);
+
+  // mixture
+  auto a_weights = std::vector<double>({0.5, 0.5});
+  auto a_dists = std::vector<DistributionBase *>({&dis1, &dis2});
+  auto mix = DistributionMixture(a_weights, a_dists);
+  auto cdf_1 = mix.GetCdf(cdf_0);
+}
+
 TEST(Distributions_T, mnormal) {
   Ti N = 100000;
   auto storage = Matrix<Tv>(NAN, new Tv[2 * N], (Ti)N, (Ti)2);

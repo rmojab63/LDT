@@ -436,6 +436,42 @@ public:
   void GetSample(Tv *storage, Ti length, unsigned int seed);
 };
 
+/// @brief It is defined with 103 parameters: CDFs at (0.0001, 0.001,
+/// 0.01:0.01:0.99, 0.999, 0.9999)
+class LDT_EXPORT DistributionEmpirical103 {
+
+public:
+  /// @brief 103 parameters of the distribution. These are the CDFs at (0.0001,
+  /// 0.001, 0.01:0.01:0.99, 0.999, 0.9999). It is a pointer to the vector given
+  /// in the constructor.
+  std::vector<Tv> *CDFs = nullptr;
+
+  /// @brief Initializes a new instance ot this class
+  DistributionEmpirical103();
+
+  /// @brief Initializes a new instance ot this class
+  /// @param parameters parameters (which are the required CDFs)
+  DistributionEmpirical103(std::vector<Tv> &cdfs);
+
+  /// @brief Approximately calculates the CDF at a point
+  /// @param p the point
+  /// @return cdf
+  Tv GetCDFApprox(Tv x);
+
+  /// @brief Approximately calculates the quantile at a probability
+  /// @param p the point
+  /// @return quantile
+  Tv GetQuantileApprox(Tv p);
+
+  /// @brief Combines a list of distributions (It uses Nelder-Mead
+  /// optimization).
+  /// @param dists the list
+  /// @param weights the weights. If empty, they will have equal weights.
+  /// @param result the parameters of the combination
+  static void Combine(const std::vector<DistributionEmpirical103 *> &dists,
+                      const std::vector<Tv> &weights, std::vector<Tv> &result);
+};
+
 /// @brief A histogram
 /// todo: this class needs a restructure (e.g., separate storage sizes, or split
 /// to helper classes)

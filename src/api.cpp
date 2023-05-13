@@ -8,7 +8,7 @@
 
 using namespace ldt;
 
-//#pragma region Exception
+// #pragma region Exception
 
 void LDT_GetLastError(char *buffer) { std::strcpy(buffer, LastErrorMsg); }
 
@@ -18,9 +18,9 @@ void LDT_GetLastError_TEST() {
   API_END()
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Distribution
+// #pragma region Distribution
 
 double LDT_GetDistributionProperty(int distributionType, int propertyType,
                                    double param1, double param2, double param3,
@@ -37,9 +37,25 @@ double LDT_GetDistributionProperty(int distributionType, int propertyType,
   return NAN;
 }
 
-//#pragma endregion
+void LDT_GetDistributionCDFs(int distributionType, double *probs,
+                             int probsLength, double *result, double param1,
+                             double param2, double param3, double param4) {
 
-//#pragma region Frequency
+  API_BEGIN()
+
+  auto distType = static_cast<ldt::DistributionType>(distributionType);
+  auto dist = ldt::DistributionBase::GetDistributionFromType(
+      distType, param1, param2, param3, param4);
+
+  for (int i = 0; i < probsLength; i++)
+    result[i] = dist.get()->GetQuantile(probs[i]);
+
+  API_END()
+}
+
+// #pragma endregion
+
+// #pragma region Frequency
 
 ldt::Frequency *LDT_FrequencyCreate(const char *str, const char *classStr,
                                     int &freqClass) {
@@ -167,149 +183,67 @@ void LDT_DisposeFrequency(ldt::Frequency *f) {
   API_END()
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Variable
+// #pragma region Variable
 
-ldt::Variable<double> *LDT_VariableCreate(const char *name, const double *data,
-                                          int dataLength,
-                                          ldt::Frequency *startFrequency) {
+ldt::Frequency *LDT_VariableCombine(double *data1, int dataLength1,
+                                    ldt::Frequency *startFrequency1,
+                                    double *data2, int dataLength2,
+                                    ldt::Frequency *startFrequency2,
+                                    double *result, int &resultLength,
+                                    double &maxDiff_perc) {
   API_BEGIN()
+  maxDiff_perc = 0;
 
-  auto v = new ldt::Variable<double>();
-  try {
-    v->Name = std::string(name);
-    v->Data = std::vector<double>(data, data + dataLength);
-    v->StartFrequency = startFrequency->Clone(); // copy, new owner
-  } catch (...) {
-    delete v;
-    throw;
+  auto v1 = ldt::Variable<double>();
+  v1.Data.assign(data1, data1 + dataLength1);
+  v1.StartFrequency = std::move(startFrequency1->Clone());
+  v1.Trim();
+
+  auto v2 = ldt::Variable<double>();
+  v2.Data.assign(data2, data2 + dataLength2);
+  v2.StartFrequency = std::move(startFrequency2->Clone());
+  v2.Trim();
+
+  auto vars = std::vector<Variable<double> *>({&v1, &v2});
+
+  auto vs = ldt::Variables(vars);
+
+  if (vs.NumObs > resultLength) {
+    resultLength = vs.NumObs;
+    return nullptr;
   }
-  return v;
+  resultLength = vs.NumObs;
+  auto mat = ldt::Matrix<double>(&vs.Data.at(0), vs.NumObs, 2);
+  for (int i = 0; i < mat.RowsCount; i++) {
+    auto d1 = mat.Get0(i, 0);
+    auto d2 = mat.Get0(i, 1);
 
-  API_END()
-  return nullptr;
-}
-
-void LDT_VariableAddNewField(ldt::Variable<double> *v, const char *key,
-                             const char *value) {
-  API_BEGIN()
-
-  v->Fields.insert({std::string(key), std::string(value)});
-
-  API_END()
-}
-
-void LDT_VariableGetField(ldt::Variable<double> *v, int index, char *key,
-                          char *value) {
-  API_BEGIN()
-
-  int i = -1;
-  for (auto const &x : v->Fields) {
-    i++;
-    if (i == index) {
-      std::strcpy(key, x.first.c_str());
-      std::strcpy(value, x.second.c_str());
-      return;
+    if (std::isnan(d1) == false && std::isnan(d2) == false) {
+      double diff = std::fabs((d1 - d2) / d1) *
+                    100; // how the second one changed relative to the first one
+      if (diff > maxDiff_perc)
+        maxDiff_perc = diff;
     }
+    result[i] =
+        std::isnan(d2) ? d1 : d2; // priority is with the second variable. we
+                                  // select it unless it is NAN
   }
 
-  API_END()
-}
+  auto f = vs.StartFrequency.get();
+  vs.StartFrequency.release();
 
-ldt::Frequency *LDT_VariableGetData(ldt::Variable<double> *v, char *name,
-                                    double *data, int dataLength) {
-
-  API_BEGIN()
-
-  std::strcpy(name, v->Name.c_str());
-
-  for (int i = 0; i < dataLength; i++)
-    data[i] = v->Data.at(i);
-
-  return v->StartFrequency.get();
+  return f;
 
   API_END()
 
   return nullptr;
 }
 
-void LDT_VariableToString(ldt::Variable<double> *v, char *result, int &length) {
-  API_BEGIN()
+// #pragma endregion
 
-  auto a1 = v->ToString();
-  auto reqLength = a1.length() + 1;
-  if (length < (int)reqLength) { // return to get new buffer
-    length = reqLength;
-    return;
-  }
-
-  std::strcpy(result, a1.c_str());
-
-  API_END()
-}
-
-ldt::Variable<double> *LDT_VariableParse(const char *str, int &dataLength,
-                                         int &nameLength, int &fieldsCount,
-                                         int &maxFieldKeyLength,
-                                         int &maxFieldValueLength) {
-  API_BEGIN()
-
-  auto v = new ldt::Variable<double>();
-  auto listItemsString = new std::vector<std::string>();
-  auto listItemsDate = new std::vector<boost::gregorian::date>();
-  try {
-    ldt::Variable<double>::Parse(str, *v, *listItemsString, *listItemsDate);
-    if (v->StartFrequency.get()->mClass != ldt::FrequencyClass::kListString)
-      delete listItemsString;
-    if (v->StartFrequency.get()->mClass == ldt::FrequencyClass::kListDate)
-      delete listItemsDate;
-
-    dataLength = v->Data.size();
-    nameLength = v->Name.length();
-    fieldsCount = v->Fields.size();
-
-    return v;
-  } catch (...) {
-    delete v;
-    delete listItemsString;
-    delete listItemsDate;
-  }
-
-  API_END()
-
-  return nullptr;
-}
-
-void LDT_VariableDispose(ldt::Variable<double> *v) {
-  API_BEGIN()
-
-  if (v != NULL) {
-    auto f = v->StartFrequency.get();
-    if (f) {
-      if (f->mClass != ldt::FrequencyClass::kListString) {
-        auto fList = dynamic_cast<ldt::FrequencyList<std::string> const &>(*f);
-        if (fList.pItems)
-          delete fList.pItems;
-      } else if (f->mClass != ldt::FrequencyClass::kListDate) {
-        auto fList =
-            dynamic_cast<ldt::FrequencyList<boost::gregorian::date> const &>(
-                *f);
-        if (fList.pItems)
-          delete fList.pItems;
-      }
-    }
-
-    delete v;
-    v = nullptr;
-  }
-
-  API_END()
-}
-
-//#pragma endregion
-
-//#pragma region Scoring
+// #pragma region Scoring
 
 double LDT_GetScoreCrpsNormal(double y, double mean, double variance) {
   API_BEGIN()
@@ -329,4 +263,4 @@ double LDT_GetScoreCrpsLogNormal(double y, double meanLog, double varianceLog) {
   return NAN;
 }
 
-//#pragma endregion
+// #pragma endregion

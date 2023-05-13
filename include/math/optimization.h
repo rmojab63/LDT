@@ -281,6 +281,39 @@ public:
   Tv Minimize(const std::function<Tv(const Matrix<Tv> &)> &objective,
               Matrix<Tv> &start, Tv *work,
               const std::function<void(Matrix<Tv> &)> *constrain = nullptr);
+
+  /// @brief Nelder-mead optimization for univariate function
+  /// @param f univariate function
+  /// @param x0 Initial guess
+  /// @param step initial size of the simplex. The simplex is a geometrical
+  /// figure that the algorithm uses to search for the minimum of the function.
+  /// In the case of a univariate function, the simplex is just a line segment.
+  /// The step argument determines the initial length of this line segment.
+  /// @param max_iter maximum number of iterations that the algorithm will
+  /// perform. If the algorithm does not converge to a minimum within this
+  /// number of iterations, it will stop and return the current best estimate
+  /// for the minimum.
+  /// @param tol
+  /// @param x_min Lower bound for x. See the remark for a general constraint
+  /// optimization.
+  /// @param x_max A constrain on maximum value of x. See the remark for a
+  /// general constraint optimization.
+  /// @return <Minimum X, Current Iteration>
+  /// @remark For a constraint optimization, add a penalty to the objective
+  /// function. e.g. if g(x) <= 0, modify the objective function to be: auto
+  /// f_constrained = [f](double x) {
+  ///  double P = 0.0;
+  ///  if (g(x) > 0) {
+  ///      P = C * std::pow(g(x), 2);
+  ///  }
+  /// };
+  ///  return f(x) + P;
+  /// Use a large but finite value for C. Infinity or relatively large number
+  /// can cause numerical issues and may result in an unstable optimization
+  /// process.
+  static std::tuple<Tv,Ti> Minimize1(const std::function<Tv(const Tv &)> &objective, Tv x0,
+                      Tv step = 0.1, int max_iter = 100, Tv tol = 1e-6,
+                      Tv x_min = NAN, Tv x_max = NAN);
 };
 
 } // namespace ldt
