@@ -394,6 +394,10 @@ public:
   /// owner.
   std::vector<T> *pItems = nullptr;
 
+  /// @brief If not zero, it means that mValue is not valid and we are out of
+  /// the list for this number of elements
+  Ti OutIndex = 0;
+
   /// @brief Initializes a new instance of the class
   /// @param value Value of this frequency. It is a member of \p items
   /// @param list Items in this frequency. It can be null, but should be set

@@ -33,12 +33,20 @@ std::unique_ptr<Frequency> FrequencyList<T>::Clone() const {
 }
 
 template <typename T> void FrequencyList<T>::Next(Ti steps) {
-  Ti i = GetIndex();
+  Ti size = (Ti)pItems->size();
+  Ti i = OutIndex == 0 ? GetIndex() : -1;
+  if (i == -1) { // it is already an out-item
+    i = OutIndex;
+    if (i > 0)
+      i += size - 1;
+  }
   Ti j = i + steps;
-  if (j < (int)pItems->size() && j >= 0)
+
+  if (j < size && j >= 0) {
     mValue = pItems->at(j);
-  else
-    throw std::logic_error("FrequenyList:Next:Invalid number of steps.");
+    OutIndex = 0;
+  } else
+    OutIndex = j >= size ? j - size + 1 : j;
 }
 
 template <typename T> Ti FrequencyList<T>::CompareTo(Frequency const &other) {
@@ -56,7 +64,16 @@ template <typename T> Ti FrequencyList<T>::CompareTo(Frequency const &other) {
 template <typename T> Ti FrequencyList<T>::Minus(Frequency const &other) {
   CheckClassEquality(*this, other);
   auto second = dynamic_cast<FrequencyList<T> const &>(other);
-  return GetIndex() - second.GetIndex();
+  auto i1 = GetIndex();
+  auto i2 = second.GetIndex();
+  return (OutIndex == 0
+              ? i1
+              : (OutIndex > 0 ? (OutIndex + pItems->size() - 1) : OutIndex)) -
+         (second.OutIndex == 0
+              ? i2
+              : (second.OutIndex > 0
+                     ? (second.OutIndex + second.pItems->size() - 1)
+                     : second.OutIndex));
 }
 
 template <typename T>
@@ -66,16 +83,22 @@ void FrequencyList<T>::Parse0(const std::string &str,
                               FrequencyList<T> &result, std::vector<T> *items) {
   try {
 
+    if (StartsWith("out_item:", str.c_str()))
+      result.OutIndex = std::stoi(
+          str.substr(9)); // assuming 'out_item:' (see ToString method)
+
     if constexpr (std::is_same<T, std::string>()) {
       result.mClass = FrequencyClass::kListString;
-      result.mValue = str;
+      if (result.OutIndex == 0)
+        result.mValue = str;
       if (items)
         result.pItems = items;
       if (items && classStr.length() > 2)
         SplitMultiple(classStr.substr(3), std::string(";"), *items);
     } else if constexpr (std::is_same<T, boost::gregorian::date>()) {
       result.mClass = FrequencyClass::kListDate;
-      result.mValue = boost::gregorian::date_from_iso_string(str);
+      if (result.OutIndex == 0)
+        result.mValue = boost::gregorian::date_from_iso_string(str);
 
       if (items && classStr.length() > 2) {
         auto parts = std::vector<std::string>();
@@ -90,6 +113,10 @@ void FrequencyList<T>::Parse0(const std::string &str,
 }
 
 template <typename T> std::string FrequencyList<T>::ToString() const {
+  if (OutIndex != 0)
+    return std::string("out_item:") +
+           std::to_string(OutIndex); // It must be consistent with Parse0 method
+
   if constexpr (std::is_same<T, std::string>())
     return mValue;
   else if constexpr (std::is_same<T, boost::gregorian::date>())

@@ -142,6 +142,7 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
 
     if (adjustLeadLags && len != 0) {
       auto v = list0.at(i);
+
       v->StartFrequency.get()->Next(-len);
       v->Name = v->Name + std::string("(") +
                 (len > 0 ? std::string("+") : std::string("")) +

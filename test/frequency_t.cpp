@@ -445,6 +445,49 @@ TEST(Frequency_t, list_string) {
   q2.Next(2);
   EXPECT_EQ(true, q3.IsEqualTo(q4));
 
+  //     out
+  //          forward
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(2);
+  EXPECT_EQ(q2.mValue, std::string("D"));
+  q2.Next(1);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:1"));
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(3);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:1"));
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(4);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:2"));
+  q2.Next(1);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:3"));
+  q2.Next(10);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:13"));
+
+  //          backward
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(-1);
+  EXPECT_EQ(q2.ToString(), std::string("A"));
+  q2.Next(-1);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-1"));
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(-3);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-2"));
+  q2 = FrequencyList<std::string>(std::string("B"), &items);
+  q2.Next(-4);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-3"));
+  q2.Next(-1);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-4"));
+  q2.Next(-4);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-8"));
+  q2.Next(4);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-4"));
+  q2.Next(4);
+  EXPECT_EQ(q2.ToString(), std::string("A"));
+  q2.Next(-1);
+  EXPECT_EQ(q2.ToString(), std::string("out_item:-1"));
+  q2.Next(4);
+  EXPECT_EQ(q2.ToString(), std::string("D"));
+
   q2 = FrequencyList<std::string>(std::string("B"), &items);
   q3 = FrequencyList<std::string>(std::string("C"), &items);
   q3.Next(-1);
@@ -464,6 +507,15 @@ TEST(Frequency_t, list_string) {
   EXPECT_EQ(1, q2.Minus(q1));
   EXPECT_EQ(3, q4.Minus(q1));
   EXPECT_EQ(-3, q1.Minus(q4));
+
+  //     out
+  q2.Next(10);
+  EXPECT_EQ(11, q2.Minus(q1));
+  q3.Next(-10);
+  EXPECT_EQ(-8, q3.Minus(q1));
+  q4.Next(2);
+  q1.Next(-3);
+  EXPECT_EQ(8, q4.Minus(q1));
 
   // Parse
   FrequencyClass fc;

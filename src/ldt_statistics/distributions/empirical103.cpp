@@ -134,20 +134,11 @@ void DistributionEmpirical103::Combine(
     return;
   }
 
-  auto optim = LimitedMemoryBFGSB(1);
-  std::unique_ptr<Tv[]> start = std::unique_ptr<Tv[]>(new Tv[1]);
-  auto mstart = Matrix<Tv>(start.get(), 1, 1);
-
-  std::unique_ptr<Tv[]> storage =
-      std::unique_ptr<Tv[]>(new Tv[optim.StorageSize]);
-  std::unique_ptr<Tv[]> work = std::unique_ptr<Tv[]>(new Tv[optim.WorkSize]);
-
+  // we find an x which minimizes the distance between prob and weighted
+  // average of the CDFs
   Tv prob = NAN;
-  std::function<Tv(const Matrix<Tv> &)> objective =
-      [&weight, &prob, &dists, &weights](const Matrix<Tv> &xm) -> Tv {
-    Tv x = xm.Data[0];
-    // we find an x which minimizes the distance between prob and weighted
-    // average of the CDFs
+  std::function<Tv(const Tv &)> objective = [&weight, &prob, &dists,
+                                             &weights](const Tv &x) -> Tv {
     Tv wa = 0;
     if (weights.size() == 0)
       for (Ti j = 0; j < dists.size(); j++)
@@ -155,25 +146,11 @@ void DistributionEmpirical103::Combine(
     else
       for (Ti j = 0; j < dists.size(); j++)
         wa += weights.at(j) * dists.at(j)->GetCDFApprox(x);
-
     return std::abs(wa - prob);
   };
 
-  auto derv = ldt::Derivative(1, true, false);
-  auto derv_work = std::unique_ptr<Tv[]>(new Tv[derv.WorkSize]);
-  std::function<void(const Matrix<Tv> &, Matrix<Tv> &)> gradient =
-      [&](const Matrix<Tv> &x, Matrix<Tv> &grad) -> void {
-    derv.CalculateFirst(objective, x, grad.Data, derv_work.get());
-  };
-
   // x cannot be less than start
-  Tv fix_start = NAN;
-  std::function<void(Matrix<Tv> &)> constraint =
-      [&fix_start](const Matrix<Tv> &xm) -> void {
-    Tv x = xm.Data[0];
-    if (x < fix_start)
-      xm.Data[0] = fix_start;
-  };
+  Tv start;
 
   for (Ti i = 0; i < 103; i++) {
     prob = i == 0     ? 0.0001
@@ -187,14 +164,11 @@ void DistributionEmpirical103::Combine(
       for (Ti j = 0; j < dists.size(); j++)
         if (mi > dists.at(j)->CDFs->at(0))
           mi = dists.at(j)->CDFs->at(0);
-      mstart.Data[0] = mi;
+      start = mi;
     }
-    fix_start = mstart.Data[0];
-
-    // optim.Minimize(objective, mstart, work.get(), &constraint);
-
-    optim.Minimize(objective, gradient, mstart, storage.get(), work.get(),
-                   nullptr, nullptr);
+    auto optim_x =
+        NelderMead::Minimize1(objective, start, 0.1, 500, 1e-8, start, NAN);
+    start = std::get<0>(optim_x);
 
     /*for (int t = 0; t < 1000000; t++) {
       auto diff = objective(mstart);
@@ -203,6 +177,6 @@ void DistributionEmpirical103::Combine(
       mstart.Data[0] += 0.00001;
     }*/
 
-    result.at(i) = optim.Xstar->Data[0];
+    result.at(i) = start;
   }
 }
