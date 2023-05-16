@@ -37,9 +37,10 @@ double LDT_GetDistributionProperty(int distributionType, int propertyType,
   return NAN;
 }
 
-void LDT_GetDistributionCDFs(int distributionType, double *probs,
-                             int probsLength, double *result, double param1,
-                             double param2, double param3, double param4) {
+void LDT_GetDistributionQuantiles(int distributionType, double *probs,
+                                  int probsLength, double *result,
+                                  double param1, double param2, double param3,
+                                  double param4) {
 
   API_BEGIN()
 
@@ -51,6 +52,26 @@ void LDT_GetDistributionCDFs(int distributionType, double *probs,
     result[i] = dist.get()->GetQuantile(probs[i]);
 
   API_END()
+}
+
+std::vector<double *> *LDT_CombineDistribution103(std::vector<double *> *dists,
+                                                  double *dist, double *weights,
+                                                  double *result) {
+  API_BEGIN()
+  if (!dists)
+    return new std::vector<double *>();
+  else if (dist)
+    dists->push_back(dist);
+  else if (result) { // calculate
+    std::vector<DistributionEmpirical103> vec;
+    for (int i = 0; i < dists->size(); i++)
+      vec.push_back(DistributionEmpirical103(dists->at(i)));
+    DistributionEmpirical103::Combine(vec, weights, result);
+  } else {
+    delete dists;
+  }
+  API_END()
+  return nullptr;
 }
 
 // #pragma endregion

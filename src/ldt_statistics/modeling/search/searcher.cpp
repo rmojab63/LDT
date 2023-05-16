@@ -28,7 +28,7 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
   this->mFixFirstItems = fixFirstItems;
   this->pGroupIndexMap = &groupIndexMap;
 
-  for (auto i = 0; i < this->pGroupIndexMap->size(); i++)
+  for (auto i = 0; i < (int)this->pGroupIndexMap->size(); i++)
     this->GroupSizes.push_back(this->pGroupIndexMap->at(i).size());
 
   GroupIndexes = Matrix<Ti>(new Ti[SizeG], SizeG, (Ti)1);
@@ -225,7 +225,7 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
       if (fixFirstI == 0)
         return true;
       // does it contain any fixed items?
-      else if (g->size() > innerIndexes.Data[0] &&
+      else if ((int)g->size() > innerIndexes.Data[0] &&
                g->at(innerIndexes.Data[0]) < fixFirstI)
         return true;
     }

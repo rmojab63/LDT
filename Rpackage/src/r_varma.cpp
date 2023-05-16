@@ -324,6 +324,9 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
         VarmaSimulation(sizes, simFixSize, simHorizons_, measures, &optim, true,
                         restriction, true, hasPcaY ? &pcaOptionsY0 : nullptr,
                         hasPcaX ? &pcaOptionsX0 : nullptr);
+
+    simModel.KeepDetails = true; // option?!
+
     auto W0 = std::unique_ptr<double[]>(new double[simModel.WorkSize]);
     S0 = std::unique_ptr<double[]>(
         new double[simModel.StorageSize]); // don't override S
@@ -336,6 +339,30 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
 
     if (printMsg)
       Rprintf("Simulation Finished.\n");
+  }
+
+  // Simulation Details
+  NumericMatrix simDetails(0, 9);
+  colnames(simDetails) = CharacterVector::create("sampleEnd","measureIndex",
+           "horizon", "targetIndex", "last", "actual", "forecast", "error", "std");
+
+  if (simFixSize > 0){
+    simDetails = NumericMatrix(simModel.Details.size(),9);
+
+    int h = -1;
+
+    for (const auto &a : simModel.Details) {
+      h++;
+      simDetails(h,0) = std::get<0>(a);
+      simDetails(h,1) = std::get<1>(a);
+      simDetails(h,2) = std::get<2>(a);
+      simDetails(h,3) = std::get<3>(a);
+      simDetails(h,4) = std::get<4>(a);
+      simDetails(h,5) = std::get<5>(a);
+      simDetails(h,6) = std::get<6>(a);
+      simDetails(h,7) = std::get<7>(a);
+      simDetails(h,8) = std::get<8>(a);
+    }
   }
 
   // Simulation Failures
@@ -456,6 +483,7 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
                             ? R_NilValue
                             : (SEXP)List::create(_["validCounts"] =
                                                      wrap(simModel.ValidCounts),
+                                                     _["details"] = simDetails,
                                                  _["failed"] = simFails),
       _["info"] =
           List::create(_["y"] = y, _["x"] = x, _["pcaOptionsY"] = pcaOptionsY,

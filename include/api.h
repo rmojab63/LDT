@@ -43,10 +43,15 @@ LDT_C_EXPORT double LDT_GetDistributionProperty(int distributionType,
                                                 double param2, double param3,
                                                 double param4);
 
-LDT_C_EXPORT void LDT_GetDistributionCDFs(int distributionType, double *probs,
-                                          int probsLength, double *result,
-                                          double param1, double param2,
-                                          double param3, double param4);
+LDT_C_EXPORT void LDT_GetDistributionQuantiles(int distributionType,
+                                               double *probs, int probsLength,
+                                               double *result, double param1,
+                                               double param2, double param3,
+                                               double param4);
+
+LDT_C_EXPORT std::vector<double *> *
+LDT_CombineDistribution103(std::vector<double *> *dists, double *dist,
+                           double *weights, double *result);
 
 // #pragma endregion
 

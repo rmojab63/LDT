@@ -890,6 +890,7 @@ TEST(Varma_T, var_extended2) {
   auto horizons = std::vector<Ti>(horizon);
   std::iota(horizons.begin(), horizons.end(), 1);
   auto sim = VarmaSimulation(sizes, 1, horizons, measures, nullptr, true);
+  sim.KeepDetails = true;
   S = new Tv[sim.StorageSize];
   W = new Tv[sim.WorkSize];
   sim.CalculateE(S, W, data);
@@ -1022,6 +1023,7 @@ TEST(Varma_T, outofsample) {
   // bool keepdetails = true;
   auto measures = std::vector<ScoringType>({ScoringType::kRmse});
   auto sim = VarmaSimulation(sizes, outcount, horizons, measures, nullptr);
+  sim.KeepDetails = true;
   auto W = new Tv[sim.WorkSize];
   auto S = new Tv[sim.StorageSize];
   bool cancel = false;
@@ -1131,6 +1133,7 @@ TEST(Varma_T, outofsample_compare) { // row-wise and extended
 
   auto sim_ex =
       VarmaSimulation(sizes, outcount, horizons, measures, nullptr, true);
+  sim_ex.KeepDetails = true;
   auto W = new Tv[sim_ex.WorkSize];
   auto S = new Tv[sim_ex.StorageSize];
   sim_ex.CalculateE(S, W, data, 1e12, 2, false, true);
@@ -1171,6 +1174,7 @@ TEST(Varma_T, outofsample_dir) {
   auto measures = std::vector<ScoringType>(
       {ScoringType::kCrps, ScoringType::kDirection, ScoringType::kRmse});
   auto sim = VarmaSimulation(sizes, outcount, horizons, measures);
+  sim.KeepDetails = true;
   auto W = new Tv[sim.WorkSize];
   auto S = new Tv[sim.StorageSize];
   bool cancel = false;

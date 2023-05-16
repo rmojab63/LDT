@@ -451,8 +451,6 @@ public:
 
   const std::vector<ScoringType> *pMeasures = nullptr;
 
-  // bool mKeepDetails;
-
   Varma Model;
   VarmaForecast Forecast;
   VarmaExtended EModel;
@@ -468,7 +466,11 @@ public:
 
   Ti ValidCounts = 0;
 
-  // std::vector<VarmaSimulationDetail*>* Details;
+  bool KeepDetails = false;
+
+  /// @brief The items are: sample end, measure index, horizon, target index,
+  /// last value, actual value, forecast, forecast error, std
+  std::vector<std::tuple<Ti, Ti, Ti, Ti, Tv, Tv, Tv, Tv, Tv>> Details;
 
   VarmaSimulation(){};
 
