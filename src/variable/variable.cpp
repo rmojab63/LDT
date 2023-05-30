@@ -266,5 +266,86 @@ template <typename Tw> std::tuple<Ti, Ti> Variable<Tw>::Interpolate(Ti &count) {
     throw std::logic_error("invalid operation"); // there is no NAN
 }
 
+template <typename Tw> void Variable<Tw>::ConvertTo_Daily(Variable &result) {
+
+  if (StartFrequency.get()->mClass == FrequencyClass::kListDate) {
+    auto startList =
+        dynamic_cast<FrequencyList<boost::gregorian::date> const &>(
+            *StartFrequency.get());
+    result.Data.clear();
+
+    auto dates = startList.pItems;
+    auto minmax = std::minmax_element(dates->begin(), dates->end());
+    auto min_date = *minmax.first;
+    auto duration = (*minmax.second) - min_date;
+
+    for (int i = 0; i <= duration.days(); ++i) {
+      auto date_to_find = min_date + boost::gregorian::days(i);
+      auto it = std::find(dates->begin(), dates->end(), date_to_find);
+      if (it != dates->end()) {
+        int index = std::distance(dates->begin(), it);
+        result.Data.push_back(Data.at(index));
+      } else { // not found
+        result.Data.push_back(NAN);
+      }
+    }
+    result.Name = Name;
+    result.StartFrequency = std::move(FrequencyWeekBased::Daily(min_date));
+    result.Fields.insert(std::pair("conversion", "from date-list"));
+
+  } else
+    throw std::logic_error(
+        "Converting from current type of frequency to 'Daily' frequency is not "
+        "supported (or not implemented).");
+}
+
+template <typename Tw>
+void Variable<Tw>::PartitionData(std::vector<Tv> &data,
+                                 std::vector<std::vector<Tv>> &result, Ti size,
+                                 bool fromEnd) {
+  result.clear();
+  if (fromEnd) {
+    for (Ti i = (Ti)data.size(); i >= 0; i -= size) {
+      int start = std::max(i - size, 0);
+      result.insert(result.begin(),
+                    std::vector<Tv>(data.begin() + start, data.begin() + i));
+    }
+  } else {
+    for (Ti i = 0; i < (Ti)data.size(); i += size) {
+      int end = std::min(i + size, static_cast<int>(data.size()));
+      result.emplace_back(data.begin() + i, data.begin() + end);
+    }
+  }
+}
+
+template <typename Tw>
+void Variable<Tw>::ConvertTo_MultiDaily(
+    Variable &result, int k,
+    const std::function<double(const std::vector<double> &)> &aggregateFunc,
+    bool fromEnd) {
+
+  if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
+
+    std::vector<std::vector<double>> partitions;
+    PartitionData(Data, partitions, k, fromEnd);
+    std::vector<double> newdata;
+    for (int i = 0; i < (int)partitions.size(); i++) {
+      newdata.push_back(aggregateFunc(partitions.at(i)));
+    }
+
+    result.Data = newdata;
+    result.Name = Name;
+
+    auto start =
+        dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
+    result.StartFrequency =
+        std::move(FrequencyWeekBased::MultiDaily(start.mDay, k));
+
+  } else
+    throw std::logic_error("Converting from current type of frequency to "
+                           "'Multi-Day' frequency is not "
+                           "supported (or not implemented).");
+}
+
 template class ldt::Variable<Tv>;
 // template class ldt::Variable < Ti>;

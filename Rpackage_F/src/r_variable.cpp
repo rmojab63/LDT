@@ -1,17 +1,30 @@
-#include "r_tsExtra.h"
+#include "r_tsdata.h"
 
 using namespace Rcpp;
 using namespace ldt;
 
 // [[Rcpp::export(.Variable)]]
-List Variable(std::vector<double> data, std::string name, SEXP startFrequency,
-              List fields) {
+List Variable(SEXP data, SEXP name, SEXP startFrequency, SEXP fields) {
   List V =
       List::create(_["data"] = data, _["name"] = name,
                    _["startFrequency"] = startFrequency, _["fields"] = fields);
   V.attr("class") = std::vector<std::string>({"ldtv", "list"});
   return V;
 }
+
+List GetVariableForR(ldt::Variable<double> &v) {
+  auto sf = v.StartFrequency.get()->ToString();
+  auto sfc = v.StartFrequency.get()->ToClassString();
+  // TODO: fields
+
+  List V =
+    List::create(_["data"] = wrap(v.Data), _["name"] = wrap(v.Name),
+                 _["startFrequency"] = Parse_F(sf, sfc), _["fields"] = R_NilValue);
+
+  V.attr("class") = std::vector<std::string>({"ldtv", "list"});
+  return V;
+}
+
 
 void UpdateVariableFromSEXP(
     Rcpp::List w, ldt::Variable<double> &variable,

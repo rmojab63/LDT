@@ -132,12 +132,8 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 #' Use this to calculate long-run growth of a time-series data.
 #'
 #' @param data (numeric vector) Determines the data of the series.
-#' @param trimStart (integer) If the number of leading \code{NA}s is larger than this number, it returns \code{NA}. Otherwise, it finds the first number and continues the calculations..
-#' @param trimEnd (integer) Similar to \code{trimStart}, but for the end of the series.
 #' @param continuous (logical) if \code{TRUE}, it will use the continuous formula.
-#' @param skipZero (logical) if \code{TRUE}, leading and trailing zeros are skipped.
 #' @param isPercentage (logical) If the unit of measurement in \code{data} is percentage (e.g., growth rate), use \code{TRUE}. The long-run growth rate is calculated by the arithmetic mean for the continuous case and the geometric mean otherwise. If missing data exists, it returns \code{NA}.
-#' @param ... additional arguments
 #'
 #' @details
 #' A variable can have continuous growth (\eqn{y(t)=y(0) (1+g_1)(1+g_2)\ldots (1+g_t)})
@@ -157,13 +153,9 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 #'             isPercentage = TRUE, continuous = FALSE)
 #' # Note that 'g' is different from 'mean(y)'.
 #'
-get.longrun.growth <- function(data, trimStart = 0, trimEnd = 0,
-                          continuous = FALSE, skipZero = TRUE, isPercentage = FALSE, ...) {
+get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE, ...) {
   data <- as.numeric(data)
-  trimStart <- as.integer(trimStart)
-  trimEnd <- as.integer(trimEnd)
   continuous = as.logical(continuous)
-  skipZero = as.logical(skipZero)
   isPercentage = as.logical(isPercentage)
 
   N <- length(data)
@@ -171,39 +163,6 @@ get.longrun.growth <- function(data, trimStart = 0, trimEnd = 0,
   J <- N
   start <- data[[I]]
   end <- data[[J]]
-
-  is.na.zero <- function(d, skipz) {
-    return(is.na(d) || (skipz && d == 0))
-  }
-
-  if (is.na.zero(start, skipZero) && trimStart > 0) {
-    for (i in c(1:(trimStart + 1))) {
-      I <- i
-      start <- data[[I]]
-      if (is.na.zero(start, skipZero) == FALSE) {
-        break
-      }
-    }
-  }
-  if (is.na.zero(start, skipZero)) {
-    return(NA)
-  }
-
-  if (is.na.zero(end, skipZero) && trimEnd > 0) {
-    for (i in c(1:trimEnd)) {
-      J <- N - i
-      end <- data[[J]]
-      if (is.na.zero(end, skipZero) == FALSE) {
-        break
-      }
-    }
-  }
-  if (is.na.zero(end, skipZero)) {
-    return(NA)
-  }
-  if (J < I) {
-    return(NA)
-  }
 
   if (isPercentage) {
     data <- data[I:J]

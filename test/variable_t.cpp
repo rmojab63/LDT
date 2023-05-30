@@ -91,3 +91,42 @@ TEST(Variable_t, range) {
   ASSERT_EQ(std::get<1>(range), (Ti)6);
   ASSERT_EQ(hasmissing, false);
 }
+
+TEST(Variable_t, convert_datelist) {
+
+  std::vector<boost::gregorian::date> dates;
+  dates.push_back(boost::gregorian::from_string("2022-06-10"));
+  dates.push_back(boost::gregorian::from_string("2022-06-08"));
+  dates.push_back(boost::gregorian::from_string("2022-06-12"));
+  Variable<Tv> v;
+  v.Name = std::string("V1");
+  v.StartFrequency = std::unique_ptr<Frequency>(
+      new FrequencyList<boost::gregorian::date>(dates.at(0), &dates));
+  v.Data.insert(v.Data.end(), {2, 1, 3});
+
+  Variable<Tv> w;
+  v.ConvertTo_Daily(w);
+
+  ASSERT_EQ(5, w.Data.size());
+  ASSERT_EQ(1, w.Data.at(0));
+  ASSERT_EQ(2, w.Data.at(2));
+  ASSERT_EQ(3, w.Data.at(4));
+  ASSERT_TRUE(std::isnan(w.Data.at(1)));
+  ASSERT_TRUE(std::isnan(w.Data.at(3)));
+}
+
+TEST(Variable_t, partition) {
+
+  auto v = std::vector<Tv>({1, 2, 3, 4, 5, 6, 7});
+  std::vector<std::vector<Tv>> partitions;
+  Variable<Tv>::PartitionData(v, partitions, 2, false);
+  ASSERT_EQ(4, partitions.size());
+  ASSERT_EQ(std::vector<Tv>({1, 2}), partitions.at(0));
+  ASSERT_EQ(std::vector<Tv>({7}), partitions.at(3));
+
+  // backward
+  Variable<Tv>::PartitionData(v, partitions, 2, true);
+  ASSERT_EQ(4, partitions.size());
+  ASSERT_EQ(std::vector<Tv>({1}), partitions.at(0));
+  ASSERT_EQ(std::vector<Tv>({6, 7}), partitions.at(3));
+}

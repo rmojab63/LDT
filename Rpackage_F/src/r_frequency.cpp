@@ -1,4 +1,4 @@
-#include "r_tsExtra.h"
+#include "r_tsdata.h"
 
 using namespace Rcpp;
 using namespace ldt;

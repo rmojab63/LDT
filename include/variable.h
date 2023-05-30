@@ -76,6 +76,17 @@ public:
   std::tuple<Ti, Ti> GetRange(bool &hasMissing);
 
   std::tuple<Ti, Ti> Interpolate(Ti &count);
+
+  void ConvertTo_Daily(Variable &result);
+
+  static void PartitionData(std::vector<Tv> &data,
+                            std::vector<std::vector<Tv>> &result, Ti size,
+                            bool fromEnd = true);
+
+  void ConvertTo_MultiDaily(
+      Variable &result, int k,
+      const std::function<double(const std::vector<double> &)> &aggregateFunc,
+      bool fromEnd = true);
 };
 
 /// @brief A class for grouping a list of variables with similar frequencies
