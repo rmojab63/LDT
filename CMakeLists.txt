@@ -133,6 +133,29 @@ SET(LDT_HEADER_DIR ${PROJECT_SOURCE_DIR}/include
 				   ${PROJECT_SOURCE_DIR}/include/math/statistics/inference/models
 				   )
 
+# ------ Rcpp: Frequency package
+
+file(GLOB SOURCES_F 
+ include/ldt_base.h
+ include/helpers.h
+ include/frequency.h
+ include/variable.h
+ src/helpers.cpp
+ src/variable/variables.cpp
+ src/variable/variable.cpp
+ src/frequency/f_base.cpp
+ src/frequency/f_cross_section.cpp
+ src/frequency/f_year_based.cpp
+ src/frequency/f_week_based.cpp
+ src/frequency/f_list.cpp
+ src/frequency/f_day_based.cpp
+)
+file(COPY ${SOURCES_F} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage_F/src)
+file(COPY ${SOURCES_F} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage_F/src)
+message(STATUS "Source files and headers are copied to Rpackage_F/src directory.")
+
+# ------
+
 # ------ Rcpp: Copy files to R/src directory (They are ignored by git)
 file(COPY ${SOURCES} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage/src)
 foreach (hd ${LDT_HEADER_DIR})

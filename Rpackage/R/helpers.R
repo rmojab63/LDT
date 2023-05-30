@@ -1,5 +1,5 @@
 
-#' Remove NA and Count the Number of Observations in Different Scenarios
+#' Removes NA and Count the Number of Observations in Different Scenarios
 #'
 #' When a matrix has NA, one can omit columns with NA or rows with NA or a combination of these two.
 #' Total number of observations is a function the order.

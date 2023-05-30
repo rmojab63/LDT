@@ -375,8 +375,9 @@ IndexRange Matrix<Tw>::GetRangeColumn(bool &hasMissing, Ti j) const {
         break;
       }
     return range;
-  } else if constexpr (true)
+  } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
+  }
 }
 
 template <typename Tw>
@@ -406,8 +407,9 @@ IndexRange Matrix<Tw>::GetRangeRow(bool &hasMissing, Ti i) const {
         break;
       }
     return range;
-  } else if constexpr (true)
+  } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
+  }
 }
 
 template <typename Tw>
@@ -444,8 +446,9 @@ IndexRange Matrix<Tw>::InterpolateColumn(Ti &count, Ti colIndex) {
       }
     }
     return range;
-  } else if constexpr (true)
+  } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
+  }
 }
 
 template <typename Tw>

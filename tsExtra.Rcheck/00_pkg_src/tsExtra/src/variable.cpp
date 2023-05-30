@@ -231,7 +231,7 @@ template <typename Tw> std::tuple<Ti, Ti> Variable<Tw>::Interpolate(Ti &count) {
 
     bool hasMissing = false;
     auto range = GetRange(hasMissing);
-    count = 0;
+    Ti count = 0;
     if (hasMissing) {
       bool inMissing = false;
       Tw first = NAN, last = NAN;

@@ -1,0 +1,29 @@
+Package: tsdata
+Title: time-series data
+Version: 0.1.0.0
+Authors@R: c(
+    person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")))
+Description: provides a set of tools for managing time-series data, 
+    with a particular emphasis on defining various frequency types such 
+    as daily and weekly. It assists users in preparing time-series 
+    data for further analysis.
+License: GPL (>= 3)
+URL: https://github.com/rmojab63/LDT
+VignetteBuilder: knitr
+Encoding: UTF-8
+SystemRequirements: C++17
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 3.5.0)
+Imports:
+    Rcpp
+Suggests:
+    knitr,
+    testthat,
+    rmarkdown,
+    kableExtra
+LinkingTo: 
+    BH,
+    Rcpp
+Config/testthat/edition: 3

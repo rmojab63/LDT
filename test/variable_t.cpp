@@ -65,3 +65,29 @@ TEST(Variable_t, trim) {
   EXPECT_EQ(v1.Data, v2.Data);
   EXPECT_EQ(true, v1.StartFrequency.get()->IsEqualTo(*v2.StartFrequency.get()));
 }
+
+TEST(Variable_t, range) {
+
+  Variable<Tv> v1;
+  v1.Name = std::string("V1");
+  v1.StartFrequency = std::unique_ptr<Frequency>(new FrequencyCrossSection(1));
+  v1.Data.insert(v1.Data.end(), {NAN, 1, 2, 3, 4, 5, 6, NAN, NAN});
+
+  Variable<Tv> v2;
+  v2.Name = std::string("V2");
+  v2.StartFrequency = std::unique_ptr<Frequency>(new FrequencyCrossSection(1));
+  v2.Data.insert(v2.Data.end(), {NAN, NAN, 2, 3, NAN, 5, NAN, NAN, NAN});
+
+  auto vs = Variables<Tv>(std::vector<Variable<Tv> *>({&v1, &v2}));
+
+  bool hasmissing;
+  auto range = vs.GetRange(1, hasmissing);
+  ASSERT_EQ(std::get<0>(range), (Ti)2);
+  ASSERT_EQ(std::get<1>(range), (Ti)5);
+  ASSERT_EQ(hasmissing, true);
+
+  range = vs.GetRange(0, hasmissing);
+  ASSERT_EQ(std::get<0>(range), (Ti)1);
+  ASSERT_EQ(std::get<1>(range), (Ti)6);
+  ASSERT_EQ(hasmissing, false);
+}
