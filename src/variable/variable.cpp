@@ -152,7 +152,7 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
         result.Data.push_back(std::stod(d));
       } else if constexpr (std::is_same<Tw, float>()) {
         result.Data.push_back(std::stof(d));
-      } else if constexpr (std::is_same<Tw, int>()) {
+      } else if constexpr (std::is_same<Tw, Ti>()) {
         result.Data.push_back(std::stoi(d));
       } else if constexpr (std::is_same<Tw, long long>()) {
         result.Data.push_back(std::stoll(d));
@@ -177,98 +177,46 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
   }
 }
 
-template <typename Tw>
-std::tuple<Ti, Ti> Variable<Tw>::GetRange(bool &hasMissing) {
+template <typename Tw> IndexRange Variable<Tw>::GetRange(bool &hasMissing) {
 
-  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-    Ti start, end;
-    hasMissing = false;
-    for (start = 0; start < (Ti)Data.size(); start++)
-      if (std::isnan(Data.at(start)) == false)
-        break;
-
-    for (end = Data.size(); end > 0; end--)
-      if (std::isnan(Data.at(end - 1)) == false) {
-        end--;
-        break;
-      }
-
-    if (start > end)
-      return std::tuple(start, end);
-
-    for (Ti i = start; i <= end; i++)
-      if (std::isnan(Data.at(i))) {
-        hasMissing = true;
-        break;
-      }
-
-    return std::tuple(start, end);
-
-  } else if constexpr (true) {
-    throw std::logic_error("invalid operation"); // there is no NAN
-  }
+  auto range = Array<Tw>::GetRange(&Data[0], (Ti)Data.size(), hasMissing);
+  return range;
 }
 
-template <typename Tw> std::tuple<Ti, Ti> Variable<Tw>::Trim() {
+template <typename Tw> IndexRange Variable<Tw>::Trim() {
   bool hasMissing = false;
   auto range = GetRange(hasMissing);
-  auto start = std::get<0>(range);
-  auto end = std::get<1>(range);
-  if (start > end)
+
+  if (range.IsNotValid())
     return range;
 
-  auto count = end - start + 1;
+  auto count = range.EndIndex - range.StartIndex + 1;
   if (count != (Ti)Data.size()) {
-    Data = {Data.begin() + start, Data.begin() + end + 1};
-    StartFrequency.get()->Next(start);
+    Data = {Data.begin() + range.StartIndex, Data.begin() + range.EndIndex + 1};
+    StartFrequency.get()->Next(range.StartIndex);
   }
   return range;
 }
 
-template <typename Tw> std::tuple<Ti, Ti> Variable<Tw>::Interpolate(Ti &count) {
+template <typename Tw> IndexRange Variable<Tw>::Interpolate(Ti &count) {
 
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
 
-    bool hasMissing = false;
-    auto range = GetRange(hasMissing);
-    count = 0;
-    if (hasMissing) {
-      bool inMissing = false;
-      Tw first = NAN, last = NAN;
-      Ti length = 1;
-      auto start = std::get<0>(range);
-      auto end = std::get<1>(range);
-
-      Tw *col = &Data[0];
-      for (Ti i = start; i <= end; i++) {
-        auto isNaN = std::isnan(col[i]);
-        if (isNaN)
-          length++;
-        if (isNaN == false && inMissing) {
-          last = col[i];
-          // calculate and set
-          Tw step = (last - first) / length;
-          for (int p = 1; p < length; p++) {
-            col[i - p] = col[i] - p * step;
-            count++;
-          }
-          length = 1;
-          inMissing = false;
-        }
-        if (isNaN && inMissing == false) {
-          first = col[i - 1];
-          inMissing = true;
-        }
-      }
-    }
+    auto range = Array<Tw>::Interpolate(&Data[0], (Ti)Data.size(), count);
     return range;
+
   } else if constexpr (true)
     throw std::logic_error("invalid operation"); // there is no NAN
 }
 
-template <typename Tw> void Variable<Tw>::ConvertTo_Daily(Variable &result) {
+template <typename Tw>
+void Variable<Tw>::ConvertTo_Daily(
+    Variable &result,
+    const std::function<Tv(const std::vector<Tv> &)> *aggregateFunc) const {
 
-  if (StartFrequency.get()->mClass == FrequencyClass::kListDate) {
+  auto mclass = StartFrequency.get()->mClass;
+
+  if (mclass == FrequencyClass::kListDate) {
     auto startList =
         dynamic_cast<FrequencyList<boost::gregorian::date> const &>(
             *StartFrequency.get());
@@ -279,11 +227,11 @@ template <typename Tw> void Variable<Tw>::ConvertTo_Daily(Variable &result) {
     auto min_date = *minmax.first;
     auto duration = (*minmax.second) - min_date;
 
-    for (int i = 0; i <= duration.days(); ++i) {
+    for (Ti i = 0; i <= duration.days(); ++i) {
       auto date_to_find = min_date + boost::gregorian::days(i);
       auto it = std::find(dates->begin(), dates->end(), date_to_find);
       if (it != dates->end()) {
-        int index = std::distance(dates->begin(), it);
+        Ti index = std::distance(dates->begin(), it);
         result.Data.push_back(Data.at(index));
       } else { // not found
         result.Data.push_back(NAN);
@@ -293,44 +241,56 @@ template <typename Tw> void Variable<Tw>::ConvertTo_Daily(Variable &result) {
     result.StartFrequency = std::move(FrequencyWeekBased::Daily(min_date));
     result.Fields.insert(std::pair("conversion", "from date-list"));
 
-  } else
-    throw std::logic_error(
-        "Converting from current type of frequency to 'Daily' frequency is not "
-        "supported (or not implemented).");
-}
+  } else if (mclass == FrequencyClass::kDailyInWeek) {
+    auto startF =
+        dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
+    result.Data.clear();
 
-template <typename Tw>
-void Variable<Tw>::PartitionData(std::vector<Tv> &data,
-                                 std::vector<std::vector<Tv>> &result, Ti size,
-                                 bool fromEnd) {
-  result.clear();
-  if (fromEnd) {
-    for (Ti i = (Ti)data.size(); i >= 0; i -= size) {
-      int start = std::max(i - size, 0);
-      result.insert(result.begin(),
-                    std::vector<Tv>(data.begin() + start, data.begin() + i));
+    auto range = startF.mRange;
+    auto startDay = startF.mDay;
+
+    auto weekSize = range.GetLength();
+    auto weekEndCount = 7 - weekSize;
+    auto numWeeks = std::ceil((Tv)Data.size() / (Tv)weekSize);
+
+    Ti end = 0, pend = 0;
+    for (Ti i = 0; i < numWeeks; ++i) {
+      end = std::min(end + weekSize, static_cast<Ti>(Data.size()));
+      for (Ti p = pend; p < end; p++)
+        result.Data.push_back(Data.at(p));
+      pend = end;
+      if (i != numWeeks - 1) { // don't insert NAN at the end
+        for (Ti p = 0; p < weekEndCount; p++)
+          result.Data.push_back(NAN);
+      }
     }
-  } else {
-    for (Ti i = 0; i < (Ti)data.size(); i += size) {
-      int end = std::min(i + size, static_cast<int>(data.size()));
-      result.emplace_back(data.begin() + i, data.begin() + end);
-    }
-  }
+    result.Name = Name;
+    result.StartFrequency = std::move(FrequencyWeekBased::Daily(startDay));
+    result.Fields.insert(std::pair("conversion", "from date-list"));
+
+  } else
+    throw std::logic_error("Direct conversion from current type of frequency "
+                           "to 'Daily' frequency is not "
+                           "supported (or not implemented).");
 }
 
 template <typename Tw>
 void Variable<Tw>::ConvertTo_MultiDaily(
-    Variable &result, int k,
-    const std::function<double(const std::vector<double> &)> &aggregateFunc,
-    bool fromEnd) {
+    Variable &result, Ti k,
+    const std::function<Tv(const std::vector<Tv> &)> *aggregateFunc,
+    bool fromEnd) const {
 
   if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
 
-    std::vector<std::vector<double>> partitions;
-    PartitionData(Data, partitions, k, fromEnd);
-    std::vector<double> newdata;
-    for (int i = 0; i < (int)partitions.size(); i++) {
-      newdata.push_back(aggregateFunc(partitions.at(i)));
+    if (!aggregateFunc)
+      throw std::logic_error("Aggregate function is missing.");
+    auto aggF = *aggregateFunc;
+
+    std::vector<std::vector<Tv>> partitions;
+    Array<Tw>::PartitionEqual(Data, partitions, k, fromEnd);
+    std::vector<Tv> newdata;
+    for (Ti i = 0; i < (Ti)partitions.size(); i++) {
+      newdata.push_back(aggF(partitions.at(i)));
     }
 
     result.Data = newdata;
@@ -341,10 +301,119 @@ void Variable<Tw>::ConvertTo_MultiDaily(
     result.StartFrequency =
         std::move(FrequencyWeekBased::MultiDaily(start.mDay, k));
 
-  } else
-    throw std::logic_error("Converting from current type of frequency to "
-                           "'Multi-Day' frequency is not "
-                           "supported (or not implemented).");
+  } else {
+    throw std::logic_error(
+        "Direct conversion from current type of frequency to "
+        "'Multi-Day' frequency is not "
+        "supported (or not implemented).");
+  }
+}
+
+template <typename Tw>
+void Variable<Tw>::ConvertTo_Weekly(
+    Variable &result, DayOfWeek firstDayOfWeek,
+    const std::function<Tv(const std::vector<Tv> &)> *aggregateFunc) const {
+
+  if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
+
+    if (!aggregateFunc)
+      throw std::logic_error("Aggregate function is missing.");
+    auto aggF = *aggregateFunc;
+
+    auto start =
+        dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
+    auto wd = start.mDay.day_of_week();
+    auto pre_end = FromString_DayOfWeek(ToLower(wd.as_short_string()));
+    auto diff = DayOfWeekRange::Distance(firstDayOfWeek, pre_end, true);
+
+    std::vector<std::vector<Tv>> weeks;
+    std::vector<Tv> newdata;
+
+    if (diff == 0) {
+
+      Array<Tw>::PartitionEqual(Data, weeks, 7, false);
+      for (Ti i = 0; i < (Ti)weeks.size(); i++)
+        newdata.push_back(aggF(weeks.at(i)));
+
+    } else { // insert NAN and make it the first day of the week
+
+      auto copydata = Data;
+      for (Ti i = 0; i < diff; i++)
+        copydata.insert(copydata.begin(), NAN);
+      Array<Tw>::PartitionEqual(copydata, weeks, 7, false);
+      for (Ti i = 0; i < (Ti)weeks.size(); i++)
+        newdata.push_back(aggF(weeks.at(i)));
+    }
+    result.Data = newdata;
+    result.Name = Name;
+    boost::gregorian::date_duration dd(diff);
+    result.StartFrequency =
+        std::move(FrequencyWeekBased::Weekly(start.mDay - dd));
+
+  } else {
+    throw std::logic_error(
+        "Direct conversion from current type of frequency to "
+        "'Weekly' frequency is not "
+        "supported (or not implemented).");
+  }
+}
+
+static Ti get_part(boost::gregorian::date date, Ti x) {
+  auto day_of_year = date.day_of_year();
+  int partition;
+  if (boost::gregorian::gregorian_calendar::is_leap_year(date.year()))
+    partition = ((day_of_year - 1) / 366.0) * x + 1;
+  else
+    partition = ((day_of_year - 1) / 365.0) * x + 1;
+  return partition;
+}
+
+template <typename Tw>
+void Variable<Tw>::ConvertTo_XxYear(
+    Variable &result, Ti x,
+    const std::function<Tv(const std::vector<Tv> &)> *aggregateFunc) const {
+
+  /*if (mclass == FrequencyClass::kListDate) { // It can be more efficient
+    } else*/
+  if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
+    auto start =
+        dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
+
+    if (!aggregateFunc)
+      throw std::logic_error("Aggregate function is missing.");
+    auto aggF = *aggregateFunc;
+
+    result.Data.clear();
+    std::vector<Tv> partdata;
+
+    auto current_part = get_part(start.mDay, x);
+    auto part = current_part;
+
+    for (Ti i = 0; i < (Ti)Data.size(); i++) {
+
+      auto day = start.mDay + boost::gregorian::date_duration(i);
+      part = get_part(day, x);
+
+      if (part != current_part) {
+        result.Data.push_back(aggF(partdata));
+        partdata.clear();
+      }
+      partdata.push_back(Data.at(i));
+      current_part = part;
+    }
+    if (partdata.size() > 0)
+      result.Data.push_back(aggF(partdata));
+
+    result.Name = Name;
+    result.StartFrequency = std::move(FrequencyYearBased::XTimesAYear(
+        start.mDay.year(), x, get_part(start.mDay, x)));
+
+  } else {
+    throw std::logic_error(
+        "Direct conversion from current type of frequency to "
+        "'x times a year' frequency is not "
+        "supported (or not implemented).");
+  }
 }
 
 template class ldt::Variable<Tv>;

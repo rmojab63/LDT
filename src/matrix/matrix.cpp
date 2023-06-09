@@ -351,30 +351,11 @@ bool Matrix<Tw>::Equals(const Matrix<Tw> &m, Tw &abs_diff, Tw epsilon,
 template <typename Tw>
 IndexRange Matrix<Tw>::GetRangeColumn(bool &hasMissing, Ti j) const {
   if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-    hasMissing = false;
-    Ti start;
-    Ti end;
-    for (start = 0; start < RowsCount; start++)
-      if (std::isnan(Get0(start, j)) == false)
-        break;
 
-    for (end = RowsCount; end > 0; end--)
-      if (std::isnan(Get0(end - 1, j)) == false) {
-        end--;
-        break;
-      }
-
-    auto range = IndexRange(start, end);
-
-    if (range.IsNotValid())
-      return range;
-
-    for (Ti i = range.StartIndex; i <= range.EndIndex; i++)
-      if (std::isnan(Get0(i, j))) {
-        hasMissing = true;
-        break;
-      }
+    Tw *col = &Data[RowsCount * j];
+    auto range = Array<Tw>::GetRange(col, RowsCount, hasMissing);
     return range;
+
   } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
   }
@@ -414,38 +395,13 @@ IndexRange Matrix<Tw>::GetRangeRow(bool &hasMissing, Ti i) const {
 
 template <typename Tw>
 IndexRange Matrix<Tw>::InterpolateColumn(Ti &count, Ti colIndex) {
-  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
-    bool hasMissing = false;
-    auto range = GetRangeColumn(hasMissing, colIndex);
-    count = 0;
-    if (hasMissing) {
-      bool inMissing = false;
-      Tw first = NAN, last = NAN;
-      Ti length = 1;
 
-      Tw *col = &Data[RowsCount * colIndex];
-      for (Ti i = range.StartIndex; i <= range.EndIndex; i++) {
-        auto isNaN = std::isnan(col[i]);
-        if (isNaN)
-          length++;
-        if (isNaN == false && inMissing) {
-          last = col[i];
-          // calculate and set
-          Tw step = (last - first) / length;
-          for (int p = 1; p < length; p++) {
-            col[i - p] = col[i] - p * step;
-            count++;
-          }
-          length = 1;
-          inMissing = false;
-        }
-        if (isNaN && inMissing == false) {
-          first = col[i - 1];
-          inMissing = true;
-        }
-      }
-    }
+  if constexpr (std::numeric_limits<Tw>::has_quiet_NaN) {
+
+    Tw *col = &Data[RowsCount * colIndex];
+    auto range = Array<Tw>::Interpolate(col, RowsCount, count);
     return range;
+
   } else if constexpr (true) {
     throw std::logic_error("invalid operation"); // there is no NAN
   }
@@ -1806,24 +1762,6 @@ std::string Matrix<Tw>::ToString_R_Matrix(std::streamsize precesion,
   str << ")";
   return str.str();
 }
-
-// #pragma endregion
-
-// #pragma region Index Range
-
-IndexRange::IndexRange(Ti start, Ti end) {
-  if (start > end || start < 0 || end < 0) {
-    StartIndex = 1;
-    EndIndex = 0;
-  } else {
-    StartIndex = start;
-    EndIndex = end;
-  }
-}
-
-bool IndexRange::IsNotValid() const { return StartIndex > EndIndex; }
-
-Ti IndexRange::Count() const { return EndIndex - StartIndex + 1; }
 
 // #pragma endregion
 

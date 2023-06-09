@@ -180,7 +180,7 @@ void Sur::estim_un(Ti N, Ti m, Tv *work,
   condition_number = xtx.Norm('1'); // condition number
   auto info = xtx.Inv0();
   if (info != 0) {
-    throw exp_mat_sin; // Matrix<Tv> singularity
+    throw std::logic_error("matrix singularity");
     return;
   }
   condition_number *= xtx.Norm('1');
@@ -263,7 +263,7 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
   auto info =
       gamma_var.Inv0(); //                      [R'(V^{-1} o pX'pX)R]^{-1}
   if (info != 0) {
-    throw exp_mat_sin; // Matrix<Tv> singularity
+    throw std::logic_error("matrix singularity");
     return;
   }
   condition_number *= gamma_var.Norm('1');

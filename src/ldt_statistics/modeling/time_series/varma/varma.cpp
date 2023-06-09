@@ -278,7 +278,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         Result.cn = sxx.Norm('1');
         info = sxx.Inv0();
         if (info != 0) {
-          throw exp_mat_sin; // Matrix<Tv> singularity
+          throw std::logic_error("matrix singularity");
           return;
         }
         Result.cn *= sxx.Norm('1');
@@ -324,7 +324,8 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.cn = sxx.Norm('1');
           info = sxx.Inv0();
           if (info != 0) {
-            throw exp_mat_sin; // Matrix<Tv> singularity
+            throw std::logic_error("matrix singularity");
+            ; // Matrix<Tv> singularity
             return;
           }
           Result.cn *= sxx.Norm('1');
@@ -354,7 +355,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         info = Result.gammavar.Inv0();
 
         if (info != 0) {
-          throw exp_mat_sin; // Matrix<Tv> singularity
+          throw std::logic_error("matrix singularity");
           return;
         }
         Result.cn *= Result.gammavar.Norm('1'); // TODO: is it valid?!

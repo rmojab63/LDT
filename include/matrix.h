@@ -1,5 +1,6 @@
 #pragma once
 
+#include "array.h"
 #include "helpers.h"
 #include "ldt_base.h"
 #include <algorithm> // std::sort, std::stable_sort
@@ -8,42 +9,7 @@
 #include <string>
 #include <vector>
 
-// #pragma region Exceptions
-
-/// @brief inversion of a singular Matrix
-static const char exp_mat_sin[] = "mat_sin";
-
-// #pragma endregion
-
 namespace ldt {
-
-/// @brief A range with an start and end indices
-class LDT_EXPORT IndexRange {
-
-public:
-  /// @brief Starting index of the range
-  Ti StartIndex = 0;
-
-  /// @brief Ending index of the range
-  Ti EndIndex = 0;
-
-  /// @brief Initializes a new instance of the class
-  IndexRange(){};
-
-  /// @brief Initializes a new instance of the class
-  /// @param start Starting index of the range
-  /// @param end Ending index of the range
-  IndexRange(Ti start, Ti end);
-
-  /// @brief Determines whether this range is invalid (start > end, start < 0,
-  /// end < 0)
-  /// @return true if the range is not valid, false otherwise
-  bool IsNotValid() const;
-
-  /// @brief Number of elements in this range. It is 1 if start==end
-  /// @return Number of elements in this range
-  Ti Count() const;
-};
 
 /// @brief A matrix with an array
 /// @tparam Tw type of data in the matrix array

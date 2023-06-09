@@ -122,6 +122,7 @@ file(GLOB SOURCES
  src/frequency/f_day_based.cpp
 
  src/helpers.cpp
+ src/array.cpp
   
 )
  
@@ -137,10 +138,12 @@ SET(LDT_HEADER_DIR ${PROJECT_SOURCE_DIR}/include
 
 file(GLOB SOURCES_F 
  include/ldt_base.h
+ include/array.h
  include/helpers.h
  include/frequency.h
  include/variable.h
  src/helpers.cpp
+ src/array.cpp
  src/variable/variables.cpp
  src/variable/variable.cpp
  src/frequency/f_base.cpp
@@ -299,6 +302,7 @@ if(BUILD_TEST)
 	 test/data_split_t.cpp 
 	 test/frequency_t.cpp 
 	 test/variable_t.cpp 
+	 test/array_t.cpp 
    ) 
   
 	 enable_testing()

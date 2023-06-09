@@ -195,7 +195,7 @@ public:
   /// from \p start to \p end
   /// @param start First point
   /// @param end Second point
-  /// @param forward It true, we move forward until we reach \p forward
+  /// @param forward It true, we move forward until we reach \p end
   /// @return The distance
   static Ti Distance(DayOfWeek start, DayOfWeek end, bool forward);
 

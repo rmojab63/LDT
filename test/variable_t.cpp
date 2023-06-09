@@ -92,7 +92,7 @@ TEST(Variable_t, range) {
   ASSERT_EQ(hasmissing, false);
 }
 
-TEST(Variable_t, convert_datelist) {
+TEST(Variable_t, con_daylist_daily) {
 
   std::vector<boost::gregorian::date> dates;
   dates.push_back(boost::gregorian::from_string("2022-06-10"));
@@ -105,7 +105,7 @@ TEST(Variable_t, convert_datelist) {
   v.Data.insert(v.Data.end(), {2, 1, 3});
 
   Variable<Tv> w;
-  v.ConvertTo_Daily(w);
+  v.ConvertTo_Daily(w, nullptr);
 
   ASSERT_EQ(5, w.Data.size());
   ASSERT_EQ(1, w.Data.at(0));
@@ -115,18 +115,109 @@ TEST(Variable_t, convert_datelist) {
   ASSERT_TRUE(std::isnan(w.Data.at(3)));
 }
 
-TEST(Variable_t, partition) {
+TEST(Variable_t, con_dayinweek_daily) {
 
-  auto v = std::vector<Tv>({1, 2, 3, 4, 5, 6, 7});
-  std::vector<std::vector<Tv>> partitions;
-  Variable<Tv>::PartitionData(v, partitions, 2, false);
-  ASSERT_EQ(4, partitions.size());
-  ASSERT_EQ(std::vector<Tv>({1, 2}), partitions.at(0));
-  ASSERT_EQ(std::vector<Tv>({7}), partitions.at(3));
+  auto range = DayOfWeekRange(DayOfWeek::kSat, DayOfWeek::kWed);
+  Variable<Tv> v;
+  v.Name = std::string("V1");
+  v.StartFrequency = std::move(FrequencyWeekBased::DailyInWeek(
+      boost::gregorian::from_string("2023-06-07"), range, true));
+  v.Data.insert(v.Data.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 
-  // backward
-  Variable<Tv>::PartitionData(v, partitions, 2, true);
-  ASSERT_EQ(4, partitions.size());
-  ASSERT_EQ(std::vector<Tv>({1}), partitions.at(0));
-  ASSERT_EQ(std::vector<Tv>({6, 7}), partitions.at(3));
+  Variable<Tv> w;
+  v.ConvertTo_Daily(w, nullptr);
+  ASSERT_EQ(12, w.Data.size());
+  ASSERT_EQ(1, w.Data.at(0));
+  ASSERT_EQ(5, w.Data.at(4));
+  ASSERT_TRUE(std::isnan(w.Data.at(5)));
+  ASSERT_TRUE(std::isnan(w.Data.at(6)));
+  ASSERT_EQ(6, w.Data.at(7));
+  ASSERT_EQ(10, w.Data.at(11));
+
+  // smaller week
+  range = DayOfWeekRange(DayOfWeek::kSat, DayOfWeek::kTue);
+  v.StartFrequency = std::move(FrequencyWeekBased::DailyInWeek(
+      boost::gregorian::from_string("2023-06-07"), range, true));
+  v.ConvertTo_Daily(w, nullptr);
+  ASSERT_EQ(16, w.Data.size());
+  ASSERT_EQ(1, w.Data.at(0));
+  ASSERT_EQ(4, w.Data.at(3));
+  ASSERT_TRUE(std::isnan(w.Data.at(4)));
+  ASSERT_TRUE(std::isnan(w.Data.at(6)));
+  ASSERT_EQ(5, w.Data.at(7));
+  ASSERT_EQ(10, w.Data.at(15));
+  ASSERT_TRUE(std::isnan(w.Data.at(11)));
+  ASSERT_TRUE(std::isnan(w.Data.at(13)));
+}
+
+TEST(Variable_t, con_daily_weekly) {
+
+  Variable<Tv> v;
+  v.Name = std::string("V1");
+  v.StartFrequency =
+      FrequencyWeekBased::Daily(boost::gregorian::from_string("2023-05-29"));
+  v.Data.insert(v.Data.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14});
+
+  std::function<double(const std::vector<double> &)> func =
+      [](const std::vector<double> &v) {
+        Tv m;
+        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        return m;
+      };
+  Variable<Tv> w;
+
+  v.ConvertTo_Weekly(w, DayOfWeek::kSat, &func);
+  ASSERT_EQ((1 + 2 + 3 + 4 + 5) / 5.0, w.Data.at(0));
+  ASSERT_EQ((6 + 7.0 + 8 + 9 + 10 + 11 + 12) / 7.0, w.Data.at(1));
+  ASSERT_EQ((13.0 + 14) / 2.0, w.Data.at(2));
+
+  v.ConvertTo_Weekly(w, DayOfWeek::kMon, &func);
+  ASSERT_EQ(4, w.Data.at(0));
+  ASSERT_EQ(11, w.Data.at(1));
+}
+
+TEST(Variable_t, con_daily_monthly) {
+
+  Variable<Tv> v;
+  v.Name = std::string("V1");
+  v.StartFrequency =
+      FrequencyWeekBased::Daily(boost::gregorian::from_string("2023-06-01"));
+  v.Data = std::vector<double>(70);
+  std::iota(v.Data.begin(), v.Data.begin() + 70, 1);
+
+  std::function<double(const std::vector<double> &)> func =
+      [](const std::vector<double> &v) {
+        Tv m;
+        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        return m;
+      };
+
+  Variable<Tv> w;
+
+  v.ConvertTo_XxYear_month_based<12>(w, &func);
+  ASSERT_EQ(15.5, w.Data.at(0));
+  ASSERT_EQ(46, w.Data.at(1));
+  ASSERT_EQ(66, w.Data.at(2));
+}
+
+TEST(Variable_t, con_daily_5xyear) {
+
+  Variable<Tv> v;
+  v.Name = std::string("V1");
+  v.StartFrequency =
+      FrequencyWeekBased::Daily(boost::gregorian::from_string("2023-01-01"));
+  v.Data = std::vector<double>(5 * 365);
+  std::iota(v.Data.begin(), v.Data.begin() + 5 * 365, 1);
+
+  std::function<double(const std::vector<double> &)> func =
+      [](const std::vector<double> &v) {
+        Tv m;
+        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        return m;
+      };
+
+  Variable<Tv> w;
+
+  v.ConvertTo_XxYear(w, 5, &func);
+  ASSERT_EQ(25, w.Data.size());
 }

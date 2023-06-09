@@ -280,12 +280,16 @@ bool Contains(const std::vector<T> &vec, const T &element) {
   return false;
 }
 
+LDT_EXPORT const char *ToLower(const char *str);
+
 /// @brief Determines if a character array starts with another (smaller)
 /// character array
 /// @param code smaller character array
 /// @param str the original array
 /// @return true if \p str starts with \p code, false otherwise
 LDT_EXPORT bool StartsWith(const char *code, const char *str);
+
+LDT_EXPORT bool EndsWith(const char *code, const char *str);
 
 LDT_EXPORT bool AreEqual_i(const char *first, const char *second);
 

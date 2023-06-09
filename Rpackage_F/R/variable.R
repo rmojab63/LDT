@@ -128,7 +128,7 @@ print.ldtv <- function(x, ...) {
 #' # convert it to data.frame
 #' df1 <- to.data.frame(v1)
 #'
-to.data.frame <- function(x, ...) {
+as.data.frame.ldtv <- function(x, ...) {
   if (is.null(x)) {
     stop("argument is null.")
   }

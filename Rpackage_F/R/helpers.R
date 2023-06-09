@@ -185,3 +185,29 @@ get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE, .
 }
 
 
+
+
+
+
+
+#' Get Descriptive Statistics
+#'
+#' Use this function to get descriptive statistics of a numeric vector.
+#'
+#' @param data A numeric vector that contains the data.
+#' @param type Its a character array that determines the type of the descriptive statistics.
+#' @param skipNAN If \code{TRUE}, it checks for and skips any \code{NA}s. If you are sure that data does not have \code{NA} set it to be \code{False}.
+#'
+#' @return An array with different sizes based on the inputs
+#'
+get.descriptive <- function(data, type, skipNAN){
+
+  # TODO: test
+
+  type = as.character(type)
+  data = as.numeric(data)
+  skipNAN = as.logical(skipNAN)
+
+  res = .Get_Descriptive(data, type, skipNAN)
+  res
+}
