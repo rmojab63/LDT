@@ -13,10 +13,10 @@ test_that("Bind Variables works with lag/lead adjustments", {
   mat[4,3]=NaN
   freq <- f.monthly(2022,12)
 
-  v1 <- variable(mat[,1],"V1",freq, list())
-  v2 <- variable(mat[,2],"V2",freq, list())
-  v3 <- variable(mat[,3],"V3",freq, list())
-  v4 <- variable(mat[,4],"V4",freq, list())
+  v1 <- variable(mat[,1], freq, "V1")
+  v2 <- variable(mat[,2], freq, "V2")
+  v3 <- variable(mat[,3], freq, "V3")
+  v4 <- variable(mat[,4], freq, "V4")
 
   res <- bind.variables(list(v1,v2,v3,v4),interpolate = FALSE, adjustLeadLags = FALSE,
                             numExo = 0, horizon = 0)

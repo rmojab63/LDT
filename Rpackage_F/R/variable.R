@@ -4,8 +4,8 @@
 #' Use this to create data array with a frequency. It can have a name and other named fields.
 #'
 #' @param data Data of the variable.
-#' @param name Name of the variable.
 #' @param startFrequency Frequency of the first element.
+#' @param name Name of the variable.
 #' @param fields A list that contains named fields.
 #'
 #' @return An object of class \code{ldtv}. This is also a list with the following memebers:
@@ -21,11 +21,13 @@
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = variable(data,"V1",start_f, fields)
-variable <- function(data, name, startFrequency,
-         fields) {
+#' v1 = variable(data, start_f, "V1", fields)
+variable <- function(data, startFrequency = NULL, name = NULL, fields = NULL) {
   data = as.numeric(data)
-  name = as.character(name)
+  if (is.null(name) == FALSE)
+    name = as.character(name)
+  if (is.null(startFrequency))
+    startFrequency <- f.cross.section(1)
 
   res <- .Variable(data, name, startFrequency, fields)
   res
@@ -49,7 +51,7 @@ variable <- function(data, name, startFrequency,
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = variable(data,"V1",start_f, fields)
+#' v1 = variable(data,start_f, "V1", fields)
 #'
 #' #string representation:
 #' v1_str <- as.character(v1)
@@ -97,12 +99,12 @@ print.ldtv <- function(x, ...) {
     fields <- NULL
   }
   s <- .ToString_F0(x$startFrequency)
-  cat("variable:\n",
-      "    Name = ", x$name, "\n",
+  cat("Variable:\n",
+      "    Name = ", if (is.null(x$name)) "" else x$name, "\n",
       "    Length = ", length(x$data), "\n",
       "    Frequency Class = ", s$classType, ": ", s$class, "\n",
       "    Start Frequency = ", s$value, "\n",
-      "    Fields:\n", strrep(" ", 8), if (is.null(fields)) "" else fields,
+      "    Fields:", if (is.null(fields)) " NULL" else paste0("\n", strrep(" ", 8), fields),
       sep = ""
   )
   return(NULL)
@@ -123,7 +125,7 @@ print.ldtv <- function(x, ...) {
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = variable(data,"V1",start_f, fields)
+#' v1 = variable(data,start_f,"V1", fields)
 #'
 #' # convert it to data.frame
 #' df1 <- as.data.frame(v1)
@@ -174,8 +176,8 @@ as.data.frame.ldtv <- function(x, ...) {
 #'
 #' @export
 #' @examples
-#' v1 = variable(c(1,2,3,2,3,4,5),"V1",f.monthly(2022,12), list())
-#' v2 = variable(c(10,20,30,20,30,40,50),"V2",f.monthly(2022,8), list())
+#' v1 = variable(c(1,2,3,2,3,4,5),f.monthly(2022,12),"V1", list())
+#' v2 = variable(c(10,20,30,20,30,40,50),f.monthly(2022,8),"V2", list())
 #' L = bind.variables(list(v1,v2))
 bind.variables <- function(varList, interpolate = FALSE,
               adjustLeadLags = FALSE, numExo = 0,

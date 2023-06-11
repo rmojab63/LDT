@@ -31,7 +31,8 @@ void UpdateVariableFromSEXP(
     std::vector<std::string> &listItems,
     std::vector<boost::gregorian::date> &listItemsDate) {
 
-  variable.Name = as<std::string>(w["name"]);
+  if (w["name"] != R_NilValue)
+      variable.Name = as<std::string>(w["name"]);
 
   try {
     variable.StartFrequency = std::move(

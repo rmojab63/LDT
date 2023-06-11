@@ -33,8 +33,7 @@ message(STATUS "Project source directory: ${PROJECT_SOURCE_DIR}")
 
 file(GLOB SOURCES
  src/api.cpp  
-
-
+ 
  #src/ldt_statistics/modeling/time_series/expsmoothing.cpp
  #src/ldt_statistics/modeling/time_series/tsfilter.cpp 
  
@@ -166,7 +165,20 @@ file(GLOB HD "${hd}/*.h" )
 file(COPY ${HD} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage/src)
 endforeach()
 file(GLOB REMOVE_FILES  ${PROJECT_SOURCE_DIR}/Rpackage/src/api.h
-                        ${PROJECT_SOURCE_DIR}/Rpackage/src/api.cpp)
+                        ${PROJECT_SOURCE_DIR}/Rpackage/src/api.cpp 
+						${PROJECT_SOURCE_DIR}/Rpackage/src/frequency.h
+						${PROJECT_SOURCE_DIR}/Rpackage/src/variable.h 
+						${PROJECT_SOURCE_DIR}/Rpackage/src/variables.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/variable.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_base.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_cross_section.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_year_based.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_week_based.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_list.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/f_day_based.cpp
+						
+						${PROJECT_SOURCE_DIR}/Rpackage/src/empirical103.cpp
+						${PROJECT_SOURCE_DIR}/Rpackage/src/histogram.cpp)
 file(REMOVE ${REMOVE_FILES})
 message(STATUS "Source files and headers are copied to Rpackage/src directory.")
 # Copy copyright file to R package

@@ -187,94 +187,67 @@ GetPca <- function(x, center = TRUE, scale = TRUE, newX = NULL)
 
 
 
-
-#' Calculate Long-run Growth
+#' Gets Distances Between Variables
 #'
+#' @param data (numeric matrix) Data with variables in the columns.
+#' @param distance (string) Determines how distances are calculated. It can be \code{correlation}, \code{absCorrelation}, \code{euclidean}, \code{manhattan}, \code{maximum}.
+#' @param correlation (string) If \code{distance} is correlation, it determines the type of the correlation. It can be \code{pearson}, \code{spearman}.
+#' @param checkNan (bool) If false, \code{NAN}s are not omitted.
 #'
-#' @param data (integer vector) data
-#' @param trimStart (integer) if the number of leading NAs is larger
-#' than this number, it returns NA. Otherwise, it finds the first
-#' number and continue the calculations.
-#' @param trimEnd (integer) if the number of trailing NAs is larger
-#' than this number, it returns NA. Otherwise, it finds the first number
-#' and continue the calculations.
-#' @param cont (logical) if \code{TRUE} it will use the continuous formula.
-#' @param skipZero (logical) if \code{TRUE} leading and trailing
-#' zeros are skipped.
-#' @param isPercentage (logical) if the unit of measurement in \code{data}
-#' is percentage (e.g., growth rate) use \code{TRUE}. Long-run growth rate
-#' is calculated by arithmetic mean for continuous case, and geometric mean
-#' otherwise. If missing data exists, it returns NA.
-#' @param ... additional arguments
+#' @return A symmetric matrix (lower triangle as a vector).
 #'
-#' @return the growth rate (percentage)
 #' @export
+GetDistance <- function(data,
+                        distance = "correlation",
+                        correlation = "pearson",
+                        checkNan = TRUE) {
+  res <- .GetDistance(data, distance, correlation, checkNan)
+  res
+}
+
+#' Hierarchical Clustering
 #'
-#' @examples
-#' y <- c(NA, 0, c(60, 70, 80, 90), 0, NA, NA)
-#' g <- LongrunGrowth(y, 2, 3, skipZero = TRUE, isPercentage = TRUE, cont = TRUE)
 #'
-LongrunGrowth <- function(data, trimStart = 0, trimEnd = 0,
-                          cont = FALSE, skipZero = TRUE, isPercentage = FALSE, ...) {
-  data <- as.numeric(data)
-  trimStart <- as.integer(trimStart)
-  trimEnd <- as.integer(trimEnd)
+#' @param distances (numeric vector) Determines the distances. This must be the lower triangle of a (symmetric) distance matrix (without the diagonal).
+#' @param numVariables (int) Determines the number of variables. This should hold: '2 * length(\code{distances}) = \code{numVariables}(\code{numVariables} - 1)'.
+#' @param linkage (string) Determines how Distances are calculated in a left-right node merge. It can be \code{single}, \code{complete}, \code{uAverage}, \code{wAverage}, \code{ward}.
+#'
+#' @return A list:
+#' \item{merge}{(integer matrix)}
+#' \item{height}{(numeric vector)}
+#' \item{order}{(integer vector)}
+#'
+#' @export
+ClusterH <- function(distances, numVariables,
+                     linkage = "single"){
+  res <- .ClusterH(distances, numVariables, linkage)
+  res
+}
 
-  N <- length(data)
-  I <- 1
-  J <- N
-  start <- data[[I]]
-  end <- data[[J]]
 
-  is.na.zero <- function(d, skipz) {
-    return(is.na(d) || (skipz && d == 0))
-  }
+#' Groups Variables with Hierarchical Clustering
+#'
+#' @details The results might be different from R's 'cutree' function. I don't know how 'cutree' works, but here I iterate over the nodes and whenever a split occurs, I add a group until the required number of groups is reached.
+#'
+#' @param data (numeric matrix) Data with variables in the columns.
+#' @param nGroups (int) Number of groups
+#' @param threshold (double) A threshold for omitting variables. If distance between two variables in a group is less than this value, the second one will be omitted. Note that a change in the order of the columns might change the results.
+#' @param distance (string)  Determines how distances are calculated. It can be \code{correlation}, \code{absCorrelation}, \code{euclidean}, \code{manhattan}, \code{maximum}.
+#' @param linkage (string) Determines how Distances are calculated in a left-right node merge. It can be \code{single}, \code{complete}, \code{uAverage}, \code{wAverage}, \code{ward}.
+#' @param correlation (string) If \code{distance} is correlation, it determines the type of the correlation. It can be \code{pearson}, \code{spearman}.
+#'
+#' @return A list:
+#' \item{groups}{(of integer vectors) indexes of variables in each group.}
+#' \item{removed}{(integer vector) indexes of removed variables.}
+#'
+#' @export
+ClusterHGroup <- function(data, nGroups = 2, threshold = 0,
+                          distance = "correlation",
+                          linkage = "single",
+                          correlation = "pearson")
 
-  if (is.na.zero(start, skipZero) && trimStart > 0) {
-    for (i in c(1:(trimStart + 1))) {
-      I <- i
-      start <- data[[I]]
-      if (is.na.zero(start, skipZero) == FALSE) {
-        break
-      }
-    }
-  }
-  if (is.na.zero(start, skipZero)) {
-    return(NA)
-  }
-
-  if (is.na.zero(end, skipZero) && trimEnd > 0) {
-    for (i in c(1:trimEnd)) {
-      J <- N - i
-      end <- data[[J]]
-      if (is.na.zero(end, skipZero) == FALSE) {
-        break
-      }
-    }
-  }
-  if (is.na.zero(end, skipZero)) {
-    return(NA)
-  }
-  if (J < I) {
-    return(NA)
-  }
-
-  if (isPercentage) {
-    data <- data[I:J]
-    if (cont) {
-      return(mean(data))
-    } else {
-      d <- 1
-      for (i in data) {
-        d <- d * (i / 100 + 1)
-      }
-      return((d^(1 / (J - I + 1)) - 1) * 100)
-    }
-  } else {
-    if (cont) {
-      return(log(end / start) / (J - I) * 100)
-    } else {
-      return(((end / start)^(1 / (J - I)) - 1) * 100)
-    }
-  }
+{
+  res <- .ClusterHGroup(data, nGroups, threshold,
+                        distance, linkage, correlation)
+  res
 }

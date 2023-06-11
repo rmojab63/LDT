@@ -60,6 +60,9 @@ std::tuple<Matrix<Tv>, Matrix<Tv>>
 Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
                 Matrix<Tv> *intercept, Matrix<Tv> *exocoef, Matrix<Tv> *sigma,
                 Ti n, Ti skip, unsigned int seed, Matrix<Tv> *y0, Ti horizon) {
+
+  throw std::logic_error("Check the MNormal test.");
+
   Ti m = sigma ? sigma->ColsCount
                : (ar->size() > 0 ? ar->at(0)->ColsCount
                                  : (ma->size() > 0 ? ma->at(0)->ColsCount

@@ -47,7 +47,10 @@ enum class DescriptiveType {
   kVariance,
   kVariancePop,
   kStd,
-  kStdPop
+  kStdPop,
+
+  kLast,
+  kFirst
 
 };
 
@@ -70,6 +73,10 @@ inline const char *ToString(DescriptiveType v) {
     return "Variance (pop)";
   case DescriptiveType::kStdPop:
     return "Std (pop)";
+  case DescriptiveType::kFirst:
+    return "First";
+  case DescriptiveType::kLast:
+    return "Last";
 
   default:
     return "[Unknown DescriptiveType Method]";
@@ -96,9 +103,12 @@ inline DescriptiveType FromString_DescriptiveType(const char *v) {
       return DescriptiveType::kStdPop;
     else
       return DescriptiveType::kStd;
-  }
+  } else if (StartsWith("last", v))
+    return DescriptiveType::kLast;
+  else if (StartsWith("firs", v))
+    return DescriptiveType::kFirst;
 
-  throw std::logic_error("Invalid enum name: 'CorrelationMethod'.");
+  throw std::logic_error("Invalid enum name: 'DescriptiveType'.");
 }
 
 /// @brief A class for static array operations, that are for example needed both
@@ -154,6 +164,12 @@ public:
       break;
     case DescriptiveType::kMax:
       Max<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kLast:
+      Last<skipNAN>(data, length, result);
+      break;
+    case DescriptiveType::kFirst:
+      First<skipNAN>(data, length, result);
       break;
     case DescriptiveType::kMean:
       Mean<skipNAN>(data, length, result);

@@ -3,12 +3,10 @@
 
 #pragma once
 
-#include "frequency.h"
 #include "helpers.h"
 #include "matrix.h"
 #include "pca.h"
 #include "searchers.h"
-#include "variable.h"
 #include <Rcpp.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -82,16 +80,7 @@ IntegerMatrix as_imatrix(ldt::Matrix<int> &mat,
 IntegerVector as_ivector(ldt::Matrix<int> &vec,
                          std::vector<std::string> *names = nullptr);
 
-std::unique_ptr<ldt::FrequencyWeekBased> GetFreqFromSEXP_week(List f);
-
-std::unique_ptr<ldt::Frequency>
-GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
-                std::vector<boost::gregorian::date> &listItemsDate);
-
-std::unique_ptr<ldt::Variable<double>> GetVariableFromSEXP(List w);
-
 std::vector<std::string> GetDefaultColNames(std::string pre, int length);
-
 
 void UpdateRocOptions(bool printMsg, List &rocOptionsR,
                       ldt::RocOptions &options, const char *startMsg);

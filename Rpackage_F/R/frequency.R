@@ -492,8 +492,31 @@ f.multi.weekly <- function(year, month, day, k){
 }
 
 
+get_date <- function(dateString, asDateFun){
+  if (is.null(asDateFun))
+    date <- as.Date(dateString, tryFormats = c("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"))
+  else
+    date <- asDateFun(date)
 
+  year <- as.integer(format(date, "%Y"))
+  month <- as.integer(format(date, "%m"))
+  day <- as.integer(format(date, "%d"))
+  res <- list(year = year, month = month, day = day)
+  res
+}
 
+get_date_reformat <- function(dateString, asDateFun){
+  if (is.null(asDateFun))
+    date <- as.Date(dateString, tryFormats = c("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"))
+  else
+    date <- asDateFun(date)
+
+  year <- as.integer(format(date, "%Y"))
+  month <- as.integer(format(date, "%m"))
+  day <- as.integer(format(date, "%d"))
+  res <- sprintf("%04d%02d%02d", year, month, day)
+  res
+}
 
 
 #' Creates a Daily Frequency
@@ -503,6 +526,8 @@ f.multi.weekly <- function(year, month, day, k){
 #' @param year Year of the observation. It should be a valid year as an integer.
 #' @param month Month of the observation. It should be a valid month of year as an integer.
 #' @param day Day of the observation. It should be a valid day of month as an integer.
+#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
+#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
 #'
 #' @details
 #' In order to use \code{\link{as.frequency}} function for this type of frequency,
@@ -535,11 +560,21 @@ f.multi.weekly <- function(year, month, day, k){
 #' #   d_invalid <- as.frequency("20230132", "d") # invalid day in month
 #' #   d_invalid <- as.frequency("20231331", "d") # invalid month
 #'
-f.daily <- function(year, month, day){
+f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
 
-  year = as.integer(year)
-  month = as.integer(month)
-  day = as.integer(day)
+  if (is.null(dateString) == FALSE){
+    if (is.null(asDateFun) == FALSE)
+      asDateFun = as.function(asDateFun)
+    date <- get_date(dateString, asDateFun)
+    year <- date$year
+    month <- date$month
+    day <- date$day
+  }
+  else{
+    year = as.integer(year)
+    month = as.integer(month)
+    day = as.integer(day)
+  }
 
   if (year < 1400)
     stop("Invalid 'year'. It should be larger than 1400.")
@@ -560,6 +595,8 @@ f.daily <- function(year, month, day){
 #' @param month Month of the observation. It should be a valid month of year as an integer.
 #' @param day Day of the observation. It should be a valid day of month as an integer.
 #' @param k Number of days.
+#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
+#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
 #'
 #' @details
 #' In order to use \code{\link{as.frequency}} function for this type of frequency,
@@ -593,11 +630,22 @@ f.daily <- function(year, month, day){
 #' #   md_invalid <- as.frequency("20230132", "d4") # invalid day in month
 #' #   md_invalid <- as.frequency("20231331", "d5") # invalid month
 #'
-f.multi.daily <- function(year, month, day, k){
+f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NULL){
 
-  year = as.integer(year)
-  month = as.integer(month)
-  day = as.integer(day)
+  if (is.null(dateString) == FALSE){
+    if (is.null(asDateFun) == FALSE)
+      asDateFun = as.function(asDateFun)
+    date <- get_date(dateString, asDateFun)
+    year <- date$year
+    month <- date$month
+    day <- date$day
+  }
+  else{
+    year = as.integer(year)
+    month = as.integer(month)
+    day = as.integer(day)
+  }
+
   k = as.integer(k)
 
   if (year < 1400)
@@ -625,6 +673,8 @@ f.multi.daily <- function(year, month, day, k){
 #' @param weekStart First day of the week. It can be \code{sun}, \code{mon}, \code{tue}, \code{wed}, \code{thu}, \code{fri}, and \code{sat}.
 #' @param weekEnd Last day of the week. See \code{weekStart} for possible values. Together, they define the week
 #' @param forward If the current date is not in the week and this value is true, it moves forward to the first day of the week. If this value is false, it moves backward to the last day of the week.
+#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
+#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
 #'
 #' @details
 #' In order to use \code{\link{as.frequency}} function for this type of frequency,
@@ -672,11 +722,21 @@ f.multi.daily <- function(year, month, day, k){
 #' #   f.daily.in.week(2023, 5, 16, "Wednesday", "sat")
 #'
 f.daily.in.week <- function(year, month, day, weekStart = "mon",
-                          weekEnd = "fri", forward = TRUE){
+                          weekEnd = "fri", forward = TRUE, dateString = NULL, asDateFun = NULL){
 
-  year = as.integer(year)
-  month = as.integer(month)
-  day = as.integer(day)
+  if (is.null(dateString) == FALSE){
+    if (is.null(asDateFun) == FALSE)
+      asDateFun = as.function(asDateFun)
+    date <- get_date(dateString, asDateFun)
+    year <- date$year
+    month <- date$month
+    day <- date$day
+  }
+  else{
+    year = as.integer(year)
+    month = as.integer(month)
+    day = as.integer(day)
+  }
 
   weekStart = as.character(weekStart)
   weekEnd = as.character(weekEnd)
@@ -757,8 +817,10 @@ f.list.string <- function(items, value){
 #'
 #' Use this frequency for data with date labels. It is generally a list of dates, but it can be used to label observations outside this list.
 #'
-#' @param items Items of the in \code{YYYYMMDD} format.
-#' @param value Current value in \code{YYYYMMDD} format.
+#' @param items Items of the list in \code{YYYYMMDD} format.
+#' @param value Current value in \code{YYYYMMDD} format. If null, the first value in \code{items} is used.
+#' @param reformat If the elements of \code{items} is not in the given format, set it to be \code{TRUE}.
+#' @param asDateFun If given and \code{reformat} is \code{TRUE}, it will be used in converting the strings to the required format.
 #'
 #' @details
 #' In order to use \code{\link{as.frequency}} function for this type of frequency,
@@ -793,10 +855,21 @@ f.list.string <- function(items, value){
 #' #     'E' is not a member of the list
 #' #   Ld_invalid <- f.list.date(c("20231101","20220903","20200823","20230303"), "20231102")
 #'
-f.list.date <- function(items, value){
+f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 
-  value = as.character(value)
+  if (is.null(value) == FALSE)
+     value = as.character(value)
   items = as.character(items)
+
+  if (reformat){
+    if (is.null(asDateFun) == FALSE)
+      asDateFun = as.function(asDateFun)
+    items <- as.character(sapply(items, function(d)get_date_reformat(d, asDateFun)))
+    if (is.null(value) == FALSE)
+       value <- get_date_reformat(value, asDateFun)
+  }
+  if (is.null(value))
+    value <- items[[1]]
 
   res <- .F_list_date(items, value)
   res

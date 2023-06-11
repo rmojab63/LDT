@@ -21,7 +21,7 @@
 #'
 #' @examples
 #' startFreq <- f.list.date(c("20220904","20220901"), "20220901")
-#' v <- variable(c(4,1), "var", startFreq, list())
+#' v <- variable(c(4,1), startFreq)
 #' w <- convert.to.daily(v)
 convert.to.daily <- function(variable, aggregateFun = NULL){
 
@@ -49,7 +49,7 @@ res
 #'
 #' @examples
 #' startFreq <- f.daily(2022, 9, 1)
-#' v <- variable(c(1,2,3,4,5,6,7,8), "var", startFreq, list())
+#' v <- variable(c(1,2,3,4,5,6,7,8), startFreq)
 #' w <- convert.to.multidaily(v, 3, function(x)mean(x, na.rm=TRUE))
 convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 
@@ -83,7 +83,7 @@ convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 #'
 #' @examples
 #' startFreq <- f.daily(2022, 9, 1)
-#' v <- variable(c(1,2,3,4,5,6,7,8), "V", startFreq, list())
+#' v <- variable(c(1,2,3,4,5,6,7,8), startFreq)
 #' w <- convert.to.weekly(v, "mon", function(x)mean(x, na.rm=TRUE))
 #'
 convert.to.weekly <- function(variable, weekStart, aggregateFun){
@@ -113,7 +113,7 @@ convert.to.weekly <- function(variable, weekStart, aggregateFun){
 #'
 #' @examples
 #' startFreq <- f.daily(2023,1,1)
-#' v <- variable(c(1:(365*2)), "V", startFreq, list())
+#' v <- variable(c(1:(365*2)), startFreq)
 #' w <- convert.to.XxYear(v,12,function(x)mean(x))
 #'
 convert.to.XxYear <- function(variable, x, aggregateFun){

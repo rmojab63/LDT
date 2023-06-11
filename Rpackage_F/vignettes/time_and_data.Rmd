@@ -1,0 +1,115 @@
+---
+title: "Time & Data"
+output: rmarkdown::html_vignette
+bibliography: tdata.bib
+vignette: >
+  %\VignetteIndexEntry{Time & Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r library}
+library(tdata)
+```
+
+## Introduction
+In this vignette, I will introduce you to the main features of the `tdata` package. I will use various datasets to demonstrate how to perform common tasks, such as defining frequency types and converting data between frequencies.
+
+_Please note that currently, only one section is provided in this vignette. Additional examples will be added in subsequent updates._
+
+Let’s get started!
+
+## Oil Price 
+In the first example, I will use oil price data. The required data can be downloaded from the `Quandl` package using the following code (Note that the end date in this example may differ from yours):
+
+```{R eval=FALSE, include=TRUE}
+oil_price <- Quandl::Quandl("OPEC/ORB", start_date="2010-01-01")
+```
+```{R eval=TRUE, include=FALSE}
+oil_price <- tdata::oil_price
+```
+
+
+### 1. Create a Variable
+To manipulate data using the `tdata` package, we generally need to create a variable. In this example, we’ll create a variable from the oil price data. First, we’ll use the values in the first column to define a frequency. Since the first column contains a list of dates, we’ll use a ‘List-Date’ frequency:
+
+```{R} 
+start_freq <- f.list.date(oil_price$Date)
+```
+
+Now that we have defined the frequency, we can create a variable using the following code:
+
+```{R} 
+var_dl <- variable(oil_price$Value, start_freq, "Oil Price")
+```
+
+This creates an array where each element is labeled by a date. We can print this variable using the `print` function:
+
+```{R eval=FALSE, include=TRUE}
+print(var_dl)
+```
+```{R echo=FALSE}
+invisible(print(var_dl))
+```
+
+We can also convert the variable back to a data.frame using the `as.data.frame` function:
+
+```{R eval=FALSE, include=TRUE}
+df_var_dl <- as.data.frame(var_dl)
+```
+
+### 2. Daily Variable
+
+In this section, we’ll convert `var_dl` to a daily variable. This can be done by sorting the data and filling in any gaps. The `convert.to.daily` function can do this for us:
+
+```{R}
+var_daily <- convert.to.daily(var_dl)
+```
+
+Using this function is more efficient than manually sorting the data and filling in gaps because `var_daily`, as a daily variable, only stores a single date: the frequency of the first observation. Other frequencies (or dates) are inferred from this first date (except for ‘Lists’, this is true for other types of frequencies in the `tdata` package). We can print the starting frequency using the print function:
+
+```{R eval=FALSE, include=TRUE}
+print(var_daily$startFrequency)
+```
+```{R echo=FALSE}
+invisible(print(var_daily$startFrequency))
+```
+
+Each frequency in the `tdata` package has a string representation and a class ID. We can get these values using the following code:
+
+
+```{R}
+class_id <- get.class.id(var_daily$startFrequency)
+str_rep <- as.character(var_daily$startFrequency)
+```
+```{R echo=FALSE}
+invisible(print(paste0("class_id: ", class_id, ", str_rep: ", str_rep)))
+```
+
+Plotting the data is straightforward. We simply convert the data to a `data.frame` using the `as.data.frame` function and then plot it. However, I won’t plot the daily variable in this example because, since the original data was a ‘List-Date’, there are many `NA` values. In the next section, I’ll aggregate the data and plot it.
+
+### 3. Weekly Variable
+In this section, we’ll convert the daily variable to a weekly variable. Unlike the previous conversion, this involves aggregating the data rather than sorting and filling in gaps. To do this, we’ll need to use an aggregator function that takes an array of data as an argument and returns a scalar value. Summary statistic functions such as `mean` and `median` are natural choices for this (we’ll also need to handle `NA` values). In this example, I’ll use a built-in function to get the last available data point in each week as the representative value for that week. Here’s the code:
+
+```{R}
+var_weekly <- convert.to.weekly(var_daily, "mon", "last")
+```
+
+The second argument, `"mon"`, specifies that the week starts on Monday. Note that the weekly frequency points to the first day of the week. We can now convert the variable to a `data.frame` and plot it using the following code:
+
+
+```{R results='hide', fig.cap='Plotting the generated weekly data',fig.show='hold',fig.width=6}
+df_var_weekly <- as.data.frame(var_weekly)
+par(las = 2, cex.axis = 0.8)
+plot(factor(rownames(df_var_weekly)), 
+     df_var_weekly$`Oil Price`, 
+     xlab = NULL, ylab = "$", 
+     main = "Weekly Oil Price")
+```
+
+There are other frequency types and conversion functions available in the `tdata` package that you can explore on your own.
+
+
+
+
