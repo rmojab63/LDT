@@ -13,12 +13,12 @@ test_that("Bind Variables works with lag/lead adjustments", {
   mat[4,3]=NaN
   freq <- f.monthly(2022,12)
 
-  v1 <- Variable(mat[,1],"V1",freq, list())
-  v2 <- Variable(mat[,2],"V2",freq, list())
-  v3 <- Variable(mat[,3],"V3",freq, list())
-  v4 <- Variable(mat[,4],"V4",freq, list())
+  v1 <- variable(mat[,1],"V1",freq, list())
+  v2 <- variable(mat[,2],"V2",freq, list())
+  v3 <- variable(mat[,3],"V3",freq, list())
+  v4 <- variable(mat[,4],"V4",freq, list())
 
-  res <- BindVariables(list(v1,v2,v3,v4),interpolate = FALSE, adjustLeadLags = FALSE,
+  res <- bind.variables(list(v1,v2,v3,v4),interpolate = FALSE, adjustLeadLags = FALSE,
                             numExo = 0, horizon = 0)
   expected <- matrix(c(NaN,2,3,4,5,NaN,NaN,
                        8,9,10,11,NaN,NaN,NaN,
@@ -29,7 +29,7 @@ test_that("Bind Variables works with lag/lead adjustments", {
   expect_equal(expected, res$data)
   expect_equal(c(2,1,1,1,5,4,7,7,0,0,1,1,0,0,0,0,0,-1,2,2), as.numeric(res$info))
 
-  res <- BindVariables(list(v1,v2,v3,v4),interpolate = TRUE, adjustLeadLags = TRUE,
+  res <- bind.variables(list(v1,v2,v3,v4),interpolate = TRUE, adjustLeadLags = TRUE,
                        numExo = 0, horizon = 0)
   expected <- matrix(c(NaN,NaN,NaN,2,3,4,5,
                        NaN,NaN,NaN,8,9,10,11,
@@ -41,7 +41,7 @@ test_that("Bind Variables works with lag/lead adjustments", {
   expect_equal(c(4,4,1,1,7,7,7,7,0,0,0,0,0,0,2,2,0,0,0,0), as.numeric(res$info))
 
 
-  res <- BindVariables(list(v1,v2,v3,v4),interpolate = FALSE, adjustLeadLags = TRUE,
+  res <- bind.variables(list(v1,v2,v3,v4),interpolate = FALSE, adjustLeadLags = TRUE,
                        numExo = 1, horizon = 2)
   expected <- matrix(c(NaN,NaN,NaN,2,3,4,5,NaN,NaN,
                        NaN,NaN,NaN,8,9,10,11,NaN,NaN,

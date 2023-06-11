@@ -1,5 +1,5 @@
 
 
-#' @useDynLib tsdata
+#' @useDynLib tdata
 #' @importFrom Rcpp sourceCpp
 NULL

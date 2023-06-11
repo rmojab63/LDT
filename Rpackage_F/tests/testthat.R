@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(tsdata)
+library(tdata)
 
-test_check("tsdata")
+test_check("tdata")

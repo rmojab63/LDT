@@ -21,8 +21,8 @@
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = Variable(data,"V1",start_f, fields)
-Variable <- function(data, name, startFrequency,
+#' v1 = variable(data,"V1",start_f, fields)
+variable <- function(data, name, startFrequency,
          fields) {
   data = as.numeric(data)
   name = as.character(name)
@@ -35,7 +35,7 @@ Variable <- function(data, name, startFrequency,
 #'
 #' Use this to convert the variable in a compact form.
 #'
-#' @param w An object of class \code{ldtv}.
+#' @param x An object of class \code{ldtv}.
 #' @param ... Additional arguments.
 #'
 #' @details
@@ -49,13 +49,13 @@ Variable <- function(data, name, startFrequency,
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = Variable(data,"V1",start_f, fields)
+#' v1 = variable(data,"V1",start_f, fields)
 #'
 #' #string representation:
 #' v1_str <- as.character(v1)
 #'
-as.character.ldtv <- function(w, ...) {
-  res <- .VariableToString(w)
+as.character.ldtv <- function(x, ...) {
+  res <- .VariableToString(x)
   res
 }
 
@@ -97,7 +97,7 @@ print.ldtv <- function(x, ...) {
     fields <- NULL
   }
   s <- .ToString_F0(x$startFrequency)
-  cat("Variable:\n",
+  cat("variable:\n",
       "    Name = ", x$name, "\n",
       "    Length = ", length(x$data), "\n",
       "    Frequency Class = ", s$classType, ": ", s$class, "\n",
@@ -123,10 +123,10 @@ print.ldtv <- function(x, ...) {
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
-#' v1 = Variable(data,"V1",start_f, fields)
+#' v1 = variable(data,"V1",start_f, fields)
 #'
 #' # convert it to data.frame
-#' df1 <- to.data.frame(v1)
+#' df1 <- as.data.frame(v1)
 #'
 as.data.frame.ldtv <- function(x, ...) {
   if (is.null(x)) {
@@ -136,10 +136,10 @@ as.data.frame.ldtv <- function(x, ...) {
     stop("Invalid class.")
   }
   if (is.null(x$data)) {
-    stop("Variable's data array is null.")
+    stop("variable's data array is null.")
   }
   if (is.null(x$startFrequency)) {
-    stop("Variable's frequency is null.")
+    stop("variable's frequency is null.")
   }
 
   df <- as.data.frame(x$data)
@@ -156,11 +156,10 @@ as.data.frame.ldtv <- function(x, ...) {
 #'
 #' Use this to bind variables with the same class of frequency together.
 #'
-#' @param var A list of variables ((i.e., \code{ldtv} objects)) with similar frequency class.
+#' @param varList A list of variables ((i.e., \code{ldtv} objects)) with similar frequency class.
 #' @param interpolate If \code{TRUE}, missing observations are interpolated.
 #' @param adjustLeadLags If \code{TRUE}, leads and lags are adjusted with respect to the first variable.
-#' @param numEndo (integer) If \code{adjustLeadLags} is \code{TRUE}, this must be
-#' the number of endogenous variables. The rest is exogenous.
+#' @param numExo (integer) This is the number of exogenous variables.
 #' @param horizon (integer) If \code{adjustLeadLags} is \code{TRUE} and there is exogenous variables,
 #' this determines the required length of out-of-sample data. It creates lag of exogenous variables
 #' or omits \code{NaN}s to make data available.
@@ -175,10 +174,10 @@ as.data.frame.ldtv <- function(x, ...) {
 #'
 #' @export
 #' @examples
-#' v1 = Variable(c(1,2,3,2,3,4,5),"V1",f.monthly(2022,12), list())
-#' v2 = Variable(c(10,20,30,20,30,40,50),"V2",f.monthly(2022,8), list())
-#' L = BindVariables(list(v1,v2))
-BindVariables <- function(varList, interpolate = FALSE,
+#' v1 = variable(c(1,2,3,2,3,4,5),"V1",f.monthly(2022,12), list())
+#' v2 = variable(c(10,20,30,20,30,40,50),"V2",f.monthly(2022,8), list())
+#' L = bind.variables(list(v1,v2))
+bind.variables <- function(varList, interpolate = FALSE,
               adjustLeadLags = FALSE, numExo = 0,
               horizon = 0)
 {

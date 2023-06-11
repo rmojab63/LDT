@@ -1,15 +1,14 @@
-Package: tsdata
-Title: time-series data
+Package: tdata
+Title: Prepare Your Time-Series Data for Further Analysis
 Version: 0.1.0.0
 Authors@R: c(
     person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")))
-Description: provides a set of tools for managing time-series data, 
-    with a particular emphasis on defining various frequency types such 
-    as daily and weekly. It assists users in preparing time-series 
-    data for further analysis.
+Description: Provides a set of tools for managing time-series data,
+    with a particular emphasis on defining various frequency types such
+    as daily and weekly. It also includes functionality for converting
+    data between different frequencies.
 License: GPL (>= 3)
-URL: https://github.com/rmojab63/LDT
-VignetteBuilder: knitr
+URL: https://github.com/rmojab63/LDT 
 Encoding: UTF-8
 SystemRequirements: C++17
 Roxygen: list(markdown = TRUE)
@@ -19,10 +18,8 @@ Depends:
 Imports:
     Rcpp
 Suggests:
-    knitr,
     testthat,
-    rmarkdown,
-    kableExtra
+    rmarkdown
 LinkingTo: 
     BH,
     Rcpp

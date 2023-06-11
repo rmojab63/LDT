@@ -21,14 +21,15 @@ print.ldtf <- function(x, ...) {
 
 #' Converts Frequency to Character
 #'
-#' The format is explained in \code{F_?} functions.
+#' The format is explained in \code{f.?} functions.
 #'
-#' @param frequency value of the frequency. It must be an \code{ldtf} object returned from \code{F_?} functions.
+#' @param x value of the frequency. It must be an \code{ldtf} object returned from \code{f.?} functions.
+#' @param ... additional arguments.
 #'
 #' @return String representation of the value of the frequency
 #' @export
-as.character.ldtf <- function(frequency){
-  res <- .ToString_F(frequency)
+as.character.ldtf <- function(x, ...){
+  res <- .ToString_F(x)
   res
 }
 
@@ -36,10 +37,10 @@ as.character.ldtf <- function(frequency){
 #'
 #' Use this function to get the 'id' of a frequency class.
 #'
-#' @param frequency The frequency. It must be an \code{ldtf} object returned from \code{F_?} functions.
+#' @param frequency The frequency. It must be an \code{ldtf} object returned from \code{f.?} functions.
 #'
 #' @details
-#' You need this ‘id’ to convert the character back to the object. Some frequencies have a constant class id. For example, the class id for ‘monthly’ data is m. Some class ‘ids’ have parameters in them. Note that the format is explained in F_? functions.
+#' You need this ‘id’ to convert the character back to the object. Some frequencies have a constant class id. For example, the class id for ‘monthly’ data is m. Some class ‘ids’ have parameters in them. Note that the format is explained in f.? functions.
 #'
 #'
 #' @return A character that represents the class Id of this frequency.
@@ -59,7 +60,7 @@ get.class.id <- function(frequency){
 #' Similar to \code{as.character()} method. However, it returns the class id too.
 #'
 #' @param frequency value of the frequency. It must be an \code{ldtf}
-#' object returned from \code{F_?} functions.
+#' object returned from \code{f.?} functions.
 #'
 #' @return A list with the following items:
 #' \itemize{

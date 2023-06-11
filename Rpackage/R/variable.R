@@ -51,11 +51,11 @@ VariableToString <- function(w) {
 #' @examples
 #' v1 = ldt::Variable(c(1,2,3,2,3,4,5),"V1",F_Monthly(2022,12), list())
 #' v2 = ldt::Variable(c(10,20,30,20,30,40,50),"V2",F_Monthly(2022,8), list())
-#' L = ldt::BindVariables(list(v1,v2))
-BindVariables <- function(varList, interpolate = FALSE,
+#' L = ldt::bind.variables(list(v1,v2))
+bind.variables <- function(varList, interpolate = FALSE,
               adjustLeadLags = FALSE, numExo = 0,
               horizon = 0)
 {
-  res <- .BindVariables(varList, interpolate, adjustLeadLags, numExo, horizon)
+  res <- .bind.variables(varList, interpolate, adjustLeadLags, numExo, horizon)
   res
 }

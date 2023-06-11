@@ -29,7 +29,8 @@
 #' cs0_value_str <-  as.character(cs0) # this will be '10'.
 #' cs0_class_str <- get.class.id(cs0) # this will be 'cs'.
 #'
-#' cs_new <- as.frequency("20", "cs") # this is a cross-section frequency. It points to position 20.
+#' cs_new <- as.frequency("20", "cs")
+#' #      this is a cross-section frequency. It points to position 20.
 #'
 f.cross.section <- function(position) {
   position = as.integer(position)
@@ -105,22 +106,21 @@ f.yearly <- function(year) {
 #'
 #' @examples
 #'
-#' q0 <- f.quarterly(2020, 2) # this is a quarterly frequency that refers to the second quarter of the year 2021.
+#' q0 <- f.quarterly(2020, 2)
+#' #     this is a quarterly frequency that refers to the second quarter of the year 2021.
 #'
 #' q0_value_str <-  as.character(q0) # this will be '2020Q2'.
 #' q0_class_str <- get.class.id(q0) # this will be 'q'.
 #'
-#' q_new <- as.frequency("2021q3", "q") # this is a quarterly frequency that refers to the third quarter of the year 2021.
+#' q_new <- as.frequency("2021q3", "q")
+#' #      this is a quarterly frequency that refers to the third quarter of the year 2021.
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
-#'
-#' q_invalid <- f.quarterly(2020, 0)
-#' q_invalid <- f.quarterly(2020, 5)
-#' q_invalid <- as.frequency("2021q0", "q")
-#' q_invalid <- as.frequency("2021q5", "q")
-#' q_invalid <- as.frequency("2021", "q")
-#' }
+#' #   q_invalid <- f.quarterly(2020, 0)
+#' #   q_invalid <- f.quarterly(2020, 5)
+#' #   q_invalid <- as.frequency("2021q0", "q")
+#' #   q_invalid <- as.frequency("2021q5", "q")
+#' #   q_invalid <- as.frequency("2021", "q")
 #'
 f.quarterly <- function(year, quarter){
   year = as.integer(year)
@@ -143,14 +143,14 @@ f.quarterly <- function(year, quarter){
 #' @details
 #' In order to use \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
-#' \tabular{ll}{
+#' \itemize{
 #' \item **Character Format** \code{"#m#"} (first # is the \code{year}, second # is
 #'  the \code{month} (1 to 12); e.g., 2010m8 or 2010m12. Note that 2000m0 or 2000m13 are invalid.
 #' \item **Class Id** \code{"m"}
 #' }
 #'
 #' @return An object of class 'ldtf'. It is also a list with the following members:
-#' \itemize{
+#' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{year} \tab Determines the \code{year}.\cr
 #' \code{month} \tab Determines the \code{month}.
@@ -160,22 +160,22 @@ f.quarterly <- function(year, quarter){
 #'
 #' @examples
 #'
-#' m0 <- f.monthly(2020, 2) # this is a monthly frequency that refers to the second month of the year 2020.
+#' m0 <- f.monthly(2020, 2)
+#' #     this is a monthly frequency that refers to the second month of the year 2020.
 #'
 #' m0_value_str <-  as.character(m0) # this will be '2020M2'.
 #' m0_class_str <- get.class.id(m0) # this will be 'm'.
 #'
-#' m_new <- as.frequency("2021m3", "m") # this is a monthly frequency that refers to the third month of the year 2021.
+#' m_new <- as.frequency("2021m3", "m")
+#' #     this is a monthly frequency that refers to the third month of the year 2021.
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   m_invalid <- f.monthly(2020, 0)
+#' #   m_invalid <- f.monthly(2020, 5)
+#' #   m_invalid <- as.frequency("2021m0", "m")
+#' #   m_invalid <- as.frequency("2021m13", "m")
+#' #   m_invalid <- as.frequency("2021", "m")
 #'
-#' m_invalid <- f.monthly(2020, 0)
-#' m_invalid <- f.monthly(2020, 5)
-#' m_invalid <- as.frequency("2021m0", "m")
-#' m_invalid <- as.frequency("2021m13", "m")
-#' m_invalid <- as.frequency("2021", "m")
-#' }
 f.monthly <- function(year, month){
   year = as.integer(year)
   month = as.integer(month)
@@ -212,20 +212,22 @@ f.monthly <- function(year, month){
 #'
 #' @examples
 #'
-#' my0 <- f.multi.yearly(2020, 2) # this is a multi-year frequency that refers to the year 2020. The next observation is expected in 2022 (not the next year).
+#' my0 <- f.multi.yearly(2020, 2)
+#' #      this is a multi-year frequency that refers to the year 2020.
+#' #      The next observation is expected in 2022 (not the next year).
 #'
 #' my0_value_str <-  as.character(my0) # this will be '2020'.
 #' my0_class_str <- get.class.id(my0) # this will be 'z2'.
 #'
-#' my_new <- as.frequency("2020", "z3") # this is a multi-year frequency that refers to the year 2020. However, the next observation is expected in 2023.
+#' my_new <- as.frequency("2020", "z3")
+#' #      this is a multi-year frequency that refers to the year 2020.
+#' #      However, the next observation is expected in 2023.
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   my_invalid <- f.multi.yearly(2020, 0)
+#' #   my_invalid <- f.multi.yearly(2020, -5)
+#' #   my_invalid <- as.frequency("2021", "z")
 #'
-#' my_invalid <- f.multi.yearly(2020, 0)
-#' my_invalid <- f.multi.yearly(2020, -5)
-#' my_invalid <- as.frequency("2021", "z")
-#' }
 f.multi.yearly <- function(year, z){
   year = as.integer(year)
   z = as.integer(z)
@@ -265,22 +267,24 @@ f.multi.yearly <- function(year, z){
 #' @export
 #' @examples
 #'
-#' xty0 <- f.x.times.a.year(2020, 3, 1) # this frequency divides the year 2020 into 3 partitions and refers to the first partition.
+#' xty0 <- f.x.times.a.year(2020, 3, 1)
+#' #      this frequency divides the year 2020 into 3 partitions
+#' #      and refers to the first partition.
 #'
 #' xty_value_str <-  as.character(xty0) # this will be '2020:1'.
 #' xty_class_str <- get.class.id(xty0) # this will be 'y3'.
 #'
-#' xty_new <- as.frequency("2021:24", "z24") # this frequency divides the year 2021 into 24 partitions and refers to the last partition.
+#' xty_new <- as.frequency("2021:24", "z24")
+#' #     this frequency divides the year 2021 into 24 partitions
+#' #     and refers to the last partition.
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   xty_invalid <- f.x.times.a.year(2020, 3, 0)
+#' #   xty_invalid <- f.x.times.a.year(2020, 24, 25)
+#' #   xty_invalid <- as.frequency("2021:13", "y12")
+#' #   xty_invalid <- as.frequency("2021:0", "y1")
+#' #   xty_invalid <- as.frequency("2021", "y1")
 #'
-#' xty_invalid <- f.x.times.a.year(2020, 3, 0)
-#' xty_invalid <- f.x.times.a.year(2020, 24, 25)
-#' xty_invalid <- as.frequency("2021:13", "y12")
-#' xty_invalid <- as.frequency("2021:0", "y1")
-#' xty_invalid <- as.frequency("2021", "y1")
-#' }
 f.x.times.a.year <- function(year, x, position){
   year = as.integer(year)
   x = as.integer(x)
@@ -328,20 +332,23 @@ f.x.times.a.year <- function(year, x, position){
 #'
 #' @examples
 #'
-#' xtzy0 <- f.x.times.z.years(2020, 3, 2, 3) # this frequency divides the year 2020 into 3 partitions and refers to the last partition. The next observation belongs to 2022 (not the next year).
+#' xtzy0 <- f.x.times.z.years(2020, 3, 2, 3)
+#' #      this frequency divides the year 2020 into 3 partitions and
+#' #      refers to the last partition. The next observation
+#' #      belongs to 2022 (not the next year).
 #'
 #' xtzy_value_str <-  as.character(xtzy0) # this will be '2020:3'.
 #' xtzy_class_str <- get.class.id(xtzy0) # this will be 'x3z2'.
 #'
-#' xtzy_new <- as.frequency("2021:3", "x3z4") # this frequency divides the year 2021 into 3 partitions and refers to the last partition. The next observation occurs after 4 years.
+#' xtzy_new <- as.frequency("2021:3", "x3z4")
+#' #      this frequency divides the year 2021 into 3 partitions
+#' #      and refers to the last partition. The next observation occurs after 4 years.
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   xtzy_invalid <- f.x.times.z.years(2020, 3, 5, 0)
+#' #   xtzy_invalid <- f.x.times.z.years(2020, 3, 0, 1)
+#' #   xtzy_invalid <- as.frequency("2021:25", "x24y2")
 #'
-#' xtzy_invalid <- f.x.times.z.years(2020, 3, 5, 0)
-#' xtzy_invalid <- f.x.times.z.years(2020, 3, 0, 1)
-#' xtzy_invalid <- as.frequency("2021:25", "x24y2")
-#' }
 f.x.times.z.years <- function(year, x, z, position){
   year = as.integer(year)
   z = as.integer(z)
@@ -398,14 +405,11 @@ f.x.times.z.years <- function(year, x, z, position){
 #'
 #' w_new <- as.frequency("20230109", "w") # This is 9/1/2023.
 #'
-#' \dontrun{
 #' # Don't use invalid or unsupported dates:
+#' #   w_invalid <- as.frequency("1399109", "w") # this is a too old date and unsupported
+#' #   w_invalid <- as.frequency("20230132", "w") # invalid day in month
+#' #   w_invalid <- as.frequency("20231331", "w") # invalid month
 #'
-#' w_invalid <- as.frequency("1399109", "w") # this is a too old date and unsupported
-#' w_invalid <- as.frequency("20230132", "w") # invalid day in month
-#' w_invalid <- as.frequency("20231331", "w") # invalid month
-#'
-#' }
 f.weekly <- function(year, month, day){
   year = as.integer(year)
   month = as.integer(month)
@@ -453,21 +457,20 @@ f.weekly <- function(year, month, day){
 #'
 #' @examples
 #'
-#' mw0 <- f.multi.weekly(2023, 1, 2,3) # This is 2/1/2023 which is Monday. Next observation belongs to 23/1/2023.
+#' mw0 <- f.multi.weekly(2023, 1, 2,3)
+#' #      This is 2/1/2023 which is Monday. Next observation belongs to 23/1/2023.
 #'
 #' mw0_value_str <-  as.character(mw0) # this will be '20230102'.
 #' mw0_class_str <- get.class.id(mw0) # this will be 'w3'.
 #'
 #' mw_new <- as.frequency("20230109", "w4") # This is 9/1/2023.
 #'
-#' \dontrun{
-#' # Don't use invalid or unsupported dates.
+#' # Don't use invalid or unsupported dates:
+#' #   mw_invalid <- as.frequency("1399109", "w4") # this is a too old date and unsupported
+#' #   mw_invalid <- as.frequency("20230132", "w5") # invalid day in month
+#' #   mw_invalid <- as.frequency("20231331", "w2") # invalid month
+#' #   mw_invalid <- as.frequency("20231012", "w0")
 #'
-#' mw_invalid <- as.frequency("1399109", "w4") # this is a too old date and unsupported
-#' mw_invalid <- as.frequency("20230132", "w5") # invalid day in month
-#' mw_invalid <- as.frequency("20231331", "w2") # invalid month
-#' mw_invalid <- as.frequency("20231012", "w0")
-#' }
 f.multi.weekly <- function(year, month, day, k){
 
   year = as.integer(year)
@@ -527,14 +530,11 @@ f.multi.weekly <- function(year, month, day, k){
 #'
 #' d_new <- as.frequency("20230109", "d") # This is 9/1/2023.
 #'
-#' \dontrun{
-#' # Don't use invalid or unsupported dates.
+#' # Don't use invalid or unsupported dates:
+#' #   d_invalid <- as.frequency("1399109", "d") # this is a too old date and unsupported
+#' #   d_invalid <- as.frequency("20230132", "d") # invalid day in month
+#' #   d_invalid <- as.frequency("20231331", "d") # invalid month
 #'
-#' d_invalid <- as.frequency("1399109", "d") # this is a too old date and unsupported
-#' d_invalid <- as.frequency("20230132", "d") # invalid day in month
-#' d_invalid <- as.frequency("20231331", "d") # invalid month
-#'
-#' }
 f.daily <- function(year, month, day){
 
   year = as.integer(year)
@@ -588,14 +588,11 @@ f.daily <- function(year, month, day){
 #'
 #' md_new <- as.frequency("20230109", "d") # This is 9/1/2023.
 #'
-#' \dontrun{
-#' # Don't use invalid or unsupported dates.
+#' # Don't use invalid or unsupported dates:
+#' #   md_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
+#' #   md_invalid <- as.frequency("20230132", "d4") # invalid day in month
+#' #   md_invalid <- as.frequency("20231331", "d5") # invalid month
 #'
-#' md_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
-#' md_invalid <- as.frequency("20230132", "d4") # invalid day in month
-#' md_invalid <- as.frequency("20231331", "d5") # invalid month
-#'
-#' }
 f.multi.daily <- function(year, month, day, k){
 
   year = as.integer(year)
@@ -655,22 +652,25 @@ f.multi.daily <- function(year, month, day, k){
 #' dw0_class_str <- get.class.id(dw0) # this will be 'i:mon-fri'.
 #'
 #' # Let's use the same date with another week definition:
-#' dw1 <- f.daily.in.week(2023, 5, 16, "wed", "sat") # This is NOT 16/5/2023. It is 17/5/2023. Since it was outside the week, we moved it forward.
-#' dw2 <- f.daily.in.week(2023, 5, 16, "wed", "sat", FALSE) # This is 13/5/2023. The original day was outside the week, but we moved backward too the end of the previous week (which is Saturday).
+#' dw1 <- f.daily.in.week(2023, 5, 16, "wed", "sat")
+#' #     This is NOT 16/5/2023. It is 17/5/2023.
+#' #     Since it was outside the week, we moved it forward.
+#' dw2 <- f.daily.in.week(2023, 5, 16, "wed", "sat", FALSE)
+#' #     This is 13/5/2023. The original day was outside the
+#' #     week, but we moved backward too the end of
+#' #     the previous week (which is Saturday).
 #'
-#' dw_new <- as.frequency("20230519", "i:sat-wed") # This is 20/1/2023 (by default, it moves forward).
+#' dw_new <- as.frequency("20230519", "i:sat-wed")
+#' #     This is 20/1/2023 (by default, it moves forward).
 #'
-#' \dontrun{
-#' # Don't use invalid or unsupported dates.
-#'
-#' dw_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
-#' dw_invalid <- as.frequency("20230132", "d4") # invalid day in month
-#' dw_invalid <- as.frequency("20231331", "d5") # invalid month
+#' # Don't use invalid or unsupported dates:
+#' #   dw_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
+#' #   dw_invalid <- as.frequency("20230132", "d4") # invalid day in month
+#' #   dw_invalid <- as.frequency("20231331", "d5") # invalid month
 #'
 #' # don't use invalid week definitions:
-#' f.daily.in.week(2023, 5, 16, "Wednesday", "sat")
+#' #   f.daily.in.week(2023, 5, 16, "Wednesday", "sat")
 #'
-#' }
 f.daily.in.week <- function(year, month, day, weekStart = "mon",
                           weekEnd = "fri", forward = TRUE){
 
@@ -740,13 +740,10 @@ f.daily.in.week <- function(year, month, day, weekStart = "mon",
 #' L_new <- as.frequency("A", "Ls:A;B;C;D")
 #' L_new0 <- as.frequency("A", "Ls") # compared to the previous one, its items will be empty
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   L_invalid <- as.frequency("E", "Ls:A;B;C;D") # 'E' is not a member of the list
+#' #   L_invalid <- f.list.string(c("A","B","C","D"), "E")
 #'
-#' L_invalid <- as.frequency("E", "Ls:A;B;C;D") # 'E' is not a member of the list
-#' L_invalid <- f.list.string(c("A","B","C","D"), "E")
-#'
-#' }
 f.list.string <- function(items, value){
   value = as.character(value)
   items = as.character(items)
@@ -784,18 +781,18 @@ f.list.string <- function(items, value){
 #' Ld0 <- f.list.date(c("20231101","20220903","20200823","20230303"), "20200823")
 #'
 #' Ld0_value_str <-  as.character(Ld0) # this will be '20200823'.
-#' Ld0_class_str <- get.class.id(Ld0) # this will be 'Ld:20231101;20220903;20200823;20230303'.
+#' Ld0_class_str <- get.class.id(Ld0)
+#' #      this will be 'Ld:20231101;20220903;20200823;20230303'.
 #'
 #' Ld_new <- as.frequency("20231101", "Ld:20231101;20220903;20200823;20230303")
-#' Ld_new0 <- as.frequency("20231101", "Ld") # compared to the previous one, its items will be empty
+#' Ld_new0 <- as.frequency("20231101", "Ld")
+#' #     compared to the previous one, its items will be empty
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   Ld_invalid <- as.frequency("20231102", "Ld:20231101;20220903;20200823;20230303")
+#' #     'E' is not a member of the list
+#' #   Ld_invalid <- f.list.date(c("20231101","20220903","20200823","20230303"), "20231102")
 #'
-#' Ld_invalid <- as.frequency("20231102", "Ld:20231101;20220903;20200823;20230303") # 'E' is not a member of the list
-#' Ld_invalid <- f.list.date(c("20231101","20220903","20200823","20230303"), "20231102")
-#'
-#' }
 f.list.date <- function(items, value){
 
   value = as.character(value)
@@ -838,17 +835,17 @@ f.list.date <- function(items, value){
 #' ho0 <- f.hourly(f.daily(2023,5,16),4)
 #'
 #' ho0_value_str <-  as.character(ho0) # this will be '20230516:4'.
-#' ho0_class_str <- get.class.id(ho0) # this will be 'ho|d'. The second part (i.e., 'd') shows that this frequency is defined in a 'Daily' frequency.
+#' ho0_class_str <- get.class.id(ho0)
+#' #    this will be 'ho|d'. The second part (i.e., 'd')
+#' #    shows that this frequency is defined in a 'Daily' frequency.
 #'
 #' ho_new <- as.frequency("20231101:3", "ho|i:wed-sat")
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   ho_invalid <- as.frequency("20231101:3", "ho|j:wed-sat")
+#' #     invalid format in day-based frequency
+#' #   ho_invalid <- f.hourly(f.daily(2023,5,16),25) # invalid hour
 #'
-#' ho_invalid <- as.frequency("20231101:3", "ho|j:wed-sat") # invalid format in day-based frequency
-#' ho_invalid <- f.hourly(f.daily(2023,5,16),25) # invalid hour
-#'
-#' }
 f.hourly <- function(day, hour){
   hour = as.integer(hour)
 
@@ -886,17 +883,17 @@ f.hourly <- function(day, hour){
 #' mi0 <- f.minutely(f.daily(2023,5,16),1200)
 #'
 #' mi0_value_str <-  as.character(mi0) # this will be '20230516:1200'.
-#' mi0_class_str <- get.class.id(mi0) # this will be 'mi|d'. The second part (i.e., 'd') shows that this frequency is defined in a 'Daily' frequency.
+#' mi0_class_str <- get.class.id(mi0)
+#' #     this will be 'mi|d'. The second part (i.e., 'd')
+#' #     shows that this frequency is defined in a 'Daily' frequency.
 #'
 #' mi_new <- as.frequency("20231101:3", "mi|i:wed-sat")
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   mi_invalid <- as.frequency("20231101:3", "mi|j:wed-sat")
+#' #      invalid format in day-based frequency
+#' #   mi_invalid <- f.minutely(f.daily(2023,5,16),2000) # invalid minute
 #'
-#' mi_invalid <- as.frequency("20231101:3", "mi|j:wed-sat") # invalid format in day-based frequency
-#' mi_invalid <- f.minutely(f.daily(2023,5,16),2000) # invalid minute
-#'
-#' }
 f.minutely <- function(day, minute){
   minute = as.integer(minute)
 
@@ -937,17 +934,17 @@ f.minutely <- function(day, minute){
 #' se0 <- f.secondly(f.daily(2023,5,16),40032)
 #'
 #' se0_value_str <-  as.character(se0) # this will be '20230516:40032'.
-#' se0_class_str <- get.class.id(se0) # this will be 'se|d'. The second part (i.e., 'd') shows that this frequency is defined in a 'Daily' frequency.
+#' se0_class_str <- get.class.id(se0)
+#' #     this will be 'se|d'. The second part (i.e., 'd') shows
+#' #     that this frequency is defined in a 'Daily' frequency.
 #'
 #' se_new <- as.frequency("20231101:3", "se|i:wed-sat")
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   mi_invalid <- as.frequency("20231101:3", "se|j:wed-sat")
+#' #      invalid format in day-based frequency
+#' #   mi_invalid <- f.secondly(f.daily(2023,5,16),100000) # invalid second
 #'
-#' mi_invalid <- as.frequency("20231101:3", "se|j:wed-sat") # invalid format in day-based frequency
-#' mi_invalid <- f.secondly(f.daily(2023,5,16),100000) # invalid second
-#'
-#' }
 f.secondly <- function(day, second){
 
   second = as.integer(second)
@@ -989,17 +986,17 @@ f.secondly <- function(day, second){
 #' xd0 <- f.x.times.a.day(f.daily(2023,5,16),13, 12)
 #'
 #' xd0_value_str <-  as.character(xd0) # this will be '20230516:12'.
-#' xd0_class_str <- get.class.id(xd0) # this will be 'da13|d'. The second part (i.e., 'd') shows that this frequency is defined in a 'Daily' frequency.
+#' xd0_class_str <- get.class.id(xd0)
+#' #      this will be 'da13|d'. The second part (i.e., 'd')
+#' #      shows that this frequency is defined in a 'Daily' frequency.
 #'
 #' xd_new <- as.frequency("20231101:3", "da3|i:wed-sat")
 #'
-#' \dontrun{
 #' # Don't make the following mistakes:
+#' #   xd_invalid <- as.frequency("20231101:3", "da|i:wed-sat")
+#' #      invalid format in day-based frequency
+#' #   xd_invalid <- f.x.times.a.day(f.daily(2023,5,16),4,0) # invalid position
 #'
-#' xd_invalid <- as.frequency("20231101:3", "da|i:wed-sat") # invalid format in day-based frequency
-#' xd_invalid <- f.x.times.a.day(f.daily(2023,5,16),4,0) # invalid position
-#'
-#' }
 f.x.times.a.day <- function(day, x, position){
 
   x = as.integer(x)

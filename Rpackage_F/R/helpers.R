@@ -149,11 +149,10 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 #'
 #' @examples
 #' y <- c(60, 70, 80, 95)
-#' g <- get.longrun.growth(y, 2, 3, skipZero = TRUE,
-#'             isPercentage = TRUE, continuous = FALSE)
+#' g <- get.longrun.growth(y, isPercentage = TRUE, continuous = FALSE)
 #' # Note that 'g' is different from 'mean(y)'.
 #'
-get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE, ...) {
+get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE) {
   data <- as.numeric(data)
   continuous = as.logical(continuous)
   isPercentage = as.logical(isPercentage)

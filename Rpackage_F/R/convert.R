@@ -21,7 +21,7 @@
 #'
 #' @examples
 #' startFreq <- f.list.date(c("20220904","20220901"), "20220901")
-#' v <- Variable(c(4,1), "var", startFreq, list())
+#' v <- variable(c(4,1), "var", startFreq, list())
 #' w <- convert.to.daily(v)
 convert.to.daily <- function(variable, aggregateFun = NULL){
 
@@ -41,7 +41,7 @@ res
 #' @param fromEnd If the number of observations is not divisible by \code{k}, this argument matters. If \code{TRUE}, the last observation is the combination of \code{k} observations. Otherwise, the last observation might be created from a lower number of observations.
 #'
 #' @details
-#' See the details section of \code{\link{convert.to.daily()}} function.
+#' See the details section of \code{\link{convert.to.daily}} function.
 #'
 #'
 #' @return It returns a variable with multi-day frequency.
@@ -49,7 +49,7 @@ res
 #'
 #' @examples
 #' startFreq <- f.daily(2022, 9, 1)
-#' v <- Variable(c(1,2,3,4,5,6,7,8), "var", startFreq, list())
+#' v <- variable(c(1,2,3,4,5,6,7,8), "var", startFreq, list())
 #' w <- convert.to.multidaily(v, 3, function(x)mean(x, na.rm=TRUE))
 convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 
@@ -76,14 +76,14 @@ convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 #' @param aggregateFun A function that aggregates the data within each interval.
 #'
 #' @details
-#' See the details section of \code{\link{convert.to.daily()}} function.
+#' See the details section of \code{\link{convert.to.daily}} function.
 #'
 #' @return A variable with weekly frequency.
 #' @export
 #'
 #' @examples
 #' startFreq <- f.daily(2022, 9, 1)
-#' v <- Variable(c(1,2,3,4,5,6,7,8), "V", startFreq, list())
+#' v <- variable(c(1,2,3,4,5,6,7,8), "V", startFreq, list())
 #' w <- convert.to.weekly(v, "mon", function(x)mean(x, na.rm=TRUE))
 #'
 convert.to.weekly <- function(variable, weekStart, aggregateFun){
@@ -106,15 +106,15 @@ convert.to.weekly <- function(variable, weekStart, aggregateFun){
 #'
 #'
 #' @details
-#' See the details section of \code{\link{convert.to.daily()}} function.
+#' See the details section of \code{\link{convert.to.daily}} function.
 #'
 #' @return A variable with year-based frequency.
 #' @export
 #'
 #' @examples
-#' startFreq <- f.daily(2022, 9, 1)
-#' v <- Variable(c(1,2,3,4,5,6,7,8), "V", startFreq, list())
-#' w <- convert.to.XxYear(v, "mon", function(x)mean(x, na.rm=TRUE))
+#' startFreq <- f.daily(2023,1,1)
+#' v <- variable(c(1:(365*2)), "V", startFreq, list())
+#' w <- convert.to.XxYear(v,12,function(x)mean(x))
 #'
 convert.to.XxYear <- function(variable, x, aggregateFun){
   x = as.integer(x)

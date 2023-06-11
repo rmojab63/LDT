@@ -3,7 +3,7 @@
 test_that("Frequency conversion (from DateList to Daily) works", {
 
   startFreq <- f.list.date(c("20220904","20220903","20220902","20220901"), "20220901")
-  v <- Variable(c(4,3,2,1), "V", startFreq, list())
+  v <- variable(c(4,3,2,1), "V", startFreq, list())
 
   w <- convert.to.daily(v)
   expect_equal(c(1,2,3,4), w$data)
@@ -12,7 +12,7 @@ test_that("Frequency conversion (from DateList to Daily) works", {
   # with NA
 
   startFreq <- f.list.date(c("20220904","20220901"), "20220901")
-  v <- Variable(c(4,1), "V", startFreq, list())
+  v <- variable(c(4,1), "V", startFreq, list())
 
   w <- convert.to.daily(v)
   expect_equal(c(1,NaN,NaN,4), w$data)
@@ -23,13 +23,13 @@ test_that("Frequency conversion (from DateList to Daily) works", {
 test_that("Frequency conversion (from Daily to Multi-Day) works", {
 
   startFreq <- f.daily(2022,9,1)
-  v <- Variable(c(1,2,3,4,5,6), "V", startFreq, list())
+  v <- variable(c(1,2,3,4,5,6), "V", startFreq, list())
   w <- convert.to.multidaily(v,2,function(x)mean(x),FALSE)
   expect_equal(c(1.5,3.5,5.5), w$data)
   expect_equal("20220901", as.character(w$startFrequency))
 
   # not divisible
-  v <- Variable(c(1,2,3,4,5,6,7), "V", startFreq, list())
+  v <- variable(c(1,2,3,4,5,6,7), "V", startFreq, list())
 
   w <- convert.to.multidaily(v,2,function(x)mean(x),FALSE)
   expect_equal(c(1.5,3.5,5.5,7.0), w$data)
@@ -41,7 +41,7 @@ test_that("Frequency conversion (from Daily to Multi-Day) works", {
   expect_equal("20220901", as.character(w$startFrequency))
 
   # with NA
-  v <- Variable(c(1,NA,3,4,5,6,7), "V", startFreq, list())
+  v <- variable(c(1,NA,3,4,5,6,7), "V", startFreq, list())
   w <- convert.to.multidaily(v,2,function(x)mean(x),TRUE)
   expect_true(is.na(w$data[[2]]))
 
@@ -54,14 +54,14 @@ test_that("Frequency conversion (from Daily to Multi-Day) works", {
 test_that("Frequency conversion (from Daily to Weekly) works", {
 
   startFreq <- f.daily(2023,6,1) # It is Thursday
-  v <- Variable(c(1:14), "V", startFreq, list()) # two weeks
+  v <- variable(c(1:14), "V", startFreq, list()) # two weeks
 
   w <- convert.to.weekly(v,"thu",function(x)mean(x)) # start from Thursday
   expect_equal(c(sum(c(1:7))/7, sum(c(8:14))/7), w$data)
   expect_equal("20230601", as.character(w$startFrequency))
 
   # more than two weeks
-  v <- Variable(c(1:17), "V", startFreq, list())
+  v <- variable(c(1:17), "V", startFreq, list())
   w <- convert.to.weekly(v,"thu",function(x)mean(x))
   expect_equal(c(sum(c(1:7))/7, sum(c(8:14))/7, (15+16+17)/3), w$data)
   expect_equal("20230601", as.character(w$startFrequency))
@@ -81,7 +81,7 @@ test_that("Frequency conversion (from Daily to Weekly) works", {
 test_that("Frequency conversion (from Daily to X-Times-A-Year) works", {
 
   startFreq <- f.daily(2023,1,1)
-  v <- Variable(c(1:(365*2)), "V", startFreq, list())
+  v <- variable(c(1:(365*2)), "V", startFreq, list())
 
   # Monthly
   w <- convert.to.XxYear(v,12,function(x)mean(x))
