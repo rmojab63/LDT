@@ -5,8 +5,8 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// [[Rcpp::export(.VarmaSearch)]]
-SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
+// [[Rcpp::export(.SearchVarma)]]
+SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                  SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
                  SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
                  List lmbfgsOptions, List measureOptions, List modelCheckItems,
@@ -170,8 +170,8 @@ SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   return L;
 }
 
-// [[Rcpp::export(.VarmaEstim)]]
-SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
+// [[Rcpp::export(.EstimVarma)]]
+SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
                 bool addIntercept, List lmbfgsOptions, double olsStdMultiplier,
                 SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX,
                 int simFixSize, SEXP simHorizons, bool simUsePreviousEstim,

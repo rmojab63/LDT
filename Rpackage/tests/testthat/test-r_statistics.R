@@ -50,24 +50,24 @@ X_NA <- matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
 
 
 test_that("Pca works", {
-  res = GetPca(tX,TRUE,TRUE,tX)
+  res = s.pca(tX,TRUE,TRUE,tX)
   resR = prcomp(tX, center = T, scale. = T)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
   presR = predict(resR, newdata = tX)
   expect_equal(as.numeric(abs(presR)), as.numeric(abs(res$projections[,1:7])), tolerance = 1e-8)
 
-  res = GetPca(tX,TRUE,FALSE,tX)
+  res = s.pca(tX,TRUE,FALSE,tX)
   resR = prcomp(tX, center = T, scale. = F)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
 
-  res = GetPca(tX,FALSE,TRUE,tX)
+  res = s.pca(tX,FALSE,TRUE,tX)
   y=tX
   for (i in c(1:ncol(y)))
     y[,i]=y[,i]/sd(y[,i])  #TODO: otherwise the test is not working and I am not sure why
   resR = prcomp(y, center = F, scale. = F)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
 
-  res = GetPca(tX,FALSE,FALSE,tX)
+  res = s.pca(tX,FALSE,FALSE,tX)
   resR = prcomp(tX, center = F, scale. = F)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
 
@@ -77,13 +77,13 @@ test_that("Pca works with zero variance columns", {
 
   X_0 = cbind(1,tX[,1:4],1,tX[,5:22],1)
 
-  res = GetPca(X_0,TRUE,TRUE,X_0)
+  res = s.pca(X_0,TRUE,TRUE,X_0)
   resR = prcomp(tX, center = T, scale. = T)
   expect_equal(res$stds, resR$sdev, tolerance = 1e-8)
   presR = predict(resR, newdata = tX)
   expect_equal(as.numeric(abs(presR)), as.numeric(abs(res$projections[,1:7])), tolerance = 1e-8)
 
-  res = GetPca(X_0,FALSE,TRUE,X_0)
+  res = s.pca(X_0,FALSE,TRUE,X_0)
   y=tX
   for (i in c(1:ncol(y)))
     y[,i]=y[,i]/sd(y[,i])  #TODO: otherwise the test is not working and I am not sure why
@@ -94,7 +94,7 @@ test_that("Pca works with zero variance columns", {
 
 test_that("GldFromMoments works", {
 
-  res = GetGldFromMoments(0,1,0,0,0,c(0,0))
+  res = s.gld.from.moments(0,1,0,0,0,c(0,0))
   #resR = gld::fit.fkml.moments.val(moments=c(mean=0, variance=1, skewness=0,
   #                                    kurtosis=3), starting.point = c(0,0))
   #lambda = as.numeric(resR$lambda)
@@ -105,7 +105,7 @@ test_that("GldFromMoments works", {
 
 test_that("Gld Qunatile works", {
 
-  res = GldQuantile(seq(0.1,0.9,0.1), 0,1,0,0)
+  res = s.gld.quantile(seq(0.1,0.9,0.1), 0,1,0,0)
   expect_equal(0, res[[5]], tolerance = 1e-16)
 
 })
@@ -114,8 +114,8 @@ test_that("Combine4Moments works", {
 
   set.seed(340)
 
-  x1 <- rchisq(10000,3)
-  x2 <- rchisq(20000,5)
+  x1 <- rchisq(10000000,3)
+  x2 <- rchisq(10000000,5)
   x <- c(x1,x2)
 
   s1 = 1.279220669965758 # moments::skewness(x)
@@ -129,7 +129,7 @@ test_that("Combine4Moments works", {
   d2 <- list(mean = mean(x2), variance = var(x2), skewness = skewness2, kurtosis = kurtosis2, count=length(x2), sumWeights = length(x2))
   d <- list(mean = mean(x), variance = var(x), skewness = s1, kurtosis = k1, count=length(x), sumWeights = length(x))
 
-  c <- GetCombination4Moments(d1,d2)
+  c <- s.combine.by.moments4(d1,d2)
 
   expect_equal(as.numeric(c)[1:3],as.numeric(d)[1:3], tolerance = 1e-3)
   expect_equal(as.numeric(c[4]),as.numeric(d[4]), tolerance = 1e-1)
@@ -141,31 +141,31 @@ test_that("Auc works for binary and no weights", {
   y = c(1, 0, 1, 0, 1, 1)
   scores = c(0.1, 0.9, 0.1, 0.9, 0.1, 0.9)
 
-  res = GetRoc(y,scores,NULL, printMsg = FALSE)
+  res = s.roc(y,scores,NULL, printMsg = FALSE)
   #resR = pROC::roc(y,scores[,1])
-  expect_equal(res$AUC, 0.875, tolerance = 1e-14)
+  expect_equal(res$auc, 0.875, tolerance = 1e-14)
 
   #partial
   y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
   scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
-  opt <- GetRocOptions(0.2,0.8)
-  res = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
-  expect_equal(res$AUC, 0.44 / 0.6, tolerance = 1e-14)
+  opt <- get.roc.options(0.2,0.8)
+  res = s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
+  expect_equal(res$auc, 0.44 / 0.6, tolerance = 1e-14)
 
   # weighted
   y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1) # zero weight for the last observation
   scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1, 0.8)
   weights <- c(1,1,1,1,1,1,1,1,1,1,0)
-  res = GetRoc(y,scores,weights,options = opt, printMsg = FALSE)
-  expect_equal(res$AUC, 0.44 / 0.6, tolerance = 1e-14)
+  res = s.roc(y,scores,weights,options = opt, printMsg = FALSE)
+  expect_equal(res$auc, 0.44 / 0.6, tolerance = 1e-14)
 
   # varying cost
   y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
   scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
   costs <- c(1,1,1,1,1,1,1,1,1,1)
   costMatrix = matrix(c(0.02,-1,-10,10),2,2)
-  opt <- GetRocOptions(costs = costs, costMatrix = costMatrix)
-  res = GetRoc(y,scores,NULL,options = opt, printMsg = FALSE)
+  opt <- get.roc.options(costs = costs, costMatrix = costMatrix)
+  res = s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
   #expect_equal(res$AUC, ?, tolerance = 1e-14) TODO
 
 })
@@ -179,7 +179,7 @@ test_that("Auc works for binary and no weights", {
 test_that("Distance (euclidean,manhattan,maximum) works", {
 
   for (dis in c("euclidean","manhattan","maximum")){
-    res <- GetDistance(x, dis)
+    res <- s.distance(x, dis)
     rres = as.numeric(dist(tX,dis))
     expect_equal(res, rres, tolerance = 1e-8)  }
 
@@ -189,48 +189,48 @@ test_that("Distance (euclidean,manhattan,maximum) works", {
 
 
 test_that("Distance (correlation) works", {
-  res <- GetDistance(x, "correlation", "pearson", FALSE)
+  res <- s.distance(x, "correlation", "pearson", FALSE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(x, method = "pearson"))/2.0)))
   expect_equal(res, rres, tolerance = 1e-8)
 
   # abs
-  res <- GetDistance(x, "absCorrelation", "pearson", FALSE)
+  res <- s.distance(x, "absCorrelation", "pearson", FALSE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(x, method = "pearson")^2))))
   expect_equal(res, rres, tolerance = 1e-8)
 
 })
 
 test_that("Distance (pearson correlation) works with NA", {
-  res <- GetDistance(X_NA, "correlation", "pearson", TRUE)
+  res <- s.distance(X_NA, "correlation", "pearson", TRUE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(X_NA, use = "pairwise.complete.obs", method = "pearson"))/2.0)))
   expect_equal(res, rres, tolerance = 1e-8)
 
   # abs
-  res <- GetDistance(X_NA, "absCorrelation", "pearson", TRUE)
+  res <- s.distance(X_NA, "absCorrelation", "pearson", TRUE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(X_NA, use = "pairwise.complete.obs" , method = "pearson")^2))))
   expect_equal(res, rres, tolerance = 1e-8)
 
 })
 
 test_that("Distance (spearman correlation) works", {
-  res <- GetDistance(x, "correlation", "spearman", FALSE)
+  res <- s.distance(x, "correlation", "spearman", FALSE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(x, method = "spearman"))/2.0)))
   expect_equal(res, rres, tolerance = 1e-8)
 
   # abs
-  res <- GetDistance(x, "absCorrelation", "spearman", FALSE)
+  res <- s.distance(x, "absCorrelation", "spearman", FALSE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(x, method = "spearman")^2))))
   expect_equal(res, rres, tolerance = 1e-8)
 
 })
 
 test_that("Distance (spearman correlation) works with NA", {
-  res <- GetDistance(X_NA, "correlation", "spearman", TRUE)
+  res <- s.distance(X_NA, "correlation", "spearman", TRUE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(X_NA, use = "pairwise.complete.obs", method = "spearman"))/2.0)))
   expect_equal(res, rres, tolerance = 1e-8)
 
   # abs
-  res <- GetDistance(X_NA, "absCorrelation", "spearman", TRUE)
+  res <- s.distance(X_NA, "absCorrelation", "spearman", TRUE)
   rres <- as.numeric(as.dist(sqrt((1 - cor(X_NA, use = "pairwise.complete.obs" , method = "spearman")^2))))
   expect_equal(res, rres, tolerance = 1e-8)
 
@@ -255,7 +255,7 @@ test_that("Hierarchical (single, complete, uAverage, wAverage, ward) clustering 
     if (link == "ward")
       rLink="ward.D"
 
-    res <- ClusterH(as.numeric(Dist), 7, link)
+    res <- s.cluster.h(as.numeric(Dist), link)
     rres <- hclust(Dist, rLink)
     expect_equal(res$height, rres$height, tolerance = 1e-8)
 
@@ -265,7 +265,7 @@ test_that("Hierarchical (single, complete, uAverage, wAverage, ward) clustering 
 
 #test_that("Hierarchical grouping works with NAs", {
 
-#  res <- ClusterHGroup(X_NA,3,0, "correlation", "wAverage", "pearson")
+#  res <- s.cluster.h.group(X_NA,3,0, "correlation", "wAverage", "pearson")
 
 #TODO
 

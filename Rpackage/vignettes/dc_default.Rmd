@@ -36,7 +36,7 @@ It is recommended to read the following vignettes first:
 In **ldt**, we _automatically explain_ or _automatically predict_ one or more than one random variable. In this vignette, we design a model set for predicting loan default. Of course, we focus on comparing the performance of _logit_ and _probit_ models. We use AUC as a performance measure:
 
 ```{r dc_measure_options}
-measureOptions <- GetMeasureOptions(
+measureOptions <- get.measure.options(
   typesIn = c("aucIn", "frequency"),
   typesOut = c("aucOut", "frequency")
 )
@@ -127,10 +127,10 @@ If you have downloaded the data set files, do not run this code. Since only `r (
 weight <- as.matrix((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 ```
 
-There are `r ncol(x) ` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `DcSearch_s()` function:
+There are `r ncol(x) ` potential predictors and the size of the potential predicting models is relatively large. We follow a step-wise search approach by defining the following two arguments for the `search.dc_s()` function:
 
 ```{r modelset_steps}
-xSizes <- list(c(1L,2L)), c(3L))
+xSizes <- list(c(1L,2L), c(3L))
 xCounts <- c(NA, 4)
 ```
 
@@ -146,22 +146,22 @@ Note that the out-of-sample simulation depends on random sampling. Finally, we s
 
 ```{r dc_estimate}
 berka_res <- list(
-  logit = DcSearch_s(
+  logit = search.dc_s(
     x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = TRUE, searchProbit = FALSE,
-    searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
+    searchItems = get.search.items(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,
-    searchOptions = GetSearchOptions(printMsg = FALSE),
+    searchOptions = get.search.options(printMsg = FALSE),
     savePre = NULL
   ),
-  probit = DcSearch_s(
+  probit = search.dc_s(
     x = x, y = y, w = weight, costMatrices = list(frequencyCost),
     xSizes = xSizes, counts = xCounts,
     searchLogit = FALSE, searchProbit = TRUE,
-    searchItems = GetSearchItems(bestK = 20, inclusion = TRUE),
+    searchItems = get.search.items(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,
-    searchOptions = GetSearchOptions(printMsg = FALSE),
+    searchOptions = get.search.options(printMsg = FALSE),
     savePre = NULL
   )
 )

@@ -63,10 +63,10 @@ sMultipliers <- c(0.1, 2)
 
 Note that a larger value for $s$ (element of `sMultipliers`) means more dispersed and more correlated disturbances and a larger value for $n$ (element of `sampleSizes`) means more degrees of freedom. 
 
-We assume that the number of endogenous variables is known. Furthermore, to decrease the size of the model set, we assume that we know that the number of regressors is not larger than 3. In other words, we will use the following data (If you are not familiar with the arguments of the `SurSearch_s()` function, please read [this vignette](sur_growth.html) first):
+We assume that the number of endogenous variables is known. Furthermore, to decrease the size of the model set, we assume that we know that the number of regressors is not larger than 3. In other words, we will use the following data (If you are not familiar with the arguments of the `search.sur_s()` function, please read [this vignette](sur_growth.html) first):
 
 ```{r def_search_assumptions}
-xSizes <- list(c(1L,2L)), c(3L))
+xSizes <- list(c(1L,2L), c(3L))
 xCounts <- c(NA, 5)
 yGroups <- list(c(1L,2L))
 ```
@@ -101,17 +101,17 @@ seed <- 340
 set.seed(seed)
 ```
 
-Given the sample, we use `SurSearch_s()` function to find the best model. This function will select one best mode for each of the evaluation methods. We use the results for AIC, SIC, RMSE, and CRPS measures:
+Given the sample, we use `search.sur_s()` function to find the best model. This function will select one best mode for each of the evaluation methods. We use the results for AIC, SIC, RMSE, and CRPS measures:
 
 ```{r estimation_measureOptions}
-measureOptions <- GetMeasureOptions(
+measureOptions <- get.measure.options(
   typesIn = c("aic", "sic"),
   typesOut = c("rmse", "crps")
 )
 measureNames <- c("AIC", "SIC", "RMSE", "CRPS")
 ```
 
-If you are not familiar with the arguments of the `SurSearch_s()` function, please read [this vignette](sur_growth.html) first. The `measureNames` vector is just a display name that we will use later.
+If you are not familiar with the arguments of the `search.sur_s()` function, please read [this vignette](sur_growth.html) first. The `measureNames` vector is just a display name that we will use later.
 
 In order to compare the performance of different measures, we use the following scoring schema: 
 
@@ -132,7 +132,7 @@ GetScore <- function(indices1, indices2) {
 
 This schema uses the indices of the regressors in the (restricted) best model and calculates the score. If the indices belong to the true model (i.e., `indices1=c(6,12)` and `indices2=c(12,18)`), the score is 1. otherwise each correct index (i.e., 6 and 12 for the first equation and 12 and 18 for the second equation) adds 0.1 points to the score. For example, this means the maximum score for an incorrect model is 0.4. Such a model has all the true explanatory variables and some irrelevant ones. The minimum score is zero. This is the score of a model with no correct explanatory variable.
 
-The `SurSearch_s()` function also reports the inclusion weights. The previous function is used to get the score of such a list. In this case, `indices1` and `indices2` are the index of the first 2 explanatory variables in the inclusion list.
+The `search.sur_s()` function also reports the inclusion weights. The previous function is used to get the score of such a list. In this case, `indices1` and `indices2` are the index of the first 2 explanatory variables in the inclusion list.
 
 Before we continue, we need a helper function to get the required indices from the estimations:
 
@@ -173,7 +173,7 @@ The central piece of this experiment is the following function in which we gener
 SampleAndEstimate <- function(i, res, n, s, xSizes, xCounts, yGroups,
                               measureOptions, searchItems, checkItems) {
   sample <- GetSample(n, s)
-  search_res <- SurSearch_s(
+  search_res <- search.sur_s(
     y = sample$y, x = sample$z, numTargets = 2,
     xSizes = xSizes, counts = xCounts,
     yGroups = yGroups,
@@ -182,7 +182,7 @@ SampleAndEstimate <- function(i, res, n, s, xSizes, xCounts, yGroups,
     searchItems = searchItems,
     measureOptions = measureOptions,
     modelCheckItems = checkItems,
-    searchOptions = GetSearchOptions(printMsg = FALSE),
+    searchOptions = get.search.options(printMsg = FALSE),
     savePre = NULL
   )
   
@@ -221,7 +221,7 @@ for (n in sampleSizes) {
       measureOptions$seed <- seedi
       measureOptions$simFixSize <- 6
       measureOptions$trainRatio <- 0.75
-      searchItems <- GetSearchItems(model = TRUE, type1 = FALSE, bestK = 10, inclusion = TRUE)
+      searchItems <- get.search.items(model = TRUE, type1 = FALSE, bestK = 10, inclusion = TRUE)
       res <- SampleAndEstimate(
         i, res, n, s, xSizes, xCounts, yGroups, measureOptions,
         searchItems, NULL
@@ -281,14 +281,14 @@ Apart from finding the correct variables, another important task is estimating t
 We specify these options by the following code:
 
 ```{r}
-searchItems <- GetSearchItems(
+searchItems <- get.search.items(
   model = FALSE, type1 = TRUE,
   bestK = 1, cdfs = seq(0.8, 1.8, 0.03),
   extremeMultiplier = 2, mixture4 = TRUE
 )
 ```
 
-In `SurSearch`, `type1` information is the estimated parameters. Note that in order to set a proper value for `cdfs`, we need to run the code (at least) twice. This is because we need to get some general idea about the range of values of estimated coefficients (e.g., by studying the extreme bounds analysis result).
+In `search.sur`, `type1` information is the estimated parameters. Note that in order to set a proper value for `cdfs`, we need to run the code (at least) twice. This is because we need to get some general idea about the range of values of estimated coefficients (e.g., by studying the extreme bounds analysis result).
 
 Next, we select the values of $n$ and $s$:
 ```{r}
@@ -299,7 +299,7 @@ n <- 50
 Next, we want to estimate two types of coefficients: an unrestricted search and a restricted one in which we discard a part of the model set with low. We assess the performance by using AIC:
 
 ```{r}
-checkItems <- GetModelCheckItems(maxAic = 10)
+checkItems <- get.modelcheck.items(maxAic = 10)
 ```
 
 Note that we adjusted the value of `maxAic` by running the code multiple times. This is because, at the first stage, we have no information about the magnitude of the AICs.
@@ -321,7 +321,7 @@ sur_sim_one <- list(
 
 The number of estimated regressions for the unrestricted and restricted model sets are `r sur_sim_one$unr$search_res$counts$searchedCount-sur_sim_one$unr$search_res$counts$failedCount` and `r sur_sim_one$res$search_res$counts$searchedCount-sur_sim_one$res$search_res$counts$failedCount`, respectively. 
 
-In this example, we present the results for one of the estimated parameters: $\frac{\rho y_1}{\rho x_1}$ in the following figure. Note that the actual value of this parameter is 1.0 (see the equation in the first section). Also, note that we use `ldt::PlotCoefs()` and `ldt::GetGldFromMoments()` functions.
+In this example, we present the results for one of the estimated parameters: $\frac{\rho y_1}{\rho x_1}$ in the following figure. Note that the actual value of this parameter is 1.0 (see the equation in the first section). Also, note that we use `ldt::coefs.plot()` and `ldt::s.gld.from.moments()` functions.
 
 ```{r result_compare_measures_inclusion, echo=FALSE, results='hide', fig.cap='Estimated coefficient (searches with and without restricting AIC)', fig.show='hold', out.width="45%"}
 
@@ -360,7 +360,7 @@ plot_estim <- function(estim, legendSize, intialGld) {
   )
   cdfs <- list(type = "cdfs", label = "CDFs", xs = searchItems$cdfs, cdfs = cdfs1, smoothFun = function(y) smooth(y), col = "brown", lty = 1)
   
-  PlotCoefs(
+  coefs.plot(
     points = list(list(label = "Parameter", value = 1, col = "red", pch = 11, cex = 2)),
     bounds = list(bounds[[1]]),
     intervals = list(intervals[[1]]),

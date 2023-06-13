@@ -10,22 +10,22 @@
 #' @param yGroups (nullable list of integer vector) different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.
 #' @param searchSigMaxIter (int) maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
 #' @param searchSigMaxProb (double) maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
-#' @param measureOptions (list) see \code{[GetMeasureOptions()]}.
-#' @param modelCheckItems (list) see \code{[GetModelCheckItems()]}.
-#' @param searchItems (list) see \code{[GetSearchItems()]}.
-#' @param searchOptions (list) see \code{[GetSearchOptions()]}.
+#' @param measureOptions (list) see \code{[get.measure.options()]}.
+#' @param modelCheckItems (list) see \code{[get.modelcheck.items()]}.
+#' @param searchItems (list) see \code{[get.search.items()]}.
+#' @param searchOptions (list) see \code{[get.search.options()]}.
 #'
 #' @return An object of class \code{ldtsearch}. It does not contain any estimation results,
 #' but minimum required data to estimate the models (Use \code{[summary()]} for this goal).
 #' An object of class \code{ldtsearch} has a nested structure.
 #'
 #' @export
-SurSearch <- function(y, x, numTargets = 1, xSizes = NULL,
+search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
                       xPartitions = NULL, numFixXPartitions = 0,
                       yGroups = NULL, searchSigMaxIter = 0,
-                      searchSigMaxProb = 0.1, measureOptions = GetMeasureOptions(),
-                      modelCheckItems = GetModelCheckItems(), searchItems = GetSearchItems(),
-                      searchOptions = GetSearchOptions()){
+                      searchSigMaxProb = 0.1, measureOptions = get.measure.options(),
+                      modelCheckItems = get.modelcheck.items(), searchItems = get.search.items(),
+                      searchOptions = get.search.options()){
 
   y = as.matrix(y)
   x = as.matrix(x)
@@ -48,26 +48,26 @@ SurSearch <- function(y, x, numTargets = 1, xSizes = NULL,
   }
 
   if (is.null(measureOptions))
-    measureOptions = GetMeasureOptions()
+    measureOptions = get.measure.options()
   else
     measureOptions <- CheckMeasureOptions(measureOptions)
 
   if (is.null(modelCheckItems))
-    modelCheckItems = GetModelCheckItems()
+    modelCheckItems = get.modelcheck.items()
   else
     modelCheckItems <- CheckModelCheckItems(modelCheckItems)
 
   if (is.null(searchItems))
-    searchItems = GetSearchItems()
+    searchItems = get.search.items()
   else
     searchItems <- CheckSearchItems(searchItems)
 
   if (is.null(searchOptions))
-    searchOptions = GetSearchOptions()
+    searchOptions = get.search.options()
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
-  res <- .SurSearch(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
+  res <- .SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
                     yGroups, searchSigMaxIter, searchSigMaxProb, measureOptions,
                     modelCheckItems, searchItems, searchOptions)
   res
@@ -83,9 +83,9 @@ SurSearch <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @param searchSigMaxProb (double) Maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant and removed in the next iteration (if any exists).
 #' @param restriction (nullable numeric matrix) A km x q matrix in which m=ncols(y), k=ncols(x) and q is the number of unrestricted coefficients.
 #' @param newX (nullable numeric matrix) Data of new exogenous variables to be used in the predictions. Its columns must be the same as \code{x}. If null, projection is disabled.
-#' @param pcaOptionsY (nullable list) A list of options in order to use principal components of the \code{y}, instead of the actual values. Set null to disable. Use \code{[GetPcaOptions()]} for initialization.
+#' @param pcaOptionsY (nullable list) A list of options in order to use principal components of the \code{y}, instead of the actual values. Set null to disable. Use \code{[get.pca.options()]} for initialization.
 #' @param pcaOptionsX (nullable list) Similar to \code{pcaOptionsY} but for \code{x}. see \code{pcaOptionsY}.
-#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. See also \code{GetMeasureOptions()]}.
+#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. See also \code{get.measure.options()]}.
 #' @param simTrainRatio (double) Size of the training sample as a ratio of the number of the observations. It is effective only if \code{simTrainFixSize} is zero.
 #' @param simTrainFixSize (int) A fixed size for the training sample. If zero, \code{simTrainRatio} is used.
 #' @param simSeed (int) A seed for the pseudo out-of-sample simulation.
@@ -95,7 +95,7 @@ SurSearch <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @return An object of class \code{ldtestimsur}.
 #'
 #' @export
-SurEstim <- function(y, x, addIntercept = TRUE,
+estim.sur <- function(y, x, addIntercept = TRUE,
                      searchSigMaxIter = 0, searchSigMaxProb = 0.1,
                      restriction = NULL, newX = NULL,
                      pcaOptionsY = NULL, pcaOptionsX = NULL,
@@ -121,7 +121,7 @@ SurEstim <- function(y, x, addIntercept = TRUE,
   if (is.null(pcaOptionsX) == FALSE)
     pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
 
-  res <- .SurEstim(y, x, addIntercept,
+  res <- .EstimSur(y, x, addIntercept,
                    searchSigMaxIter, searchSigMaxProb,
                    restriction, newX, pcaOptionsY, pcaOptionsX,
                    simFixSize, simTrainRatio,
@@ -140,7 +140,7 @@ GetEstim_sur <- function(searchRes, endoIndices,
     x[, c(exoIndices), drop = FALSE]
   }
 
-  M <- SurEstim(
+  M <- estim.sur(
     y = y,
     x = x,
     addIntercept = FALSE,
@@ -178,12 +178,12 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' @param savePre if not \code{NULL}, it saves and tries to load the progress
 #' of search step in a file (name=\code{paste0(savePre,i)} where \code{i}
 #' is the index of the step).
-#' @param ... other arguments to pass to [SurSearch()] function such
+#' @param ... other arguments to pass to [search.sur()] function such
 #' as endogenous data. Note that \code{xSizes} is treated differently.
 #'
 #' @return A combined \code{LdtSearch} object
 #' @export
-SurSearch_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+search.sur_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                         counts = c(NA, 40, 30, 20),
                         savePre = NULL, ...) {
   Search_s("sur", x, xSizes, counts, savePre, ...)

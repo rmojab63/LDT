@@ -22,14 +22,14 @@ RoxygenNote: 7.2.3
 Depends: 
     R (>= 3.5.0)
 Imports:
-    Rcpp,
-    readxl,
-    jsonlite
+    Rcpp
 Suggests:
+    tdata,
     knitr,
     testthat,
     rmarkdown,
     kableExtra,
+    moments,
     MASS
 LinkingTo: 
     BH,

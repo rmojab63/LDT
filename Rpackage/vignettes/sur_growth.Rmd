@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+library(tdata)
 library(ldt)
 library(kableExtra)
 ```
@@ -128,9 +129,9 @@ In other words, our generosity in defining new potential regressors is computati
 
 ### Which subset of the model set should we estimate?
 
-Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt::SurSearch_s()` function has a step-wise search algorithm. It estimates small regressions, and given a list of criteria, it omits regressors with poor performance. In other words, larger models are not built with variables with relatively low explanatory power in the smaller models.
+Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt::search.sur_s()` function has a step-wise search algorithm. It estimates small regressions, and given a list of criteria, it omits regressors with poor performance. In other words, larger models are not built with variables with relatively low explanatory power in the smaller models.
 
-The steps of `SurSearch\_s()` function is defined by a list of indices and a vector of sizes: 
+The steps of `search.sur\_s()` function is defined by a list of indices and a vector of sizes: 
 
 ```{r modelset_steps}
 xSizes <- list(c(2L,3L), c(4L))
@@ -144,7 +145,7 @@ This means that at the first step, we use all data and estimate models with 2 po
 For a given regression model, **ldt** calculates two types of scores: in-sample and out-of-sample. The latter is calculated in a pseudo-out-of-sample simulation (e.g., by calculating the distance between the projected value and the actual one), and the former is calculated by using all the sample data (e.g., AIC of the regression). We select a set of options by the following code:
 
 ```{r modelset_measure_options}
-measureOptions <- GetMeasureOptions(
+measureOptions <- get.measure.options(
   typesIn = c("aic", "sic"), typesOut = c("rmse", "crps"),
   simFixSize = 60, trainRatio = 0.75, seed = 340
 )
@@ -156,7 +157,7 @@ In other words, we are asking **ldt** to use AIC and SIC as the two in-sample cr
 Given a regression model, one might discuss the value of the estimated coefficients, its sign or statistical significance, or one might use it for projection. When model uncertainty presents, one might also look for inclusion weights. While **ldt** provides a range of options, in this example, we focus on the following:
 
 ```{r modelset_search_items}
-searchItems <- GetSearchItems(model = TRUE, bestK = 50, inclusion = TRUE)
+searchItems <- get.search.items(model = TRUE, bestK = 50, inclusion = TRUE)
 ```
 
 In other words, we are asking **ldt** to keep the first `r searchItems$bestK` best models and also, the inclusion weights.
@@ -165,7 +166,7 @@ In other words, we are asking **ldt** to keep the first `r searchItems$bestK` be
 When it comes to an automatic approach toward modeling, We might want to exclude regressions with high levels of multicollinearity, low degrees of freedom (in presence of `NA`s), relatively large AIC, etc. **ldt** provides some options in this regard. In the current example, we use the following code:
 
 ```{r modelset_check_items}
-checkItems <- GetModelCheckItems(maxConditionNumber = 1e15, minDof = 35, minOutSim = 50)
+checkItems <- get.modelcheck.items(maxConditionNumber = 1e15, minDof = 35, minOutSim = 50)
 ```
 
 In other words, we are asking **ldt** to omit a regression with a degrees-of-freedom less than `r checkItems$minDof`, a condition number larger than `r checkItems$maxConditionNumber`, or a number of valid out-of-sample simulations less than `r checkItems$minOutSim`. We hope that restricting the condition number can deal with the multicollinearity problem. 
@@ -186,15 +187,15 @@ If you have downloaded the data set files, do not run this code.
 
 
 ```{r estimation}
-search_res <- SurSearch_s(
+search_res <- search.sur_s(
   x = x, y = y, numFixXPartitions = 2,
   xSizes = xSizes, counts = xCounts,
   searchItems = searchItems, modelCheckItems = checkItems, measureOptions = measureOptions,
-  searchOptions = GetSearchOptions(parallel = TRUE, printMsg = FALSE)
+  searchOptions = get.search.options(parallel = TRUE, printMsg = FALSE)
 )
 ```
 
-The arguments are discussed in the previous sections. Note that `SurSearch_s()` can save the result of different steps in the working directory. 
+The arguments are discussed in the previous sections. Note that `search.sur_s()` can save the result of different steps in the working directory. 
 
 ### Status
 
@@ -204,7 +205,7 @@ We can print the results to get some general information about the search proces
 print(search_res)
 ```
 
-Note that the weights are related to the in-sample and out-of-sample criteria discussed before. See the documentation of `ldt::GetWeightFromMeasure()` or `GetMeasureFromWeight()` functions. Also, an error occurred in `r round(search_res$counts$failedCount/search_res$counts$searchedCount*100,1)`% of the searched models. Note that this number may increase if we apply more strict options in `modelCheckItems` argument.
+Note that the weights are related to the in-sample and out-of-sample criteria discussed before. See the documentation of `ldt::s.weight.from.measure()` or `s.measure.from.weight()` functions. Also, an error occurred in `r round(search_res$counts$failedCount/search_res$counts$searchedCount*100,1)`% of the searched models. Note that this number may increase if we apply more strict options in `modelCheckItems` argument.
 
 ### Best models
 While the best weights are informative, we generally want more information about the best models. The returned value (which is an `ldtsearch` object) provides some general information such as the indices of the exogenous variables. The `summary` function can be used to estimate the best models:
@@ -213,7 +214,7 @@ While the best weights are informative, we generally want more information about
 search_res_sum <- summary(search_res, y = y, x = x, test = FALSE, printMsg = FALSE)
 ```
 
-However, this returned value contains lots of information and we need a way of summarizing them. If the goal is to discuss the coefficients, `ldt::CoefTable()` function can be used to create a table. First, we need to create a list of models:
+However, this returned value contains lots of information and we need a way of summarizing them. If the goal is to discuss the coefficients, `ldt::table.coefs()` function can be used to create a table. First, we need to create a list of models:
 
 ```{r estimation_table_1}
 best_models <- list(
@@ -223,7 +224,7 @@ best_models <- list(
 )
 ```
 
-Next, we should choose the types of information from the regressions, we like to display. It gets done based on some keywords from the documentation of the `CoefTable()` function. For example:
+Next, we should choose the types of information from the regressions, we like to display. It gets done based on some keywords from the documentation of the `table.coefs()` function. For example:
 
 ```{r estimation_table_2}
 regInfo <- list(
@@ -252,7 +253,7 @@ replaces <- list(c("US$", "US\\$"))
 Finally, we can get the table and draw it by using **kableExtra** package:
 
 ```{r estimation_table_4}
-res <- CoefTable(best_models,
+res <- table.coefs(best_models,
                  tableFun = "coef_star", hnameFun = hnameFun, vnamesFun = vnamefun_wdi, regInfo = regInfo,
                  vnamesFun_sub = replaces, vnamesFun_max = 40, formatNumFun = function(j,x)round(x,3),
                  formatLatex = FALSE
@@ -280,7 +281,7 @@ To calculate the principle components, we should omit incomplete observations (r
 
 ```{r pca_na_strategies}
 x_ <- x[, 3:ncol(x), drop = FALSE]
-strategies <- RemoveNaStrategies(x_)
+strategies <- tdata::remove.na.strategies(x_)
 ```
 
 Each strategy specifies the number of rows or columns that should be removed and also the order. Note that we want to exclude the intercept and the lag of the dependent variable from PCA. The `NA` strategies are sorted by the overall number of observations. We can print the number of variables and select some of them:
@@ -294,7 +295,7 @@ These numbers are the number of variables in each strategy. While the choice is 
 ```{r pca_na_strategies_select}
 inds <- c(1, 2, 1, 2)
 pcaCutoffRates <- c(0.95, 0.95, 0.6, 0.6)
-xPcaOptions <- GetPcaOptions(ignoreFirst = 2, exactCount = 0, max = 8)
+xPcaOptions <- get.pca.options(ignoreFirst = 2, exactCount = 0, max = 8)
 ```
 
 This means we will estimate 6 models by combining the first two `NA` strategies and three cumulative variance ratios: 0.95, 0.9, and 0.6. The third line of code is just a setup for ignoring the first two regressors and choosing the number of PCs while estimating the model. We restrict the number of PCs to be less than `r xPcaOptions$max`. This is a relatively large number and therefore, as the next step, we ask **ldt** to omit insignificant coefficients and re-estimate the model, and repeat this process 2 times:
@@ -304,7 +305,7 @@ searchSigMaxIter <- 2
 searchSigMaxProb <- 0.2
 ```
 
-Note that we choose a relatively large value for the type-I error (i.e., `r searchSigMaxProb`). Next, we prepare the data for each case and use `ldt::SurEstim()` function to estimate and create a list of the estimated models:
+Note that we choose a relatively large value for the type-I error (i.e., `r searchSigMaxProb`). Next, we prepare the data for each case and use `ldt::estim.sur()` function to estimate and create a list of the estimated models:
 
 ```{r pca_estimation}
 pca_models <- list()
@@ -325,7 +326,7 @@ for (ind in inds) {
   }
   x0 <- cbind(x[, c(1, 2), drop = F][-strat$rowRemove, , drop = FALSE], x0)
   xPcaOptions$cutoffRate <- pcaCutoffRates[[i]]
-  pca_models[[length(pca_models) + 1]] <- SurEstim(y0, x0,
+  pca_models[[length(pca_models) + 1]] <- estim.sur(y0, x0,
                                                    addIntercept = FALSE,
                                                    searchSigMaxIter = searchSigMaxIter,
                                                    searchSigMaxProb = searchSigMaxProb,
@@ -348,7 +349,7 @@ regInfo <- append(regInfo,
                        c("pca_x_cutoff", "PCA Cutoff")), 2)
 regInfo <- append(regInfo, list(c("", "[. . .]")), 0)
 regInfo <- append(regInfo, list(c("num_rest", "No. Rest.")), 6)
-res <- CoefTable(pca_models,
+res <- table.coefs(pca_models,
                  tableFun = "coef_star", hnameFun = function(x) x, vnamesFun_sub = replaces,
                  vnamesFun = vnamefun_wdi, vnamesFun_max = 16, regInfo = regInfo, 
                  numCoefs = 2, formatNumFun = function(j,x)round(x,3),

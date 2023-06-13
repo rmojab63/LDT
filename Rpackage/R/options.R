@@ -14,7 +14,7 @@
 #' @return A list with the given options.
 #'
 #' @export
-GetRocOptions <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
+get.roc.options <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
                           pessimistic = FALSE, costs = NULL, costMatrix = NULL){
 
   O = list(lowerThreshold = lowerThreshold, upperThreshold = upperThreshold,
@@ -61,7 +61,7 @@ CheckRocOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetNelderMeadOptions <- function(maxIterations = 100, epsilon = 1e-8,
+get.neldermead.options <- function(maxIterations = 100, epsilon = 1e-8,
                                  alpha = 1, beta = 0.5, gamma = 2,
                                  scale = 1){
   O = list(maxIterations = maxIterations,
@@ -115,7 +115,7 @@ CheckNelderMeadOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetPcaOptions <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
+get.pca.options <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
   O = list(
     ignoreFirst = ignoreFirst, exactCount = exactCount,
     cutoffRate = cutoffRate, max = max)
@@ -155,7 +155,7 @@ O
 #' @return A list with the given options.
 #'
 #' @export
-GetLmbfgsOptions <- function(maxIterations = 100, factor = 1e7,
+get.lmbfgs.options <- function(maxIterations = 100, factor = 1e7,
                              projectedGradientTol = 0, maxCorrections = 5){
   O = list(maxIterations = maxIterations,
            factor = factor,
@@ -199,7 +199,7 @@ CheckLmbfgsOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetNewtonOptions <- function(maxIterations = 100, functionTol = 1e-4,
+get.newton.options <- function(maxIterations = 100, functionTol = 1e-4,
                              gradientTol = 0, useLineSearch = TRUE){
   O = list(maxIterations = maxIterations,
            functionTol = functionTol,
@@ -246,7 +246,7 @@ CheckNewtonOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetSearchItems <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
+get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
                            bestK = 1, all = FALSE, inclusion = FALSE,
                            cdfs = numeric(0), extremeMultiplier = 0,
                            mixture4 = FALSE){
@@ -292,7 +292,7 @@ CheckSearchItems <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetSearchOptions <- function(parallel = FALSE, reportInterval = 2,
+get.search.options <- function(parallel = FALSE, reportInterval = 2,
                              printMsg = FALSE){
   O = list(parallel = parallel,
            reportInterval = reportInterval,
@@ -331,7 +331,7 @@ CheckSearchOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetModelCheckItems <- function( estimation = TRUE, maxConditionNumber = Inf,
+get.modelcheck.items <- function( estimation = TRUE, maxConditionNumber = Inf,
                                 minObsCount = 0, minDof = 0, minOutSim = 0,
                                 minR2 = -Inf, maxAic = Inf, maxSic = Inf,
                                 prediction = FALSE, predictionBoundMultiplier = 4){
@@ -394,7 +394,7 @@ CheckModelCheckItems <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-GetMeasureOptions <- function(typesIn = character(0), typesOut = character(0),
+get.measure.options <- function(typesIn = character(0), typesOut = character(0),
                               simFixSize = 10, trainRatio = 0.75,
                               trainFixSize = 0, seed = 0,
                               horizons = c(1L), weightedEval = FALSE){

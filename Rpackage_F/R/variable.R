@@ -176,8 +176,8 @@ as.data.frame.ldtv <- function(x, ...) {
 #'
 #' @export
 #' @examples
-#' v1 = variable(c(1,2,3,2,3,4,5),f.monthly(2022,12),"V1", list())
-#' v2 = variable(c(10,20,30,20,30,40,50),f.monthly(2022,8),"V2", list())
+#' v1 = variable(c(1,2,3,2,3,4,5),f.monthly(2022,12),"V1")
+#' v2 = variable(c(10,20,30,20,30,40,50),f.monthly(2022,8),"V2")
 #' L = bind.variables(list(v1,v2))
 bind.variables <- function(varList, interpolate = FALSE,
               adjustLeadLags = FALSE, numExo = 0,
@@ -191,7 +191,7 @@ bind.variables <- function(varList, interpolate = FALSE,
     stop("Invalid 'numExo'. It cannot be negative.")
   if (horizon < 0)
     stop("Invalid 'horizon'. It cannot be negative.")
-
+  varList = as.list(varList)
 
   res <- .BindVariables(varList, interpolate, adjustLeadLags, numExo, horizon)
   res

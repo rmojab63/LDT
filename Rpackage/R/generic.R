@@ -50,7 +50,7 @@ print.ldtsearch <- function(x, ...) {
       }
       cat(" ", t$name, " ", sep = "")
       if (is.null(t$model) || is.null(t$model$bests) || length(t$model$bests) > 0) {
-        cat("(best=", round(GetMeasureFromWeight(t$model$bests[[1]]$weight, nms[[i]]), 3), ")\n", sep = "")
+        cat("(best=", round(s.measure.from.weight(t$model$bests[[1]]$weight, nms[[i]]), 3), ")\n", sep = "")
       } else {
         cat("(best model is missing)\n", sep = "")
       }
@@ -72,7 +72,7 @@ print.ldtsearch <- function(x, ...) {
 #'
 #' @return estimation result
 #' @export
-GetEstim <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, ...) {
+h.get.estim <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, ...) {
   if (is.null(endoIndices) == FALSE && is.null(y) == FALSE) {
     y <- as.matrix(y)
   }
@@ -110,11 +110,11 @@ getMeasureFrom <- function(model, measureName, tarIndex, method) {
 #' @param y dependent variables data (Data is not saved in \code{object})
 #' @param x exogenous variables data (Data is not saved in \code{object})
 #' @param addModelBests if \code{TRUE} and 'model$bests' exists
-#' (see \code{[GetSearchItems()]}), it estimates them.
+#' (see \code{[get.search.items()]}), it estimates them.
 #' @param addModelAll if \code{TRUE} and 'all' exists
-#' (see \code{[GetSearchItems()]}), it estimates them.
+#' (see \code{[get.search.items()]}), it estimates them.
 #' @param addItem1Bests if \code{TRUE} and 'item1' exists
-#' (see \code{[GetSearchItems()]}), it estimates them.
+#' (see \code{[get.search.items()]}), it estimates them.
 #' @param printMsg if \code{TRUE} details are printed.
 #' @param w weight of observations (if available, e.g., in discrete choice estimation.
 #' Data is not saved in \code{object})
@@ -173,7 +173,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
             k <- 0
             for (b in x_mod$bests) {
               k <- k + 1
-              su_m <- GetEstim(object, b$depIndices, b$exoIndices, y, x,
+              su_m <- h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                 printMsg = printMsg,
                 params = b$parameters, newX = newX, w = w,
                 distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
@@ -185,7 +185,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                   which(b$depIndices == j)[[1]]
                 } # index of target in endogenous data
                 testthat::expect_equal(
-                  GetWeightFromMeasure(
+                  s.weight.from.measure(
                     getMeasureFrom(su_m, mea, jt, result$method), mea
                   ),
                   b$weight,
@@ -203,7 +203,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
             for (b in x_mod$all) {
               k <- k + 1
 
-              su_m <- GetEstim(object, b$depIndices, b$exoIndices, y, x,
+              su_m <- h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                 printMsg = printMsg,
                 params = b$parameters, newX = newX, w = w,
                 distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
@@ -215,7 +215,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                   which(b$depIndices == j)[[1]]
                 }
                 testthat::expect_equal(
-                  GetWeightFromMeasure(getMeasureFrom(su_m, mea, jt, result$method), mea),
+                  s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea),
                   b$weight,
                   tolerance = test_perc
                 )
@@ -248,7 +248,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                   if (k != 1) { # first one is name (note k-1 in the next line)
 
                     su_m <-
-                      GetEstim(object, b$depIndices, b$exoIndices, y, x,
+                      h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                         printMsg = printMsg,
                         params = b$parameters, newX = newX, w = w,
                         distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
@@ -261,7 +261,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                         which(b$depIndices == j)[[1]]
                       }
                       testthat::expect_equal(
-                        GetWeightFromMeasure(
+                        s.weight.from.measure(
                           getMeasureFrom(su_m, mea, jt, result$method), mea
                         ), b$weight,
                         tolerance = test_perc

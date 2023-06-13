@@ -53,8 +53,8 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
     warning("Zero weight is found.");
 }
 
-// [[Rcpp::export(.DcSearch)]]
-SEXP DcSearch(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
+// [[Rcpp::export(.SearchDc)]]
+SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
               SEXP costMatrices, bool searchLogit, bool searchProbit,
               List optimOptions, List aucOptions, List measureOptions,
               List modelCheckItems, List searchItems, List searchOptions) {
@@ -199,8 +199,8 @@ SEXP DcSearch(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   return L;
 }
 
-// [[Rcpp::export(.DcEstim)]]
-SEXP DcEstim(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
+// [[Rcpp::export(.EstimDc)]]
+SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
              SEXP pcaOptionsX, SEXP costMatrices, List aucOptions,
              int simFixSize, double simTrainRatio, int simTrainFixSize,
              int simSeed, bool weightedEval, bool printMsg) {

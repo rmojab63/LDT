@@ -95,7 +95,7 @@ combineSearch <- function(list, type1Name = "coefs") {
       ind <- which(n == firstNames)
       if (length(ind) > 0) {
         ind <- ind[[1]]
-        mix <- GetCombination4Moments(
+        mix <- s.combine.by.moments4(
           list(
             mean = first[[ind, 1]], variance = first[[ind, 2]],
             skewness = first[[ind, 3]], kurtosis = first[[ind, 4]],
@@ -394,11 +394,11 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       cat("\n=================\n")
 
     if (method == "sur") {
-      estims[[i]] <- SurSearch(x = data_i, xSizes = size_i, ...)
+      estims[[i]] <- search.sur(x = data_i, xSizes = size_i, ...)
     } else if (method == "dc") {
-      estims[[i]] <- DcSearch(x = data_i, xSizes = size_i, ...)
+      estims[[i]] <- search.dc(x = data_i, xSizes = size_i, ...)
     } else if (method == "varma") {
-      estims[[i]] <- VarmaSearch(y = data_i, ySizes = size_i, ...)
+      estims[[i]] <- search.varma(y = data_i, ySizes = size_i, ...)
     } else {
       stop("invalid method")
     }
@@ -490,7 +490,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
 #'
 #' @return the generated table.
 #' @export
-CoefTable <- function(list, depInd = 1,
+table.coefs <- function(list, depInd = 1,
                       regInfo = list(
                         c("", " "), c("num_obs", "No. Obs."), c("num_eq", "No. Eq."),
                         c("num_x", "No. Exo."), c("sigma2", "S.E. Reg."),

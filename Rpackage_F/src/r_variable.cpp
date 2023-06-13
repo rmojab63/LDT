@@ -49,12 +49,14 @@ void UpdateVariableFromSEXP(
   }
 
   try {
-    List F = w["fields"];
-    for (int j = 0; j < F.length(); j++) {
-      CharacterVector Fj = as<CharacterVector>(F[j]);
-      if (Fj.length() < 2)
-        throw std::logic_error("Expected a 'key' and a 'value'.");
-      variable.Fields.insert({as<std::string>(Fj[0]), as<std::string>(Fj[1])});
+    if (is<List>(w["fields"])){
+      List F = w["fields"];
+      for (int j = 0; j < F.length(); j++) {
+        CharacterVector Fj = as<CharacterVector>(F[j]);
+        if (Fj.length() < 2)
+          throw std::logic_error("Expected a 'key' and a 'value'.");
+        variable.Fields.insert({as<std::string>(Fj[0]), as<std::string>(Fj[1])});
+      }
     }
   } catch (...) {
     throw std::logic_error(

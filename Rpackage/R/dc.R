@@ -10,26 +10,26 @@
 #' @param costMatrices (list of numeric matrix) each frequency cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a frequency cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
 #' @param searchLogit (bool) if \code{TRUE}, logit regressions are added to the model set.
 #' @param searchProbit (bool) if \code{TRUE}, probit regressions are added to the model set.
-#' @param optimOptions (list) Newton optimization options. see \code{[GetNewtonOptions()]}.
-#' @param aucOptions (list) AUC calculation options. see \code{[GetRocOptions()]}.
-#' @param measureOptions (list) see \code{[GetMeasureOptions()]}.
-#' @param modelCheckItems (list) see \code{[GetModelCheckItems()]}.
-#' @param searchItems (list) see \code{[GetSearchItems()]}.
-#' @param searchOptions (list) see \code{[GetSearchOptions()]}.
+#' @param optimOptions (list) Newton optimization options. see \code{[get.newton.options()]}.
+#' @param aucOptions (list) AUC calculation options. see \code{[get.roc.options()]}.
+#' @param measureOptions (list) see \code{[get.measure.options()]}.
+#' @param modelCheckItems (list) see \code{[get.modelcheck.items()]}.
+#' @param searchItems (list) see \code{[get.search.items()]}.
+#' @param searchOptions (list) see \code{[get.search.options()]}.
 #'
 #' @return An object of class \code{ldtsearch}. It does not contain any estimation results,
 #' but minimum required data to estimate the models (Use \code{[summary()]} for this goal).
 #' An object of class \code{ldtsearch} has a nested structure.
 #'
 #' @export
-DcSearch <- function(y, x, w = NULL, xSizes = NULL,
+search.dc <- function(y, x, w = NULL, xSizes = NULL,
                      xPartitions = NULL, costMatrices = NULL,
                      searchLogit = TRUE, searchProbit = FALSE,
-                     optimOptions = GetNewtonOptions(), aucOptions = GetRocOptions(),
-                     measureOptions = GetMeasureOptions(),
-                     modelCheckItems = GetModelCheckItems(),
-                     searchItems = GetSearchItems(),
-                     searchOptions = GetSearchOptions()){
+                     optimOptions = get.newton.options(), aucOptions = get.roc.options(),
+                     measureOptions = get.measure.options(),
+                     modelCheckItems = get.modelcheck.items(),
+                     searchItems = get.search.items(),
+                     searchOptions = get.search.options()){
 
   y = as.matrix(y)
   x = as.matrix(x)
@@ -52,36 +52,36 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL,
   }
 
   if (is.null(optimOptions))
-    optimOptions = GetNewtonOptions()
+    optimOptions = get.newton.options()
   else
     optimOptions = CheckNewtonOptions(optimOptions)
 
   if (is.null(aucOptions))
-    aucOptions = GetRocOptions()
+    aucOptions = get.roc.options()
   else
     aucOptions = CheckRocOptions(aucOptions)
 
   if (is.null(measureOptions))
-    measureOptions = GetMeasureOptions()
+    measureOptions = get.measure.options()
   else
     measureOptions <- CheckMeasureOptions(measureOptions)
 
   if (is.null(modelCheckItems))
-    modelCheckItems = GetModelCheckItems()
+    modelCheckItems = get.modelcheck.items()
   else
     modelCheckItems <- CheckModelCheckItems(modelCheckItems)
 
   if (is.null(searchItems))
-    searchItems = GetSearchItems()
+    searchItems = get.search.items()
   else
     searchItems <- CheckSearchItems(searchItems)
 
   if (is.null(searchOptions))
-    searchOptions = GetSearchOptions()
+    searchOptions = get.search.options()
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
-  res <- .DcSearch(y, x, w, xSizes, xPartitions, costMatrices,
+  res <- .SearchDc(y, x, w, xSizes, xPartitions, costMatrices,
                    searchLogit, searchProbit,
                    optimOptions, aucOptions, measureOptions ,
                    modelCheckItems, searchItems,
@@ -97,10 +97,10 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL,
 #' @param w (numeric vector) Weights of the observations in \code{y}. Null means equal weights.
 #' @param distType (string) Distribution assumption. It can be \code{logit} or \code{probit}.
 #' @param newX (numeric matrix) If not null, probabilities are projected for each row of this matrix.
-#' @param pcaOptionsX (list) A list of options in order to use principal components of the \code{x}, instead of the actual values. set null to disable. Use [GetPcaOptions()] for initialization.
+#' @param pcaOptionsX (list) A list of options in order to use principal components of the \code{x}, instead of the actual values. set null to disable. Use [get.pca.options()] for initialization.
 #' @param costMatrices (list of matrices) Each cost table determines how you score the calculated probabilities.
-#' @param aucOptions (nullable list) AUC calculation options. see \code{[GetRocOptions()]}.
-#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. (see [GetMeasureOptions()]).
+#' @param aucOptions (nullable list) AUC calculation options. see \code{[get.roc.options()]}.
+#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. (see [get.measure.options()]).
 #' @param simTrainRatio (double) Size of the training sample as a ratio of the number of the observations. It is effective only if \code{simTrainFixSize} is zero.
 #' @param simTrainFixSize (int) A fixed size for the training sample. If zero, \code{simTrainRatio} is used.
 #' @param simSeed (int) A seed for the pseudo out-of-sample simulation.
@@ -110,10 +110,10 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL,
 #' @return An object of class \code{ldtestimdc}.
 #'
 #' @export
-DcEstim <- function(y, x, w = NULL,
+estim.dc <- function(y, x, w = NULL,
                     distType = c("logit", "probit"), newX = NULL,
                     pcaOptionsX = NULL, costMatrices = NULL,
-                    aucOptions = GetRocOptions(), simFixSize = 200, simTrainRatio = 0.5,
+                    aucOptions = get.roc.options(), simFixSize = 200, simTrainRatio = 0.5,
                     simTrainFixSize = 0, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
 {
 
@@ -140,11 +140,11 @@ DcEstim <- function(y, x, w = NULL,
   }
 
   if (is.null(aucOptions))
-    aucOptions = GetRocOptions()
+    aucOptions = get.roc.options()
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  res <- .DcEstim(y, x, w, distType, newX,
+  res <- .EstimDc(y, x, w, distType, newX,
                   pcaOptionsX, costMatrices,
                   aucOptions, simFixSize, simTrainRatio,
                   simTrainFixSize, simSeed,
@@ -154,7 +154,7 @@ DcEstim <- function(y, x, w = NULL,
 
 # get estimation from search result
 GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, distType, ...) {
-  M <- DcEstim(y,
+  M <- estim.dc(y,
                x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
                w = w,
                distType = distType,
@@ -189,12 +189,12 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #' suggested number is reached.
 #' @param savePre if not \code{NULL}, it saves and tries to load the progress of search
 #' step in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step).
-#' @param ... other arguments to pass to [DcSearch()] function such as endogenous data.
+#' @param ... other arguments to pass to [search.dc()] function such as endogenous data.
 #' Note that \code{xSizes} is treated differently.
 #'
 #' @return A combined \code{LdtSearch} object
 #' @export
-DcSearch_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+search.dc_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                        counts = c(NA, 40, 30, 20),
                        savePre = NULL, ...) {
   Search_s("dc", x, xSizes, counts, savePre, ...)

@@ -27,7 +27,7 @@
 #'
 #' @param ... additional properties for plot or legend: \code{xlab}, \code{ylab}
 #'
-#' @return if \code{plot} is \code{FALSE}, a \code{ggplot} to be printed.
+#' @return NULL
 #' @export
 #' @importFrom graphics legend par
 #' @importFrom grDevices rgb
@@ -36,7 +36,7 @@
 #' points <- list()
 #' points$one <- list(value = 1, label = "Point 1")
 #' points$two <- list(value = 2, label = "Point 2", col = "red", pch = 22, cex = 4)
-#' PlotCoefs(points = points)
+#' coefs.plot(points = points)
 #'
 #' bounds <- list()
 #' bounds$one <- list(xmin = -1, xmax = 0.5, label = "Bound 1")
@@ -44,7 +44,7 @@
 #'   xmin = 0, xmax = 1, ymin = 0.2, ymax = 0.3,
 #'   label = "Bound 2", alpha = 0.2, col = rgb(0, 0, 1.0, alpha = 0.3)
 #' )
-#' PlotCoefs(points = points, bounds = bounds)
+#' coefs.plot(points = points, bounds = bounds)
 #'
 #' intervals <- list()
 #' intervals$one <- list(value = 2, xmin = 0, xmax = 3, label = "Interval 1")
@@ -52,7 +52,7 @@
 #'   value = 1.5, xmin = 1, xmax = 2, y = 4,
 #'   label = "Interval 2", col = "blue", lwd = 3, pch = 11, cex = c(1.2, 3, 1.2)
 #' )
-#' PlotCoefs(points = points, bounds = bounds, intervals = intervals)
+#' coefs.plot(points = points, bounds = bounds, intervals = intervals)
 #'
 #' distributions <- list()
 #' distributions$one <- list(type = "normal", mean = 0, var = 1, label = "Distribution 1")
@@ -65,12 +65,12 @@
 #'   cdfs = pnorm(seq(-2, 2, 0.1)), label = "Distribution 3",
 #'   col = rgb(1, 0, 0, alpha = 0.5), lwd = 8
 #' )
-#' PlotCoefs(
+#' coefs.plot(
 #'   points = points, bounds = bounds, intervals = intervals,
 #'   distributions = distributions, legendsTitle = NULL, legendSize = 7
 #' )
 #'
-PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributions = NULL,
+coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distributions = NULL,
                       newPlot = TRUE, xlim = NULL, ylim = NULL,
                       boundFun = function(b, type) {
                         if
@@ -118,8 +118,8 @@ PlotCoefs <- function(points = NULL, bounds = NULL, intervals = NULL, distributi
       } else if (type == "gld") {
         quantiles <- if.not.null(g$quantiles, seq(0.01, 0.99, length.out = numPoints))
         dists[[length(dists) + 1]] <- list(
-          x = GldQuantile(quantiles, g$p1, g$p2, g$p3, g$p4),
-          y = GldDensityQuantile(quantiles, g$p1, g$p2, g$p3, g$p4)
+          x = s.gld.quantile(quantiles, g$p1, g$p2, g$p3, g$p4),
+          y = s.gld.density.quantile(quantiles, g$p1, g$p2, g$p3, g$p4)
         )
       } else if (type == "cdfs") {
         y <- diff(g$cdfs) / diff(g$xs)

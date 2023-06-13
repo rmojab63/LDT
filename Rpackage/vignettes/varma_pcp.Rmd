@@ -36,7 +36,7 @@ It is recommended to read the following vignettes first:
 in this vignette, we will predict the commodity prices and discuss the prediction power of the VARMA modeling. Given a model, we design a pseudo-out-of-sample simulation with the following options:
 
 ```{r}
-measureOptions <- GetMeasureOptions(
+measureOptions <- get.measure.options(
   simFixSize = 24,
   typesIn = NULL, typesOut = c("direction", "scaledRmse", "crps"),
   horizons = c(1L)
@@ -128,7 +128,7 @@ maxParams <- c(2, 1, 0, 2, 1, 0)
 Note that there is no MA part in the selected models. Next, we ask **ldt** to exclude models with unusual predictions:
 
 ```{r}
-checkItems <- GetModelCheckItems(
+checkItems <- get.modelcheck.items(
   estimation = TRUE, prediction = TRUE,
   predictionBoundMultiplier = 4
 )
@@ -138,15 +138,14 @@ Finally, we search for the best models:
 
 ```{r estimation}
 
-pcpRes <- VarmaSearch(
+pcpRes <- search.varma(
   y = y, x = x, numTargets = numTargets,
   ySizes = ySizes, xGroups = xGroups, maxParams = maxParams,
   seasonsCount = seasonsCount, maxHorizon = 1, newX = newX,
-  interpolate = TRUE,
   measureOptions = measureOptions,
   modelCheckItems = checkItems,
-  searchItems = GetSearchItems(model = TRUE, bestK = 1),
-  searchOptions = GetSearchOptions(printMsg = FALSE)
+  searchItems = get.search.items(model = TRUE, bestK = 1),
+  searchOptions = get.search.options(printMsg = FALSE)
 )
 
 
@@ -186,7 +185,7 @@ for (i in c(1:3)) {
   mea <- mea_names[[i]]
   res[[length(res) + 1]] <- sapply(nms, function(n) {
     ij <- which(r$labels == n)[[1]]
-    v <- GetMeasureFromWeight(r$x[[ij]], measureName = mea)
+    v <- s.measure.from.weight(r$x[[ij]], measureName = mea)
     if (ij > 3) {
       paste0(round(v, 4), " <sup>(", ij, ")</sup>")
     } else {

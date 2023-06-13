@@ -13,8 +13,8 @@ test_that("Bind Variables works with lag/lead adjustments", {
   mat[4,3]=NaN
   freq <- f.monthly(2022,12)
 
-  v1 <- variable(mat[,1], freq, "V1")
-  v2 <- variable(mat[,2], freq, "V2")
+  v1 <- variable(mat[,1], freq, "V1", list())
+  v2 <- variable(mat[,2], freq, "V2", list())
   v3 <- variable(mat[,3], freq, "V3")
   v4 <- variable(mat[,4], freq, "V4")
 
