@@ -22,17 +22,20 @@
 #' # This example requires external data. Download the data and run them:
 #'
 #' \donttest{
-#' path.dir <- "D:/Data/WDI" # This path must be valid
-#' # Define a function that calculates the long-run growth rates:
-#' aggregateFun <- function(data, code, name, unit, definition, aggMethod) {
-#'   isPerc <- unit == "%" || grepl(".ZG", code)
-#'   if (isPerc) NA else LongrunGrowth(data, 30, 5, FALSE, TRUE, isPerc)
-#' }
-#' # Add some rules for removing the variable from the analysis:
-#' keepFun <- function(data) {
-#'      var(data, na.rm = TRUE) > 1e-12 && sum((is.na(data)) == FALSE) >= 50
-#' }
-#' data <- data.wdi.agg(path.dir, 1960, 2020, aggregateFun, keepFun)
+#' try({
+#'    path.dir <- "D:/Data/WDI" # This path must be valid
+#'    # Define a function that calculates the long-run growth rates:
+#'    aggregateFun <- function(data, code, name, unit, definition, aggMethod) {
+#'      isPerc <- unit == "%" || grepl(".ZG", code)
+#'      if (isPerc) NA
+#'      else get.longrun.growth(data, FALSE, TRUE, 30, 5, isPerc)
+#'    }
+#'    # Add some rules for removing the variable from the analysis:
+#'    keepFun <- function(data) {
+#'         var(data, na.rm = TRUE) > 1e-12 && sum((is.na(data)) == FALSE) >= 50
+#'    }
+#'    data <- data.wdi.agg(path.dir, 1960, 2020, aggregateFun, keepFun)
+#' })
 #' }
 #'
 #' @importFrom utils read.csv

@@ -1,9 +1,9 @@
 ---
-title: "Time & Data"
+title: "Time and Data"
 output: rmarkdown::html_vignette
 bibliography: tdata.bib
 vignette: >
-  %\VignetteIndexEntry{Time & Data}
+  %\VignetteIndexEntry{Time and Data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

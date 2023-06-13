@@ -116,11 +116,13 @@ f.yearly <- function(year) {
 #' #      this is a quarterly frequency that refers to the third quarter of the year 2021.
 #'
 #' # Don't make the following mistakes:
-#' #   q_invalid <- f.quarterly(2020, 0)
-#' #   q_invalid <- f.quarterly(2020, 5)
-#' #   q_invalid <- as.frequency("2021q0", "q")
-#' #   q_invalid <- as.frequency("2021q5", "q")
-#' #   q_invalid <- as.frequency("2021", "q")
+#' \donttest{
+#' q_invalid <- try(f.quarterly(2020, 0))
+#' q_invalid <- try(f.quarterly(2020, 5))
+#' q_invalid <- try(as.frequency("2021q0", "q"))
+#' q_invalid <- try(as.frequency("2021q5", "q"))
+#' q_invalid <- try(as.frequency("2021", "q"))
+#' }
 #'
 f.quarterly <- function(year, quarter){
   year = as.integer(year)
@@ -170,11 +172,13 @@ f.quarterly <- function(year, quarter){
 #' #     this is a monthly frequency that refers to the third month of the year 2021.
 #'
 #' # Don't make the following mistakes:
-#' #   m_invalid <- f.monthly(2020, 0)
-#' #   m_invalid <- f.monthly(2020, 5)
-#' #   m_invalid <- as.frequency("2021m0", "m")
-#' #   m_invalid <- as.frequency("2021m13", "m")
-#' #   m_invalid <- as.frequency("2021", "m")
+#' \donttest{
+#' m_invalid <- try(f.monthly(2020, 0))
+#' m_invalid <- try(f.monthly(2020, 5))
+#' m_invalid <- try(as.frequency("2021m0", "m"))
+#' m_invalid <- try(as.frequency("2021m13", "m"))
+#' m_invalid <- try(as.frequency("2021", "m"))
+#' }
 #'
 f.monthly <- function(year, month){
   year = as.integer(year)
@@ -224,9 +228,11 @@ f.monthly <- function(year, month){
 #' #      However, the next observation is expected in 2023.
 #'
 #' # Don't make the following mistakes:
-#' #   my_invalid <- f.multi.yearly(2020, 0)
-#' #   my_invalid <- f.multi.yearly(2020, -5)
-#' #   my_invalid <- as.frequency("2021", "z")
+#' \donttest{
+#' my_invalid <- try(f.multi.yearly(2020, 0))
+#' my_invalid <- try(f.multi.yearly(2020, -5))
+#' my_invalid <- try(as.frequency("2021", "z"))
+#' }
 #'
 f.multi.yearly <- function(year, z){
   year = as.integer(year)
@@ -279,11 +285,13 @@ f.multi.yearly <- function(year, z){
 #' #     and refers to the last partition.
 #'
 #' # Don't make the following mistakes:
-#' #   xty_invalid <- f.x.times.a.year(2020, 3, 0)
-#' #   xty_invalid <- f.x.times.a.year(2020, 24, 25)
-#' #   xty_invalid <- as.frequency("2021:13", "y12")
-#' #   xty_invalid <- as.frequency("2021:0", "y1")
-#' #   xty_invalid <- as.frequency("2021", "y1")
+#' \donttest{
+#' xty_invalid <- try(f.x.times.a.year(2020, 3, 0))
+#' xty_invalid <- try(f.x.times.a.year(2020, 24, 25))
+#' xty_invalid <- try(as.frequency("2021:13", "y12"))
+#' xty_invalid <- try(as.frequency("2021:0", "y1"))
+#' xty_invalid <- try(as.frequency("2021", "y1"))
+#' }
 #'
 f.x.times.a.year <- function(year, x, position){
   year = as.integer(year)
@@ -345,9 +353,11 @@ f.x.times.a.year <- function(year, x, position){
 #' #      and refers to the last partition. The next observation occurs after 4 years.
 #'
 #' # Don't make the following mistakes:
-#' #   xtzy_invalid <- f.x.times.z.years(2020, 3, 5, 0)
-#' #   xtzy_invalid <- f.x.times.z.years(2020, 3, 0, 1)
-#' #   xtzy_invalid <- as.frequency("2021:25", "x24y2")
+#' \donttest{
+#' xtzy_invalid <- try(f.x.times.z.years(2020, 3, 5, 0))
+#' xtzy_invalid <- try(f.x.times.z.years(2020, 3, 0, 1))
+#' xtzy_invalid <- try(as.frequency("2021:25", "x24y2"))
+#' }
 #'
 f.x.times.z.years <- function(year, x, z, position){
   year = as.integer(year)
@@ -406,9 +416,11 @@ f.x.times.z.years <- function(year, x, z, position){
 #' w_new <- as.frequency("20230109", "w") # This is 9/1/2023.
 #'
 #' # Don't use invalid or unsupported dates:
-#' #   w_invalid <- as.frequency("1399109", "w") # this is a too old date and unsupported
-#' #   w_invalid <- as.frequency("20230132", "w") # invalid day in month
-#' #   w_invalid <- as.frequency("20231331", "w") # invalid month
+#' \donttest{
+#' w_invalid <- try(as.frequency("1399109", "w")) # this is a too old date and unsupported
+#' w_invalid <- try(as.frequency("20230132", "w")) # invalid day in month
+#' w_invalid <- try(as.frequency("20231331", "w")) # invalid month
+#' }
 #'
 f.weekly <- function(year, month, day){
   year = as.integer(year)
@@ -466,10 +478,12 @@ f.weekly <- function(year, month, day){
 #' mw_new <- as.frequency("20230109", "w4") # This is 9/1/2023.
 #'
 #' # Don't use invalid or unsupported dates:
-#' #   mw_invalid <- as.frequency("1399109", "w4") # this is a too old date and unsupported
-#' #   mw_invalid <- as.frequency("20230132", "w5") # invalid day in month
-#' #   mw_invalid <- as.frequency("20231331", "w2") # invalid month
-#' #   mw_invalid <- as.frequency("20231012", "w0")
+#' \donttest{
+#' mw_invalid <- try(as.frequency("1399109", "w4")) # this is a too old date and unsupported
+#' mw_invalid <- try(as.frequency("20230132", "w5")) # invalid day in month
+#' mw_invalid <- try(as.frequency("20231331", "w2")) # invalid month
+#' mw_invalid <- try(as.frequency("20231012", "w0"))
+#' }
 #'
 f.multi.weekly <- function(year, month, day, k){
 
@@ -556,9 +570,11 @@ get_date_reformat <- function(dateString, asDateFun){
 #' d_new <- as.frequency("20230109", "d") # This is 9/1/2023.
 #'
 #' # Don't use invalid or unsupported dates:
-#' #   d_invalid <- as.frequency("1399109", "d") # this is a too old date and unsupported
-#' #   d_invalid <- as.frequency("20230132", "d") # invalid day in month
-#' #   d_invalid <- as.frequency("20231331", "d") # invalid month
+#' \donttest{
+#' # d_invalid <- try(as.frequency("1399109", "d")) # this is a too old date and unsupported
+#' # d_invalid <- try(as.frequency("20230132", "d")) # invalid day in month
+#' d_invalid <- try(as.frequency("20231331", "d")) # invalid month
+#' }
 #'
 f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
 
@@ -626,9 +642,11 @@ f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
 #' md_new <- as.frequency("20230109", "d") # This is 9/1/2023.
 #'
 #' # Don't use invalid or unsupported dates:
-#' #   md_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
-#' #   md_invalid <- as.frequency("20230132", "d4") # invalid day in month
-#' #   md_invalid <- as.frequency("20231331", "d5") # invalid month
+#' \donttest{
+#' md_invalid <- try(as.frequency("1399109", "d3")) # this is a too old date and unsupported
+#' md_invalid <- try(as.frequency("20230132", "d4")) # invalid day in month
+#' md_invalid <- try(as.frequency("20231331", "d5")) # invalid month
+#' }
 #'
 f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NULL){
 
@@ -714,12 +732,14 @@ f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NU
 #' #     This is 20/1/2023 (by default, it moves forward).
 #'
 #' # Don't use invalid or unsupported dates:
-#' #   dw_invalid <- as.frequency("1399109", "d3") # this is a too old date and unsupported
-#' #   dw_invalid <- as.frequency("20230132", "d4") # invalid day in month
-#' #   dw_invalid <- as.frequency("20231331", "d5") # invalid month
+#' \donttest{
+#' dw_invalid <- try(as.frequency("1399109", "d3")) # this is a too old date and unsupported
+#' dw_invalid <- try(as.frequency("20230132", "d4")) # invalid day in month
+#' dw_invalid <- try(as.frequency("20231331", "d5")) # invalid month
 #'
 #' # don't use invalid week definitions:
-#' #   f.daily.in.week(2023, 5, 16, "Wednesday", "sat")
+#' dw_invalid <- try(f.daily.in.week(2023, 5, 16, "Wednesday", "sat"))
+#' }
 #'
 f.daily.in.week <- function(year, month, day, weekStart = "mon",
                           weekEnd = "fri", forward = TRUE, dateString = NULL, asDateFun = NULL){
@@ -801,8 +821,10 @@ f.daily.in.week <- function(year, month, day, weekStart = "mon",
 #' L_new0 <- as.frequency("A", "Ls") # compared to the previous one, its items will be empty
 #'
 #' # Don't make the following mistakes:
-#' #   L_invalid <- as.frequency("E", "Ls:A;B;C;D") # 'E' is not a member of the list
-#' #   L_invalid <- f.list.string(c("A","B","C","D"), "E")
+#' \donttest{
+#' L_invalid <- try(as.frequency("E", "Ls:A;B;C;D")) # 'E' is not a member of the list
+#' L_invalid <- try(f.list.string(c("A","B","C","D"), "E"))
+#' }
 #'
 f.list.string <- function(items, value){
   value = as.character(value)
@@ -851,9 +873,11 @@ f.list.string <- function(items, value){
 #' #     compared to the previous one, its items will be empty
 #'
 #' # Don't make the following mistakes:
-#' #   Ld_invalid <- as.frequency("20231102", "Ld:20231101;20220903;20200823;20230303")
-#' #     'E' is not a member of the list
-#' #   Ld_invalid <- f.list.date(c("20231101","20220903","20200823","20230303"), "20231102")
+#' \donttest{
+#' Ld_invalid <- try(as.frequency("20231102", "Ld:20231101;20220903;20200823;20230303"))
+#'   # 'E' is not a member of the list
+#' Ld_invalid <- try(f.list.date(c("20231101","20220903","20200823","20230303"), "20231102"))
+#' }
 #'
 f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 
@@ -915,9 +939,11 @@ f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 #' ho_new <- as.frequency("20231101:3", "ho|i:wed-sat")
 #'
 #' # Don't make the following mistakes:
-#' #   ho_invalid <- as.frequency("20231101:3", "ho|j:wed-sat")
-#' #     invalid format in day-based frequency
-#' #   ho_invalid <- f.hourly(f.daily(2023,5,16),25) # invalid hour
+#' \donttest{
+#' ho_invalid <- try(as.frequency("20231101:3", "ho|j:wed-sat"))
+#' #  invalid format in day-based frequency
+#' ho_invalid <- try(f.hourly(f.daily(2023,5,16),25)) # invalid hour
+#' }
 #'
 f.hourly <- function(day, hour){
   hour = as.integer(hour)
@@ -963,9 +989,11 @@ f.hourly <- function(day, hour){
 #' mi_new <- as.frequency("20231101:3", "mi|i:wed-sat")
 #'
 #' # Don't make the following mistakes:
-#' #   mi_invalid <- as.frequency("20231101:3", "mi|j:wed-sat")
-#' #      invalid format in day-based frequency
-#' #   mi_invalid <- f.minutely(f.daily(2023,5,16),2000) # invalid minute
+#' \donttest{
+#' mi_invalid <- try(as.frequency("20231101:3", "mi|j:wed-sat"))
+#' #   invalid format in day-based frequency
+#' mi_invalid <- try(f.minutely(f.daily(2023,5,16),2000)) # invalid minute
+#' }
 #'
 f.minutely <- function(day, minute){
   minute = as.integer(minute)
@@ -1014,9 +1042,11 @@ f.minutely <- function(day, minute){
 #' se_new <- as.frequency("20231101:3", "se|i:wed-sat")
 #'
 #' # Don't make the following mistakes:
-#' #   mi_invalid <- as.frequency("20231101:3", "se|j:wed-sat")
-#' #      invalid format in day-based frequency
-#' #   mi_invalid <- f.secondly(f.daily(2023,5,16),100000) # invalid second
+#' \donttest{
+#' mi_invalid <- try(as.frequency("20231101:3", "se|j:wed-sat"))
+#' #  invalid format in day-based frequency
+#' mi_invalid <- try(f.secondly(f.daily(2023,5,16),100000)) # invalid second
+#' }
 #'
 f.secondly <- function(day, second){
 
@@ -1066,9 +1096,11 @@ f.secondly <- function(day, second){
 #' xd_new <- as.frequency("20231101:3", "da3|i:wed-sat")
 #'
 #' # Don't make the following mistakes:
-#' #   xd_invalid <- as.frequency("20231101:3", "da|i:wed-sat")
-#' #      invalid format in day-based frequency
-#' #   xd_invalid <- f.x.times.a.day(f.daily(2023,5,16),4,0) # invalid position
+#' \donttest{
+#' xd_invalid <- try(as.frequency("20231101:3", "da|i:wed-sat"))
+#' #  invalid format in day-based frequency
+#' xd_invalid <- try(f.x.times.a.day(f.daily(2023,5,16),4,0)) # invalid position
+#' }
 #'
 f.x.times.a.day <- function(day, x, position){
 

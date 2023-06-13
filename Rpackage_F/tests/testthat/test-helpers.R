@@ -9,6 +9,7 @@
 #})
 
 
+
 test_that("Long-run growth works (discrete)", {
   g <- get.longrun.growth(c(1,2,1))
   expect_equal(0, g, tolerance = 1e-16)
@@ -38,25 +39,29 @@ test_that("Long-run growth works (continuous)", {
 
 })
 
-test_that("Long-run growth works (discrete)", {
+test_that("Long-run growth works (discrete with NAs)", {
 
-  y <- abs(rnorm(10,2,5))
-  g <- get.longrun.growth(y, cont = FALSE)
-  x = y[[1]] # start from y_0 and reach y_T
-  for (i in c(1:(length(y)-1)))
+  y <- c(NA, 0, abs(rnorm(10,2,5)), 0, NA, NA)
+  g <- get.longrun.growth(y, FALSE, FALSE, 2, 3, TRUE)
+  x = y[[3]] # start from y_0 and reach y_T
+  for (i in c(1:(length(y)-6)))
     x <- x * (1 + g/100)
-  expect_equal(x, y[[length(y)]], tolerance = 1e-12)
+  if (is.na(x))
+    stop("x is NA")
+  expect_equal(x, y[[length(y)-3]], tolerance = 1e-12)
 
 })
 
 test_that("Long-run growth works (%)", {
 
-  y <- c(60,70,80,90)
-  g <- get.longrun.growth(y, isPercentage = TRUE, cont = TRUE)
+  y <- c(NA, 0, c(60,70,80,90), 0, NA, NA)
+  g <- get.longrun.growth(y, TRUE, TRUE, 2, 3, TRUE)
   expect_equal(75, g, tolerance = 1e-12)
 
-  g <- get.longrun.growth(y, isPercentage = TRUE, cont = FALSE)
+  g <- get.longrun.growth(y, FALSE, TRUE, 2, 3, TRUE)
   expect_equal(74.64202, g, tolerance = 1e-3) # TODO: check its validity
 
 })
+
+
 

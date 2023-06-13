@@ -4,3 +4,5 @@
 /out/*
 *.tar.gz
 .Rproj.user
+
+.vs/*

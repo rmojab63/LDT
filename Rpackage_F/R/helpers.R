@@ -39,7 +39,7 @@
 #' data <- matrix(c(NA, 2, 3, 4, NA, 5, NA, 6, 7, NA, 9, 10, 11, 12, 13, 14, 15, NA, 16, 17), 4, 5)
 #' res <- remove.na.strategies(data)
 remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows * nCols,
-                               rowIndices = NULL, colIndices = NULL, printMsg = FALSE) {
+                                 rowIndices = NULL, colIndices = NULL, printMsg = FALSE) {
   data <- as.matrix(data)
   Nrow = nrow(data)
   Ncol = ncol(data)
@@ -134,6 +134,9 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 #' @param data (numeric vector) Determines the data of the series.
 #' @param continuous (logical) if \code{TRUE}, it will use the continuous formula.
 #' @param isPercentage (logical) If the unit of measurement in \code{data} is percentage (e.g., growth rate), use \code{TRUE}. The long-run growth rate is calculated by the arithmetic mean for the continuous case and the geometric mean otherwise. If missing data exists, it returns \code{NA}.
+#' @param trimStart If the number of leading \code{NA}s is larger than this number, the function returns NA. Otherwise, it finds the first non-NA value and continues the calculations.
+#' @param trimEnd Similar to \code{trimStart}, but for the end of the series.
+#' @param skipZero If \code{TRUE}, leading and trailing zeros are skipped, similar to \code{NA}.
 #'
 #' @details
 #' A variable can have continuous growth (\eqn{y(t)=y(0) (1+g_1)(1+g_2)\ldots (1+g_t)})
@@ -152,7 +155,8 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 #' g <- get.longrun.growth(y, isPercentage = TRUE, continuous = FALSE)
 #' # Note that 'g' is different from 'mean(y)'.
 #'
-get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE) {
+get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE,
+                               trimStart = 0, trimEnd = 0, skipZero = TRUE) {
   data <- as.numeric(data)
   continuous = as.logical(continuous)
   isPercentage = as.logical(isPercentage)
@@ -162,6 +166,39 @@ get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE) {
   J <- N
   start <- data[[I]]
   end <- data[[J]]
+
+  is.na.zero <- function(d, skipz) {
+    return(is.na(d) || (skipz && d == 0))
+  }
+
+  if (is.na.zero(start, skipZero) && trimStart > 0) {
+    for (i in c(1:(trimStart + 1))) {
+      I <- i
+      start <- data[[I]]
+      if (is.na.zero(start, skipZero) == FALSE) {
+        break
+      }
+    }
+  }
+  if (is.na.zero(start, skipZero)) {
+    return(NA)
+  }
+
+  if (is.na.zero(end, skipZero) && trimEnd > 0) {
+    for (i in c(1:trimEnd)) {
+      J <- N - i
+      end <- data[[J]]
+      if (is.na.zero(end, skipZero) == FALSE) {
+        break
+      }
+    }
+  }
+  if (is.na.zero(end, skipZero)) {
+    return(NA)
+  }
+  if (J < I) {
+    return(NA)
+  }
 
   if (isPercentage) {
     data <- data[I:J]
@@ -182,12 +219,6 @@ get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE) {
     }
   }
 }
-
-
-
-
-
-
 
 #' Get Descriptive Statistics
 #'
