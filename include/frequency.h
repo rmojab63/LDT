@@ -115,6 +115,50 @@ inline const char *ToString(const FrequencyClass &value) {
   };
 }
 
+/// @brief Converts a string into a value of \ref FrequencyClass
+/// @param v The string
+/// @return The value
+inline FrequencyClass FromString_FrequencyClass(const char *v) {
+  if (StartsWith("cro", v) || AreEqual_i("cs", v))
+    return FrequencyClass::kCrossSection;
+  else if (AreEqual_i("daily", v))
+    return FrequencyClass::kDaily;
+  else if (StartsWith("dailyin", v))
+    return FrequencyClass::kDailyInWeek;
+  else if (StartsWith("hou", v))
+    return FrequencyClass::kHourly;
+  else if (StartsWith("listd", v) || StartsWith("datel", v))
+    return FrequencyClass::kListDate;
+  else if (StartsWith("lists", v) || StartsWith("stringl", v))
+    return FrequencyClass::kListString;
+  else if (StartsWith("min", v))
+    return FrequencyClass::kMinutely;
+  else if (StartsWith("mont", v))
+    return FrequencyClass::kMonthly;
+  else if (StartsWith("multid", v))
+    return FrequencyClass::kMultiDaily;
+  else if (StartsWith("multiw", v))
+    return FrequencyClass::kMultiWeekly;
+  else if (StartsWith("multiy", v))
+    return FrequencyClass::kMultiYear;
+  else if (StartsWith("qua", v))
+    return FrequencyClass::kQuarterly;
+  else if (StartsWith("sec", v))
+    return FrequencyClass::kSecondly;
+  else if (StartsWith("wee", v))
+    return FrequencyClass::kWeekly;
+  else if (StartsWith("xtimesad", v))
+    return FrequencyClass::kXTimesADay;
+  else if (StartsWith("xtimesay", v))
+    return FrequencyClass::kXTimesAYear;
+  else if (StartsWith("xtimeszy", v))
+    return FrequencyClass::kXTimesZYears;
+  else if (StartsWith("yea", v) || StartsWith("anu", v))
+    return FrequencyClass::kYearly;
+
+  throw std::logic_error("Invalid enum name: 'FrequencyClass'.");
+}
+
 /// @brief Represents a day of week
 enum class DayOfWeek {
   kSun = 0,

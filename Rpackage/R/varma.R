@@ -13,11 +13,11 @@
 #' @param newX (matrix) New exogenous data for out-of-sample prediction. It must have the same number of columns as \code{x}.
 #' @param simUsePreviousEstim (logical) if \code{TRUE}, parameters are initialized in just the first step of the simulation. The initial values of the n-th simulation (with one more observation) is the estimations in the previous step.
 #' @param olsStdMultiplier (numeric) a multiplier for the standard deviation of OLS, used for restricting the maximum likelihood estimation.
-#' @param lmbfgsOptions (list) Optimization options. see \code{[get.lmbfgs.options()]}. Use null for default values.
-#' @param measureOptions (list) see \code{[get.measure.options()]}.
-#' @param modelCheckItems (list) see \code{[get.modelcheck.items()]}.
-#' @param searchItems (list) see \code{[get.search.items()]}.
-#' @param searchOptions (list) see \code{[get.search.options()]}.
+#' @param lmbfgsOptions (list) Optimization options. see \code{[get.options.lmbfgs()]}. Use null for default values.
+#' @param measureOptions (list) see \code{[get.options.measure()]}.
+#' @param modelCheckItems (list) see \code{[get.items.modelcheck()]}.
+#' @param searchItems (list) see \code{[get.items.search()]}.
+#' @param searchOptions (list) see \code{[get.options.search()]}.
 #'
 #' @return An object of class \code{ldtsearch}. It does not contain any estimation results,
 #' but minimum required data to estimate the models (Use \code{[summary()]} for this goal).
@@ -29,10 +29,10 @@ search.varma <- function(y, x = NULL, numTargets = 1,
                         xGroups = NULL, maxParams = c(1,0,0,0,0,0),
                         seasonsCount = 0, maxHorizon = 0,
                         newX = NULL, simUsePreviousEstim = TRUE,
-                        olsStdMultiplier = 2.0, lmbfgsOptions = get.lmbfgs.options(),
-                        measureOptions = get.measure.options(),
-                        modelCheckItems = get.modelcheck.items(), searchItems = get.search.items(),
-                        searchOptions = get.search.options()){
+                        olsStdMultiplier = 2.0, lmbfgsOptions = get.options.lmbfgs(),
+                        measureOptions = get.options.measure(),
+                        modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
+                        searchOptions = get.options.search()){
 
   y = as.matrix(y)
   x = if (is.null(x)) NULL else as.matrix(x)
@@ -58,27 +58,27 @@ search.varma <- function(y, x = NULL, numTargets = 1,
   }
 
   if (is.null(lmbfgsOptions))
-    lmbfgsOptions = get.lmbfgs.options()
+    lmbfgsOptions = get.options.lmbfgs()
   else
     lmbfgsOptions = CheckLmbfgsOptions(lmbfgsOptions)
 
   if (is.null(measureOptions))
-    measureOptions = get.measure.options()
+    measureOptions = get.options.measure()
   else
     measureOptions <- CheckMeasureOptions(measureOptions)
 
   if (is.null(modelCheckItems))
-    modelCheckItems = get.modelcheck.items()
+    modelCheckItems = get.items.modelcheck()
   else
     modelCheckItems <- CheckModelCheckItems(modelCheckItems)
 
   if (is.null(searchItems))
-    searchItems = get.search.items()
+    searchItems = get.items.search()
   else
     searchItems <- CheckSearchItems(searchItems)
 
   if (is.null(searchOptions))
-    searchOptions = get.search.options()
+    searchOptions = get.options.search()
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
@@ -97,14 +97,14 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @param params (integer vector, length=6) parameters of the VARMA model (p,d,q,P,D,Q).
 #' @param seasonsCount (integer) number of observations per unit of time
 #' @param addIntercept (logical) if \code{TRUE}, intercept is added automatically to x.
-#' @param lmbfgsOptions (list) optimization options. See \code{[get.lmbfgs.options()]}.
+#' @param lmbfgsOptions (list) optimization options. See \code{[get.options.lmbfgs()]}.
 #' @param olsStdMultiplier (numeric) a multiplier for the standard deviation of OLS, used for restricting the maximum likelihood estimation.
-#' @param pcaOptionsY (list) a list of options in order to use principal components of the \code{y}, instead of the actual values. set \code{NULL} to disable. Use \code{[get.pca.options()]} for initialization.
+#' @param pcaOptionsY (list) a list of options in order to use principal components of the \code{y}, instead of the actual values. set \code{NULL} to disable. Use \code{[get.options.pca()]} for initialization.
 #' @param pcaOptionsX (list) similar to \code{pcaOptionsY} but for \code{x}. see \code{pcaOptionsY}.
 #' @param maxHorizon (integer) maximum prediction horizon. Set zero to disable.
 #' @param newX (matrix) data of new exogenous variables to be used in the predictions. Its columns must be the same as \code{x}.
-#' @param simFixSize (integer) number of pseudo out-of-sample simulations. Use zero to disable the simulation. see also \code{[get.measure.options()]}.
-#' @param simHorizons (integer vector) prediction horizons to be used in pseudo out-of-sample simulations. see also \code{[get.measure.options()]}.
+#' @param simFixSize (integer) number of pseudo out-of-sample simulations. Use zero to disable the simulation. see also \code{[get.options.measure()]}.
+#' @param simHorizons (integer vector) prediction horizons to be used in pseudo out-of-sample simulations. see also \code{[get.options.measure()]}.
 #' @param simUsePreviousEstim (logical) if \code{TRUE}, parameters are initialized in just the first step of the simulation. The initial values of the n-th simulation (with one more observation) is the estimations in the previous step.
 #' @param simMaxConditionNumber (numeric) maximum value for the condition number in the pseudo out-of-sample simulations.
 #' @param printMsg (logical) set \code{FALSE} to disable printing the details.
@@ -114,7 +114,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @export
 estim.varma <- function(y, x = NULL, params = NULL,
                        seasonsCount = 0, addIntercept = TRUE,
-                       lmbfgsOptions = get.lmbfgs.options(), olsStdMultiplier = 2,
+                       lmbfgsOptions = get.options.lmbfgs(), olsStdMultiplier = 2,
                        pcaOptionsY = NULL, pcaOptionsX = NULL,
                        maxHorizon = 0, newX = NULL, simFixSize = 0,
                        simHorizons = NULL, simUsePreviousEstim = TRUE,
@@ -135,7 +135,7 @@ estim.varma <- function(y, x = NULL, params = NULL,
   printMsg = as.logical(printMsg)
 
   if (is.null(lmbfgsOptions))
-    lmbfgsOptions = get.lmbfgs.options()
+    lmbfgsOptions = get.options.lmbfgs()
   else
     lmbfgsOptions = CheckLmbfgsOptions(lmbfgsOptions)
 
@@ -209,7 +209,7 @@ GetEstim_varma <- function(searchRes, endoIndices,
 #'
 #' @return A combined \code{LdtSearch} object
 #' @export
-search.varma_s <- function(y, ySizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+search.varma.stepwise <- function(y, ySizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                           counts = c(NA, 40, 30, 20),
                           savePre = NULL, ...) {
   Search_s("varma", y, ySizes, counts, savePre, ...)

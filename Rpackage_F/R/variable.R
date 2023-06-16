@@ -1,19 +1,19 @@
 
-#' Creates a Variable
+#' Create a Variable
 #'
-#' Use this to create data array with a frequency. It can have a name and other named fields.
+#' Use this function to create a variable, which is a data array with frequencies. It can have a name and other named fields.
 #'
-#' @param data Data of the variable.
-#' @param startFrequency Frequency of the first element.
-#' @param name Name of the variable.
+#' @param data The data of the variable.
+#' @param startFrequency The frequency of the first element.
+#' @param name The name of the variable.
 #' @param fields A list that contains named fields.
 #'
-#' @return An object of class \code{ldtv}. This is also a list with the following memebers:
+#' @return An object of class \code{ldtv}, which is also a list with the following members:
 #' \itemize{
-#' \item **data:** Determines the \code{data}.
-#' \item **name:** Determines the \code{name}.
-#' \item **startFrequency:** Determines the \code{startFrequency}.
-#' \item **fields:** Determines the \code{fields}.
+#' \item **data**: Determines the \code{data}.
+#' \item **name**: Determines the \code{name}.
+#' \item **startFrequency**: Determines the \code{startFrequency}.
+#' \item **fields**: Determines the \code{fields}.
 #' }
 #' @export
 #'
@@ -33,15 +33,15 @@ variable <- function(data, startFrequency = NULL, name = NULL, fields = NULL) {
   res
 }
 
-#' Converts a Variable to String
+#' Convert a Variable to Character String
 #'
-#' Use this to convert the variable in a compact form.
+#' Use this function to convert a variable to a compact form.
 #'
 #' @param x An object of class \code{ldtv}.
 #' @param ... Additional arguments.
 #'
 #' @details
-#' The returned character will have just one line, items are separated by \code{tab} or \code{semi-colon}.
+#' The returned character will have just one line, with items separated by \code{tab} or \code{semi-colon}.
 #'
 #' @return A character that represents the variable.
 #' @export
@@ -61,12 +61,12 @@ as.character.ldtv <- function(x, ...) {
   res
 }
 
-#' Prints a Variable
+#' Print a Variable
 #'
-#' Use this to print an \code{ldtv} object.
+#' Use this to print a variable.
 #'
-#' @param x An \code{ldtv} object
-#' @param ... additional arguments
+#' @param x A variable which is an object of class \code{ldtv}.
+#' @param ... Additional arguments
 #'
 #' @return \code{NULL}
 #' @export
@@ -111,17 +111,17 @@ print.ldtv <- function(x, ...) {
 }
 
 
-#' Converts Variable to \code{data.frame}
+#' Convert Variable to Data Frame
 #'
-#' Use this to convert an \code{ldtv} object to a \code{data.frame}. You can use the result for plotting.
+#' Use this function to convert a variable to a data frame. You can use the result for plotting.
 #'
-#' @param x An \code{ldtv} object
-#' @param ... additional arguments
+#' @param x An \code{ldtv} object.
+#' @param ... Additional arguments.
 #'
-#' @return A \code{data.frame} in which row names are set from the frequency of the variable.
+#' @return A data frame in which row names are set from the frequency of the variable.
 #' @export
 #' @examples
-#' # define the variable:
+#' # Define the variable:
 #' data <- c(1,2,3,2,3,4,5)
 #' start_f <- f.monthly(2022,12)
 #' fields <- list(c("key1","value1"), c("key2", "value2"))
@@ -154,24 +154,23 @@ as.data.frame.ldtv <- function(x, ...) {
 }
 
 
-#' Binds Variables
+#' Bind Variables and Create a Data.frame
 #'
-#' Use this to bind variables with the same class of frequency together.
+#' Use this function to bind variables with the same class of frequency together.
 #'
-#' @param varList A list of variables ((i.e., \code{ldtv} objects)) with similar frequency class.
+#' @param varList A list of variables (i.e., \code{ldtv} objects) with similar frequency class.
 #' @param interpolate If \code{TRUE}, missing observations are interpolated.
 #' @param adjustLeadLags If \code{TRUE}, leads and lags are adjusted with respect to the first variable.
-#' @param numExo (integer) This is the number of exogenous variables.
-#' @param horizon (integer) If \code{adjustLeadLags} is \code{TRUE} and there is exogenous variables,
-#' this determines the required length of out-of-sample data. It creates lag of exogenous variables
-#' or omits \code{NaN}s to make data available.
+#' @param numExo An integer representing the number of exogenous variables.
+#' @param horizon An integer representing the required length of out-of-sample data if \code{adjustLeadLags} is \code{TRUE} and there are exogenous variables.
+#' It creates lags of exogenous variables or omits \code{NaN}s to make data available.
 #'
 #' @return A list with the following members:
-#' \itemize{
-#' \item **data:** (numeric matrix) Final data after the requested fixes. It is a matrix with variables in the columns and frequencies as the row names.
-#' \item **info:** (integer matrix) Information about the columns of the final data. E.g., Range of data, missing data, lags/leads, etc.
-#' \item **startFrequency:** Start frequency of data.
-#' \item **startClass:** frequency class of the data.
+#' \tabular{ll}{
+#' \code{data}\tab A numeric matrix representing the final data after the requested fixes. It is a matrix with variables in the columns and frequencies as the row names.\cr
+#' \code{info} \tab An integer matrix containing information about the columns of the final data, such as range of data, missing data, lags/leads, etc.\cr
+#' \code{startFrequency} \tab The start frequency of the data.\cr
+#' \code{startClass} \tab The frequency class of the data.
 #' }
 #'
 #' @export

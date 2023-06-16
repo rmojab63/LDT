@@ -1,21 +1,30 @@
 
-#' Options for ROC and AUC
+#' Get Options for ROC and AUC Calculations
 #'
-#' @param lowerThreshold (double) Lower bound for calculating partial AUC.
-#' @param upperThreshold (double) Upper bound for calculating partial AUC.
-#' @param epsilon (double) A value to ignore small floating podifferences in comparing scores.
-#' @param pessimistic (bool) If TRUE, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to roc analysis, fig. 6).
-#' @param costs (numeric vector) cost of each observations. If null, cost of all observations will be 1.
-#' @param costMatrix (numeric matrix) a 2x2 cost matrix in which: (1,1) is cost of TN,
-#' (2,2) is cost of TP, (1,2) is cost of FP and (2,1) is cost of FN. First
-#' column is multiplied by the corresponding value in costs vector (see
-#' Fawcett (2006, ROC graphs with instance-varying costs).
+#' Use this function to get the required options for [search.dc], [estim.dc], or [s.roc] functions.
+#'
+#' @param lowerThreshold A number representing the lower bound for calculating partial AUC.
+#' @param upperThreshold A number representing the upper bound for calculating partial AUC.
+#' @param epsilon A small number used to ignore small floating point differences when comparing scores.
+#' @param pessimistic If \code{TRUE}, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to ROC analysis, fig. 6).
+#' @param costs The cost of each observation. If \code{NULL}, the cost of all observations will be 1.
+#' @param costMatrix A \code{2x2} cost matrix in which: (1,1) is the cost of TN,
+#' (2,2) is the cost of TP, (1,2) is the cost of FP and (2,1) is the cost of FN. The first
+#' column is multiplied by the corresponding value in the costs vector (see
+#' Fawcett (2006), ROC graphs with instance-varying costs).
+#'
+#' @details
+#' See details of [s.roc] function.
 #'
 #' @return A list with the given options.
+#' @examples
+#' See [s.roc] function.
+#'
 #'
 #' @export
-get.roc.options <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
-                          pessimistic = FALSE, costs = NULL, costMatrix = NULL){
+#' @seealso [search.dc], [estim.dc], [s.roc]
+get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
+                            pessimistic = FALSE, costs = NULL, costMatrix = NULL){
 
   O = list(lowerThreshold = lowerThreshold, upperThreshold = upperThreshold,
            epsilon=epsilon, pessimistic = pessimistic, costs=costs,
@@ -51,6 +60,8 @@ CheckRocOptions <- function(O){
 
 #' Options for Nelder-Mead Optimization
 #'
+#'
+#'
 #' @param maxIterations (int) Maximum number of iterations.
 #' @param epsilon (double) A small value to test convergence.
 #' @param alpha (double) the reflection coefficient.
@@ -60,10 +71,11 @@ CheckRocOptions <- function(O){
 #'
 #' @return A list with the given options.
 #'
-#' @export
-get.neldermead.options <- function(maxIterations = 100, epsilon = 1e-8,
-                                 alpha = 1, beta = 0.5, gamma = 2,
-                                 scale = 1){
+#'  TODO: export
+#'
+get.options.neldermead <- function(maxIterations = 100, epsilon = 1e-8,
+                                   alpha = 1, beta = 0.5, gamma = 2,
+                                   scale = 1){
   O = list(maxIterations = maxIterations,
            epsilon = epsilon, alpha = alpha,
            beta = beta, gamma = gamma,
@@ -105,17 +117,25 @@ CheckNelderMeadOptions <- function(O){
 
 
 
-#' Options for PCA
+#' Get Options for PCA
 #'
-#' @param ignoreFirst (int) Excludes variables at the beginning of data matrices (such as intercept) from PCA.
-#' @param exactCount (int) Determines the number of components to be used. If zero, number of components are determined by the \code{cutoffRate}.
-#' @param cutoffRate (between 0 and 1) Determines the cutoff rate for cumulative variance ratio in order to determine the number of PCA components. It is not used if \code{exactCount} is positive.
-#' @param max (int) Maximum number of components when \code{cutoffRate} is used.
+#' Use this function to get PCA options in [estim.dc], [estim.sur], [estim.varma], or [s.pca] functions.
+#'
+#' @param ignoreFirst A number representing the number of variables to exclude at the beginning of data matrices (such as intercept) from PCA.
+#' @param exactCount A number that determines the number of components to be used. If zero, the number of components is determined by the \code{cutoffRate}.
+#' @param cutoffRate A number between 0 and 1 that determines the cutoff rate for the cumulative variance ratio in order to determine the number of PCA components. It is not used if \code{exactCount} is positive.
+#' @param max A number representing the maximum number of components when \code{cutoffRate} is used.
+#'
+#' @details
+#' See details of [s.pca] function.
 #'
 #' @return A list with the given options.
+#' @examples
+#' See [s.pca] function.
 #'
 #' @export
-get.pca.options <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
+#' @seealso [estim.dc], [estim.sur], [estim.varma], [s.pca]
+get.options.pca <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
   O = list(
     ignoreFirst = ignoreFirst, exactCount = exactCount,
     cutoffRate = cutoffRate, max = max)
@@ -141,22 +161,24 @@ CheckPcaOptions <- function(O){
   if (O$max <= 0)
     stop("Invalid Pca option. 'max' must be positive.")
 
-O
+  O
 }
 
 
-#' Options for LMBFGS Optimization
+#' Get Options for L-BFGS Optimization
 #'
-#' @param maxIterations (int) A positive integer for maximum number of iterations.
-#' @param factor (double) A condition for stopping the iterations. The iteration will stop when (f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} < \code{factor}*epsmch where epsmch is the machine precision, which is automatically generated by the code. Use e.g., 1e12 for low accuracy, 1e7 (default) for moderate accuracy and 1e1 for extremely high accuracy. default is 1e7
-#' @param projectedGradientTol (double) The iteration will stop when \code{max{|proj g_i | i = 1, ..., n} < projectedGradientTol} where \code{pg_i} is the ith component of the projected gradient. default is zero.
-#' @param maxCorrections (int) Maximum number of variable metric corrections allowed in the limited memory Matrix. default is 5.
+#' Use this function to get optimization options in [estim.varma] or [search.varma] functions.
+#'
+#' @param maxIterations A positive integer representing the maximum number of iterations.
+#' @param factor A number that determines the condition for stopping the iterations. Use, for example, 1e12 for low accuracy, 1e7 (default) for moderate accuracy, and 1e1 for extremely high accuracy. The default is 1e7.
+#' @param projectedGradientTol A number used to stop the iteration using the projected gradient. The default is zero.
+#' @param maxCorrections The maximum number of variable metric corrections allowed in the limited memory matrix. The default is 5.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.lmbfgs.options <- function(maxIterations = 100, factor = 1e7,
-                             projectedGradientTol = 0, maxCorrections = 5){
+get.options.lmbfgs <- function(maxIterations = 100, factor = 1e7,
+                               projectedGradientTol = 0, maxCorrections = 5){
   O = list(maxIterations = maxIterations,
            factor = factor,
            projectedGradientTol = projectedGradientTol,
@@ -174,33 +196,35 @@ CheckLmbfgsOptions <- function(O){
 
 
   if (O$maxIterations <= 0)
-    stop("Invalid LMBFGS option. 'maxIterations' must be positive.")
+    stop("Invalid L-BFGS option. 'maxIterations' must be positive.")
 
   if (O$factor <= 0)
-    stop("Invalid LMBFGS option. 'factor' must be positive.")
+    stop("Invalid L-BFGS option. 'factor' must be positive.")
 
   if (O$projectedGradientTol < 0)
-    stop("Invalid LMBFGS option. 'projectedGradientTol' cannot be negative.")
+    stop("Invalid L-BFGS option. 'projectedGradientTol' cannot be negative.")
 
   if (O$maxCorrections <= 0)
-    stop("Invalid LMBFGS option. 'maxCorrections' must be positive.")
+    stop("Invalid L-BFGS option. 'maxCorrections' must be positive.")
 
   O
 }
 
 
-#' Options for Newton Optimization
+#' Get Options for Newton Optimization
 #'
-#' @param maxIterations (int) Maximum number of iterations.
-#' @param functionTol (double) A small value to test convergence of the objective function.
-#' @param gradientTol (double) A small value to test convergence of the gradient.
-#' @param useLineSearch (bool) If TRUE, it uses line search.
+#' Use this function to get optimization options in [estim.dc] or [search.dc] functions.
+#'
+#' @param maxIterations An integer representing the maximum number of iterations.
+#' @param functionTol A small value used to test the convergence of the objective function.
+#' @param gradientTol A small value used to test the convergence of the gradient.
+#' @param useLineSearch If \code{TRUE}, line search is used.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.newton.options <- function(maxIterations = 100, functionTol = 1e-4,
-                             gradientTol = 0, useLineSearch = TRUE){
+get.options.newton <- function(maxIterations = 100, functionTol = 1e-4,
+                               gradientTol = 0, useLineSearch = TRUE){
   O = list(maxIterations = maxIterations,
            functionTol = functionTol,
            gradientTol = gradientTol,
@@ -229,27 +253,27 @@ CheckNewtonOptions <- function(O){
 }
 
 
-#' Options for 'Search Items'
+#' Specify the Purpose of the Model Search Process
 #'
-#' @description Creates a with predefined items which determines the information to be saved and retrieved.
+#' Use this function to list the required items and information that should be saved and retrieved from the model set search process in \code{search.?} functions.
 #'
-#' @param model (bool) If TRUE, information about the models is saved.
-#' @param type1 (bool) If TRUE and implemented, extra information is saved. This can be the coefficients in the SUR search or predictions in VARMA search.
-#' @param type2 (bool) If TRUE and implemented, extra information is saved. This is similar to \code{type1}. **It is reserved for future updates.**
-#' @param bestK (int) Number of best items to be saved in \code{model}, \code{type1}, or \code{type2} information.
-#' @param all (bool) If TRUE, all available information is saved.
-#' @param inclusion (bool) If TRUE, inclusion weights are saved in \code{model}.
-#' @param cdfs (nullable numeric vector) Weighted average of the CDFs at each given pois calculated (for \code{type1} and \code{type2}).
-#' @param extremeMultiplier (double) Determined the multiplier in the extreme bound analysis (for \code{type1} and \code{type2}).
-#' @param mixture4 (bool) If TRUE, the first 4 moments of the average distributions are calculated in \code{type1} and \code{type2}.
+#' @param model If \code{TRUE}, some information about the models is saved.
+#' @param type1 If \code{TRUE} and implemented, extra information is saved. This can be the coefficients in the SUR search or predictions in the VARMA search.
+#' @param type2 If \code{TRUE} and implemented, extra information is saved. This is similar to \code{type1}. **It is reserved for future updates.**
+#' @param bestK The number of best items to be saved in \code{model}, \code{type1}, or \code{type2} information.
+#' @param all If \code{TRUE}, all models' information is saved.
+#' @param inclusion If \code{TRUE}, inclusion weights are saved.
+#' @param cdfs Weighted average of the CDFs at each given point is calculated (for \code{type1} and \code{type2} cases).
+#' @param extremeMultiplier A number that determines the multiplier in the extreme bound analysis (for \code{type1} and \code{type2} cases). Use zero to disable it.
+#' @param mixture4 If \code{TRUE}, the first four moments of the average distributions are calculated in \code{type1} and \code{type2} cases.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
-                           bestK = 1, all = FALSE, inclusion = FALSE,
-                           cdfs = numeric(0), extremeMultiplier = 0,
-                           mixture4 = FALSE){
+get.items.search <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
+                             bestK = 1, all = FALSE, inclusion = FALSE,
+                             cdfs = numeric(0), extremeMultiplier = 0,
+                             mixture4 = FALSE){
   O = list(model = model, type1 = type1,
            type2 = type2, bestK = bestK,
            all = all, inclusion = inclusion,
@@ -281,19 +305,20 @@ CheckSearchItems <- function(O){
 }
 
 
-#' Options for 'Search Options'
+#' Get Extra Options for Model Search Process
 #'
-#' @description Creates a with predefined Search O.
+#' Use this function to determine how the model search is performed.
 #'
-#' @param parallel (bool) If TRUE, it uses a parallel search. It generally changes the speed and memory usage.
-#' @param reportInterval (int) Time interval (in seconds) for reporting the progress (if the change is significant). Set zero to disable.
-#' @param printMsg (bool) Set FALSE to disable printing the details.
+#' @param parallel If \code{TRUE}, a parallel search algorithm is used. This generally changes the speed and memory usage.
+#' @param reportInterval An integer representing the time interval (in seconds) for reporting progress (if any significant change has occurred). Set to zero to disable reporting.
+#' @param printMsg Set to \code{TRUE} to enable printing details.
 #'
 #' @return A list with the given options.
+
 #'
 #' @export
-get.search.options <- function(parallel = FALSE, reportInterval = 2,
-                             printMsg = FALSE){
+get.options.search <- function(parallel = FALSE, reportInterval = 2,
+                               printMsg = FALSE){
   O = list(parallel = parallel,
            reportInterval = reportInterval,
            printMsg = printMsg)
@@ -315,26 +340,30 @@ CheckSearchOptions <- function(O){
 }
 
 
-#' Options for 'Model Check Items'
+#' Set Options to Exclude a Model Subset
 #'
-#' @param estimation (bool) If TRUE, model is estimated with all data. If FALSE, you might get a 'best model' that cannot be estimated.
-#' @param maxConditionNumber (double) Maximum value for the condition number (if implemented in the search).
-#' @param minObsCount (int) Minimum value for the number of observations. Use 0 to disable.
-#' @param minDof (int) Minimum value for the degrees of freedom (equation-wise). Use 0 to disable.
-#' @param minOutSim (int) Minimum value for the number of valid out-of-sample simulations (if implemented in the search).
-#' @param minR2 (double) Minimum value for R2 (if implemented in the search).
-#' @param maxAic (double) Maximum value for AIC (if implemented in the search).
-#' @param maxSic (double) Maximum value for SIC (if implemented in the search).
-#' @param prediction (bool) If TRUE, model data is predicted given all data. If FALSE, you might get a 'best model' that cannot be used in prediction.
-#' @param predictionBoundMultiplier (double) If positive, a bound is created by multiplying this value to the average growth rate. A model is ignored, if its prediction lies outside of this bound.
+#' Use this function to determine which models should be skipped in the search process.
+#'
+#' @param estimation If \code{TRUE}, the model is estimated with all data and is ignored if this estimation fails. If \code{FALSE}, you might get a 'best model' that cannot be estimated.
+#' @param maxConditionNumber A number used to ignore an estimation that has a high condition number (if implemented in the search).
+#' @param minObsCount An integer used to ignore an estimation where the number of observations (after dealing with \code{NA}) is low. Use 0 to disable this check.
+#' @param minDof An integer used to ignore an estimation with low degrees of freedom (equation-wise). Use 0 to disable this check.
+#' @param minOutSim An integer used to ignore estimations with a low number of out-of-sample simulations (if implemented in the search).
+#' @param minR2 A number used to ignore estimations with a low value for 'R2' (if implemented in the search).
+#' @param maxAic A number used to ignore estimations with a high 'AIC' (if implemented in the search).
+#' @param maxSic A number used to ignore estimations with a high 'SIC' (if implemented in the search).
+#' @param prediction If \code{TRUE}, model data is predicted given all data and is ignored if this process fails. If \code{FALSE}, you might get a 'best model' that cannot be used for prediction.
+#' @param predictionBoundMultiplier A positive number used to create a bound and check predictions.
+#' The bound is created by multiplying this value by the average growth rate of the data.
+#' A model is ignored if its prediction lies outside of this bound. Use zero to disable this check.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.modelcheck.items <- function( estimation = TRUE, maxConditionNumber = Inf,
-                                minObsCount = 0, minDof = 0, minOutSim = 0,
-                                minR2 = -Inf, maxAic = Inf, maxSic = Inf,
-                                prediction = FALSE, predictionBoundMultiplier = 4){
+get.items.modelcheck <- function( estimation = TRUE, maxConditionNumber = Inf,
+                                  minObsCount = 0, minDof = 0, minOutSim = 0,
+                                  minR2 = -Inf, maxAic = Inf, maxSic = Inf,
+                                  prediction = FALSE, predictionBoundMultiplier = 4){
 
   O = list(
     estimation = estimation,
@@ -381,23 +410,26 @@ CheckModelCheckItems <- function(O){
   O
 }
 
-#' Options for 'Measuring Performance'
+#' Get Options for Measuring Performance
 #'
-#' @param typesIn (nullable string vector) Evaluations when model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{aucIn}. Null means no measure.
-#' @param typesOut (nullable string vector) Evaluations in an pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, \code{aucOut}. Null means no measure.
-#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation.
-#' @param trainFixSize (int) Number of data-points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
-#' @param trainRatio (double) Number of data-points, as a ratio of the available size, in the training sample in the pseudo out-of-sample simulation.
-#' @param seed (int) A seed for random number generator. Use zero for a random value.
-#' @param horizons (nullable integer vector) prediction horizons to be used in pseudo out-of-sample simulations, if model supports time-series prediction. If null, c(1) is used.
-#' @param weightedEval (bool) If TRUE, weights are used in evaluationg discrete-choice models
+#' Use this function to get measuring options in \code{search.?} functions.
+#'
+#' @param typesIn A list of evaluation measures when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, or \code{aucIn}. \code{NULL} means no measure.
+#' @param typesOut A list of evaluation measures in a pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, or \code{aucOut}. Null means no measure.
+#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
+#' @param trainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
+#' @param trainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
+#' @param seed A seed for the random number generator. Use zero for a random value. It can be negative to get reproducible results between the \code{search.?} function and the \code{estim.?} function.
+#' @param horizons An array of integers representing the prediction horizons to be used in pseudo out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
+#' @param weightedEval If \code{TRUE}, weights are used in evaluating discrete-choice models.
+#'
 #' @return A list with the given options.
 #'
 #' @export
-get.measure.options <- function(typesIn = character(0), typesOut = character(0),
-                              simFixSize = 10, trainRatio = 0.75,
-                              trainFixSize = 0, seed = 0,
-                              horizons = c(1L), weightedEval = FALSE){
+get.options.measure <- function(typesIn = character(0), typesOut = character(0),
+                                simFixSize = 10, trainRatio = 0.75,
+                                trainFixSize = 0, seed = 0,
+                                horizons = c(1L), weightedEval = FALSE){
   O = list(
     typesIn = typesIn, typesOut = typesOut,
     simFixSize = simFixSize, trainRatio = trainRatio,

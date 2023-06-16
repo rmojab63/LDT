@@ -6,7 +6,7 @@
 #'
 #' @param value Numeric value of the measure.
 #' @param measureName Character string specifying the name of the measure.
-#' See [get.measure.options] function for the list of available options.
+#' See [get.options.measure] function for the list of available options.
 #'
 #' @details
 #' Given a collection of models for the data, a measure is not
@@ -38,7 +38,7 @@ s.weight.from.measure <- function(value, measureName)
 #'
 #' @param value Numeric value of the weight.
 #' @param measureName Character string specifying the name of the measure.
-#' See \code{\link{get.measure.options}} function for the list of available options.
+#' See \code{\link{get.options.measure}} function for the list of available options.
 #'
 #' @details
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
@@ -68,8 +68,8 @@ s.measure.from.weight <- function(value, measureName)
 #' @param scores A numeric vector (\code{Nx1}) representing the calculated probabilities for the negative observations.
 #' @param weights A numeric vector (\code{Nx1}) representing the weights of the observations.
 #' Use \code{NULL} for equal weights.
-#' @param options A list from \code{\link{get.roc.options}} function for more options.
-#' @param printMsg Logical value indicating whether to report some details.
+#' @param options A list from \code{\link{get.options.roc}} function for more options.
+#' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @details
 #' This is generally a statistics helper method in this package and it shows the inner calculations.
@@ -90,10 +90,10 @@ s.measure.from.weight <- function(value, measureName)
 #' res1 <- s.roc(y,scores, printMsg = FALSE)
 #' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
 #' costMatrix = matrix(c(0.02,-1,-3,3),2,2)
-#' opt <- get.roc.options(costs = costs, costMatrix = costMatrix)
+#' opt <- get.options.roc(costs = costs, costMatrix = costMatrix)
 #' res2 <- s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
-s.roc <- function(y, scores, weights = NULL, options = get.roc.options(),
-                  printMsg = FALSE)
+s.roc <- function(y, scores, weights = NULL,
+                  options = get.options.roc(), printMsg = FALSE)
 {
   y <- as.numeric(y)
   scores <- as.numeric(scores)
@@ -105,7 +105,7 @@ s.roc <- function(y, scores, weights = NULL, options = get.roc.options(),
       stop("Inconsistent length between actual data and the weights.")
   }
   if (is.null(options))
-    options <- get.roc.options()
+    options <- get.options.roc()
   options <-as.list(options)
   printMsg <- as.logical(printMsg)
 
@@ -151,7 +151,7 @@ s.roc <- function(y, scores, weights = NULL, options = get.roc.options(),
 s.gld.from.moments <- function(mean = 0, variance = 1,
                                skewness = 0, excessKurtosis = 0,
                                type = 0, start = NULL,
-                               nelderMeadOptions = get.neldermead.options(),
+                               nelderMeadOptions = get.options.neldermead(),
                                printMsg = FALSE)
 {
   res <- .GetGldFromMoments(mean , variance, skewness, excessKurtosis,
@@ -279,9 +279,9 @@ s.combine.by.moments4 <- function(mix1, mix2)
   res
 }
 
-#' Calculates PCA
+#' Principal Component Analysis
 #'
-#' This function performs Principal Component Analysis on the columns of a matrix.
+#' This function performs PCA on the columns of a matrix.
 #'
 #' @param x A numeric matrix with variables in the columns.
 #' @param center Logical value indicating whether to demean the columns of \code{x}.
@@ -310,7 +310,8 @@ s.combine.by.moments4 <- function(mix1, mix2)
 #' res_invalid <- try(stats::prcomp(data, center = TRUE,
 #'                    scale. = TRUE)) # We should remove 'z' first
 #'
-s.pca <- function(x, center = TRUE, scale = TRUE, newX = NULL)
+s.pca <- function(x, center = TRUE,
+                  scale = TRUE, newX = NULL)
 {
   x <- as.matrix(x)
   center <- as.logical(center)
@@ -348,7 +349,8 @@ s.pca <- function(x, center = TRUE, scale = TRUE, newX = NULL)
 #' data <- data.frame(x = rnorm(n), y = rnorm(n), z = rnorm(n))
 #' distances <- s.distance(data)
 #'
-s.distance <- function(data, distance = "correlation", correlation = "pearson", checkNan = TRUE) {
+s.distance <- function(data, distance = "correlation",
+                       correlation = "pearson", checkNan = TRUE) {
 
   data <- as.matrix(data)
   distance <- as.character(distance)

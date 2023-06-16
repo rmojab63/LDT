@@ -126,10 +126,13 @@ Ti FrequencyWeekBased::Minus(Frequency const &other) {
 
   switch (mClass) {
   case FrequencyClass::kWeekly: {
+    return ((mDay - second.mDay).days() / 7);
+  }
+  case FrequencyClass::kMultiWeekly: {
     return ((mDay - second.mDay).days() / (7 * mMulti));
   }
   case FrequencyClass::kDaily: {
-    return (mDay - second.mDay).days() / mMulti;
+    return (mDay - second.mDay).days();
   }
   case FrequencyClass::kDailyInWeek: {
 
@@ -145,6 +148,12 @@ Ti FrequencyWeekBased::Minus(Frequency const &other) {
     Ti td = span * mRange.GetLength() / 7;
 
     return td - c0 + c1;
+  }
+  case FrequencyClass::kMultiDaily: {
+    if (mMulti != second.mMulti)
+      throw std::logic_error("Minus failed. Frequencies are not consistent.");
+
+    return ((mDay - second.mDay).days() / mMulti);
   }
   default:
     throw std::logic_error("not implemented: minus: week-based frequency");

@@ -1,22 +1,22 @@
 
-#' Creates a Cross-Section Frequency
+#' Create a Cross-Section Frequency
 #'
 #' This frequency is typically used for indexed data. It is represented by an integer
 #' that indicates the position of the observation.
 #'
-#' @param position Position of the observation
+#' @param position An integer representing the position of the observation.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#"} (the number is the \code{position})
 #' \item **Class Id** \code{"cs"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
+#' \code{class} \tab Determines the class of this frequency. \cr
 #' \code{position} \tab Determines the \code{position}.
 #' }
 #'
@@ -40,23 +40,23 @@ f.cross.section <- function(position) {
 
 
 
-#' Creates an Annual Frequency
+#' Create an Annual Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs annually.
+#' Use this function to create a frequency for time-series data that occurs annually.
 #'
-#' @param year Year of the observation
+#' @param year An integer representing the year of the observation.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#"} (the number is the \code{year})
 #' \item **Class Id** \code{"y"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
+#' \code{class} \tab Determines the class of this frequency. \cr
 #' \code{year} \tab Determines the \code{year}.
 #' }
 #'
@@ -79,15 +79,15 @@ f.yearly <- function(year) {
 
 
 
-#' Creates a Quarterly Frequency
+#' Create a Quarterly Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs quarterly.
+#' Use this function to create a frequency for time-series data that occurs quarterly.
 #'
-#' @param year Year of the observation.
-#' @param quarter Quarter of the observation (It should be between 1 and 4).
+#' @param year An integer representing the year of the observation.
+#' @param quarter An integer representing the quarter of the observation (It should be between 1 and 4).
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#q#"} (first '#' is the \code{year}, second '#' is the
@@ -95,11 +95,11 @@ f.yearly <- function(year) {
 #' \item **Class Id** \code{"q"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
-#' \code{quarter} \tab Determines the \code{quareter}.
+#' \code{class} \tab Determines the class of this frequency. \cr
+#' \code{year} \tab Determines the \code{year}. \cr
+#' \code{quarter} \tab Determines the \code{quarter}.
 #' }
 #'
 #' @export
@@ -135,15 +135,15 @@ f.quarterly <- function(year, quarter){
 
 
 
-#' Creates a Monthly Frequency
+#' Create a Monthly Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs monthly.
+#' Use this function to create a frequency for time-series data that occurs monthly.
 #'
-#' @param year Year of the observation.
-#' @param month Month of the observation (It should be between 1 to 12).
+#' @param year An integer representing the year of the observation.
+#' @param month An integer representing the month of the observation (It should be between 1 to 12).
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#m#"} (first # is the \code{year}, second # is
@@ -151,10 +151,10 @@ f.quarterly <- function(year, quarter){
 #' \item **Class Id** \code{"m"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
+#' \code{class} \tab Determines the class of this frequency. \cr
+#' \code{year} \tab Determines the \code{year}. \cr
 #' \code{month} \tab Determines the \code{month}.
 #' }
 #'
@@ -191,25 +191,25 @@ f.monthly <- function(year, month){
 
 
 
-#' Creates a Multi-Year Frequency
+#' Create a Multi-Year Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs every \code{z} years.
+#' Use this function to create a frequency for time-series data that occurs every \code{z} years.
 #'
-#' @param year Year of the observation.
-#' @param z Number of years. It should be larger than zero.
+#' @param year An integer representing the year of the observation.
+#' @param z An integer representing the number of years. It should be larger than zero.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#"} (the number is the \code{year}, which means the string representation is the first year of the interval)
 #' \item **Class Id** \code{"z#"} ('#' represents the value: \code{z}; e.g., z3 means every 3 years)
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
+#' \code{class} \tab Determines the class of this frequency. \cr
+#' \code{year} \tab Determines the \code{year}. \cr
 #' \code{z} \tab Determines the value: \code{z}.
 #' }
 #' @export
@@ -245,16 +245,16 @@ f.multi.yearly <- function(year, z){
 
 
 
-#' Creates an \code{X-Times-A-Year} Frequency
+#' Create an \code{X-Times-A-Year} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs \code{x} times every year.
+#' Use this function to create a frequency for time-series data that occurs \code{x} times every year.
 #'
-#' @param year Year of the observation.
-#' @param x Number of the observation in each year. It should be a positive integer.
-#' @param position Position of the current observation. It should be a positive integer. It cannot be larger than \code{x}.
+#' @param year An integer representing the year of the observation.
+#' @param x An integer representing the number of observations in each year. It should be a positive integer.
+#' @param position An integer representing the position of the current observation. It should be a positive integer and cannot be larger than \code{x}.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#:#"} (first # is the \code{year} and
@@ -262,11 +262,11 @@ f.multi.yearly <- function(year, z){
 #' \item **Class Id** \code{"y#"} (the number is the value: \code{x})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf} which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
-#' \code{x} \tab Determines the value: \code{x}.\cr
+#' \code{class} \tab Determines the class of this frequency. \cr
+#' \code{year} \tab Determines the \code{year}. \cr
+#' \code{x} \tab Determines the value: \code{x}. \cr
 #' \code{position} \tab Determines the \code{position}.
 #' }
 #'
@@ -309,17 +309,17 @@ f.x.times.a.year <- function(year, x, position){
 
 
 
-#' Creates an \code{X-Times-Z-Years} Frequency
+#' Create an \code{X-Times-Z-Years} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs \code{x} times every \code{z} years.
+#' Use this function to create a frequency for time-series data that occurs \code{x} times every \code{z} years.
 #'
-#' @param year Year of the observation.
-#' @param x Number of partitions in each \code{z} years. It should be a positive integer.
-#' @param z Number of years. It should be a positive integer.
-#' @param position Position of the current observation. It should be a positive integer. It cannot be larger than \code{x}.
+#' @param year An integer representing the year of the observation.
+#' @param x An integer representing the number of partitions in each \code{z} years. It should be a positive integer.
+#' @param z An integer representing the number of years. It should be a positive integer.
+#' @param position An integer representing the position of the current observation. It should be a positive integer and cannot be larger than \code{x}.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"#:#"} (Similar to \code{X-Times-A-Year}. Note that the string representation refers to the first year of the interval.)
@@ -327,13 +327,13 @@ f.x.times.a.year <- function(year, x, position){
 #' second '#' is the value: \code{z}; e.g., x23z4 means 23 times every 4 years)
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}, which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
-#' \code{z} \tab Determines the value: \code{z}.\cr
-#' \code{x} \tab Determines the value: \code{x}.\cr
-#' \code{position} \tab Determines the \code{position}.
+#' \code{class} \tab The class of this frequency.\cr
+#' \code{year} \tab The \code{year}.\cr
+#' \code{z} \tab The value: \code{z}.\cr
+#' \code{x} \tab The value: \code{x}.\cr
+#' \code{position} \tab The \code{position}.
 #' }
 #'
 #' @export
@@ -341,16 +341,16 @@ f.x.times.a.year <- function(year, x, position){
 #' @examples
 #'
 #' xtzy0 <- f.x.times.z.years(2020, 3, 2, 3)
-#' #      this frequency divides the year 2020 into 3 partitions and
-#' #      refers to the last partition. The next observation
-#' #      belongs to 2022 (not the next year).
+#' # This frequency divides the year 2020 into 3 partitions and
+#' # refers to the last partition. The next observation
+#' # belongs to 2022 (not the next year).
 #'
-#' xtzy_value_str <-  as.character(xtzy0) # this will be '2020:3'.
-#' xtzy_class_str <- get.class.id(xtzy0) # this will be 'x3z2'.
+#' xtzy_value_str <- as.character(xtzy0) # This will be '2020:3'.
+#' xtzy_class_str <- get.class.id(xtzy0) # This will be 'x3z2'.
 #'
 #' xtzy_new <- as.frequency("2021:3", "x3z4")
-#' #      this frequency divides the year 2021 into 3 partitions
-#' #      and refers to the last partition. The next observation occurs after 4 years.
+#' # This frequency divides the year 2021 into 3 partitions
+#' # and refers to the last partition. The next observation occurs after 4 years.
 #'
 #' # Don't make the following mistakes:
 #' \donttest{
@@ -377,38 +377,79 @@ f.x.times.z.years <- function(year, x, z, position){
 }
 
 
+# returns date as list with year, month, day
+get_date <- function(date){
+  res <- list()
+  if (is.null(date))
+    stop("Invalid 'date'. It is null.")
+
+  if (is.list(date)){
+    if (is.null(date$year) || is.null(date$month) || is.null(date$day))
+      stop("Date must contain year, month and day elements.")
+    res <- date
+  }
+  else if (is.numeric(date) || is.integer(date)){
+    if (length(date) != 3)
+      stop("Invalid 'date' array. Its length must be 3.")
+    res <- list(year=as.integer(date[[1]]),
+                month = as.integer(date[[2]]),
+                day=as.integer(date[[3]]))
+  }
+  else {
+    date <- as.Date(date, tryFormats = c("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"))
+    res <- list(year = as.integer(format(date, "%Y")),
+                month = as.integer(format(date, "%m")),
+                day = as.integer(format(date, "%d")))
+  }
+
+  if (res$year < 1400)
+    stop("Invalid 'year'. It should be larger than 1400.")
+  if (res$month <= 0 || res$month > 12)
+    stop("Invalid 'month'. It should be between 1 and 12.")
+  if (res$day <= 0 || res$day > 31)
+    stop("Invalid 'day'.")
+
+  res
+}
+
+get_date_reformat <- function(date){
+  date <- get_date(date)
+  res <- sprintf("%04d%02d%02d", date$year, date$month, date$day)
+  res
+}
 
 
-
-#' Creates a Weekly Frequency
+#' Create a Weekly Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs weekly. We use first day of the week as the reference.
+#' Use this function to create a frequency for time-series data that occurs weekly. The first day of the week is used as the reference.
 #'
-#' @param year Year of the observation. It should be a valid year as an integer.
-#' @param month Month of the observation. It should be a valid month of year as an integer.
-#' @param day Day of the observation which will determine the start of the week. It should be a valid day of month as an integer.
+#' @param date The date, which can be a list with \code{year}, \code{month}, and \code{day} elements.
+#' It can also be an integer array with 3 elements for year, month, and day respectively,
+#' or an object that can be used as an argument for the \code{base::as.Date} function.
+#' This date determines the start of the week.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' To use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** First day of the week in \code{"YYYYMMDD"} format.
+#' \item **Character Format** The first day of the week in \code{"YYYYMMDD"} format.
 #' \item **Class Id** \code{"w"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}, which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
-#' \code{month} \tab Determines the \code{month}.\cr
-#' \code{day} \tab Determines the \code{day}.
+#' \code{class} \tab The class of this frequency.\cr
+#' \code{year} \tab The \code{year}.\cr
+#' \code{month} \tab The \code{month}.\cr
+#' \code{day} \tab The \code{day}.
 #' }
 #'
 #' @export
 #'
 #' @examples
 #'
-#' w0 <- f.weekly(2023, 1, 2) # This is 2/1/2023 which is Monday. Next observation belongs to 9/1/2023.
+#' w0 <- f.weekly(c(2023, 1, 2)) # This is 2/1/2023, which is Monday.
+#'#    The next observation belongs to 9/1/2023.
 #'
 #' w0_value_str <-  as.character(w0) # this will be '20230102'.
 #' w0_class_str <- get.class.id(w0) # this will be 'w'.
@@ -422,58 +463,52 @@ f.x.times.z.years <- function(year, x, z, position){
 #' w_invalid <- try(as.frequency("20231331", "w")) # invalid month
 #' }
 #'
-f.weekly <- function(year, month, day){
-  year = as.integer(year)
-  month = as.integer(month)
-  day = as.integer(day)
+f.weekly <- function(date){
 
-  if (year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
-  if (month <= 0 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
-  if (day <= 0 || day > 31)
-    stop("Invalid 'day'.")
+  date <- get_date(date)
 
-  res <- .F_weekly(year, month, day)
+
+  res <- .F_weekly(date$year, date$month, date$day)
   res
 }
 
 
 
-#' Creates a Multi-Week Frequency
+#' Create a Multi-Week Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs every 'k' weeks. We use first day of the first week as the reference.
+#' Use this function to create a frequency for time-series data that occurs every 'k' weeks. The first day of the first week is used as the reference.
 #'
-#' @param year Year of the observation. It should be a valid year as an integer.
-#' @param month Month of the observation. It should be a valid month of year as an integer.
-#' @param day Day of the observation which will determine the start of the week. It should be a valid day of month as an integer.
-#' @param k Number of weeks.
+#' @param date The date, which can be a list with \code{year}, \code{month}, and \code{day} elements.
+#' It can also be an integer array with 3 elements for year, month, and day respectively,
+#' or an object that can be used as an argument for the \code{base::as.Date} function.
+#' @param k The number of weeks.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' To use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** First day of the first week in \code{"YYYYMMDD"} format.
-#' \item **Class Id** \code{"w#"} (the number is value: \code{k}; e.g., w3 means every 3 weeks)
+#' \item **Character Format** The first day of the first week in \code{"YYYYMMDD"} format.
+#' \item **Class Id** \code{"w#"} (the number is the value of \code{k}; e.g., w3 means every 3 weeks)
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}, which is also a list with the following members:
 #' \tabular{ll}{
-#' \code{class} \tab Determines the class of this frequency.\cr
-#' \code{year} \tab Determines the \code{year}.\cr
-#' \code{month} \tab Determines the \code{month}.\cr
-#' \code{day} \tab Determines the \code{day}.\cr
-#' \code{k} \tab Determines the value: \code{k}.
+#' \code{class} \tab The class of this frequency.\cr
+#' \code{year} \tab The \code{year}.\cr
+#' \code{month} \tab The \code{month}.\cr
+#' \code{day} \tab The \code{day}.\cr
+#' \code{k} \tab The value of \code{k}.
 #' }
+#'
 #' @export
 #'
 #' @examples
 #'
-#' mw0 <- f.multi.weekly(2023, 1, 2,3)
-#' #      This is 2/1/2023 which is Monday. Next observation belongs to 23/1/2023.
+#' mw0 <- f.multi.weekly(c(2023, 1, 2), 3)
+#' # This is 2/1/2023, which is Monday. The next observation belongs to 23/1/2023.
 #'
-#' mw0_value_str <-  as.character(mw0) # this will be '20230102'.
-#' mw0_class_str <- get.class.id(mw0) # this will be 'w3'.
+#' mw0_value_str <- as.character(mw0) # This will be '20230102'.
+#' mw0_class_str <- get.class.id(mw0) # This will be 'w3'.
 #'
 #' mw_new <- as.frequency("20230109", "w4") # This is 9/1/2023.
 #'
@@ -485,73 +520,41 @@ f.weekly <- function(year, month, day){
 #' mw_invalid <- try(as.frequency("20231012", "w0"))
 #' }
 #'
-f.multi.weekly <- function(year, month, day, k){
+f.multi.weekly <- function(date, k){
 
-  year = as.integer(year)
-  month = as.integer(month)
-  day = as.integer(day)
+  date <- get_date(date)
+
   k = as.integer(k)
 
-  if (year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
-  if (month <= 0 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
-  if (day <= 0 || day > 31)
-    stop("Invalid 'day'.")
+
   if (k <= 0)
     stop("Invalid 'k'. It must be a positive integer.")
 
-  res <- .F_multi_weekly(year, month, day, k)
+  res <- .F_multi_weekly(date$year, date$month, date$day, k)
   res
 }
 
 
-get_date <- function(dateString, asDateFun){
-  if (is.null(asDateFun))
-    date <- as.Date(dateString, tryFormats = c("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"))
-  else
-    date <- asDateFun(date)
-
-  year <- as.integer(format(date, "%Y"))
-  month <- as.integer(format(date, "%m"))
-  day <- as.integer(format(date, "%d"))
-  res <- list(year = year, month = month, day = day)
-  res
-}
-
-get_date_reformat <- function(dateString, asDateFun){
-  if (is.null(asDateFun))
-    date <- as.Date(dateString, tryFormats = c("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"))
-  else
-    date <- asDateFun(date)
-
-  year <- as.integer(format(date, "%Y"))
-  month <- as.integer(format(date, "%m"))
-  day <- as.integer(format(date, "%d"))
-  res <- sprintf("%04d%02d%02d", year, month, day)
-  res
-}
 
 
-#' Creates a Daily Frequency
+
+#' Create a Daily Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs daily.
+#' Use this function to create a frequency for time-series data that occurs daily.
 #'
-#' @param year Year of the observation. It should be a valid year as an integer.
-#' @param month Month of the observation. It should be a valid month of year as an integer.
-#' @param day Day of the observation. It should be a valid day of month as an integer.
-#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
-#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
+#' @param date The date, which can be a list with \code{year}, \code{month}, and \code{day} elements.
+#' It can also be an integer array with 3 elements for year, month, and day respectively,
+#' or an object that can be used as an argument for the \code{base::as.Date} function.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' To use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
 #' \item **Character Format** \code{"YYYYMMDD"} (similar to \code{Weekly})
 #' \item **Class Id** \code{"d"}
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}, which is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{year} \tab Determines the \code{year}.\cr
@@ -562,7 +565,7 @@ get_date_reformat <- function(dateString, asDateFun){
 #' @export
 #' @examples
 #'
-#' d0 <- f.daily(2023, 1, 2) # This is 2/1/2023. Next observation belongs to 3/1/2023.
+#' d0 <- f.daily(c(2023, 1, 2)) # This is 2/1/2023. Next observation belongs to 3/1/2023.
 #'
 #' d0_value_str <-  as.character(d0) # this will be '20230102'.
 #' d0_class_str <- get.class.id(d0) # this will be 'd'.
@@ -576,53 +579,32 @@ get_date_reformat <- function(dateString, asDateFun){
 #' d_invalid <- try(as.frequency("20231331", "d")) # invalid month
 #' }
 #'
-f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
+f.daily <- function(date){
 
-  if (is.null(dateString) == FALSE){
-    if (is.null(asDateFun) == FALSE)
-      asDateFun = as.function(asDateFun)
-    date <- get_date(dateString, asDateFun)
-    year <- date$year
-    month <- date$month
-    day <- date$day
-  }
-  else{
-    year = as.integer(year)
-    month = as.integer(month)
-    day = as.integer(day)
-  }
+  date <- get_date(date)
 
-  if (year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
-  if (month <= 0 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
-  if (day <= 0 || day > 31)
-    stop("Invalid 'day'.")
-
-  res <- .F_daily(year, month, day)
+  res <- .F_daily(date$year, date$month, date$day)
   res
 }
 
-#' Creates an Multi-Day Frequency
+#' Create a Multi-Day Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs every \code{k} days. The first day of the interval is used as the reference.
+#' Use this function to create a frequency for time-series data that occurs every \code{k} days. The first day of the interval is used as the reference.
 #'
-#' @param year Year of the observation. It should be a valid year as an integer.
-#' @param month Month of the observation. It should be a valid month of year as an integer.
-#' @param day Day of the observation. It should be a valid day of month as an integer.
-#' @param k Number of days.
-#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
-#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
+#' @param date The date, which can be a list with \code{year}, \code{month}, and \code{day} elements.
+#' It can also be an integer array with 3 elements for year, month, and day respectively,
+#' or an object that can be used as an argument for the \code{base::as.Date} function.
+#' @param k The number of days in the interval.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** First day of the interval in \code{"YYYYMMDD"} format.
-#' \item **Class Id** \code{"d#"} (the number is value: \code{k}; e.g., d3 means every 3 days)
+#' \item **Character Format**: The first day of the interval in \code{"YYYYMMDD"} format.
+#' \item **Class Id**: \code{"d#"} (where # is the value of \code{k}; e.g., d3 means every 3 days)
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{year} \tab Determines the \code{year}.\cr
@@ -634,7 +616,7 @@ f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
 #' @export
 #' @examples
 #'
-#' md0 <- f.multi.daily(2023, 1, 2, 4) # This is 2/1/2023. Next observation belongs to 6/1/2023.
+#' md0 <- f.multi.daily(c(2023, 1, 2), 4) # This is 2/1/2023. Next observation belongs to 6/1/2023.
 #'
 #' md0_value_str <-  as.character(md0) # this will be '20230102'.
 #' md0_class_str <- get.class.id(md0) # this will be 'd4'.
@@ -648,61 +630,42 @@ f.daily <- function(year, month, day, dateString = NULL, asDateFun = NULL){
 #' md_invalid <- try(as.frequency("20231331", "d5")) # invalid month
 #' }
 #'
-f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NULL){
+f.multi.daily <- function(date, k){
 
-  if (is.null(dateString) == FALSE){
-    if (is.null(asDateFun) == FALSE)
-      asDateFun = as.function(asDateFun)
-    date <- get_date(dateString, asDateFun)
-    year <- date$year
-    month <- date$month
-    day <- date$day
-  }
-  else{
-    year = as.integer(year)
-    month = as.integer(month)
-    day = as.integer(day)
-  }
+  date <- get_date(date)
 
   k = as.integer(k)
 
-  if (year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
-  if (month <= 0 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
-  if (day <= 0 || day > 31)
-    stop("Invalid 'day'.")
+
   if (k <= 0)
     stop("Invalid 'k'. It must be a positive integer.")
 
-  res <- .F_multi_daily(year, month, day, k)
+  res <- .F_multi_daily(date$year, date$month, date$day, k)
   res
 }
 
 
 
-#' Creates an \code{Daily-In-Week} Frequency
+#' Create a \code{Daily-In-Week} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs daily within a subset of a week. The first day of the interval is used as the reference.
+#' Use this function to create a frequency for time-series data that occurs daily within a subset of a week. The first day of the interval is used as the reference.
 #'
-#' @param year Year of the observation. It should be a valid year as an integer.
-#' @param month Month of the observation. It should be a valid month of year as an integer.
-#' @param day Day of the observation which will determine the start of the week. It should be a valid day of month as an integer.
-#' @param weekStart First day of the week. It can be \code{sun}, \code{mon}, \code{tue}, \code{wed}, \code{thu}, \code{fri}, and \code{sat}.
-#' @param weekEnd Last day of the week. See \code{weekStart} for possible values. Together, they define the week
+#' @param date The date, which can be a list with \code{year}, \code{month}, and \code{day} elements.
+#' It can also be an integer array with 3 elements for year, month, and day respectively,
+#' or an object that can be used as an argument for the \code{base::as.Date} function.
+#' @param weekStart The first day of the week, which can be \code{sun}, \code{mon}, \code{tue}, \code{wed}, \code{thu}, \code{fri}, or \code{sat}.
+#' @param weekEnd The last day of the week, which can be one of the values listed for \code{weekStart}. Together, they define the week.
 #' @param forward If the current date is not in the week and this value is true, it moves forward to the first day of the week. If this value is false, it moves backward to the last day of the week.
-#' @param dateString A string that represents a date. If not \code{NULL}, this will be used instead of \code{year}, \code{month}, and \code{day}, and they can be omitted.
-#' @param asDateFun If \code{dateString} is given, you can use it to convert the string to a \code{Date}. If \code{NULL}, default conversion is used.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"YYYYMMDD"} (First day of the interval in \code{"YYYYMMDD"} format.)
-#' \item **Class Id** \code{"i:...-..."} (the first '...' is \code{weekStart} and the second '...' is \code{weekEnd}; e.g., \code{i:mon-fri} means a week from Monday to Friday)
+#' \item **Character Format**: The first day of the interval in \code{"YYYYMMDD"} format.
+#' \item **Class Id**: \code{"i:...-..."} (where the first '...' represents \code{weekStart} and the second '...' represents \code{weekEnd}; e.g., \code{i:mon-fri} means a week from Monday to Friday)
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{year} \tab Determines the \code{year}.\cr
@@ -715,15 +678,15 @@ f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NU
 #'
 #' @examples
 #'
-#' dw0 <- f.daily.in.week(2023, 5, 16, "mon", "fri") # This is 16/5/2023.
+#' dw0 <- f.daily.in.week(c(2023, 5, 16), "mon", "fri") # This is 16/5/2023.
 #' dw0_value_str <-  as.character(dw0) # this will be '20230516'.
 #' dw0_class_str <- get.class.id(dw0) # this will be 'i:mon-fri'.
 #'
 #' # Let's use the same date with another week definition:
-#' dw1 <- f.daily.in.week(2023, 5, 16, "wed", "sat")
+#' dw1 <- f.daily.in.week(c(2023, 5, 16), "wed", "sat")
 #' #     This is NOT 16/5/2023. It is 17/5/2023.
 #' #     Since it was outside the week, we moved it forward.
-#' dw2 <- f.daily.in.week(2023, 5, 16, "wed", "sat", FALSE)
+#' dw2 <- f.daily.in.week(c(2023, 5, 16), "wed", "sat", FALSE)
 #' #     This is 13/5/2023. The original day was outside the
 #' #     week, but we moved backward too the end of
 #' #     the previous week (which is Saturday).
@@ -738,36 +701,17 @@ f.multi.daily <- function(year, month, day, k, dateString = NULL, asDateFun = NU
 #' dw_invalid <- try(as.frequency("20231331", "d5")) # invalid month
 #'
 #' # don't use invalid week definitions:
-#' dw_invalid <- try(f.daily.in.week(2023, 5, 16, "Wednesday", "sat"))
+#' dw_invalid <- try(f.daily.in.week(c(2023, 5, 16), "Wednesday", "sat"))
 #' }
 #'
-f.daily.in.week <- function(year, month, day, weekStart = "mon",
-                          weekEnd = "fri", forward = TRUE, dateString = NULL, asDateFun = NULL){
+f.daily.in.week <- function(date, weekStart = "mon",
+                          weekEnd = "fri", forward = TRUE){
 
-  if (is.null(dateString) == FALSE){
-    if (is.null(asDateFun) == FALSE)
-      asDateFun = as.function(asDateFun)
-    date <- get_date(dateString, asDateFun)
-    year <- date$year
-    month <- date$month
-    day <- date$day
-  }
-  else{
-    year = as.integer(year)
-    month = as.integer(month)
-    day = as.integer(day)
-  }
+  date <- get_date(date)
 
   weekStart = as.character(weekStart)
   weekEnd = as.character(weekEnd)
   forward = as.logical(forward)
-
-  if (year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
-  if (month <= 0 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
-  if (day <= 0 || day > 31)
-    stop("Invalid 'day'.")
 
   valids <- c("sun", "mon", "tue", "wed", "thu", "fri", "sat")
   if (any(weekStart == valids) == FALSE)
@@ -776,7 +720,7 @@ f.daily.in.week <- function(year, month, day, weekStart = "mon",
     stop(paste0("Invalid 'weekEnd'. It should be one of ", paste(dQuote(valids), collapse = ", "),"."))
 
 
-  res <- .F_daily_in_week(year, month, day, weekStart,
+  res <- .F_daily_in_week(date$year, date$month, date$day, weekStart,
                         weekEnd, forward)
   res
 }
@@ -787,22 +731,22 @@ f.daily.in.week <- function(year, month, day, weekStart = "mon",
 
 
 
-#' Creates an \code{List-String} Frequency
+#' Create a \code{List-String} Frequency
 #'
-#' This frequency is typically used for labeled data. It is generally a list, but it can be used to label observations outside this list.
+#' This frequency is typically used for labeled data. It is generally a list, but it can also be used to label observations outside this list.
 #'
-#' @param items Items of the list.
-#' @param value Current item.
+#' @param items The items in the list.
+#' @param value The current item.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"..."} (in which ... is the \code{value})
-#' \item **Class Id** \code{Ls} or \code{Ls:...} (in which ... is the semi-colon separated \code{items})
+#' \item **Character Format**: \code{"..."} (where '...' represents the \code{value})
+#' \item **Class Id**: \code{Ls} or \code{Ls:...} (where '...' represents the semi-colon-separated \code{items})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}, which is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{items} \tab Determines the \code{items}.\cr
@@ -835,24 +779,23 @@ f.list.string <- function(items, value){
 }
 
 
-#' Creates an \code{List-Date} Frequency
+#' Create a \code{List-Date} Frequency
 #'
-#' Use this frequency for data with date labels. It is generally a list of dates, but it can be used to label observations outside this list.
+#' Use this frequency for data with date labels. It is generally a list of dates, but it can also be used to label observations outside this list.
 #'
-#' @param items Items of the list in \code{YYYYMMDD} format.
-#' @param value Current value in \code{YYYYMMDD} format. If null, the first value in \code{items} is used.
-#' @param reformat If the elements of \code{items} is not in the given format, set it to be \code{TRUE}.
-#' @param asDateFun If given and \code{reformat} is \code{TRUE}, it will be used in converting the strings to the required format.
+#' @param items The items in the list in \code{YYYYMMDD} format.
+#' @param value The current value in \code{YYYYMMDD} format. If null, the first value in \code{items} is used.
+#' @param reformat If the elements of \code{items} are not in \code{YYYYMMDD} format, set this to be \code{TRUE}.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"YYYYMMDD"} (i.e., \code{item})
-#' \item **Class Id** \code{Ld} or \code{Ld:...} (in which '...' is the semi-colon separated \code{items})
+#' \item **Character Format**: \code{"YYYYMMDD"} (i.e., the \code{item})
+#' \item **Class Id**: \code{Ld} or \code{Ld:...} (where '...' represents the semi-colon-separated \code{items})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{items} \tab Determines the \code{items}.\cr
@@ -879,18 +822,16 @@ f.list.string <- function(items, value){
 #' Ld_invalid <- try(f.list.date(c("20231101","20220903","20200823","20230303"), "20231102"))
 #' }
 #'
-f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
+f.list.date <- function(items, value = NULL, reformat = TRUE){
 
   if (is.null(value) == FALSE)
      value = as.character(value)
   items = as.character(items)
 
   if (reformat){
-    if (is.null(asDateFun) == FALSE)
-      asDateFun = as.function(asDateFun)
-    items <- as.character(sapply(items, function(d)get_date_reformat(d, asDateFun)))
+    items <- as.character(sapply(items, function(d)get_date_reformat(d)))
     if (is.null(value) == FALSE)
-       value <- get_date_reformat(value, asDateFun)
+       value <- get_date_reformat(value)
   }
   if (is.null(value))
     value <- items[[1]]
@@ -905,22 +846,22 @@ f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 
 
 
-#' Creates an 'Hourly' Frequency
+#' Create an 'Hourly' Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs hourly in day or a subset of a week.
+#' Use this function to create a frequency for time-series data that occurs hourly in a day or a subset of a week.
 #'
 #' @param day A 'Day-based' object of class \code{ldtf}, such as \code{Daily} or \code{Daily-In-Week}.
-#' @param hour Index of hour in the day. It should be between 1 and 24.
+#' @param hour The index of the hour in the day, which should be between 1 and 24.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"YYYYMMDD:#"} (the number is the value: \code{hour})
-#' \item **Class Id** \code{ho|...} (the '...' is the 'Class String' of \code{day})
+#' \item **Character Format**: \code{"YYYYMMDD:#"} (where # represents the value of \code{hour})
+#' \item **Class Id**: \code{ho|...} (where '...' represents the 'class id' of \code{day})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{day} \tab Determines the \code{day}.\cr
@@ -929,7 +870,7 @@ f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 #' @export
 #' @examples
 #'
-#' ho0 <- f.hourly(f.daily(2023,5,16),4)
+#' ho0 <- f.hourly(f.daily(c(2023,5,16)),4)
 #'
 #' ho0_value_str <-  as.character(ho0) # this will be '20230516:4'.
 #' ho0_class_str <- get.class.id(ho0)
@@ -942,7 +883,7 @@ f.list.date <- function(items, value = NULL, reformat = TRUE, asDateFun = NULL){
 #' \donttest{
 #' ho_invalid <- try(as.frequency("20231101:3", "ho|j:wed-sat"))
 #' #  invalid format in day-based frequency
-#' ho_invalid <- try(f.hourly(f.daily(2023,5,16),25)) # invalid hour
+#' ho_invalid <- try(f.hourly(f.daily(c(2023,5,16)),25)) # invalid hour
 #' }
 #'
 f.hourly <- function(day, hour){
@@ -955,22 +896,22 @@ f.hourly <- function(day, hour){
   res
 }
 
-#' Creates an \code{Minute-ly} Frequency
+#' Create a \code{Minute-ly} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs every minute in day or a subset of a week.
+#' Use this function to create a frequency for time-series data that occurs every minute in a day or a subset of a week.
 #'
 #' @param day A 'Day-based' object of class \code{ldtf}, such as \code{Daily} or \code{Daily-In-Week}.
-#' @param minute Index of hour in the day. It should be between 1 and 1440.
+#' @param minute The index of the minute in the day, which should be between 1 and 1440.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"YYYYMMDD:#"} (the number is the value: \code{minute})
-#' \item **Class Id** \code{mi|...} (the '...' is the 'Class String' of \code{day})
+#' \item **Character Format**: \code{"YYYYMMDD:#"} (where # represents the value of \code{minute})
+#' \item **Class Id**: \code{mi|...} (where '...' represents the 'class id' of \code{day})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{day} \tab Determines the \code{day}.\cr
@@ -979,7 +920,7 @@ f.hourly <- function(day, hour){
 #' @export
 #' @examples
 #'
-#' mi0 <- f.minutely(f.daily(2023,5,16),1200)
+#' mi0 <- f.minutely(f.daily(c(2023,5,16)),1200)
 #'
 #' mi0_value_str <-  as.character(mi0) # this will be '20230516:1200'.
 #' mi0_class_str <- get.class.id(mi0)
@@ -992,7 +933,7 @@ f.hourly <- function(day, hour){
 #' \donttest{
 #' mi_invalid <- try(as.frequency("20231101:3", "mi|j:wed-sat"))
 #' #   invalid format in day-based frequency
-#' mi_invalid <- try(f.minutely(f.daily(2023,5,16),2000)) # invalid minute
+#' mi_invalid <- try(f.minutely(f.daily(c(2023,5,16)),2000)) # invalid minute
 #' }
 #'
 f.minutely <- function(day, minute){
@@ -1007,23 +948,22 @@ f.minutely <- function(day, minute){
 
 
 
-#' Creates an \code{Second-ly} Frequency
+#' Create a \code{Second-ly} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs every second in day or a subset of a week.
+#' Use this function to create a frequency for time-series data that occurs every second in a day or a subset of a week.
 #'
 #' @param day A 'Day-based' object of class \code{ldtf}, such as \code{Daily} or \code{Daily-In-Week}.
-#' @param second Index of hour in the day. It should be between 1 and 86400.
+#' @param second The index of the second in the day, which should be between 1 and 86400.
 #'
-
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"YYYYMMDD:#"} (the number is the value: \code{second})
-#' \item **Class Id** \code{se|...} (the '...' is the 'Class String' of \code{day})
+#' \item **Character Format**: \code{"YYYYMMDD:#"} (where # represents the value of \code{second})
+#' \item **Class Id**: \code{se|...} (where '...' represents the 'class id' of \code{day})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{day} \tab Determines the \code{day}.\cr
@@ -1032,7 +972,7 @@ f.minutely <- function(day, minute){
 #' @export
 #' @examples
 #'
-#' se0 <- f.secondly(f.daily(2023,5,16),40032)
+#' se0 <- f.secondly(f.daily(c(2023,5,16)),40032)
 #'
 #' se0_value_str <-  as.character(se0) # this will be '20230516:40032'.
 #' se0_class_str <- get.class.id(se0)
@@ -1045,7 +985,7 @@ f.minutely <- function(day, minute){
 #' \donttest{
 #' mi_invalid <- try(as.frequency("20231101:3", "se|j:wed-sat"))
 #' #  invalid format in day-based frequency
-#' mi_invalid <- try(f.secondly(f.daily(2023,5,16),100000)) # invalid second
+#' mi_invalid <- try(f.secondly(f.daily(c(2023,5,16)),100000)) # invalid second
 #' }
 #'
 f.secondly <- function(day, second){
@@ -1061,23 +1001,23 @@ f.secondly <- function(day, second){
 
 
 
-#' Creates an \code{X-Times-A-Day} Frequency
+#' Create an \code{X-Times-A-Day} Frequency
 #'
-#' Use it to create a frequency for time-series data that occurs \code{x} times in day or a subset of a week.
+#' Use this function to create a frequency for time-series data that occurs \code{x} times in a day or a subset of a week.
 #'
 #' @param day A 'Day-based' object of class \code{ldtf}, such as \code{Daily} or \code{Daily-In-Week}.
-#' @param x Number of observations in each day.
-#' @param position Position of the current observation. It should be a positive integer. It cannot be larger than \code{x}.
+#' @param x The number of observations in each day.
+#' @param position The position of the current observation, which should be a positive integer and cannot be larger than \code{x}.
 #'
 #' @details
-#' In order to use \code{\link{as.frequency}} function for this type of frequency,
+#' In order to use the \code{\link{as.frequency}} function for this type of frequency,
 #' you need the following information:
 #' \itemize{
-#' \item **Character Format** \code{"#"} (in which '#' is the value: \code{position})
-#' \item **Class Id** \code{"da#|..."} (in which '#' is the value: \code{x} and '...' is the 'Class String' of \code{day}))
+#' \item **Character Format**: \code{"#"} (where '#' represents the value of \code{position})
+#' \item **Class Id**: \code{"da#|..."} (where '#' represents the value of \code{x} and '...' represents the 'class id' of \code{day})
 #' }
 #'
-#' @return An object of class 'ldtf'. It is also a list with the following members:
+#' @return An object of class \code{ldtf}. It is also a list with the following members:
 #' \tabular{ll}{
 #' \code{class} \tab Determines the class of this frequency.\cr
 #' \code{day} \tab Determines the \code{day}.\cr
@@ -1086,7 +1026,7 @@ f.secondly <- function(day, second){
 #' @export
 #' @examples
 #'
-#' xd0 <- f.x.times.a.day(f.daily(2023,5,16),13, 12)
+#' xd0 <- f.x.times.a.day(f.daily(c(2023,5,16)),13, 12)
 #'
 #' xd0_value_str <-  as.character(xd0) # this will be '20230516:12'.
 #' xd0_class_str <- get.class.id(xd0)
@@ -1099,7 +1039,7 @@ f.secondly <- function(day, second){
 #' \donttest{
 #' xd_invalid <- try(as.frequency("20231101:3", "da|i:wed-sat"))
 #' #  invalid format in day-based frequency
-#' xd_invalid <- try(f.x.times.a.day(f.daily(2023,5,16),4,0)) # invalid position
+#' xd_invalid <- try(f.x.times.a.day(f.daily(c(2023,5,16)),4,0)) # invalid position
 #' }
 #'
 f.x.times.a.day <- function(day, x, position){

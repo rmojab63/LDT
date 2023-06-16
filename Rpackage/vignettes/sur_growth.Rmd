@@ -129,7 +129,7 @@ In other words, our generosity in defining new potential regressors is computati
 
 ### Which subset of the model set should we estimate?
 
-Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt::search.sur_s()` function has a step-wise search algorithm. It estimates small regressions, and given a list of criteria, it omits regressors with poor performance. In other words, larger models are not built with variables with relatively low explanatory power in the smaller models.
+Since **ldt** tries to be an atheoretical tool, we restrict the model set. `ldt::search.sur.stepwise()` function has a step-wise search algorithm. It estimates small regressions, and given a list of criteria, it omits regressors with poor performance. In other words, larger models are not built with variables with relatively low explanatory power in the smaller models.
 
 The steps of `search.sur\_s()` function is defined by a list of indices and a vector of sizes: 
 
@@ -145,7 +145,7 @@ This means that at the first step, we use all data and estimate models with 2 po
 For a given regression model, **ldt** calculates two types of scores: in-sample and out-of-sample. The latter is calculated in a pseudo-out-of-sample simulation (e.g., by calculating the distance between the projected value and the actual one), and the former is calculated by using all the sample data (e.g., AIC of the regression). We select a set of options by the following code:
 
 ```{r modelset_measure_options}
-measureOptions <- get.measure.options(
+measureOptions <- get.options.measure(
   typesIn = c("aic", "sic"), typesOut = c("rmse", "crps"),
   simFixSize = 60, trainRatio = 0.75, seed = 340
 )
@@ -157,7 +157,7 @@ In other words, we are asking **ldt** to use AIC and SIC as the two in-sample cr
 Given a regression model, one might discuss the value of the estimated coefficients, its sign or statistical significance, or one might use it for projection. When model uncertainty presents, one might also look for inclusion weights. While **ldt** provides a range of options, in this example, we focus on the following:
 
 ```{r modelset_search_items}
-searchItems <- get.search.items(model = TRUE, bestK = 50, inclusion = TRUE)
+searchItems <- get.items.search(model = TRUE, bestK = 50, inclusion = TRUE)
 ```
 
 In other words, we are asking **ldt** to keep the first `r searchItems$bestK` best models and also, the inclusion weights.
@@ -166,7 +166,7 @@ In other words, we are asking **ldt** to keep the first `r searchItems$bestK` be
 When it comes to an automatic approach toward modeling, We might want to exclude regressions with high levels of multicollinearity, low degrees of freedom (in presence of `NA`s), relatively large AIC, etc. **ldt** provides some options in this regard. In the current example, we use the following code:
 
 ```{r modelset_check_items}
-checkItems <- get.modelcheck.items(maxConditionNumber = 1e15, minDof = 35, minOutSim = 50)
+checkItems <- get.items.modelcheck(maxConditionNumber = 1e15, minDof = 35, minOutSim = 50)
 ```
 
 In other words, we are asking **ldt** to omit a regression with a degrees-of-freedom less than `r checkItems$minDof`, a condition number larger than `r checkItems$maxConditionNumber`, or a number of valid out-of-sample simulations less than `r checkItems$minOutSim`. We hope that restricting the condition number can deal with the multicollinearity problem. 
@@ -187,15 +187,15 @@ If you have downloaded the data set files, do not run this code.
 
 
 ```{r estimation}
-search_res <- search.sur_s(
+search_res <- search.sur.stepwise(
   x = x, y = y, numFixXPartitions = 2,
   xSizes = xSizes, counts = xCounts,
   searchItems = searchItems, modelCheckItems = checkItems, measureOptions = measureOptions,
-  searchOptions = get.search.options(parallel = TRUE, printMsg = FALSE)
+  searchOptions = get.options.search(parallel = TRUE, printMsg = FALSE)
 )
 ```
 
-The arguments are discussed in the previous sections. Note that `search.sur_s()` can save the result of different steps in the working directory. 
+The arguments are discussed in the previous sections. Note that `search.sur.stepwise()` can save the result of different steps in the working directory. 
 
 ### Status
 
@@ -295,7 +295,7 @@ These numbers are the number of variables in each strategy. While the choice is 
 ```{r pca_na_strategies_select}
 inds <- c(1, 2, 1, 2)
 pcaCutoffRates <- c(0.95, 0.95, 0.6, 0.6)
-xPcaOptions <- get.pca.options(ignoreFirst = 2, exactCount = 0, max = 8)
+xPcaOptions <- get.options.pca(ignoreFirst = 2, exactCount = 0, max = 8)
 ```
 
 This means we will estimate 6 models by combining the first two `NA` strategies and three cumulative variance ratios: 0.95, 0.9, and 0.6. The third line of code is just a setup for ignoring the first two regressors and choosing the number of PCs while estimating the model. We restrict the number of PCs to be less than `r xPcaOptions$max`. This is a relatively large number and therefore, as the next step, we ask **ldt** to omit insignificant coefficients and re-estimate the model, and repeat this process 2 times:

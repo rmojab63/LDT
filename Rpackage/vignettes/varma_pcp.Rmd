@@ -36,7 +36,7 @@ It is recommended to read the following vignettes first:
 in this vignette, we will predict the commodity prices and discuss the prediction power of the VARMA modeling. Given a model, we design a pseudo-out-of-sample simulation with the following options:
 
 ```{r}
-measureOptions <- get.measure.options(
+measureOptions <- get.options.measure(
   simFixSize = 24,
   typesIn = NULL, typesOut = c("direction", "scaledRmse", "crps"),
   horizons = c(1L)
@@ -128,7 +128,7 @@ maxParams <- c(2, 1, 0, 2, 1, 0)
 Note that there is no MA part in the selected models. Next, we ask **ldt** to exclude models with unusual predictions:
 
 ```{r}
-checkItems <- get.modelcheck.items(
+checkItems <- get.items.modelcheck(
   estimation = TRUE, prediction = TRUE,
   predictionBoundMultiplier = 4
 )
@@ -144,8 +144,8 @@ pcpRes <- search.varma(
   seasonsCount = seasonsCount, maxHorizon = 1, newX = newX,
   measureOptions = measureOptions,
   modelCheckItems = checkItems,
-  searchItems = get.search.items(model = TRUE, bestK = 1),
-  searchOptions = get.search.options(printMsg = FALSE)
+  searchItems = get.items.search(model = TRUE, bestK = 1),
+  searchOptions = get.options.search(printMsg = FALSE)
 )
 
 
