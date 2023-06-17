@@ -46,6 +46,7 @@
 #' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
+#' @importFrom stats glm
 #'
 #' @examples
 #' # We simulate some data for this example:
@@ -95,7 +96,7 @@
 #' counts_steps = c(NA, 10, 9)
 #' search_items <- get.items.search(bestK = 10)
 #' search_step_res <- search.dc.stepwise(y, data[,2:(length(data))],
-#'                                       xSizesSteps = x_sizes_steps, countSteps = counts_steps,
+#'                                       xSizeSteps = x_sizes_steps, countSteps = counts_steps,
 #'                                       measureOptions = measure_options,
 #'                                       searchItems = search_items)
 #' print(search_step_res$sic$target1$model$bests$best1$exoIndices)
@@ -205,7 +206,6 @@ search.dc <- function(y, x, w = NULL, xSizes = NULL,
 #' @export
 #' @examples
 #' See the example in the 'search.dc' function.
-#'
 #' @seealso [search.dc], [search.dc.stepwise]
 estim.dc <- function(y, x, w = NULL,
                     distType = c("logit", "probit"), newX = NULL,
@@ -279,8 +279,8 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #'
 #' @param y A matrix of endogenous data with variable in the column.
 #' @param x A matrix of exogenous data with variables in the columns.
-#' @param xSizesSteps A list of model dimensions to be estimated in each step. Its size determines the number of steps.
-#' @param countSteps A vector to determine the number of variables to be used in each step.
+#' @param xSizeSteps A list of model dimensions to be estimated in each step. Its size determines the number of steps.
+#' @param countSteps A integer vector to determine the number of variables to be used in each step.
 #' \code{NA} means all variables. Variables are selected based on best estimations.
 #' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
 #' Select an appropriate value for \code{bestK} in the options.
@@ -296,8 +296,8 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #' See the example in the 'search.dc' function.
 #'
 #' @seealso [search.dc], [estim.dc]
-search.dc.stepwise <- function(y, x, xSizesSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+search.dc.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                        countSteps = c(NA, 40, 30, 20),
                        savePre = NULL, ...) {
-  Search_s("dc", x, xSizesSteps, countSteps, savePre, y = y, ...)
+  Search_s("dc", x, xSizeSteps, countSteps, savePre, y = y, ...)
 }

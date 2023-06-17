@@ -619,7 +619,7 @@ test_that("Discrete choice SplitSearch works (no subsetting)", {
   measureOptions = get.options.measure(c("sic", "aic"), c("frequencyCost"), seed = -400)
   searchOptions = get.options.search(FALSE, printMsg = FALSE)
 
-  split = search.dc.stepwise(x = Exo, y = y, xSizesSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
+  split = search.dc.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                      costMatrices = list(c1, c2),
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, savePre = NULL)

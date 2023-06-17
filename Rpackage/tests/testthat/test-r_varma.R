@@ -616,7 +616,7 @@ test_that("VARMA summary works", {
 
 
 
-test_that("estim.sur SplitSearch works (no subsetting)", {
+test_that("estim.varma SplitSearch works (no subsetting)", {
   skip_on_cran()
 
   Endo = x[,1:3]
@@ -635,7 +635,7 @@ test_that("estim.sur SplitSearch works (no subsetting)", {
   searchOptions = get.options.search(FALSE, printMsg = FALSE)
   modelCheckItems = get.items.modelcheck(prediction = FALSE, predictionBoundMultiplier = 0)
 
-  split = search.varma.stepwise(y = Endo, x = Exo, ySizes = list(c(1L,2L), c(3L)), counts = c(NA, NA),
+  split = search.varma.stepwise(y = Endo, x = Exo, ySizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  xGroups = xGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, modelCheckItems = modelCheckItems,

@@ -177,18 +177,18 @@ CheckPcaOptions <- function(O){
 #' @return A list with the given options.
 #'
 #' @export
-get.options.lmbfgs <- function(maxIterations = 100, factor = 1e7,
+get.options.lbfgs <- function(maxIterations = 100, factor = 1e7,
                                projectedGradientTol = 0, maxCorrections = 5){
   O = list(maxIterations = maxIterations,
            factor = factor,
            projectedGradientTol = projectedGradientTol,
            maxCorrections = maxCorrections)
-  O = CheckLmbfgsOptions(O)
+  O = CheckLbfgsOptions(O)
   O
 }
 
 
-CheckLmbfgsOptions <- function(O){
+CheckLbfgsOptions <- function(O){
   O$maxIterations <- as.integer(O$maxIterations)
   O$factor <- as.numeric(O$factor)
   O$projectedGradientTol <- as.numeric(O$projectedGradientTol)

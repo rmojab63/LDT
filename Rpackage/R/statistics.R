@@ -1,6 +1,6 @@
 
 
-#' Converts a Measure to Weight
+#' Convert a Measure to Weight
 #'
 #' This function converts a measure to its weight equivalent.
 #'
@@ -32,7 +32,7 @@ s.weight.from.measure <- function(value, measureName)
 }
 
 
-#' Converts a Weight to Measure
+#' Convert a Weight to Measure
 #'
 #' This function converts a weight to its measure equivalent.
 #'
@@ -60,7 +60,7 @@ s.measure.from.weight <- function(value, measureName)
   res
 }
 
-#' Gets ROC Curve Data for Binary Classification
+#' Get ROC Curve Data for Binary Classification
 #'
 #' This function calculates the required points for plotting the ROC curve and the AUC.
 #'
@@ -114,7 +114,7 @@ s.roc <- function(y, scores, weights = NULL,
 }
 
 
-#' Gets the GLD Parameters from the moments
+#' Get the GLD Parameters from the moments
 #'
 #' Calculates the parameters of the generalized lambda distribution (FKML), given the first four moments of the distribution.
 #'
@@ -227,7 +227,7 @@ s.gld.density.quantile <- function(probs, p1, p2, p3, p4)
   res
 }
 
-#' Combines Two Distributions Given their First 4 Moments
+#' Combine Two Distributions Given their First 4 Moments
 #'
 #' This function combines two distributions and calculates the first 4 moments of the combined distribution.
 #'
@@ -301,13 +301,15 @@ s.combine.by.moments4 <- function(mix1, mix2)
 #' \code{projections} \tab Projections matrix if \code{newX} is provided.
 #' }
 #' @export
+#' @importFrom stats prcomp
+#' @importFrom stats rnorm
 #'
 #' @examples
 #' data <- data.frame( x = rnorm(100), y = rnorm(100), z = rep(0, 100))
 #' res <- s.pca(data)
 #'
 #' # Note that one of the columns has zero variance.
-#' res_invalid <- try(stats::prcomp(data, center = TRUE,
+#' res_invalid <- try(prcomp(data, center = TRUE,
 #'                    scale. = TRUE)) # We should remove 'z' first
 #'
 s.pca <- function(x, center = TRUE,
@@ -327,7 +329,7 @@ s.pca <- function(x, center = TRUE,
 }
 
 
-#' Gets the Distances Between Variables
+#' Get the Distances Between Variables
 #'
 #' This function calculates the distances between the columns of a numeric matrix.
 #'
@@ -398,7 +400,7 @@ s.cluster.h <- function(distances, linkage = "single"){
 }
 
 
-#' Groups Variables with Hierarchical Clustering
+#' Group Variables with Hierarchical Clustering
 #'
 #' This function groups the columns of a numeric matrix based on the hierarchical clustering algorithm.
 #'
@@ -444,4 +446,70 @@ s.cluster.h.group <- function(data, nGroups = 2, threshold = 0,
   res <- .ClusterHGroup(data, nGroups, threshold,
                         distance, linkage, correlation)
   res
+}
+
+
+
+
+#' Generate Random Samples from a Multivariate Normal Distribution
+#'
+#' Use this function to get random samples from a multivariate normal distribution.
+#'
+#' @param n The number of samples to generate.
+#' @param mu The mean vector of the distribution.
+#' If \code{NULL}, it defaults to a zero vector of length \code{p}.
+#' If \code{NA}, it is set to a random vector.
+#' @param sigma The covariance matrix of the distribution.
+#' If \code{NULL}, it defaults to an identity matrix of size \code{p x p}.
+#' If \code{NA}, it is set to a random positive definite matrix.
+#' @param p The dimension of the distribution, if both \code{mu} and \code{sigma} are \code{NA} or \code{NULL}.
+#' @param byRow If \code{TRUE}, generated samples are stored in the rows. Otherwise, they are stored in the columns.
+#'
+#' @return A list containing the generated sample (\code{p x n}), \code{mu}, and \code{sigma}.
+#'
+#' @export
+#' @importFrom stats runif
+#' @importFrom stats rnorm
+#'
+#' @examples
+#' s1 <- rand.mnormal(10, mu = c(0, 0), sigma = matrix(c(1, 0.5, 0.5, 1), ncol = 2))
+#' s2 <- rand.mnormal(10, mu = c(1,1), sigma = NA, p = 2)
+#' s3 <- rand.mnormal(10, p = 2, byRow = FALSE) #standard normal
+#'
+rand.mnormal <- function(n, mu = NULL, sigma = NULL, p = NULL, byRow = TRUE) {
+  if (length(mu) == 1 && is.na(mu) && length(sigma) == 1 && is.na(sigma)) {
+    if (is.null(p)) stop("Please specify the dimension 'p' of the distribution")
+    mu <- runif(p)
+    x <- matrix(rnorm(p * p), ncol = p)
+    sigma <- crossprod(x)
+  } else if (is.null(mu) && is.null(sigma)) {
+    if (is.null(p)) stop("Please specify the dimension 'p' of the distribution")
+    mu <- rep(0, p)
+    sigma <- diag(p)
+  } else if (length(mu) == 1 && is.na(mu)) {
+    p <- ncol(sigma)
+    mu <- runif(p)
+  } else if (length(sigma) == 1 && is.na(sigma)) {
+    p <- length(mu)
+    x <- matrix(rnorm(p * p), ncol = p)
+    sigma <- crossprod(x)
+  } else if (is.null(mu)) {
+    p <- ncol(sigma)
+    mu <- rep(0, p)
+  } else if (is.null(sigma)) {
+    p <- length(mu)
+    sigma <- diag(p)
+  } else {
+    p <- length(mu)
+    if (p != ncol(sigma)) stop("The dimensions of 'mu' and 'sigma' are inconsistent")
+  }
+
+  e <- matrix(rnorm(n * p), ncol = p)
+
+  if (byRow) {
+    sample <- e %*% chol(sigma) + matrix(mu, nrow = n, ncol = p, byrow = TRUE)
+  } else {
+    sample <- t(chol(sigma)) %*% t(e) + mu
+  }
+  list(sample = sample, mu = mu, sigma = sigma)
 }

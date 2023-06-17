@@ -635,7 +635,7 @@ test_that("SUR SplitSearch works (no subsetting)", {
   measureOptions = get.options.measure(c("sic", "aic"), c("crps"), seed = -400)
   searchOptions = get.options.search(FALSE, printMsg = printMsg)
 
-  split = search.sur.stepwise(x = Exo, y = y, xSizesSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
+  split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  yGroups = yGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, savePre = NULL)

@@ -1,6 +1,6 @@
 Package: ldt
 Title: Let Data Talk
-Version: 0.2.0.0
+Version: 0.3.0.0
 Authors@R: c(
     person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")),
     person("Michael", "Hutt", role = c("cph"), comment = "MIT license. Original code for Nelder-Mead algorithm."),
@@ -29,8 +29,9 @@ Suggests:
     testthat,
     rmarkdown,
     kableExtra,
+    MTS,
     moments,
-    MASS
+    systemfit
 LinkingTo: 
     BH,
     Rcpp

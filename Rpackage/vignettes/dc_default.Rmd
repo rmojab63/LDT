@@ -148,7 +148,7 @@ Note that the out-of-sample simulation depends on random sampling. Finally, we s
 berka_res <- list(
   logit = search.dc.stepwise(
     x = x, y = y, w = weight, costMatrices = list(frequencyCost),
-    xSizes = xSizes, counts = xCounts,
+    xSizeSteps = xSizes, countSteps = xCounts,
     searchLogit = TRUE, searchProbit = FALSE,
     searchItems = get.items.search(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,
@@ -157,7 +157,7 @@ berka_res <- list(
   ),
   probit = search.dc.stepwise(
     x = x, y = y, w = weight, costMatrices = list(frequencyCost),
-    xSizes = xSizes, counts = xCounts,
+    xSizeSteps = xSizes, countSteps = xCounts,
     searchLogit = FALSE, searchProbit = TRUE,
     searchItems = get.items.search(bestK = 20, inclusion = TRUE),
     measureOptions = measureOptions,

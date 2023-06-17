@@ -294,7 +294,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   }
 
   if (is.null(colnames(data))) {
-    stop("'data' must have column names.")
+    stop("'data' must have column names.") # don't set it here, due to the loading part
   }
 
   estims <- list()
@@ -386,8 +386,9 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       data_i <- data_i[, vars, drop = FALSE]
     }
     if (any(ncol(data_i) < size_i)) {
-      stop("There is not enough variables in this step. Increase the value of
-      'bestK' or if you have fix variables, adjust the sizes.")
+      warning("There is not enough variables in this step. Increase the value of
+      'bestK' or if you have fix variables, adjust the sizes. Search is stoped.")
+      break
     }
 
     if (printMsg)

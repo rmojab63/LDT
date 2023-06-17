@@ -22,8 +22,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(ldt)
-library(kableExtra)
-library(MASS)
+library(kableExtra) 
 ```
 
 It is recommended to read the following vignette first:
@@ -83,8 +82,8 @@ GetSample <- function(n, s) {
   }
   z <- as.matrix(z)
   x <- z[, c(6, 12, 18)]
-  e <- as.matrix(mvrnorm(n, c(0, 0), s * s * matrix(c(5, 2, 2, 4), 2, 2)))
-  y <- x %*% t(matrix(c(1, 2, 0, 0, 3, 4), 2, 3, byrow = TRUE)) + e
+  e <- rand.mnormal(n, c(0, 0), s * s * matrix(c(5, 2, 2, 4), 2, 2))
+  y <- x %*% t(matrix(c(1, 2, 0, 0, 3, 4), 2, 3, byrow = TRUE)) + e$sample
   colnames(y) <- c("y1", "y2")
   colnames(z) <- paste0("z", seq(1, 18, 1))
   return(list(y = y, z = z))
@@ -175,7 +174,7 @@ SampleAndEstimate <- function(i, res, n, s, xSizes, xCounts, yGroups,
   sample <- GetSample(n, s)
   search_res <- search.sur.stepwise(
     y = sample$y, x = sample$z, numTargets = 2,
-    xSizes = xSizes, counts = xCounts,
+    xSizeSteps = xSizes, countSteps = xCounts,
     yGroups = yGroups,
     searchSigMaxIter = 1,
     searchSigMaxProb = 0.1,

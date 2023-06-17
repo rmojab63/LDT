@@ -14,7 +14,7 @@
 #' If \code{NULL}, \code{c(1)} is used.
 #' @param xPartitions A list of integer vectors that partition the indexes of the exogenous variables.
 #' No regression is estimated with two variables in the same partition.
-#' If \code{NULL}, each variable is placed in its own group, and the size of the model set is maximized.
+#' If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.
 #' @param numFixXPartitions Number of partitions at the beginning of \code{xPartitions} to be included in all regressions.
 #' @param yGroups A list of integer vectors that determine different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.
 #' @param searchSigMaxIter An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
@@ -35,6 +35,9 @@
 #' \code{info} \tab General information about the search process, some arguments, elapsed time, etc.
 #' }
 #'
+#' Note that the output does not contain any estimation results,
+#' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+#'
 #' @export
 #'
 #' @examples
@@ -50,14 +53,16 @@
 #' x_irrelevant <- matrix(rnorm(n * num_x_irrelevant), ncol = num_x_irrelevant)
 #'
 #' # calculate the dependent variable
-#' beta <- matrix(rnorm((num_x_relevant + 1) * num_y), ncol = num_y) # coefficients (including intercepts)
+#' # coefficients (including intercepts):
+#' beta <- matrix(rnorm((num_x_relevant + 1) * num_y), ncol = num_y)
 #' Sigma <- crossprod(matrix(rnorm(num_y^2), ncol = num_y)) # errors covariance
-#' errors <- MASS::mvrnorm(n, mu = rep(0, num_y), Sigma = Sigma)
+#' errors <- rand.mnormal(n, mu = rep(0, num_y), sigma = Sigma)
 #' y <- cbind(rep(1, n), x_relevant) %*% beta + errors
 #'
 #' # prepare data for estimation
 #' data <- data.frame(y, x_relevant, x_irrelevant)
-#' colnames(data) <- c(paste0("y", 1:num_y), paste0("x", 1:num_relevant), paste0("z", 1:num_irrelevant))
+#' colnames(data) <- c(paste0("y", 1:num_y), paste0("x", 1:num_relevant),
+#'                                           paste0("z", 1:num_irrelevant))
 #'
 #' # Use systemfit to estimate and analyse:
 #' exp_names <- paste0(colnames(data)[(num_y+1):(length(colnames((data))))], collapse = " + ")
@@ -81,8 +86,9 @@
 #' measure_options <- get.options.measure(typesIn = c("sic")) # We use SIC for searching
 #' search_res <- search.sur(y, data[,2:(length(data))], numTargets = num_targets,
 #'                          xSizes = x_sizes, measureOptions = measure_options)
-#' print(search_res$sic$target1$model$bests$best1$exoIndices) # best model's explanatory indexes for the first variable
-#' print(search_res$sic$target2$model$bests$best1$exoIndices) # best model's explanatory indexes for the second variable
+#' # best model's explanatory indexes for the first and second variables:
+#' print(search_res$sic$target1$model$bests$best1$exoIndices)
+#' print(search_res$sic$target2$model$bests$best1$exoIndices)
 #'
 #' # Use summary function to estimate the best models:
 #' search_sum <- summary(search_res, y = data[,1:num_y], x = data[,(num_y+1):(length(data))])
@@ -100,7 +106,7 @@
 #' counts_steps = c(NA, 10, 9)
 #' search_items <- get.items.search(bestK = 10)
 #' search_step_res <- search.sur.stepwise(y = data[,1:num_y], x = data[,2:(length(data))],
-#'                                        xSizesSteps = x_sizes_steps, countSteps = counts_steps,
+#'                                        xSizeSteps = x_sizes_steps, countSteps = counts_steps,
 #'                                        measureOptions = measure_options,
 #'                                        searchItems = search_items)
 #' print(search_step_res$sic$target1$model$bests$best1$exoIndices)
@@ -116,7 +122,7 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
   y = as.matrix(y)
   x = as.matrix(x)
   numTargets = as.integer(numTargets)
-  xSizes = if (is.null(xSizes)) NULL else as.integer(xSizes)
+  xSizes = if (is.null(xSizes)) c(1L) else as.integer(xSizes)
   numFixXPartitions = as.integer(numFixXPartitions)
   searchSigMaxIter = as.integer(searchSigMaxIter)
   searchSigMaxProb = as.numeric(searchSigMaxProb)
@@ -195,7 +201,6 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @export
 #' @examples
 #' See the example in the 'search.sur' function.
-#'
 #' @seealso [search.sur], [search.sur.stepwise]
 estim.sur <- function(y, x, addIntercept = TRUE,
                      searchSigMaxIter = 0, searchSigMaxProb = 0.1,
@@ -271,15 +276,15 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #'
 #' @param y A matrix of endogenous data with variables in the columns.
 #' @param x A matrix of exogenous data with variables in the columns.
-#' @param xSizesSteps A list of model dimensions to be estimated in each step.
+#' @param xSizeSteps A list of model dimensions to be estimated in each step.
 #' Its size determines the number of steps.
-#' @param countSteps A vector to determine the number of variables to be used in each step.
+#' @param countSteps An integer vector to determine the number of variables to be used in each step.
 #' \code{NA} means all variables. Variables are selected based on best estimations.
 #' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
 #' Select an appropriate value for \code{bestK} in the options.
 #' @param savePre A directory for saving and loading the progress.
 #' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
-#' @param ... other arguments to pass to [search.sur] function such as the \code{w} argument.
+#' @param ... other arguments to pass to [search.sur] function such as the \code{numTargets} argument.
 #' Note that \code{xSizes} is ineffective here.
 #'
 #' @return Similar to [search.sur] function.
@@ -289,8 +294,8 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' See the example in the 'search.sur' function.
 #'
 #' @seealso [search.sur], [estim.sur]
-search.sur.stepwise <- function(y, x, xSizesSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                         countSteps = c(NA, 40, 30, 20),
                         savePre = NULL, ...) {
-  Search_s("sur", x, xSizesSteps, countSteps, savePre, y = y, ...)
+  Search_s("sur", x, xSizeSteps, countSteps, savePre, y = y, ...)
 }

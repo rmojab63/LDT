@@ -189,7 +189,7 @@ If you have downloaded the data set files, do not run this code.
 ```{r estimation}
 search_res <- search.sur.stepwise(
   x = x, y = y, numFixXPartitions = 2,
-  xSizes = xSizes, counts = xCounts,
+  xSizeSteps = xSizes, countSteps = xCounts,
   searchItems = searchItems, modelCheckItems = checkItems, measureOptions = measureOptions,
   searchOptions = get.options.search(parallel = TRUE, printMsg = FALSE)
 )

@@ -151,7 +151,7 @@ TEST(Distributions_T, empirical103_combine) {
   ASSERT_NEAR(mix.GetCdf(2.0), res_dis.GetCDFApprox(2.0), 1e-3);
 }
 
-TEST(Distributions_T, mnormal) {
+TEST(Distributions_T, mnormal_sample) {
   Ti N = 100000;
   auto storage = Matrix<Tv>(NAN, new Tv[2 * N], (Ti)N, (Ti)2);
   Tv W[2 * 2 + 4];
@@ -167,20 +167,17 @@ TEST(Distributions_T, mnormal) {
   ASSERT_NEAR(varm.Get(0, 1), 0.0, 1e-2); // covariance 0
 
   // general
-  auto P = Matrix<Tv>(new Tv[4]{1, 0.2, 4, 0.2}, 2, 2);
-  auto var = Matrix<Tv>(0.0,
-                        new Tv[4]{
-                            0,
-                            0,
-                            0,
-                        },
-                        2, 2);
-  P.TrDot(P, var);
-  auto mn2 = NormalM(2, new Matrix<Tv>(new Tv[2]{0, 0}, (Ti)2), &var, N);
+  auto var = Matrix<Tv>(new Tv[4]{1.04, 4.04, 4.04, 16.04}, 2, 2);
+  auto var_copy = Matrix<Tv>(new Tv[4]{1.04, 4.04, 4.04, 16.04}, 2, 2);
+  auto mn2 = NormalM(2, new Matrix<Tv>(new Tv[2]{0, 0}, (Ti)2), &var,
+                     N); // var gets destroyed
   mn2.GetSample(storage.Data, W, 340);
   auto su = std::vector<Ti>();
   storage.ColumnsVariance(varm, su, false);
-  ASSERT_EQ(varm.Equals(var, 1e-1), true);
+  ASSERT_EQ(varm.Equals(var_copy, 1e-1), true);
+}
+
+TEST(Distributions_T, mnormal_density) {
 
   // density
   Tv WW[3 + 4];
@@ -188,7 +185,7 @@ TEST(Distributions_T, mnormal) {
   auto mn3 = NormalM(2, new Matrix<Tv>(new Tv[2]{1, 1}, 2), nullptr, 0, true,
                      false, 0, true, 0, true, 0);
   auto x = Matrix<Tv>(new Tv[6]{1, 2, 1, 1, 2, 2}, 2, 3);
-  storage = Matrix<Tv>(-10.0, new Tv[3]{0, 0, 0}, 3);
+  auto storage = Matrix<Tv>(-10.0, new Tv[3]{0, 0, 0}, 3);
   mn3.GetDensity(&x, &storage, WW, false);
   ASSERT_EQ(storage.Get(0), 0.0);
   ASSERT_EQ(true, std::isinf(storage.Get(1)));
@@ -219,7 +216,7 @@ TEST(Distributions_T, mnormal) {
       true);
 
   //     general variance
-  P = Matrix<Tv>(new Tv[4]{1, 0.2, 0.2, 4}, 2, 2);
+  auto P = Matrix<Tv>(new Tv[4]{1, 0.2, 0.2, 4}, 2, 2);
   auto mn5 = NormalM(2, new Matrix<Tv>(new Tv[2]{1, 1}, 2), &P, 0);
   x = Matrix<Tv>(new Tv[6]{1, 2, 1, 1, 2, 3}, 2, 3);
   storage = Matrix<Tv>(-10.0, new Tv[3], 3);
