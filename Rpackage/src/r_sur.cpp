@@ -4,8 +4,8 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// [[Rcpp::export(.SurSearch)]]
-SEXP SurSearch(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
+// [[Rcpp::export(.SearchSur)]]
+SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
                int numFixXPartitions, SEXP yGroups, int searchSigMaxIter,
                double searchSigMaxProb, List measureOptions,
                List modelCheckItems, List searchItems, List searchOptions) {
@@ -143,8 +143,8 @@ SEXP SurSearch(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
   return L;
 }
 
-// [[Rcpp::export(.SurEstim)]]
-SEXP SurEstim(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
+// [[Rcpp::export(.EstimSur)]]
+SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
               double searchSigMaxProb, SEXP restriction, SEXP newX,
               SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize,
               double simTrainRatio, int simTrainFixSize, int simSeed,

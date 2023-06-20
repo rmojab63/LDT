@@ -28,8 +28,8 @@ x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
 colnames(x) = paste0("V",seq(1,ncol(x)))
 
 
-test_that("SurEstim estimation works with NO restrictions (OLS)", {
-  res = SurEstim(x[,1:2], x[,3:5], printMsg = printMsg)
+test_that("estim.sur estimation works with NO restrictions (OLS)", {
+  res = estim.sur(x[,1:2], x[,3:5], printMsg = printMsg)
 
   #resR = systemfit::systemfit(list(V1~V3+V4+V5,V2~V3+V4+V5), data=as.data.frame(x))
   #cofs = as.numeric(resR$coefficients)
@@ -42,10 +42,10 @@ test_that("SurEstim estimation works with NO restrictions (OLS)", {
                rcov, tolerance = 1e-8) # adjusted dof
 })
 
-test_that("SurEstim peojection works with NO restrictions (OLS)", {
+test_that("estim.sur peojection works with NO restrictions (OLS)", {
   newX = matrix(c(1,2,3,4,5,6),2,3)
   colnames(newX) <- c("V3", "V4", "V5")
-  res = SurEstim(x[,1:2], x[,3:5], newX = newX, printMsg = printMsg)
+  res = estim.sur(x[,1:2], x[,3:5], newX = newX, printMsg = printMsg)
 
 
   #cont = systemfit::systemfit.control(methodResidCov = 'noDfCor')
@@ -74,10 +74,10 @@ test_that("SurEstim peojection works with NO restrictions (OLS)", {
 
 })
 
-test_that("SurEstim estimation works with restrictions", {
+test_that("estim.sur estimation works with restrictions", {
   R = diag(8)
   R=R[,c(-2,-7)]
-  res = SurEstim(x[,1:2], x[,3:5], restriction = R, printMsg = printMsg)
+  res = estim.sur(x[,1:2], x[,3:5], restriction = R, printMsg = printMsg)
   #resR = systemfit::systemfit(list(V1~V4+V5,V2~V3+V5), data=as.data.frame(x),method="SUR")
   #cf = as.numeric(resR$coefficients)
   cf = c(69.83450663570873473 , 0.01888766594180449 ,-0.37231463758924349, 51.22018576974861759, -0.01993726393353337,
@@ -90,12 +90,12 @@ test_that("SurEstim estimation works with restrictions", {
                cv, tolerance = 1e-3) # adjusted dof
 })
 
-test_that("SurEstim peojection works with NO restrictions (OLS)", {
+test_that("estim.sur peojection works with NO restrictions (OLS)", {
   newX = matrix(c(1,2,3,4,5,6),2,3)
   colnames(newX) <- c("V3", "V4", "V5")
   R = diag(8)
   R=R[,c(-2,-7)]
-  res = SurEstim(x[,1:2], x[,3:5], restriction = R, newX = newX, printMsg = printMsg)
+  res = estim.sur(x[,1:2], x[,3:5], restriction = R, newX = newX, printMsg = printMsg)
 
   # cont = systemfit::systemfit.control(methodResidCov = 'noDfCor', singleEqSigma = TRUE)
   # resR = systemfit::systemfit(list(V1~V4+V5,V2~V3+V5), data=as.data.frame(x), control = cont, method = "SUR")
@@ -118,9 +118,9 @@ test_that("SurEstim peojection works with NO restrictions (OLS)", {
 
 })
 
-test_that("SurEstim estimation works with significance search", {
+test_that("estim.sur estimation works with significance search", {
   for (th in seq(0.01,0.90,0.1)){
-    res = SurEstim(x[,1:2], x[,3:7], searchSigMaxIter = 10,
+    res = estim.sur(x[,1:2], x[,3:7], searchSigMaxIter = 10,
                    searchSigMaxProb = th, printMsg = printMsg)
     for (a in res$estimations$pValues){
       if (is.nan(a) == FALSE){
@@ -130,17 +130,17 @@ test_that("SurEstim estimation works with significance search", {
   }
 })
 
-test_that("SurEstim projection works with PCA for endogenous", {
+test_that("estim.sur projection works with PCA for endogenous", {
 
   y = as.data.frame(cbind(as.matrix(x[,1:2]), prcomp(x[,3:5], scale. = TRUE)$x)) # orthogonal
-  pcaOp = GetPcaOptions()
+  pcaOp = get.options.pca()
   pcaOp$ignoreFirst = 2
   pcaOp$exactCount = 1
 
   newX = matrix(c(10,11,12, 13,14,15),3,2)
 
-  res1 = SurEstim(as.matrix(y[,1:3]), as.matrix(x[,6:7]), newX = newX, printMsg = printMsg)
-  res2 = SurEstim(as.matrix(x[,1:5]), as.matrix(x[,6:7]), pcaOptionsY = pcaOp, newX = newX, printMsg = printMsg)
+  res1 = estim.sur(as.matrix(y[,1:3]), as.matrix(x[,6:7]), newX = newX, printMsg = printMsg)
+  res2 = estim.sur(as.matrix(x[,1:5]), as.matrix(x[,6:7]), pcaOptionsY = pcaOp, newX = newX, printMsg = printMsg)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-13)
   expect_equal(as.numeric( res1$estimations$sigma),as.numeric(res2$estimations$sigma), tolerance = 1e-13)
@@ -151,42 +151,42 @@ test_that("SurEstim projection works with PCA for endogenous", {
 
 })
 
-test_that("SurEstim projection works with PCA for exogenous", {
+test_that("estim.sur projection works with PCA for exogenous", {
   p=prcomp(x[,3:4], scale. = TRUE)
   Z = as.matrix(p$x[,1])
   newZ = matrix(c(10,11,12, 13,14,15),3,2)
   colnames(newZ) <- colnames(x)[3:4]
   newZp = predict(p,newdata = newZ)
 
-  pcaOp = GetPcaOptions()
+  pcaOp = get.options.pca()
   pcaOp$ignoreFirst = 0
   pcaOp$exactCount = 1
 
-  res1 = SurEstim(x[,1:2], x= Z, addIntercept = TRUE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
-  res2 = SurEstim(x[,1:2], x=x[,3:4], addIntercept = TRUE, pcaOptionsX = pcaOp, newX = newZp, printMsg = printMsg)
+  res1 = estim.sur(x[,1:2], x= Z, addIntercept = TRUE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
+  res2 = estim.sur(x[,1:2], x=x[,3:4], addIntercept = TRUE, pcaOptionsX = pcaOp, newX = newZp, printMsg = printMsg)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
   expect_equal(res1$estimations$gammaVar, res2$estimations$gammaVar, tolerance = 1e-8)
 
   # without intercept
-  res1 = SurEstim(x[,1:2], x= Z, addIntercept = FALSE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
-  res2 = SurEstim(x[,1:2], x=x[,3:4], addIntercept = FALSE, pcaOptionsX = pcaOp, newX = newZ, printMsg = printMsg)
+  res1 = estim.sur(x[,1:2], x= Z, addIntercept = FALSE, newX = as.matrix(newZp[,1],3,1), printMsg = printMsg)
+  res2 = estim.sur(x[,1:2], x=x[,3:4], addIntercept = FALSE, pcaOptionsX = pcaOp, newX = newZ, printMsg = printMsg)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
   expect_equal(res1$estimations$gammaVar, res2$estimations$gammaVar, tolerance = 1e-8)
 })
 
-test_that("SurEstim estimation works with PCA for endogenous and exogenous with restrictions", {
+test_that("estim.sur estimation works with PCA for endogenous and exogenous with restrictions", {
 
   p=prcomp(x[,3:4], scale. = TRUE)
   Z = as.matrix(p$x[,1])
 
-  pcaOpX = GetPcaOptions()
+  pcaOpX = get.options.pca()
   pcaOpX$ignoreFirst = 0
   pcaOpX$exactCount = 1
 
   y = as.data.frame(cbind(as.matrix(x[,1:2]), prcomp(x[,3:5], scale. = TRUE)$x)) # orthogonal
-  pcaOpY = GetPcaOptions()
+  pcaOpY = get.options.pca()
   pcaOpY$ignoreFirst = 2
   pcaOpY$exactCount = 1
 
@@ -194,35 +194,35 @@ test_that("SurEstim estimation works with PCA for endogenous and exogenous with 
   R = diag(6)
   R=R[,c(-2,-5)]
 
-  res1 = SurEstim(as.matrix(y[,1:3]), Z, restriction = R, printMsg = printMsg)
-  res2 = SurEstim(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, restriction = R, printMsg = printMsg)
+  res1 = estim.sur(as.matrix(y[,1:3]), Z, restriction = R, printMsg = printMsg)
+  res2 = estim.sur(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, restriction = R, printMsg = printMsg)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
 })
 
-test_that("SurEstim estimation works with PCA for endogenous and exogenous with significance search", {
+test_that("estim.sur estimation works with PCA for endogenous and exogenous with significance search", {
 
   p=prcomp(x[,3:4], scale. = TRUE)
   Z = as.matrix(p$x[,1])
 
-  pcaOpX = GetPcaOptions()
+  pcaOpX = get.options.pca()
   pcaOpX$ignoreFirst = 0
   pcaOpX$exactCount = 1
 
   y = as.data.frame(cbind(as.matrix(x[,1:2]), prcomp(x[,3:5], scale. = TRUE)$x)) # orthogonal
-  pcaOpY = GetPcaOptions()
+  pcaOpY = get.options.pca()
   pcaOpY$ignoreFirst = 2
   pcaOpY$exactCount = 1
 
   # note that it is the current code's responsibility to predict the dimensions of R when PCA is used
 
-  res1 = SurEstim(as.matrix(y[,1:3]), Z, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
-  res2 = SurEstim(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
+  res1 = estim.sur(as.matrix(y[,1:3]), Z, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
+  res2 = estim.sur(x[,1:5], x[,3:4], pcaOptionsY = pcaOpY, pcaOptionsX = pcaOpX, searchSigMaxIter = 10, searchSigMaxProb = 0.3, printMsg = printMsg)
 
   expect_equal(res1$estimations$gamma, res2$estimations$gamma, tolerance = 1e-8)
 })
 
-test_that("SurEstim simulation works", {
+test_that("estim.sur simulation works", {
 
   # The primary test was with this endogenous variable x[,c(1,2,1)]
   # I wanted to test the equality of coefficients of 1st and 3rd equations
@@ -232,26 +232,26 @@ test_that("SurEstim simulation works", {
   exo <- x[,c(5,6)]
   exo[[1,1]] <- NA
   exo[[1,2]] <- NaN
-  res1 = SurEstim(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, searchSigMaxProb = 0.95, printMsg = printMsg )
+  res1 = estim.sur(x[,c(1,2,3)], exo, simFixSize = 10, searchSigMaxIter = 2, searchSigMaxProb = 0.95, printMsg = printMsg )
   expect_equal(res1$simulation$validIter, 10)
   expect_true(all(is.na(res1$simulation$results[,1]) == FALSE))
   expect_equal(res1$simulation$results[,1], res1$simulation$results[,1], tolerance = 1e-8) # any better test ?!
 
 })
 
-test_that("SurSearch works for insample", {
+test_that("search.sur works for insample", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo, numTargets = 2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions( printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(c("aic", "sic"), character(0)))
-  res1 = SurEstim(y[,res$aic$target1$model$bests$best1$depIndices,drop=FALSE],
+  res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
+                  searchOptions = get.options.search( printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+  res1 = estim.sur(y[,res$aic$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$aic$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-  res2 = SurEstim(y[,res$sic$target2$model$bests$best1$depIndices,drop=FALSE],
+  res2 = estim.sur(y[,res$sic$target2$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$sic$target2$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
 
@@ -259,7 +259,7 @@ test_that("SurSearch works for insample", {
   expect_equal(exp(-0.5 * res2$measures[3,1]), res$sic$target2$model$bests$best1$weight, tolerance = 1e-10)
 
   for (m in res$aic$target1$model$all){
-    M = SurEstim(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
+    M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
     expect_equal(exp(-0.5 * M$measures[2,1]), m$weight, tolerance = 1e-10)
   }
@@ -267,24 +267,24 @@ test_that("SurSearch works for insample", {
   # change Indexes
   y=x[,c(2,3,1)]
   Exo=x[,c(5,4,7,6)]
-  res3 = SurSearch(y, Exo,2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                   searchOptions = GetSearchOptions( printMsg = printMsg),
-                   searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                   measureOptions = GetMeasureOptions(c("aic", "sic"), character(0)))
+  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
+                   searchOptions = get.options.search( printMsg = printMsg),
+                   searchItems = get.items.search(all = TRUE, bestK = 2),
+                   measureOptions = get.options.measure(c("aic", "sic"), character(0)))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
 })
 
-test_that("SurSearch works with fixed exogenous variables", {
+test_that("search.sur works with fixed exogenous variables", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2, xSizes = c(3L),  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
+  res = search.sur(y, Exo,2, xSizes = c(3L),  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
                   numFixXPartitions = 3,
-                  searchOptions = GetSearchOptions( printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(c("aic", "sic"), character(0)))
+                  searchOptions = get.options.search( printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
 
   for (m in res$aic$target1$model$all){
     expect_equal(c(1,2,3),m$exoIndices[1:3])
@@ -292,48 +292,48 @@ test_that("SurSearch works with fixed exogenous variables", {
 })
 
 
-test_that("SurSearch works for insample when changing indexes", {
+test_that("search.sur works for insample when changing indexes", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(parallel = F, printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 0),
-                  measureOptions = GetMeasureOptions(c("aic", "sic"), character(0)))
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(parallel = F, printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 0),
+                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
   # change Indexes
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
-  res3 = SurSearch(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = GetSearchOptions(parallel = F, printMsg = printMsg),
-                   searchItems = GetSearchItems(all = TRUE, bestK = 0),
-                   measureOptions = GetMeasureOptions(c("aic", "sic"), character(0)))
+  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
+                   searchOptions = get.options.search(parallel = F, printMsg = printMsg),
+                   searchItems = get.items.search(all = TRUE, bestK = 0),
+                   measureOptions = get.options.measure(c("aic", "sic"), character(0)))
   allWeights3 = sort(sapply(res3$aic$target2$model$all, function(x){x$weight}))
 
   expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
 })
 
 
-test_that("SurSearch works for out-of-sample", {
+test_that("search.sur works for out-of-sample", {
   skip_on_cran()
 
   y=x[,c(1,2,3),drop=FALSE]
   Exo=x[,4:7,drop=FALSE]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions( printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search( printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))  # negative seed for equal seed in the searchers
-  res1 = SurEstim(y[,res$rmse$target1$model$bests$best1$depIndices,drop=FALSE],
+  res1 = estim.sur(y[,res$rmse$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$rmse$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 4, simTrainRatio = 0.75, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
 
   expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]), as.numeric(1/res$rmse$target1$model$bests$best1$weight), tolerance = 1e-10)
 
   for (m in res$crps$target1$model$all){
-    M = SurEstim(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
+    M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                  simFixSize = 4, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
     expect_equal(as.numeric(M$measures[which(rownames(res1$measures)=="crps"),1]), as.numeric(1/m$weight), tolerance = 1e-10)
   }
@@ -341,56 +341,56 @@ test_that("SurSearch works for out-of-sample", {
   # change Indexes
   y=x[,c(2,3,1)]
   Exo=x[,c(5,4,7,6)]
-  res3 = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = GetSearchOptions( printMsg = printMsg),
-                   searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                   measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res3 = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                   searchOptions = get.options.search( printMsg = printMsg),
+                   searchItems = get.items.search(all = TRUE, bestK = 2),
+                   measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
 })
 
-test_that("SurSearch works for out-of-sample when changing indexes", {
+test_that("search.sur works for out-of-sample when changing indexes", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions( printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search( printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
   # change Indexes
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
-  res3 = SurSearch(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = GetSearchOptions( printMsg = printMsg),
-                   searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                   measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
+                   searchOptions = get.options.search( printMsg = printMsg),
+                   searchItems = get.items.search(all = TRUE, bestK = 2),
+                   measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   allWeights3 = sort(sapply(res3$crps$target2$model$all, function(x){x$weight}))
 
   expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
 })
 
-test_that("SurSearch works when parallel", {
+test_that("search.sur works when parallel", {
   skip_on_cran()
 
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(parallel = FALSE, printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(parallel = TRUE, printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights0 = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
@@ -398,18 +398,18 @@ test_that("SurSearch works when parallel", {
 })
 
 
-test_that("SurSearch works for fixed training sample", {
+test_that("search.sur works for fixed training sample", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 2),
-                  measureOptions = GetMeasureOptions(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.65,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(all = TRUE, bestK = 2),
+                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.65,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
-  res1 = SurEstim(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
+  res1 = estim.sur(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
                   as.matrix(Exo[,res$rmse$target1$model$bests$best1$exoIndices]),
                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
                   printMsg = printMsg)
@@ -417,36 +417,36 @@ test_that("SurSearch works for fixed training sample", {
   expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]), as.numeric(1/res$rmse$target1$model$bests$best1$weight), tolerance = 1e-10)
 })
 
-test_that("SurSearch works with restricted aic", {
+test_that("search.sur works with restricted aic", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  modelCheckItems = GetModelCheckItems(maxAic = 10.3),
-                  searchItems = GetSearchItems(all = TRUE, bestK = 0),
-                  measureOptions = GetMeasureOptions(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  modelCheckItems = get.items.modelcheck(maxAic = 10.3),
+                  searchItems = get.items.search(all = TRUE, bestK = 0),
+                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
   alls = list()
   for (m in res$crps$target1$model$all){
-    M = SurEstim(as.matrix(y[,m$depIndices]), x = as.matrix(Exo[,m$exoIndices]),
+    M = estim.sur(as.matrix(y[,m$depIndices]), x = as.matrix(Exo[,m$exoIndices]),
                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
     alls = append(alls, M$measures[2,1])
     expect_true(as.numeric(M$measures[2,1]) <= 10.3)
   }
 })
 
-test_that("SurSearch works with inclusion weights", {
+test_that("search.sur works with inclusion weights", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
-                  measureOptions = GetMeasureOptions(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
+                  measureOptions = get.options.measure(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
@@ -466,15 +466,15 @@ test_that("SurSearch works with inclusion weights", {
 
 })
 
-test_that("SurSearch works with coefficients (bests)", {
+test_that("search.sur works with coefficients (bests)", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
-                  measureOptions = GetMeasureOptions(c("sic", "aic"),c("rmse", "sign")))
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
+                  measureOptions = get.options.measure(c("sic", "aic"),c("rmse", "sign")))
   best_coef2 = NULL
   w=-Inf
   for (m in res$aic$target1$model$all){
@@ -490,7 +490,7 @@ test_that("SurSearch works with coefficients (bests)", {
   expect_equal(res$aic$target1$coefs$bests$item3$best1$exoIndices, best_coef2$exoIndices, tolerance = 1e-10)
 
   # are mean and variance equal?
-  M = SurEstim(as.matrix(y[,res$aic$target1$coefs$bests$item3$best1$depIndices]),
+  M = estim.sur(as.matrix(y[,res$aic$target1$coefs$bests$item3$best1$depIndices]),
                x = as.matrix(Exo[,res$aic$target1$coefs$bests$item3$best1$exoIndices]),
                simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * M$measures[2,1]), res$aic$target1$coefs$bests$item3$best1$weight, tolerance = 1e-10)
@@ -499,17 +499,17 @@ test_that("SurSearch works with coefficients (bests)", {
 
 })
 
-test_that("SurSearch works with coefficients (cdfs)", {
+test_that("search.sur works with coefficients (cdfs)", {
   skip_on_cran()
 
   y=x[,c(1,2,3),drop=FALSE]
   Exo=x[,4:7,drop=FALSE]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(type1 = TRUE,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                cdfs = c(0,1,0)),
-                  measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   sum = 0
   c = 0
@@ -518,7 +518,7 @@ test_that("SurSearch works with coefficients (cdfs)", {
 
     if (any(m$exoIndices==2)){
       ind = which(m$exoIndices == 2)
-      M = SurEstim(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
+      M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                    simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
       coef = M$estimations$gamma[ind]
       sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -532,17 +532,17 @@ test_that("SurSearch works with coefficients (cdfs)", {
 })
 
 
-test_that("SurSearch works with coefficients (extreme bounds)", {
+test_that("search.sur works with coefficients (extreme bounds)", {
   skip_on_cran()
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(type1 = TRUE,
+  res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 2),
-                  measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   mn = Inf
   mx = -Inf
@@ -551,7 +551,7 @@ test_that("SurSearch works with coefficients (extreme bounds)", {
 
     if (any(m$exoIndices==h)) {
       ind = which(m$exoIndices == h)
-      M = SurEstim(y[,m$depIndices, drop=FALSE], x = Exo[,m$exoIndices, drop=FALSE],
+      M = estim.sur(y[,m$depIndices, drop=FALSE], x = Exo[,m$exoIndices, drop=FALSE],
                    simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
       coef = M$estimations$gamma[ind]
       sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -563,18 +563,18 @@ test_that("SurSearch works with coefficients (extreme bounds)", {
   expect_equal(res$rmse$target1$coefs$extremeBounds[h,2], mx, tolerance = 1e-10)
 })
 
-test_that("SurSearch works with coefficients (mixture)", {
+test_that("search.sur works with coefficients (mixture)", {
   skip_on_cran()
 
   y=x[,c(1,2)]
   Exo=x[,3:7]
-  res = SurSearch(y, Exo, 1, yGroups = list(c(1L,2L)), xSizes = c(1L,2L,3L,4L,5L),
-                  searchOptions = GetSearchOptions(printMsg = printMsg),
-                  searchItems = GetSearchItems(type1 = TRUE,
+  res = search.sur(y, Exo, 1, yGroups = list(c(1L,2L)), xSizes = c(1L,2L,3L,4L,5L),
+                  searchOptions = get.options.search(printMsg = printMsg),
+                  searchItems = get.items.search(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 0,
                                                mixture4 = TRUE),
-                  measureOptions = GetMeasureOptions(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   coefs = c()
   vars = c()
@@ -583,7 +583,7 @@ test_that("SurSearch works with coefficients (mixture)", {
   for (m in res$rmse$target1$model$all){
 
     if (any(m$exoIndices==h)) {
-      M = SurEstim(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
+      M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                    simFixSize = 0, addIntercept = FALSE,printMsg = printMsg)
       ind = which(m$exoIndices == h)
       coefs = append(coefs,M$estimations$gamma[ind])
@@ -608,11 +608,11 @@ test_that("SUR summary works", {
 
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
-  res = SurSearch(y, Exo, 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)), xSizes = c(1L,2L,3L),
-                  searchItems = GetSearchItems(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
+  res = search.sur(y, Exo, 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)), xSizes = c(1L,2L,3L),
+                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
                                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 ),
-                  measureOptions = GetMeasureOptions(c("sic", "aic"), c("rmse", "sign"), seed = -400),
-                  searchOptions = GetSearchOptions(TRUE, printMsg = printMsg))
+                  measureOptions = get.options.measure(c("sic", "aic"), c("rmse", "sign"), seed = -400),
+                  searchOptions = get.options.search(TRUE, printMsg = printMsg))
 
   su =summary(res, y, Exo, addModelAll = TRUE, addItem1 = TRUE, test = TRUE)
 
@@ -630,17 +630,17 @@ test_that("SUR SplitSearch works (no subsetting)", {
 
   yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L))
   numTargets = 2
-  searchItems = GetSearchItems(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
+  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  measureOptions = GetMeasureOptions(c("sic", "aic"), c("crps"), seed = -400)
-  searchOptions = GetSearchOptions(FALSE, printMsg = printMsg)
+  measureOptions = get.options.measure(c("sic", "aic"), c("crps"), seed = -400)
+  searchOptions = get.options.search(FALSE, printMsg = printMsg)
 
-  split = SurSearch_s(x = Exo, y = y, xSizes = list(c(1L,2L), c(3L)), counts = c(NA, NA),
+  split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  yGroups = yGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, savePre = NULL)
 
-  whole = SurSearch(y, Exo, xSizes = c(1L,2L,3L),
+  whole = search.sur(y, Exo, xSizes = c(1L,2L,3L),
                     numTargets = numTargets,  yGroups = yGroups,
                     searchItems = searchItems, measureOptions = measureOptions,
                     searchOptions = searchOptions)
@@ -683,30 +683,3 @@ test_that("SUR SplitSearch works (no subsetting)", {
 })
 
 
-test_that("SurEstim CoefTable works", {
-  y = as.data.frame(cbind(as.matrix(x[,1:2]), prcomp(x[,3:5], scale. = TRUE)$x)) # orthogonal
-  pcaOp = GetPcaOptions()
-  pcaOp$ignoreFirst = 2
-  pcaOp$exactCount = 1
-
-  newX = matrix(c(10,11,12, 13,14,15),3,2)
-
-
-
-  items = list(res1 = SurEstim(as.matrix(y[,1:3]), x[,6:7], newX = newX, printMsg = printMsg),
-               res2 = SurEstim(x[,1:5], x[,6:7], pcaOptionsY = pcaOp, newX = newX, printMsg = printMsg))
-  regInfo = list(c("", " "),
-                 c("num_eq", "num_eq"),
-                 c("num_x","num_x"),
-                 c("num_x_all", "num_x_all"),
-                 c("num_rest", "num_rest"),
-                 c("sigma2", "sigma2"),
-
-                 c("logL", "logL"),
-                 c("aic", "aic"),
-                 c("sic","sic")
-  )
-  str = CoefTable(items, depInd = 1, regInfo = regInfo)
-  expect_true(length(str) > 0)
-
-})

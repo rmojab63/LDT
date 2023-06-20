@@ -10,11 +10,11 @@ YearBased <- list(
 )
 
 WeekBased <- list(
-  list(A = f.weekly(2000, 10, 11), B = "20001011", C = "w"),
-  list(A = f.daily(2000, 10, 11), B = "20001011", C = "d"),
-  list(A = f.multi.weekly(2000, 10, 11, 4), B = "20001011", C = "w4"),
-  list(A = f.multi.daily(2000, 10, 11, 5), B = "20001011", C = "d5"),
-  list(A = f.daily.in.week(2000, 10, 11, "mon", "sun", TRUE), B = "20001011", C = "i:mon-sun")
+  list(A = f.weekly(c(2000, 10, 11)), B = "20001011", C = "w"),
+  list(A = f.daily(c(2000, 10, 11)), B = "20001011", C = "d"),
+  list(A = f.multi.weekly(c(2000, 10, 11), 4), B = "20001011", C = "w4"),
+  list(A = f.multi.daily(c(2000, 10, 11), 5), B = "20001011", C = "d5"),
+  list(A = f.daily.in.week(c(2000, 10, 11), "mon", "sun", TRUE), B = "20001011", C = "i:mon-sun")
 )
 
 DayBased_Weekly <- list(

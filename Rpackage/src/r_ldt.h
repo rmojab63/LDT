@@ -88,8 +88,8 @@ void UpdateRocOptions(bool printMsg, List &rocOptionsR,
 void UpdatePcaOptions(bool printMsg, List pcaOptionsR, bool hasPca,
                       ldt::PcaAnalysisOptions &options, const char *startMsg);
 
-void UpdateLmbfgsOptions(bool printMsg, List &lmbfgsOptions,
-                         ldt::LimitedMemoryBfgsbOptions &options);
+void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
+                        ldt::LimitedMemoryBfgsbOptions &options);
 
 void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
 

@@ -34,6 +34,10 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     pcaOptions->CheckValidity();
     pPcaOptions = pcaOptions;
     Pca = PcaAnalysis(rows, numExo, numForecast, true, true, true, true);
+    auto final_x_count = pPcaOptions->GetFinalCount(Pca);
+    if (final_x_count >= numExo)
+      throw std::logic_error("Invalid PCA options. The requested number of PCs "
+                             "is larger than the number of variables.");
     StorageSize += Pca.StorageSize;
     WorkSize = std::max(WorkSize, Pca.WorkSize);
 

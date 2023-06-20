@@ -131,8 +131,8 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
     points.Set(i, 1, std::get<1>(auc0->Points.at(i)));
   }
 
-  List L = List::create(_["N"] = wrap(N), _["AUC"] = wrap(auc->Result),
-                        _["Points"] = as_matrix(points, nullptr, &colnames));
+  List L = List::create(_["n"] = wrap(N), _["auc"] = wrap(auc->Result),
+                        _["points"] = as_matrix(points, nullptr, &colnames));
 
   L.attr("class") = std::vector<std::string>({"ldtroc", "list"});
 
@@ -203,8 +203,8 @@ NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
   return result;
 }
 
-// [[Rcpp::export(.GetCombination4Moments)]]
-List GetCombination4Moments(SEXP mix1, SEXP mix2)
+// [[Rcpp::export(.CombineByMoments4)]]
+List CombineByMoments4(SEXP mix1, SEXP mix2)
 // clang-format on
 {
 
@@ -230,29 +230,23 @@ List GetCombination4Moments(SEXP mix1, SEXP mix2)
 }
 
 // [[Rcpp::export(.GetPca)]]
-List GetPca(SEXP x, bool center, bool scale, SEXP newX) {
-  if (is<NumericMatrix>(x) == false)
-    throw std::logic_error("'x' must be a 'numeric matrix'.");
-  NumericMatrix x0 = as<NumericMatrix>(x);
+List GetPca(NumericMatrix x, bool center, bool scale, SEXP newX) {
 
-  auto mx = ldt::Matrix<double>(&x0[0], x0.nrow(), x0.ncol());
+  auto mx = ldt::Matrix<double>(&x[0], x.nrow(), x.ncol());
   auto mnewX = ldt::Matrix<double>();
   bool hasNewX = newX != R_NilValue;
   if (hasNewX) {
     if (is<NumericMatrix>(newX) == false)
       throw std::logic_error("'newX' must be a 'numeric matrix'.");
     NumericMatrix newX_ = as<NumericMatrix>(newX);
-
-    if (newX_.ncol() != x0.ncol())
-      throw std::logic_error(
-          "number of columns in 'newX' and 'x' are different.");
     mnewX.SetData(&newX_[0], newX_.nrow(), newX_.ncol());
   }
 
-  auto model = PcaAnalysis(x0.nrow(), x0.ncol(), hasNewX ? mnewX.RowsCount : 0,
+  auto model = PcaAnalysis(x.nrow(), x.ncol(), hasNewX ? mnewX.RowsCount : 0,
                            false, true, center, scale);
   auto W = std::unique_ptr<Tv[]>(new Tv[model.WorkSize]);
   auto S = std::unique_ptr<Tv[]>(new Tv[model.StorageSize]);
+
   model.Calculate(mx, W.get(), S.get(), hasNewX ? &mnewX : nullptr);
   // note that 'model.DataS' is null
 
@@ -266,9 +260,10 @@ List GetPca(SEXP x, bool center, bool scale, SEXP newX) {
       _["stds2Ratio"] =
           NumericVector(model.Stds2Ratios.Data,
                         model.Stds2Ratios.Data + model.Stds2Ratios.length()),
-      _["projections"] = hasNewX ? NumericMatrix(model.Forecasts.RowsCount,
-                                                 model.Forecasts.ColsCount,
-                                                 model.Forecasts.Data)
-                                 : (NumericMatrix)R_NilValue);
+      _["projections"] = hasNewX
+                             ? (SEXP)(NumericMatrix(model.Forecasts.RowsCount,
+                                                    model.Forecasts.ColsCount,
+                                                    model.Forecasts.Data))
+                             : R_NilValue);
   return L;
 }

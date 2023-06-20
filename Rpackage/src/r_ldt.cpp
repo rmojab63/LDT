@@ -907,15 +907,15 @@ void UpdatePcaOptions(bool printMsg, List pcaOptionsR, bool hasPca,
     Rprintf("    - disabled.\n");
 }
 
-void UpdateLmbfgsOptions(bool printMsg, List &lmbfgsOptions,
-                         LimitedMemoryBfgsbOptions &options) {
+void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
+                        LimitedMemoryBfgsbOptions &options) {
   if (printMsg)
-    Rprintf("LMBFGS options:\n");
-  options.Factor = as<double>(lmbfgsOptions["factor"]);
-  options.IterationMax = as<int>(lmbfgsOptions["maxIterations"]);
+    Rprintf("L-BFGS options:\n");
+  options.Factor = as<double>(lbfgsOptions["factor"]);
+  options.IterationMax = as<int>(lbfgsOptions["maxIterations"]);
   options.ProjectedGradientTol =
-      as<double>(lmbfgsOptions["projectedGradientTol"]);
-  options.mMaxCorrections = as<int>(lmbfgsOptions["maxCorrections"]);
+      as<double>(lbfgsOptions["projectedGradientTol"]);
+  options.mMaxCorrections = as<int>(lbfgsOptions["maxCorrections"]);
   ;
 
   if (printMsg) {

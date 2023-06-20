@@ -536,7 +536,8 @@ public:
   /// @brief Initializes a new instance of this class
   /// @param m Dimension of this function
   /// @param mean Mean of the distribution
-  /// @param variance Variance of the distribution
+  /// @param variance Variance of the distribution. It gets destroyed in
+  /// GetSample method.
   /// @param sampling_length
   /// @param samples_in_rows
   /// @param mean_is_const
@@ -556,9 +557,9 @@ public:
   Ti StorageSize = 0;
   Ti WorkSize = 0;
 
-  Matrix<Tv> *pMean = nullptr;
-  Matrix<Tv> *pVariance = nullptr;
-  Matrix<Tv> *pSample = nullptr;
+  Matrix<Tv> Mean;
+  Matrix<Tv> Variance;
+  Matrix<Tv> Sample;
 
   /// @brief Generates samples from this distribution using Cholesky
   /// decomposition
@@ -566,7 +567,7 @@ public:
   /// @param WORK An array of size: 2m+m^2 where m
   /// is length of X
   /// @param seed A seed for random generator
-  void GetSample(Tv *storage, Tv *WORK, unsigned int seed) const;
+  void GetSample(Tv *storage, Tv *WORK, unsigned int seed);
 
   /// @brief Calculates the density of normal distribution with m variables
   /// @param x An m x n Matrix where n is the number of observations

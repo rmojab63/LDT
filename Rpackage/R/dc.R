@@ -1,35 +1,62 @@
 
 
-#' Discrete Choice Search
+#' Search for Best Discrete-Choice Models
 #'
-#' @param y (numeric matrix) endogenous data with variable in the column.
-#' @param x (numeric matrix) exogenous data with variables in the columns.
-#' @param w (numeric vector) weights of the observations in \code{y}. null means equal weights.
-#' @param xSizes (nullable vector) Number of exogenous variables in the regressions. E.g., c(1,2) means the model set contains all the regressions with 1 and 2 exogenous variables. If null, c(1) is used.
-#' @param xPartitions (nullable list of vector) a partition over the indexes of the exogenous variables. No regression is estimated with two variables in the same group. If null, each variable is placed in its own group and the size of the model set is maximized.
-#' @param costMatrices (list of numeric matrix) each frequency cost matrix determines how to score the calculated probabilities. Given the number of choices 'n', a frequency cost matrix is a 'm x n+1' matrix. The first column determines the thresholds. Cells in the j-th column determines the costs corresponding to the (j-1)-th choice in \code{y}. It can be null if it is not selected in \code{measureOptions}.
-#' @param searchLogit (bool) if \code{TRUE}, logit regressions are added to the model set.
-#' @param searchProbit (bool) if \code{TRUE}, probit regressions are added to the model set.
-#' @param optimOptions (list) Newton optimization options. see \code{[GetNewtonOptions()]}.
-#' @param aucOptions (list) AUC calculation options. see \code{[GetRocOptions()]}.
-#' @param measureOptions (list) see \code{[GetMeasureOptions()]}.
-#' @param modelCheckItems (list) see \code{[GetModelCheckItems()]}.
-#' @param searchItems (list) see \code{[GetSearchItems()]}.
-#' @param searchOptions (list) see \code{[GetSearchOptions()]}.
+#' Use this function to create a discrete-choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation measures.
 #'
-#' @return An object of class \code{ldtsearch}. It does not contain any estimation results,
-#' but minimum required data to estimate the models (Use \code{[summary()]} for this goal).
-#' An object of class \code{ldtsearch} has a nested structure.
+#' @param y A matrix of endogenous data with variable in the column.
+#' @param x A matrix of exogenous data with variables in the columns.
+#' @param w Weights of the observations in \code{y}.
+#' \code{NULL} means equal weights for all observations.
+#' @param xSizes An integer vector specifying the number of exogenous variables in the regressions.
+#' E.g., \code{c(1,2)} means the model set contains all regressions with 1 and 2 exogenous variables.
+#' If \code{NULL}, \code{c(1)} is used.
+#' @param xPartitions A list of integer vectors that partition the indexes of the exogenous variables.
+#' No regression is estimated with two variables in the same partition.
+#' If \code{NULL}, each variable is placed in its own group, and the size of the model set is maximized.
+#' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities.
+#' Given the number of choices \code{n}, a frequency cost matrix is an \code{m x n+1} matrix.
+#' The first column determines the thresholds.
+#' Elements in the \code{j}-th column determine the costs corresponding to the \code{j-1}-th choice in \code{y}.
+#' It can be \code{NULL} if it is not selected in \code{measureOptions}.
+#' @param searchLogit If \code{TRUE}, logit regressions are added to the model set.
+#' @param searchProbit If \code{TRUE}, probit regressions are added to the model set.
+#' @param optimOptions A list for Newton optimization options.
+#' Use [get.options.newton] function to get the options.
+#' @param aucOptions A list for AUC calculation options.
+#' Use [get.options.roc] function to get the options.
+#' @param measureOptions A list of options for measuring performance.
+#' Use [get.options.measure] function to get them.
+#' @param modelCheckItems A list of options for excluding a subset of the model set.
+#' See and use [get.items.modelcheck] function to get them.
+#' @param searchItems A list of options for specifying the purpose of the search.
+#' See and use [get.items.search] function to get them.
+#' @param searchOptions A list of extra options for performing the search.
+#' See and use [get.options.search] function to get them.
+#'
+#'
+#' @return A nested list with the following members:
+#' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
+#' \item{...}{Results reported separately for each measure, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
+#'
+#' Note that the output does not contain any estimation results,
+#' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
-DcSearch <- function(y, x, w = NULL, xSizes = NULL,
+#' @importFrom stats glm
+#'
+#' @example man-roxygen/ex-search.dc.R
+#'
+#' @seealso [estim.dc], [search.dc.stepwise]
+search.dc <- function(y, x, w = NULL, xSizes = NULL,
                      xPartitions = NULL, costMatrices = NULL,
                      searchLogit = TRUE, searchProbit = FALSE,
-                     optimOptions = GetNewtonOptions(), aucOptions = GetRocOptions(),
-                     measureOptions = GetMeasureOptions(),
-                     modelCheckItems = GetModelCheckItems(),
-                     searchItems = GetSearchItems(),
-                     searchOptions = GetSearchOptions()){
+                     optimOptions = get.options.newton(), aucOptions = get.options.roc(),
+                     measureOptions = get.options.measure(),
+                     modelCheckItems = get.items.modelcheck(),
+                     searchItems = get.items.search(),
+                     searchOptions = get.options.search()){
 
   y = as.matrix(y)
   x = as.matrix(x)
@@ -52,36 +79,36 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL,
   }
 
   if (is.null(optimOptions))
-    optimOptions = GetNewtonOptions()
+    optimOptions = get.options.newton()
   else
     optimOptions = CheckNewtonOptions(optimOptions)
 
   if (is.null(aucOptions))
-    aucOptions = GetRocOptions()
+    aucOptions = get.options.roc()
   else
     aucOptions = CheckRocOptions(aucOptions)
 
   if (is.null(measureOptions))
-    measureOptions = GetMeasureOptions()
+    measureOptions = get.options.measure()
   else
     measureOptions <- CheckMeasureOptions(measureOptions)
 
   if (is.null(modelCheckItems))
-    modelCheckItems = GetModelCheckItems()
+    modelCheckItems = get.items.modelcheck()
   else
     modelCheckItems <- CheckModelCheckItems(modelCheckItems)
 
   if (is.null(searchItems))
-    searchItems = GetSearchItems()
+    searchItems = get.items.search()
   else
     searchItems <- CheckSearchItems(searchItems)
 
   if (is.null(searchOptions))
-    searchOptions = GetSearchOptions()
+    searchOptions = get.options.search()
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
-  res <- .DcSearch(y, x, w, xSizes, xPartitions, costMatrices,
+  res <- .SearchDc(y, x, w, xSizes, xPartitions, costMatrices,
                    searchLogit, searchProbit,
                    optimOptions, aucOptions, measureOptions ,
                    modelCheckItems, searchItems,
@@ -90,31 +117,44 @@ DcSearch <- function(y, x, w = NULL, xSizes = NULL,
 }
 
 
-#' Estimates an Discrete Choice Model
+#' Estimate a Discrete Choice Model
 #'
-#' @param y (numeric matrix) Data with dependent variable in the column. Given the number of choices 'n', it must contain 0,1,...,n-1 and 'sum(y==i)>0' for i=0,...,n-1.
-#' @param x (numeric matrix) Exogenous data with variables in the columns.
-#' @param w (numeric vector) Weights of the observations in \code{y}. Null means equal weights.
-#' @param distType (string) Distribution assumption. It can be \code{logit} or \code{probit}.
-#' @param newX (numeric matrix) If not null, probabilities are projected for each row of this matrix.
-#' @param pcaOptionsX (list) A list of options in order to use principal components of the \code{x}, instead of the actual values. set null to disable. Use [GetPcaOptions()] for initialization.
-#' @param costMatrices (list of matrices) Each cost table determines how you score the calculated probabilities.
-#' @param aucOptions (nullable list) AUC calculation options. see \code{[GetRocOptions()]}.
-#' @param simFixSize (int) Number of pseudo out-of-sample simulations. Use zero to disable the simulation. (see [GetMeasureOptions()]).
-#' @param simTrainRatio (double) Size of the training sample as a ratio of the number of the observations. It is effective only if \code{simTrainFixSize} is zero.
-#' @param simTrainFixSize (int) A fixed size for the training sample. If zero, \code{simTrainRatio} is used.
-#' @param simSeed (int) A seed for the pseudo out-of-sample simulation.
-#' @param weightedEval (bool) If TRUE, weights will be used in evaluations.
-#' @param printMsg (bool) Set FALSE to disable printing the details.
+#' Use this function to estimate a discrete choice model.
 #'
-#' @return An object of class \code{ldtestimdc}.
+#' @param y A matrix of endogenous data with variable in the column.
+#' @param x A matrix of exogenous data with variables in the columns.
+#' @param w Weights of the observations in \code{y}.
+#' \code{NULL} means equal weights for all observations.
+#' @param distType A character string that shows the distribution assumption. It can be \code{logit} or \code{probit}.
+#' @param newX A numeric matrix where for each row in it, probabilities are projected and reported. It can be \code{NULL}.
+#' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
+#' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.dc] for more information and initialization.
+#' @param aucOptions A list of options for AUC calculation. See and use \code{[get.options.roc()]} for more information and initialization.
+#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
+#' @param simTrainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
+#' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
+#' @param simSeed A seed for the random number generator. Use zero for a random value.
+#' @param weightedEval If \code{TRUE}, weights will be used in evaluations.
+#' @param printMsg Set to \code{TRUE} to enable printing some details.
+#'
+#' @return A nested list with the following items:
+#' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
+#' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
+#' \item{measures}{Value of different goodness of fit and out-of-sample performance measures.}
+#' \item{projections}{Information on the projected values, if \code{newX} is provided.}
+#' \item{info}{Some other general information.}
+#'
+#' @details
+#' The main purpose of exporting this method is to show the inner calculations of the search process in [search.dc] function. See the details of this function for more information.
 #'
 #' @export
-DcEstim <- function(y, x, w = NULL,
+#' @example man-roxygen/ex-estim.dc.R
+#' @seealso [search.dc], [search.dc.stepwise]
+estim.dc <- function(y, x, w = NULL,
                     distType = c("logit", "probit"), newX = NULL,
                     pcaOptionsX = NULL, costMatrices = NULL,
-                    aucOptions = GetRocOptions(), simFixSize = 200, simTrainRatio = 0.5,
-                    simTrainFixSize = 0, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
+                    aucOptions = get.options.roc(), simFixSize = 200,
+                    simTrainFixSize = 0, simTrainRatio = 0.5, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
 {
 
   y = as.matrix(y)
@@ -140,11 +180,11 @@ DcEstim <- function(y, x, w = NULL,
   }
 
   if (is.null(aucOptions))
-    aucOptions = GetRocOptions()
+    aucOptions = get.options.roc()
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  res <- .DcEstim(y, x, w, distType, newX,
+  res <- .EstimDc(y, x, w, distType, newX,
                   pcaOptionsX, costMatrices,
                   aucOptions, simFixSize, simTrainRatio,
                   simTrainFixSize, simSeed,
@@ -154,7 +194,7 @@ DcEstim <- function(y, x, w = NULL,
 
 # get estimation from search result
 GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, distType, ...) {
-  M <- DcEstim(y,
+  M <- estim.dc(y,
                x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
                w = w,
                distType = distType,
@@ -175,27 +215,128 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
   return(M)
 }
 
-#' Step-wise Discrete Choice Search
+#' Step-wise Search for Best Discrete-Choice Models
 #'
-#' A helper class to deal with large model sets. It selects a subset of variables
-#' from smaller models and moves to the bigger ones.
+#' For a large model set, use this function to find the best discrete choice models.
+#' It selects a subset of variables from smaller models and moves to the bigger ones.
 #'
-#' @param x exogenous data
-#' @param xSizes a list of model dimension to be estimated in each step.
-#' @param counts a list of suggested number of variables to be used in each step.
-#' \code{NA} means all variables. Variables are selected based on best estimations
-#' (select an appropriate value for \code{searchItems$bestK}). All variables in the
-#' best models (all measures and targets) are selected until corresponding
-#' suggested number is reached.
-#' @param savePre if not \code{NULL}, it saves and tries to load the progress of search
-#' step in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step).
-#' @param ... other arguments to pass to [DcSearch()] function such as endogenous data.
-#' Note that \code{xSizes} is treated differently.
+#' @param y A matrix of endogenous data with variable in the column.
+#' @param x A matrix of exogenous data with variables in the columns.
+#' @param xSizeSteps A list of model dimensions to be estimated in each step. Its size determines the number of steps.
+#' @param countSteps A integer vector to determine the number of variables to be used in each step.
+#' \code{NA} means all variables. Variables are selected based on best estimations.
+#' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
+#' Select an appropriate value for \code{bestK} in the options.
+#' @param savePre A directory for saving and loading the progress.
+#' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
+#' @param ... other arguments to pass to [search.dc()] function such as the \code{w} argument.
+#' Note that \code{xSizes} is ineffective here.
 #'
-#' @return A combined \code{LdtSearch} object
+#' @return Similar to [search.dc] function.
 #' @export
-DcSearch_s <- function(x, xSizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                       counts = c(NA, 40, 30, 20),
+#'
+#' @examples
+#' # See the example in the 'search.dc' function.
+#'
+#' @seealso [search.dc], [estim.dc]
+search.dc.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
+                       countSteps = c(NA, 40, 30, 20),
                        savePre = NULL, ...) {
-  Search_s("dc", x, xSizes, counts, savePre, ...)
+  Search_s("dc", x, xSizeSteps, countSteps, savePre, y = y, ...)
+}
+
+
+#' Generate Random Sample from a DC Model
+#'
+#' This function generates a random sample from an discrete choice regression model.
+#'
+#' @param coef Either a single integer specifying the number of variables in the model,
+#'   or a numeric vector of coefficients for the regression.
+#' @param nObs The number of observations to generate.
+#' @param probit Logical value indicating whether to generate data from a probit model
+#'   (if \code{TRUE}) or a logit model (if \code{FALSE}).
+#' @param pPos The percentage of positive observations (\code{y=1}) in the dependent variable y.
+#'   Must be between 0 and 1.
+#' @param sampleFactor The factor used to control the size of the initial sample.
+#'   A larger value generates a larger initial sample, which can increase the accuracy
+#'   of the generated sample but also takes more time and memory.
+#'
+#' @return A list with the following items:
+#'   \item{y}{The dependent variable.}
+#'   \item{x}{The independent variables.}
+#'   \item{coef}{The coefficients of the regression.}
+#'   \item{probit}{Logical value indicating whether data was generated from a probit model.}
+#'   \item{pPos}{The percentage of negative observations in y.}
+#'
+#' @export
+#' @importFrom stats pnorm rnorm rbinom
+#' @example man-roxygen/ex-sim.dc.R
+#'
+#' @seealso [estim.dc], [search.dc]
+sim.dc <- function(coef = 2L, nObs = 100, probit = FALSE, pPos = 0.5, sampleFactor = 2) {
+
+  if (nObs <= 0)
+    stop("nObs must be a positive integer")
+
+  probit <- as.logical(probit)
+
+  pPos <- as.numeric(pPos)
+  if (pPos < 0 || pPos > 1)
+    stop("pPos must be between 0 and 1")
+
+  sampleFactor = as.numeric(sampleFactor)
+  if (sampleFactor < 1)
+    stop("sampleFactor must be larger than 1")
+
+  # Set the number of variables
+  if (length(coef) == 1 && is.integer(coef)) {
+    nVar <- coef
+    coef <- rnorm(nVar)
+  } else {
+    nVar <- length(coef)
+  }
+
+  # Generate the independent variables
+  if (nVar == 0) {
+    x <- matrix(1, ncol = 1, nrow = nObs * sampleFactor)
+    colnames(x) <- c("Intercept")
+  } else {
+    x <- cbind(1, matrix(rnorm(nObs * sampleFactor * (nVar - 1)), ncol = nVar - 1))
+    colnames(x) <- c("Intercept", paste0("X", seq_len(nVar - 1)))
+  }
+
+  # Calculate the probability of choosing option 1
+  if (probit) {
+    p1 <- pnorm(x %*% coef)
+  } else {
+    p1 <- 1 / (1 + exp(-x %*% coef))
+  }
+
+  # Generate the dependent variable
+  y <- matrix(as.numeric(rbinom(n = nObs * sampleFactor, size = 1, prob = p1)), ncol = 1)
+  colnames(y) <- "Y"
+
+  # Remove observations until we have nPos positive observations
+  nPos <- round(nObs * pPos)
+  posToRemove <- sum(y) - nPos
+  if (posToRemove > 0) {
+    posIndexes <- sample(which(y == 1), posToRemove)
+    y <- y[-posIndexes, , drop = FALSE]
+    x <- x[-posIndexes, , drop = FALSE]
+  } else if (posToRemove < 0) {
+    stop("Failed to generate enough positive observations. Try increasing the sampleFactor argument.")
+  }
+
+  # Remove excess negative observations
+  negToRemove <- sum(!y) - (nObs - nPos)
+  if (negToRemove > 0) {
+    negIndexes <- sample(which(y == 0), negToRemove)
+    y <- y[-negIndexes, , drop = FALSE]
+    x <- x[-negIndexes, , drop = FALSE]
+  } else if (negToRemove < 0) {
+    stop("Failed to generate enough negative observations. Try increasing the sampleFactor argument.")
+  }
+
+  # Return the results as a list
+  list(y = y, x = x, coef = coef, probit = probit, pPos = pPos)
 }

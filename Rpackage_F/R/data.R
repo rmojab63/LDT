@@ -2,24 +2,23 @@
 
 #' Loads and Aggregates WDI Data
 #'
-#' Use it to aggregate and reshape data from the World Development Indicators dataset. It creates Creates a 'Country-Series' table.
+#' Use this function to aggregate and reshape data from the World Development Indicators dataset. It creates a 'Country-Series' table.
 #'
-#' @param dirPath (character) Path to the WDI dataset directory. It should contain the following files: ‘WDICountry-Series.csv’, ‘WDIData.csv’, ‘WDICountry.csv’, and ‘WDISeries.csv’. These files can be downloaded from the WDI website.
-#' @param minYear (integer) Starting year for data aggregation.
-#' @param maxYear (integer) Ending year for data aggregation.
-#' @param aggregateFun (function) Aggregation function with the following arguments: \code{data}, \code{code}, \code{name}, \code{unit}, \code{definition}, \code{aggMethod}, where \code{data} is the data-points from \code{minYear} to \code{maxYear}, \code{unit} is the unit of measurement, \code{definition} is the long definition of the series, \code{aggMethod} is the method of aggregation.
-#' @param keepFun (function) A Function that determines whether to keep or omit columns of the final data matrix. It has \code{data} argument which is the data of the column. It can check the variance or count the number of available data points and omit a variable from the analysis.
+#' @param dirPath A character string representing the path to the WDI dataset directory. It should contain the following files: ‘WDICountry-Series.csv’, ‘WDIData.csv’, ‘WDICountry.csv’, and ‘WDISeries.csv’. These files can be downloaded from the WDI website.
+#' @param minYear An integer representing the starting year for data aggregation.
+#' @param maxYear An integer representing the ending year for data aggregation.
+#' @param aggregateFun A function for aggregation with the following arguments: \code{data}, \code{code}, \code{name}, \code{unit}, \code{definition}, \code{aggMethod}, where \code{data} is the data-points from \code{minYear} to \code{maxYear}, \code{unit} is the unit of measurement, \code{definition} is the long definition of the series, and \code{aggMethod} is the method of aggregation.
+#' @param keepFun A function that determines whether to keep or omit columns of the final data matrix. It has a \code{data} argument which is the data of the column. It can check the variance or count the number of available data points and omit a variable from the analysis.
 #'
-#' @return A list with the following arguments:
-#' \tabular{ll}{
-#' \code{result} \tab A matrix with countries as rows and series as columns. Each data point represents the aggregated value from \code{minYear} to \code{maxYear}. \cr
-#' \code{countries} \tab A list containing information about the countries. \cr
-#' \code{series} \tab A list containing information about various series.
-#' }
+#' @return A list with the following items:
+#' \item{result}{A matrix with countries as rows and series as columns. Each data point represents the aggregated value from \code{minYear} to \code{maxYear}.}
+#' \item{countries}{A list containing information about the countries.}
+#' \item{series}{A list containing information about various series.}
+#' 
 #' @export
 #'
 #' @examples
-#' # This example requires external data. Download the data and run them:
+#' # This example requires external data. Download the data and run it:
 #'
 #' \donttest{
 #' try({
@@ -30,7 +29,7 @@
 #'      if (isPerc) NA
 #'      else get.longrun.growth(data, FALSE, TRUE, 30, 5, isPerc)
 #'    }
-#'    # Add some rules for removing the variable from the analysis:
+#'    # Add some rules for removing variables from the analysis:
 #'    keepFun <- function(data) {
 #'         var(data, na.rm = TRUE) > 1e-12 && sum((is.na(data)) == FALSE) >= 50
 #'    }
@@ -154,23 +153,22 @@ has_all <- function(keywords, text) {
 
 #' Finds a Series in WDI Dataset
 #'
-#' Use it to search for a series in the WDI dataset by its name, description, and some other attributes.
+#' Use this function to search for a series in the WDI dataset by its name, description, and some other attributes.
 #'
 #' @param series This must be the \code{series} field in the output of the \code{\link{data.wdi.agg}} function.
-#' @param keywords (character array) Keywords to be used for searching.
-#' @param searchName If \code{FALSE}, it does not search in the names field.
-#' @param searchDesc If \code{FALSE}, it does not search in the description
-#' @param topicKeywords If given, topic of a matched case must contain these keywords, too.
-#' @param findOne Raises error if \code{TRUE} and more than 1 series is found. default is \code{FALSE}.
+#' @param keywords A character array representing the keywords to be used for searching.
+#' @param searchName A logical value indicating whether to search in the names field or not. If \code{FALSE}, it does not search in the names field.
+#' @param searchDesc A logical value indicating whether to search in the description or not. If \code{FALSE}, it does not search in the description.
+#' @param topicKeywords A character array representing the keywords that must be contained in the topic of a matched case.
+#' @param findOne A logical value indicating whether to raise an error if more than one series is found. The default is \code{FALSE}.
 #'
-#' @return If \code{findOne} is \code{TRUE}, it is a series information. Otherwise, it is a list with series information.
+#' @return If \code{findOne} is \code{TRUE}, it returns a series information. Otherwise, it returns a list with series information.
 #' @export
 #'
 #' @examples
 #' #data <- data.wdi.agg() # this is time-consuming and requires WDI dataset files
 #' #res <- data.wdi.search(data$series, c("GDP per capita"),
 #' #                        TRUE, topicKeywords = "national account")
-#'
 data.wdi.search <- function(series, keywords, searchName = TRUE,
                               searchDesc = FALSE, topicKeywords = NULL, findOne = FALSE) {
   if (is.null(series)) {
@@ -260,47 +258,44 @@ getDummy <- function(table, colName, pre = "",
 
 #' Load 'Berka' Dataset
 #'
-#' Use it to load and combine tables from the ‘Berka’ dataset to create a unified data table.
+#' Use this function to load and combine tables from the ‘Berka’ dataset to create a unified data table.
 #'
-#' @param dirPath Path to the downloaded data directory.
-#' @param positive Determines the positive class. There are four types of loans:
+#' @param dirPath A character string representing the path to the downloaded data directory.
+#' @param positive A character value determining the positive class. There are four types of loans:
 #' 'A' stands for contract finished, no problems, 'B' stands for contract finished,
-#' loan not payed, 'C' stands for running contract, OK so far, 'D' stands
+#' loan not paid, 'C' stands for running contract, OK so far, 'D' stands
 #' for running contract, client in debt.
 #' @param negative Similar to \code{positive} for negative class.
-#' @param rateFun A function to calculate interest rate in loans. Its arguments are: \code{amount}, \code{duration}, \code{paymentPerMonth}.
+#' @param rateFun A function to calculate interest rate in loans with the following arguments: \code{amount}, \code{duration}, \code{paymentPerMonth}.
 #'
 #' @return A data.frame with the following columns:
-#' \tabular{ll}{
-#' \code{loan_id} \tab record identifier \cr
-#' \code{status} \tab original status of the data (A, B, C, or D) \cr
-#' \code{label} \tab status of paying off the loan transformed to numeric (0,1) by using \code{positive} and \code{negative} arguments. value=1 means default. \cr
-#' \code{amount} \tab amount of money \cr
-#' \code{payments} \tab monthly payments \cr
-#' \code{rate} \tab rates calculated by \code{rateFun} function \cr
-#' \code{duration_# (#=12,24,36,48,60)} \tab dummy variables for the duration of the loan \cr
-#' \code{account_frequency_?} \tab dummy variables for the frequency of issuance of statements. ?="POPLATEK MESICNE" stands for monthly issuance, ?="POPLATEK TYDNE" stands for weekly issuance, ?="POPLATEK PO OBRATU" stands for issuance after transaction \cr
-#' \code{order_num} \tab number of the payment orders issued for the account of the loan \cr
-#' \code{order_sum_amount} \tab sum of amounts of the payment orders issued for the account of the loan \cr
-#' \code{order_related_account_num} \tab unique number of 'account of the recipient' in the payment orders issued for the account of the loan \cr
-#' \code{order_related_bank_num} \tab unique number of 'bank of the recipient' in the payment orders issued for the account of the loan \cr
-#' \code{order_has_?} \tab dummy variables fo 'characterization of the payment' in the payment orders issued for the account of the loan \cr
-#' \code{trans_?num} \tab number of transactions dealt with the account of the loan (in different groups) \cr
-#' \code{trans_?amount_mean} \tab mean of 'amount of money' in the transactions dealt with the account of the loan (in different groups) \cr
-#' \code{trans_?amount_div_balance} \tab mean of 'amount of money'/'balance after transaction' in the transactions dealt with the account of the loan (in different groups) \cr
-#' \code{trans_related_account_num} \tab unique number of 'account of the partner' in the transactions dealt with the account of the loan \cr
-#' \code{trans_related_account_num} \tab unique number of 'bank of the partner' in the transactions dealt with the account of the loan \cr
-#' \code{dist_inhabitants_num} \tab no. of inhabitants in the location of the branch of the account of the loan \cr
-#' \code{dist_muni_#1#2} \tab no. of municipalities with inhabitants #1-#2 in the location of the branch of the account of the loan \cr
-#' \code{dist_cities_num} \tab no. of cities in the location of the branch of the account of the loan \cr
-#' \code{dist_ratio_urban_inhabitants} \tab ratio of urban inhabitants in the location of the branch of the account of the loan \cr
-#' \code{dist_avg_salary} \tab average salary in the location of the branch of the account of the loan \cr
-#' \code{dist_unemployment95} \tab unemployment rate '95 in the location of the branch of the account of the loan \cr
-#' \code{dist_unemployment96} \tab unemployment rate '96 in the location of the branch of the account of the loan \cr
-#' \code{dist_entrepreneurs_num_per1000} \tab no. of entrepreneurs per 1000 inhabitants in the location of the branch of the account of the loan \cr
-#' \code{dist_crimes95_num} \tab no. of committed crimes '95 in the location of the branch of the account of the loan \cr
-#' \code{dist_crimes96_num} \tab no. of committed crimes '96 in the location of the branch of the account of the loan
-#' }
+#' \item{loan_id}{record identifier}
+#' \item{status}{original status of the data (A, B, C, or D)}
+#' \item{label}{status of paying off the loan transformed to numeric (0,1) by using \code{positive} and \code{negative} arguments. value=1 means default.}
+#' \item{amount}{amount of money}
+#' \item{payments}{monthly payments}
+#' \item{rate}{rates calculated by the \code{rateFun} function}
+#' \item{duration_# (#=12,24,36,48,60)}{dummy variables for the duration of the loan}
+#' \item{account_frequency_?}{dummy variables for the frequency of issuance of statements. ?="POPLATEK MESICNE" stands for monthly issuance, ?="POPLATEK TYDNE" stands for weekly issuance, ?="POPLATEK PO OBRATU" stands for issuance after transaction.}
+#' \item{order_num}{number of payment orders issued for the account of the loan.}
+#' \item{order_sum_amount}{sum of amounts of payment orders issued for the account of the loan.}
+#' \item{order_related_account_num}{unique number of 'account of the recipient' in payment orders issued for the account of the loan.}
+#' \item{order_related_bank_num}{unique number of 'bank of the recipient' in payment orders issued for the account of the loan.}
+#' \item{order_has_?}{dummy variables for 'characterization of the payment' in payment orders issued for the account of the loan.}
+#' \item{trans_?num}{number of transactions dealt with the account of the loan (in different groups).}
+#' \item{trans_?amount_mean}{mean of 'amount of money' in transactions dealt with the account of the loan (in different groups).}
+#' \item{trans_?amount_div_balance}{mean of 'amount of money'/'balance after transaction' in transactions dealt with the account of the loan (in different groups).}
+#' \item{trans_related_account_num}{unique number of 'account of the partner' in transactions dealt with the account of the loan.}
+#' \item{dist_inhabitants_num}{number of inhabitants in the location of the branch of the account of the loan.}
+#' \item{dist_muni_#1#2}{number of municipalities with inhabitants #1-#2 in the location of the branch of the account of the loan.}
+#' \item{dist_cities_num}{number of cities in the location of the branch of the account of the loan.}
+#' \item{dist_ratio_urban_inhabitants}{ratio of urban inhabitants in the location of the branch of the account of the loan.}
+#' \item{dist_avg_salary}{average salary in the location of the branch of the account of the loan.}
+#' \item{dist_unemployment95}{unemployment rate '95 in the location of the branch of the account of the loan.}
+#' \item{dist_unemployment96}{unemployment rate '96 in the location of the branch of the account of the loan.}
+#' \item{dist_entrepreneurs_num_per1000}{number of entrepreneurs per 1000 inhabitants in the location of the branch of the account of the loan.}
+#' \item{dist_crimes95_num}{number of committed crimes '95 in the location of the branch of the account of the loan.}
+#' \item{dist_crimes96_num}{number of committed crimes '96 in the location of the branch of the account of the loan.}
 #'
 #' @export
 #' @importFrom utils read.csv
@@ -521,20 +516,18 @@ data.berka.loan <- function(dirPath,
 
 #' Load 'Vesta' Dataset
 #'
-#' Use it to create fraud-series table from 'Vesta' dataset (aka IEEE-CIS Fraud Detection).
+#' Use this function to create a fraud-series table from the 'Vesta' dataset (aka IEEE-CIS Fraud Detection).
 #'
-#' @param dirPath Path to the downloaded data directory.
-#' @param training If \code{FALSE}, it loads test data.
-#' @param tranDumCols A list with \code{name} and \code{values} of (categorical) columns in 'transaction' file to be converted to dummy variables. If \code{training} is \code{FALSE} and this is \code{NULL}, a warning is raised.
-#' @param idenDumCols Similar to \code{tranDumCols} but for 'identity' file.
-#' @param catMinSkip If \code{tranDumCols} or \code{idenDumCols} is \code{NULL}, for a categorical variable, if number of unique values is equal or larger than this value, it is omitted.
+#' @param dirPath A character string representing the path to the downloaded data directory.
+#' @param training A logical value indicating whether to load training data or not. If \code{FALSE}, it loads test data.
+#' @param tranDumCols A list with \code{name} and \code{values} of (categorical) columns in the 'transaction' file to be converted to dummy variables. If \code{training} is \code{FALSE} and this is \code{NULL}, a warning is raised.
+#' @param idenDumCols Similar to \code{tranDumCols} but for the 'identity' file.
+#' @param catMinSkip An integer value representing the minimum number of unique values for a categorical variable to be omitted if \code{tranDumCols} or \code{idenDumCols} is \code{NULL}.
 #'
 #' @return A list with the following items:
-#' \tabular{ll}{
-#' \code{data} \tab A \code{data.frame} with the data. \cr
-#' \code{tranDumCols} \tab A list with \code{name} and \code{values} in 'transaction' data, used for creating the dummy variable. \cr
-#' \code{idenDumCols} \tab A list with \code{name} and \code{values} in 'identity' data, used for creating the dummy variable.
-#' }
+#' \item{data}{A \code{data.frame} with the data.}
+#' \item{tranDumCols}{A list with \code{name} and \code{values} in 'transaction' data, used for creating dummy variables.}
+#' \item{idenDumCols}{A list with \code{name} and \code{values} in 'identity' data, used for creating dummy variables.}
 #'
 #' @export
 #' @importFrom utils read.csv
@@ -626,10 +619,10 @@ data.vesta.fraud <- function(dirPath, training = TRUE,
 
 #' Load PCP Dataset
 #'
-#' Use it to load the 'IMF's Primary Commodity Prices' dataset and create Date-Series table.
+#' Use this function to load the 'IMF's Primary Commodity Prices' dataset and create a Date-Series table.
 #'
-#' @param dirPath path to the downloaded data data.
-#' @param makeReal uses the first column (which must be US-CPI) and converts nominal variables to real. If \code{TRUE}, \code{dirPath} must also contain a file with the US CPI.
+#' @param dirPath A character string representing the path to the downloaded data directory.
+#' @param makeReal A logical value indicating whether to convert nominal variables to real using the first column (which must be US-CPI). If \code{TRUE}, \code{dirPath} must also contain a file with the US CPI.
 #'
 #' @return A list with data, descriptions, etc.
 #'

@@ -1,6 +1,6 @@
 Package: tdata
 Title: Prepare Your Time-Series Data for Further Analysis
-Version: 0.2.0.0
+Version: 0.2.1.0
 Authors@R: c(
     person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")))
 Description: Provides a set of tools for managing time-series data,

@@ -17,14 +17,13 @@ List GetVariableForR(ldt::Variable<double> &v) {
   auto sfc = v.StartFrequency.get()->ToClassString();
   // TODO: fields
 
-  List V =
-    List::create(_["data"] = wrap(v.Data), _["name"] = wrap(v.Name),
-                 _["startFrequency"] = Parse_F(sf, sfc), _["fields"] = R_NilValue);
+  List V = List::create(_["data"] = wrap(v.Data), _["name"] = wrap(v.Name),
+                        _["startFrequency"] = Parse_F(sf, sfc),
+                        _["fields"] = R_NilValue);
 
   V.attr("class") = std::vector<std::string>({"ldtv", "list"});
   return V;
 }
-
 
 void UpdateVariableFromSEXP(
     Rcpp::List w, ldt::Variable<double> &variable,
@@ -32,11 +31,11 @@ void UpdateVariableFromSEXP(
     std::vector<boost::gregorian::date> &listItemsDate) {
 
   if (w["name"] != R_NilValue)
-      variable.Name = as<std::string>(w["name"]);
+    variable.Name = as<std::string>(w["name"]);
 
   try {
-    variable.StartFrequency = std::move(
-        GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate));
+    variable.StartFrequency =
+        GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate);
   } catch (...) {
     throw std::logic_error("Invalid 'startFrequency'.");
   }
@@ -49,12 +48,15 @@ void UpdateVariableFromSEXP(
   }
 
   try {
-    List F = w["fields"];
-    for (int j = 0; j < F.length(); j++) {
-      CharacterVector Fj = as<CharacterVector>(F[j]);
-      if (Fj.length() < 2)
-        throw std::logic_error("Expected a 'key' and a 'value'.");
-      variable.Fields.insert({as<std::string>(Fj[0]), as<std::string>(Fj[1])});
+    if (is<List>(w["fields"])) {
+      List F = w["fields"];
+      for (int j = 0; j < F.length(); j++) {
+        CharacterVector Fj = as<CharacterVector>(F[j]);
+        if (Fj.length() < 2)
+          throw std::logic_error("Expected a 'key' and a 'value'.");
+        variable.Fields.insert(
+            {as<std::string>(Fj[0]), as<std::string>(Fj[1])});
+      }
     }
   } catch (...) {
     throw std::logic_error(
@@ -67,7 +69,7 @@ void UpdateVariableFromSEXP(
 std::string VariableToString(List w) {
   std::vector<std::string> listItems;
   std::vector<boost::gregorian::date> listItemsDate;
-  ldt::Variable v;
+  auto v = ldt::Variable<double>();
   UpdateVariableFromSEXP(w, v, listItems, listItemsDate);
   return v.ToString();
 }
@@ -119,7 +121,7 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   }
   auto vs = Variables<double>(list0);
 
-  std::vector<std::tuple<int,int>> ranges;
+  std::vector<std::tuple<int, int>> ranges;
 
   for (int i = 0; i < n; i++) {
     bool hasMissing = false;
@@ -140,7 +142,7 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   }
 
   // lags, leads
-  info(0, 5) = 0;
+  info(0, 4) = 0;
   int lastIndex = std::get<1>(ranges.at(0));
   int lastIndexHor = lastIndex + horizon;
   int len;

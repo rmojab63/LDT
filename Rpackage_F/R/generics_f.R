@@ -1,8 +1,8 @@
 
-#' Prints an \code{ldtf} object
+#' Print a Frequency
 #'
-#' @param x An \code{ldtf} object
-#' @param ... additional arguments
+#' @param x A frequency which is the output of \code{f.?} functions in this package.
+#' @param ... Additional arguments
 #'
 #' @return \code{NULL}
 #' @export
@@ -19,35 +19,34 @@ print.ldtf <- function(x, ...) {
   return(NULL)
 }
 
-#' Converts Frequency to Character
+#' Convert Frequency to Character
 #'
-#' The format is explained in \code{f.?} functions.
+#' This function converts a frequency to its string representation. The format is explained in the \code{f.?} functions.
 #'
-#' @param x value of the frequency. It must be an \code{ldtf} object returned from \code{f.?} functions.
-#' @param ... additional arguments.
+#' @param x The value of the frequency, which must be an \code{ldtf} object returned from the \code{f.?} functions.
+#' @param ... Additional arguments.
 #'
-#' @return String representation of the value of the frequency
+#' @return A string representation of the value of the frequency.
 #' @export
 as.character.ldtf <- function(x, ...){
   res <- .ToString_F(x)
   res
 }
 
-#' Gets Class 'Id' of a Frequency
+#' Get the Class Id of a Frequency
 #'
 #' Use this function to get the 'id' of a frequency class.
 #'
-#' @param frequency The frequency. It must be an \code{ldtf} object returned from \code{f.?} functions.
+#' @param frequency The frequency, which must be an \code{ldtf} object returned from the \code{f.?} functions.
 #'
 #' @details
-#' You need this ‘id’ to convert the character back to the object. Some frequencies have a constant class id. For example, the class id for ‘monthly’ data is m. Some class ‘ids’ have parameters in them. Note that the format is explained in f.? functions.
+#' You need this 'id' to convert the character back to the object. Some frequencies have a constant class id, such as 'm' for 'monthly' data. Some class 'ids' have parameters in them. Note that the format is explained in the \code{f.?} functions.
 #'
-#'
-#' @return A character that represents the class Id of this frequency.
+#' @return A character string that represents the class id of this frequency.
 #' @export
 #' @examples
 #'
-#' freq <- f.x.times.a.day(f.daily(2023,5,16),13, 12)
+#' freq <- f.x.times.a.day(f.daily(c(2023,5,16)),13, 12)
 #' freq_class_id <- get.class.id(freq) # this will be 'da13|d'.
 #'
 get.class.id <- function(frequency){
@@ -55,18 +54,17 @@ get.class.id <- function(frequency){
   res
 }
 
-#' Return Value and Class as String
+#' Convert Frequency to Character and Class Id
 #'
-#' Similar to \code{as.character()} method. However, it returns the class id too.
+#' This function returns the output of the [as.character.ldtf] and [get.class.id] functions.
 #'
-#' @param frequency value of the frequency. It must be an \code{ldtf}
-#' object returned from \code{f.?} functions.
+#' @param frequency The value of the frequency, which must be an \code{ldtf} object returned from the \code{f.?} functions.
 #'
 #' @return A list with the following items:
 #' \itemize{
-#' \item **value:** String representation of the frequency. If you just want this, use \code{as.character()} function.
-#' \item **day:** Class Id of this frequency. If you just want this, use \code{\link{get.class.id}} function.
-#' \item **classType:** Type of the class.
+#' \item **value**: The string representation of the frequency. If you only want this, use the \code{as.character()} function.
+#' \item **day**: The class Id of this frequency. If you only want this, use the \code{\link{get.class.id}} function.
+#' \item **classType**: The type of the class.
 #' }
 #' @export
 #'
@@ -74,25 +72,24 @@ get.class.id <- function(frequency){
 #'
 #' @examples
 #'
-#' freq <- f.x.times.a.day(f.daily(2023,5,16),13, 12)
-#' freq_class_id <- get.character.info(freq) # this will be 'da13|d'.
-#'
-#' #or,
+#' freq <- f.x.times.a.day(f.daily(c(2023,5,16)),13, 12)
+#' freq_class_id <- get.class.id0(freq)
+#' 
 #' freq1 <- f.monthly(2020,3)
-#' freq1_class_id <- get.character.info(freq1)
-get.character.info <- function(frequency){
+#' freq1_class_id <- get.class.id0(freq1)
+get.class.id0 <- function(frequency){
   res <- .ToString_F0(frequency)
   res
 }
 
-#' Converts Character to frequency
+#' Convert Character String to Frequency
 #'
-#' Use this method to convert back your character to a frequency. You need the class id information.
+#' Use this function to convert a character string back to a frequency. You need the class id information.
 #'
-#' @param str value of the frequency as a valid character. You might have get it from \code{\link{as.character.ldtf}} function
-#' @param classId class id of the frequency as a valid character.
+#' @param str The value of the frequency as a valid character, which you might have obtained from the \code{\link{as.character.ldtf}} function.
+#' @param classId The class id of the frequency. These are explained in \code{f.?} functions.
 #'
-#' @return An object of class 'ldtf'
+#' @return A frequency, which is an object of class 'ldtf'. See the \code{f.?} functions.
 #' @export
 as.frequency <-function(str, classId){
 
@@ -104,20 +101,19 @@ as.frequency <-function(str, classId){
 }
 
 
-#' Generates a Sequence from a Range of Frequency
+#' Generate a Sequence from a Range of Frequencies
 #'
-#' Use it to generate a list of characters, where each element is a string representation of a frequency within the specified range.
+#' Use this function to generate a list of character strings, where each element is a string representation of a frequency within the specified range.
 #'
-#' @param from First frequency of the range.
-#' @param to Last frequency of the range.
+#' @param from The first frequency of the sequence.
+#' @param to The last frequency of the sequence.
 #' @param by An integer that determines the increment of the sequence.
 #'
 #' @details
-#' The two arguments \code{from} and \code{to} should be a valid frequencies (see \code{f.?} methods).
-#' Also, they should be consistent. You cannot create a sequence in which one is e.g. monthly, and the other is yearly.
+#' The two arguments \code{from} and \code{to} should be valid frequencies (see the \code{f.?} functions).
+#' They should also be consistent; you cannot create a sequence in which one is, for example, monthly and the other is yearly.
 #'
-#'
-#' @return A list of characters that represents the sequence.
+#' @return A list of character strings that represents the sequence.
 #' @export
 #' @seealso \code{\link{get.seq0}}
 #'
@@ -140,15 +136,15 @@ get.seq <- function(from, to, by = 1){
   res
 }
 
-#' Generates a Sequence from a Range of Frequency
+#' Generate a Sequence from a Range of Frequencies
 #'
-#' Use it to generate a list of characters, where each element is a string representation of a frequency within the specified range.
+#' Use this function to generate a list of character strings, where each element is a string representation of a frequency within the specified range.
 #'
-#' @param start First frequency of the sequence .
-#' @param length Length of the sequence
-#' @param by increment of the sequence
+#' @param start The first frequency of the sequence.
+#' @param length The length of the sequence.
+#' @param by An integer that determines the increment of the sequence.
 #'
-#' @return A list of characters that represents the sequence.
+#' @return A list of character strings that represents the sequence.
 #' @export
 #' @seealso \code{\link{get.seq}}
 #'

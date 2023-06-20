@@ -62,7 +62,7 @@ weight <- as.matrix((y == 1) * (nrow(y) / sum(y == 1)) + (y == 0))
 
 Since the data is large and to increase the speed of the calculations, we change the default optimization options:
 ```{r}
-optimOptions <- GetNewtonOptions(maxIterations = 10, functionTol = 1e-2)
+optimOptions <- get.options.newton(maxIterations = 10, functionTol = 1e-2)
 ```
 
 We also choose to search a small subset of the model set:
@@ -82,22 +82,22 @@ And finally, we search for the best model:
 
 ```{r estimation}
 
-vestaRes <- DcSearch_s(
+vestaRes <- search.dc.stepwise(
   x = x, y = y, w = weight,
   xSizes = xSizes, counts = xCounts,
   optimOptions = optimOptions,
-  searchItems = GetSearchItems(bestK = 20),
-  modelCheckItems = GetModelCheckItems(
+  searchItems = get.items.search(bestK = 20),
+  modelCheckItems = get.items.modelcheck(
     maxConditionNumber = 1e15, minDof = 1e5, minOutSim = simFixSize / 2
   ),
-  measureOptions = GetMeasureOptions(
+  measureOptions = get.options.measure(
     typesIn = c("aucIn"),
     typesOut = c("aucOut"),
     simFixSize = 4,
     trainRatio = 0.9,
     seed = 340
   ),
-  searchOptions = GetSearchOptions(printMsg = FALSE),
+  searchOptions = get.options.search(printMsg = FALSE),
   printMsg = FALSE,
   savePre = "data/dc_vesta_"
 )

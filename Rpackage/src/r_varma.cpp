@@ -5,11 +5,11 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// [[Rcpp::export(.VarmaSearch)]]
-SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
+// [[Rcpp::export(.SearchVarma)]]
+SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                  SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
                  SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
-                 List lmbfgsOptions, List measureOptions, List modelCheckItems,
+                 List lbfgsOptions, List measureOptions, List modelCheckItems,
                  List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
@@ -86,7 +86,7 @@ SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   }
 
   LimitedMemoryBfgsbOptions optim;
-  UpdateLmbfgsOptions(printMsg, lmbfgsOptions, optim);
+  UpdateLbfgsOptions(printMsg, lbfgsOptions, optim);
 
   // if (maxHorizon > 0 && items.Length1 > 0){ // model must provide predictions
   //   checks.Prediction = true;
@@ -159,7 +159,7 @@ SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
       _["olsStdMultiplier"] = wrap(olsStdMultiplier),
       _["simUsePreviousEstim"] = wrap(simUsePreviousEstim),
       _["maxHorizon"] = wrap(checks.Prediction ? maxHorizon : 0),
-      _["lmbfgsOptions"] = lmbfgsOptions, _["measureOptions"] = measureOptions,
+      _["lbfgsOptions"] = lbfgsOptions, _["measureOptions"] = measureOptions,
       _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
       _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
@@ -170,9 +170,9 @@ SEXP VarmaSearch(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   return L;
 }
 
-// [[Rcpp::export(.VarmaEstim)]]
-SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
-                bool addIntercept, List lmbfgsOptions, double olsStdMultiplier,
+// [[Rcpp::export(.EstimVarma)]]
+SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
+                bool addIntercept, List lbfgsOptions, double olsStdMultiplier,
                 SEXP pcaOptionsY, SEXP pcaOptionsX, int maxHorizon, SEXP newX,
                 int simFixSize, SEXP simHorizons, bool simUsePreviousEstim,
                 double simMaxConditionNumber, bool printMsg) {
@@ -257,12 +257,12 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
                           params_.at(1), params_.at(2), params_.at(3),
                           params_.at(4), params_.at(5), seasonsCount);
 
-  // LMBFGS
+  // L-BFGS
   LimitedMemoryBfgsbOptions optim;
   if (sizes.HasMa) {
-    UpdateLmbfgsOptions(printMsg, lmbfgsOptions, optim);
+    UpdateLbfgsOptions(printMsg, lbfgsOptions, optim);
   } else if (printMsg)
-    Rprintf("LMBFGS (skipped).\n");
+    Rprintf("L-BFGS (skipped).\n");
 
   // Estimation
 
@@ -343,25 +343,26 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
 
   // Simulation Details
   NumericMatrix simDetails(0, 9);
-  colnames(simDetails) = CharacterVector::create("sampleEnd","measureIndex",
-           "horizon", "targetIndex", "last", "actual", "forecast", "error", "std");
+  colnames(simDetails) = CharacterVector::create(
+      "sampleEnd", "measureIndex", "horizon", "targetIndex", "last", "actual",
+      "forecast", "error", "std");
 
-  if (simFixSize > 0){
-    simDetails = NumericMatrix(simModel.Details.size(),9);
+  if (simFixSize > 0) {
+    simDetails = NumericMatrix(simModel.Details.size(), 9);
 
     int h = -1;
 
     for (const auto &a : simModel.Details) {
       h++;
-      simDetails(h,0) = std::get<0>(a);
-      simDetails(h,1) = std::get<1>(a);
-      simDetails(h,2) = std::get<2>(a);
-      simDetails(h,3) = std::get<3>(a);
-      simDetails(h,4) = std::get<4>(a);
-      simDetails(h,5) = std::get<5>(a);
-      simDetails(h,6) = std::get<6>(a);
-      simDetails(h,7) = std::get<7>(a);
-      simDetails(h,8) = std::get<8>(a);
+      simDetails(h, 0) = std::get<0>(a);
+      simDetails(h, 1) = std::get<1>(a);
+      simDetails(h, 2) = std::get<2>(a);
+      simDetails(h, 3) = std::get<3>(a);
+      simDetails(h, 4) = std::get<4>(a);
+      simDetails(h, 5) = std::get<5>(a);
+      simDetails(h, 6) = std::get<6>(a);
+      simDetails(h, 7) = std::get<7>(a);
+      simDetails(h, 8) = std::get<8>(a);
     }
   }
 
@@ -483,7 +484,7 @@ SEXP VarmaEstim(SEXP y, SEXP x, SEXP params, int seasonsCount,
                             ? R_NilValue
                             : (SEXP)List::create(_["validCounts"] =
                                                      wrap(simModel.ValidCounts),
-                                                     _["details"] = simDetails,
+                                                 _["details"] = simDetails,
                                                  _["failed"] = simFails),
       _["info"] =
           List::create(_["y"] = y, _["x"] = x, _["pcaOptionsY"] = pcaOptionsY,

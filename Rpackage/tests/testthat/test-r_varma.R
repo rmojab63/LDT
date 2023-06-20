@@ -27,7 +27,7 @@ x <- matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
 colnames(x) = paste0("W", c(1:ncol(x)))
 
 test_that("VAR estimation works", {
-  res = VarmaEstim(x[,1:2, drop = FALSE], params = c(2,0,0,0,0,0), printMsg = printMsg)
+  res = estim.varma(x[,1:2, drop = FALSE], params = c(2,0,0,0,0,0), printMsg = printMsg)
   #resR = MTS::VAR(x[,1:2],2)
   rc1 = 47.01986294876104 # resR$coef[[1]]
   rsg = c(498.5024107703099, -56.4870364060901,
@@ -37,14 +37,14 @@ test_that("VAR estimation works", {
   expect_equal(as.numeric(res$estimations$sigma), rsg, tolerance = 1e-8)
 
   #change indexes
-  res0 = VarmaEstim(x[,c(2,1)], params = c(2,0,0,0,0,0), printMsg = printMsg)
+  res0 = estim.varma(x[,c(2,1)], params = c(2,0,0,0,0,0), printMsg = printMsg)
   expect_equal(res$estimations$coefs[1,1], res0$estimations$coefs[2,2], tolerance = 1e-13) # ??1e-16 fails
   expect_equal(res$estimations$sigma[1,1], res0$estimations$sigma[2,2], tolerance = 1e-14)
   expect_equal(res$measures[2,1], res0$measures[2,1], tolerance = 1e-16)
 })
 
 test_that("VAR forecast works", {
-  res = VarmaEstim(x[,1:2], params = c(2,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
+  res = estim.varma(x[,1:2], params = c(2,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
   #resR = MTS::VAR(x[,1:2],2)
   #forR <- MTS::VARpred(resR, 3);
   prd = c(59.71207367716434, 27.85724814539860, 53.92058456057188,
@@ -60,7 +60,7 @@ test_that("VAR forecast works", {
 test_that("VAR forecast works with NA", {
   y = x[,1:2]
   y = rbind(c(NA,2),y, c(2,NA))
-  res = VarmaEstim(y[,1:2], params = c(2,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
+  res = estim.varma(y[,1:2], params = c(2,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
   #resR = MTS::VAR(x[,1:2],2)
   #forR <- MTS::VARpred(resR, 3)
 
@@ -74,7 +74,7 @@ test_that("VAR forecast works with NA", {
 })
 
 test_that("MA estimation works", {
-  res = VarmaEstim(x[,1, drop = FALSE], params = c(0,0,2,0,0,0), addIntercept = TRUE, printMsg = printMsg)
+  res = estim.varma(x[,1, drop = FALSE], params = c(0,0,2,0,0,0), addIntercept = TRUE, printMsg = printMsg)
   resR = arima(x[,1, drop = FALSE], c(0,0,2), method = "CSS", optim.method = "L-BFGS-B",
                transform.pars = FALSE, include.mean = TRUE)
   expect_equal(res$estimations$coefs[2:3], as.numeric(resR$coef[1:2]), tolerance = 1e-4)
@@ -82,7 +82,7 @@ test_that("MA estimation works", {
 })
 
 test_that("MA forecast works", {
-  res = VarmaEstim(x[,1, drop = FALSE], params = c(0,0,2,0,0,0), addIntercept = TRUE, maxHorizon = 3, printMsg = printMsg)
+  res = estim.varma(x[,1, drop = FALSE], params = c(0,0,2,0,0,0), addIntercept = TRUE, maxHorizon = 3, printMsg = printMsg)
   resR = arima(x[,1, drop = FALSE], c(0,0,2), method = "CSS", optim.method = "L-BFGS-B",
                transform.pars = FALSE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
@@ -92,7 +92,7 @@ test_that("MA forecast works", {
 })
 
 test_that("ARMA forecast works", {
-  res = VarmaEstim(x[,2, drop = FALSE], params = c(1,0,1,0,0,0), addIntercept = TRUE, maxHorizon = 3, printMsg = printMsg)
+  res = estim.varma(x[,2, drop = FALSE], params = c(1,0,1,0,0,0), addIntercept = TRUE, maxHorizon = 3, printMsg = printMsg)
   resR = arima(x[,2, drop = FALSE], c(1,0,1), method = "CSS", optim.method = "L-BFGS-B",
                transform.pars = FALSE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
@@ -102,7 +102,7 @@ test_that("ARMA forecast works", {
 })
 
 test_that("ARIMA forecast works", {
-  res = VarmaEstim(x[,5, drop = FALSE], params = c(1,1,1,0,0,0), addIntercept = FALSE, maxHorizon = 3, printMsg = printMsg)
+  res = estim.varma(x[,5, drop = FALSE], params = c(1,1,1,0,0,0), addIntercept = FALSE, maxHorizon = 3, printMsg = printMsg)
   resR = arima(x[,5, drop = FALSE], c(1,1,1), method = "CSS", optim.method = "L-BFGS-B",
                transform.pars = TRUE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
@@ -114,12 +114,12 @@ test_that("ARIMA forecast works", {
 test_that("VAR forecast works with PCA for endogenous", {
 
   y = as.matrix(as.data.frame(cbind(as.matrix(x[,1:2]), prcomp(x[,3:ncol(x)], scale. = TRUE)$x))) # orthogonal
-  pcaOp = GetPcaOptions()
+  pcaOp = get.options.pca()
   pcaOp$ignoreFirst = 2
   pcaOp$exactCount = 1
 
-  res1 = VarmaEstim(y[,1:3], params = c(1,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
-  res2 = VarmaEstim(x, params = c(1,0,0,0,0,0), maxHorizon = 3, pcaOptionsY = pcaOp, printMsg = printMsg)
+  res1 = estim.varma(y[,1:3], params = c(1,0,0,0,0,0), maxHorizon = 3, printMsg = printMsg)
+  res2 = estim.varma(x, params = c(1,0,0,0,0,0), maxHorizon = 3, pcaOptionsY = pcaOp, printMsg = printMsg)
 
   expect_equal(res1$gamma, res2$gamma, tolerance = 1e-8)
   expect_equal(as.numeric(res1$prediction$means), as.numeric(res2$prediction$means), tolerance = 1e-8)
@@ -133,12 +133,12 @@ test_that("VAR forecast works with PCA for exogenous", {
   colnames(newZ) = colnames(x[,3:4])
   newZp = predict(p,newdata = newZ)
 
-  pcaOp = GetPcaOptions()
+  pcaOp = get.options.pca()
   pcaOp$ignoreFirst = 0
   pcaOp$exactCount = 1
 
-  res1 = VarmaEstim(x[,1:2], params = c(1,0,0,0,0,0), x=Z, newX = matrix(newZp[,1],3,1), maxHorizon = 3, printMsg = printMsg)
-  res2 = VarmaEstim(x[,1:2], params = c(1,0,0,0,0,0), x=x[,3:4], newX = newZ, maxHorizon = 3, pcaOptionsX = pcaOp, printMsg = printMsg)
+  res1 = estim.varma(x[,1:2], params = c(1,0,0,0,0,0), x=Z, newX = matrix(newZp[,1],3,1), maxHorizon = 3, printMsg = printMsg)
+  res2 = estim.varma(x[,1:2], params = c(1,0,0,0,0,0), x=x[,3:4], newX = newZ, maxHorizon = 3, pcaOptionsX = pcaOp, printMsg = printMsg)
 
   expect_equal(res1$gamma, res2$gamma, tolerance = 1e-8)
   expect_equal(res1$prediction$means, res2$prediction$means, tolerance = 1e-8)
@@ -147,13 +147,13 @@ test_that("VAR forecast works with PCA for exogenous", {
 
 test_that("VAR simulation works", {
   Z = x[,1:2]
-  res = VarmaEstim(Z, params = c(1,0,0,0,0,0), maxHorizon = 2, simFixSize = 2, printMsg = printMsg)
+  res = estim.varma(Z, params = c(1,0,0,0,0,0), maxHorizon = 2, simFixSize = 2, printMsg = printMsg)
 
   T=nrow(Z)
-  f1 = VarmaEstim(Z[1:(T-1),], params = c(1,0,0,0,0,0), maxHorizon = 1, printMsg = printMsg)
+  f1 = estim.varma(Z[1:(T-1),], params = c(1,0,0,0,0,0), maxHorizon = 1, printMsg = printMsg)
   e1=(abs(f1$prediction$means[,2] - Z[T,])/Z[T,])^2
 
-  f2 = VarmaEstim(Z[1:(T-2),], params = c(1,0,0,0,0,0), maxHorizon = 2, printMsg = printMsg)
+  f2 = estim.varma(Z[1:(T-2),], params = c(1,0,0,0,0,0), maxHorizon = 2, printMsg = printMsg)
   e2=(abs(f2$prediction$means[,2] - Z[T-1,])/Z[T-1,])^2
   e3=(abs(f2$prediction$means[,3] - Z[T,])/Z[T,])^2
 
@@ -161,20 +161,20 @@ test_that("VAR simulation works", {
 
   # change indexes
   Z = x[,c(2,1)]
-  res0 = VarmaEstim(Z, params = c(1,0,0,0,0,0), maxHorizon = 2, simFixSize = 2, printMsg = printMsg)
+  res0 = estim.varma(Z, params = c(1,0,0,0,0,0), maxHorizon = 2, simFixSize = 2, printMsg = printMsg)
   expect_equal(res$measures[,1], res0$measures[,2], tolerance = 1e-13)
 
 })
 
 test_that("VARMA simulation works", {
   Z = x[,1:2]
-  res = VarmaEstim(Z, params = c(1,0,1,0,0,0), maxHorizon = 3, simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg)
+  res = estim.varma(Z, params = c(1,0,1,0,0,0), maxHorizon = 3, simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg)
 
   T=nrow(Z)
-  f1 = VarmaEstim(Z[1:(T-1),], params = c(1,0,1,0,0,0), maxHorizon = 1, printMsg = printMsg)
+  f1 = estim.varma(Z[1:(T-1),], params = c(1,0,1,0,0,0), maxHorizon = 1, printMsg = printMsg)
   e1=(abs(f1$prediction$means[,2] - Z[T,])/Z[T,])^2
 
-  f2 = VarmaEstim(Z[1:(T-2),],params =  c(1,0,1,0,0,0), maxHorizon = 2, printMsg = printMsg)
+  f2 = estim.varma(Z[1:(T-2),],params =  c(1,0,1,0,0,0), maxHorizon = 2, printMsg = printMsg)
   e2=(abs(f2$prediction$means[,2] - Z[T-1,])/Z[T-1,])^2
   e3=(abs(f2$prediction$means[,3] - Z[T,])/Z[T,])^2
 
@@ -183,7 +183,7 @@ test_that("VARMA simulation works", {
 
   # change indexes
   Z = x[,c(2,1)]
-  res0 = VarmaEstim(Z, params = c(1,0,1,0,0,0), maxHorizon = 3, simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg)
+  res0 = estim.varma(Z, params = c(1,0,1,0,0,0), maxHorizon = 3, simFixSize = 2, simUsePreviousEstim = FALSE, printMsg = printMsg)
   expect_equal(res$measures[,2], res0$measures[,1], tolerance = 1e-5)
 
 })
@@ -195,7 +195,7 @@ test_that("VARMA estimation works", {
   set.seed(340)
   #m1=MTS::VARMAsim(3000,arlags=c(1),malags=c(1),phi=p1,theta=th1,sigma=sig)
   #Z=m1$series
-  #res = VarmaEstim(Z, params = c(1,0,1,0,0,0), printMsg = printMsg)
+  #res = estim.varma(Z, params = c(1,0,1,0,0,0), printMsg = printMsg)
   #expect_equal(as.numeric(res$estimations$sigma), as.numeric(sig), tolerance = 1e-1)
 
 })
@@ -205,10 +205,10 @@ test_that("ARMA search works for In-Sample", {
   skip_on_cran()
 
   Z=x[,1, drop = FALSE]
-  res = VarmaSearch(Z, maxParams = c(2,2,2,0,0,0),
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"),c()))
-  res1 = VarmaEstim(Z, params = res$aic$target1$model$bests$best1$parameters, simFixSize = 0,
+  res = search.varma(Z, maxParams = c(2,2,2,0,0,0),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"),c()))
+  res1 = estim.varma(Z, params = res$aic$target1$model$bests$best1$parameters, simFixSize = 0,
                     addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * res1$measures[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
 })
@@ -218,11 +218,11 @@ test_that("ARMA search works for In-Sample with exogenous", {
 
   Z=x[,1, drop = FALSE]
   Exo=x[,3:6]
-  res = VarmaSearch(Z, Exo, maxParams = c(2,2,2,0,0,0), xGroups = list(c(2L),c(2L,3L)),
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"),c()),
-                    modelCheckItems = GetModelCheckItems(prediction = FALSE))
-  res1 = VarmaEstim(Z, x = Exo[,res$aic$target1$model$bests$best1$exoIndices, drop = FALSE],
+  res = search.varma(Z, Exo, maxParams = c(2,2,2,0,0,0), xGroups = list(c(2L),c(2L,3L)),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"),c()),
+                    modelCheckItems = get.items.modelcheck(prediction = FALSE))
+  res1 = estim.varma(Z, x = Exo[,res$aic$target1$model$bests$best1$exoIndices, drop = FALSE],
                      params = res$aic$target1$model$bests$best1$parameters, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * res1$measures[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
 })
@@ -232,22 +232,22 @@ test_that("VARMA search works for In-Sample with exogenous", {
 
   Endo = x[,1:3]
   Exo=x[,4:7]
-  res = VarmaSearch(Endo, Exo, numTargets = 3, ySizes = c(1L,2L),
+  res = search.varma(Endo, Exo, numTargets = 3, ySizes = c(1L,2L),
                     maxParams = c(2,2,2,0,0,0), xGroups = list(c(3L,4L)),
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic", "sic"),c()),
-                    searchItems = GetSearchItems(all = TRUE),
-                    modelCheckItems = GetModelCheckItems(prediction = FALSE))
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic", "sic"),c()),
+                    searchItems = get.items.search(all = TRUE),
+                    modelCheckItems = get.items.modelcheck(prediction = FALSE))
 
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
   for (m in res$aic$target1$model$all){
-    M = VarmaEstim(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE],
+    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE],
               params = m$parameters, simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
     expect_equal(exp(-0.5 * M$measures[2,1]), m$weight, tolerance = 1e-10)
   }
 
 
-  res1 = VarmaEstim(Endo[,res$sic$target1$model$bests$best1$depIndices, drop = FALSE], x = Exo[,res$sic$target1$model$bests$best1$exoIndices, drop = FALSE],
+  res1 = estim.varma(Endo[,res$sic$target1$model$bests$best1$depIndices, drop = FALSE], x = Exo[,res$sic$target1$model$bests$best1$exoIndices, drop = FALSE],
                      params = res$sic$target1$model$bests$best1$parameters, simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * res1$measures[3,1]), res$sic$target1$model$bests$best1$weight, tolerance = 1e-10)
   # find best in all
@@ -267,18 +267,18 @@ test_that("VARMA search works when changing Indexes NO exogenous", {
   skip_on_cran()
 
   Endo = x[,1:3]
-  res = VarmaSearch(Endo, NULL, 2, ySizes = c(1L,2L),
+  res = search.varma(Endo, NULL, 2, ySizes = c(1L,2L),
                     maxParams = c(2,2,2,0,0,0),
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic", "sic"),c()),
-                    searchItems = GetSearchItems(all = TRUE))
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic", "sic"),c()),
+                    searchItems = get.items.search(all = TRUE))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
   Endo = x[,c(2,1,3)]
-  res0 = VarmaSearch(Endo, NULL, 2, ySizes = c(1L,2L),
-                     maxParams = c(2,2,2,0,0,0),  searchOptions = GetSearchOptions(printMsg = printMsg),
-                     measureOptions = GetMeasureOptions(c("aic", "sic"),c()),
-                     searchItems = GetSearchItems(all = TRUE))
+  res0 = search.varma(Endo, NULL, 2, ySizes = c(1L,2L),
+                     maxParams = c(2,2,2,0,0,0),  searchOptions = get.options.search(printMsg = printMsg),
+                     measureOptions = get.options.measure(c("aic", "sic"),c()),
+                     searchItems = get.items.search(all = TRUE))
 
   allWeights0 = sort(sapply(res0$aic$target2$model$all, function(x){x$weight}))
   expect_equal(as.numeric(allWeights), as.numeric(allWeights0), tolerance = 1e-8)
@@ -289,18 +289,18 @@ test_that("VARMA search works when changing Indexes WITH exogenous", {
 
   Endo = x[,1:2]
   Exo=x[,4:5]
-  res = VarmaSearch(Endo, NULL, 2, ySizes = c(1L,2L),
-                    maxParams = c(0,2,3,0,0,0),  searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic", "sic"),c()),
-                    searchItems = GetSearchItems(all = TRUE))
+  res = search.varma(Endo, NULL, 2, ySizes = c(1L,2L),
+                    maxParams = c(0,2,3,0,0,0),  searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic", "sic"),c()),
+                    searchItems = get.items.search(all = TRUE))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
   Endo = x[,c(2,1)]
   Exo = x[,c(5,4)]
-  res0 = VarmaSearch(Endo, NULL, 2, ySizes = c(1L,2L),
-                     maxParams = c(0,2,3,0,0,0),  searchOptions = GetSearchOptions(printMsg = printMsg),
-                     measureOptions = GetMeasureOptions(c("aic", "sic"),c()),
-                     searchItems = GetSearchItems(all = TRUE))
+  res0 = search.varma(Endo, NULL, 2, ySizes = c(1L,2L),
+                     maxParams = c(0,2,3,0,0,0),  searchOptions = get.options.search(printMsg = printMsg),
+                     measureOptions = get.options.measure(c("aic", "sic"),c()),
+                     searchItems = get.items.search(all = TRUE))
 
   allWeights0 = sort(sapply(res0$aic$target2$model$all, function(x){x$weight}))
   expect_equal(as.numeric(allWeights), as.numeric(allWeights0), tolerance = 1e-4)  # ?????!!!!!
@@ -319,32 +319,32 @@ test_that("V-ARMA search works for Out-Sample", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = x[c(1,2),4:7]
-  res = VarmaSearch(Endo, Exo, 2,
+  res = search.varma(Endo, Exo, 2,
                     ySizes = c(1L,2L), maxParams = c(2,1,2,0,0,0), xGroups = list(c(1L,2L)),
                     simUsePreviousEstim = FALSE, maxHorizon = 2,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c(), c("crps", "mae", "direction"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c(), c("crps", "mae", "direction"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE), newX = newX,
-                    modelCheckItems = GetModelCheckItems(estimation = TRUE, prediction = TRUE,
+                    searchItems = get.items.search(all = TRUE), newX = newX,
+                    modelCheckItems = get.items.modelcheck(estimation = TRUE, prediction = TRUE,
                                                predictionBoundMultiplier = 200))
 
   for (m in res$crps$target1$model$all){
-    M = VarmaEstim(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
+    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
               params =  m$parameters, simFixSize = 2, addIntercept = FALSE, simUsePreviousEstim = FALSE, printMsg = printMsg)
      expect_equal(1/m$weight, as.numeric(M$measures[10,1]), tolerance = 1e-10)
   }
 
   # replace indexes
   Endo0 = x[,c(2,1,3)]
-  res0 = VarmaSearch(Endo0, Exo, 2,
+  res0 = search.varma(Endo0, Exo, 2,
                      ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0), xGroups = list(c(1L,2L)),
                      simUsePreviousEstim = FALSE, newX = newX, maxHorizon = 2,
-                     searchOptions = GetSearchOptions(printMsg = printMsg),
-                     measureOptions = GetMeasureOptions(c(), c("crps", "mae", "direction"),
+                     searchOptions = get.options.search(printMsg = printMsg),
+                     measureOptions = get.options.measure(c(), c("crps", "mae", "direction"),
                                                         horizons = c(1L,2L), simFixSize = 2),
-                     searchItems = GetSearchItems(all = TRUE),
-                     modelCheckItems = GetModelCheckItems(estimation = TRUE, prediction = TRUE,
+                     searchItems = get.items.search(all = TRUE),
+                     modelCheckItems = get.items.modelcheck(estimation = TRUE, prediction = TRUE,
                                                 predictionBoundMultiplier = 200))
   expect_equal(res$crps$target1$model$bests$best1$weight, res0$crps$target2$model$bests$best1$weight, tolerance = 1e-7)
 
@@ -355,24 +355,24 @@ test_that("VARMA search works when parallel", {
   skip_on_cran()
 
 
-  res = VarmaSearch(x[,1:3], NULL, 2,
+  res = search.varma(x[,1:3], NULL, 2,
                     ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0),
                     simUsePreviousEstim = FALSE,
-                    measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae", "direction"),
+                    measureOptions = get.options.measure(c("aic"), c("crps", "mae", "direction"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE),
-                    searchOptions = GetSearchOptions(parallel = FALSE, printMsg = printMsg))
+                    searchItems = get.items.search(all = TRUE),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE),
+                    searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
-  res0 = VarmaSearch(x[,1:3], NULL, 2,
+  res0 = search.varma(x[,1:3], NULL, 2,
                      ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0),
                      simUsePreviousEstim = FALSE,
-                     measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae", "direction"),
+                     measureOptions = get.options.measure(c("aic"), c("crps", "mae", "direction"),
                                                         horizons = c(1L,2L), simFixSize = 2),
-                     searchItems = GetSearchItems(all = TRUE),
-                     modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE),
-                     searchOptions = GetSearchOptions(parallel = TRUE, printMsg = printMsg))
+                     searchItems = get.items.search(all = TRUE),
+                     modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE),
+                     searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg))
 
   allWeights0 = sort(sapply(res0$aic$target1$model$all, function(x){x$weight}))
   expect_equal(as.numeric(allWeights), as.numeric(allWeights0), tolerance = 1e-16)
@@ -383,19 +383,19 @@ test_that("VARMA search works with restricted aic", {
 
   Endo = x[,1:3]
   Exo = x[,4:7]
-  res = VarmaSearch(Endo, Exo, 2,
+  res = search.varma(Endo, Exo, 2,
                     ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0), xGroups = list(c(1L,2L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c(), c("crps", "mae", "direction"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c(), c("crps", "mae", "direction"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE,
+                    searchItems = get.items.search(all = TRUE),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE,
                                                     maxAic = 20))
 
   alls = list()
   for (m in res$crps$target1$model$all){
-    M = VarmaEstim(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], params = m$parameters,
+    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], params = m$parameters,
             addIntercept = FALSE, printMsg = printMsg)
     alls = append(alls, M$measures[2,1])
     expect_true(as.numeric(M$measures[2,1]) <= 20)
@@ -407,14 +407,14 @@ test_that("VARMA search works with inclusion weights", {
 
   Endo = x[,1:3]
   Exo = x[,4:7]
-  res = VarmaSearch(Endo, Exo, 2,
+  res = search.varma(Endo, Exo, 2,
                     ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0), xGroups = list(c(1L,2L), c(3L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c(), c("crps", "mae", "direction"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c(), c("crps", "mae", "direction"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, inclusion = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE))
+                    searchItems = get.items.search(all = TRUE, inclusion = TRUE),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE))
 
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
@@ -440,14 +440,14 @@ test_that("VARMA search works with predictions (bests)", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = matrix(c(7,8,5,6,7,8,5,6,7,5,6,7),3,4)
-  res = VarmaSearch(Endo, Exo, 2, maxHorizon = 3, newX = newX,
+  res = search.varma(Endo, Exo, 2, maxHorizon = 3, newX = newX,
                     ySizes = c(1L,2L), maxParams = c(2,2,2,0,0,0), xGroups = list(c(1L,2L), c(3L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"), c("crps", "mae"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, type1 = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                    searchItems = get.items.search(all = TRUE, type1 = TRUE),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
 
   best_pred2 = NULL
   w=-Inf
@@ -462,7 +462,7 @@ test_that("VARMA search works with predictions (bests)", {
   expect_equal(res$aic$target1$predictions$bests$horizon1$best1$exoIndices, best_pred2$exoIndices, tolerance = 1e-10)
 
   # are mean and variance equal?
-  M = VarmaEstim( y= as.matrix(Endo[,res$aic$target1$predictions$bests$horizon1$best1$depIndices, drop = FALSE]),
+  M = estim.varma( y= as.matrix(Endo[,res$aic$target1$predictions$bests$horizon1$best1$depIndices, drop = FALSE]),
             params = res$aic$target1$predictions$bests$horizon1$best1$parameters,
           x = as.matrix(Exo[,res$aic$target1$predictions$bests$horizon1$best1$exoIndices, drop = FALSE]),
           newX = as.matrix(newX[,res$aic$target1$predictions$bests$horizon1$best1$exoIndices]), maxHorizon = 3,
@@ -479,14 +479,14 @@ test_that("VARMA search works with predictions (cdfs)", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = matrix(c(7,8,5,6,7,8,5,6,7,5,6,7),3,4)
-  res = VarmaSearch(Endo, Exo, 2, maxHorizon = 3, newX = newX,
+  res = search.varma(Endo, Exo, 2, maxHorizon = 3, newX = newX,
                     ySizes = c(2L,3L), maxParams = c(2,1,2,0,0,0), xGroups = list(c(1L,2L), c(3L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"), c("crps", "mae"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, type1 = TRUE, cdfs = c(0,1,0)),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                    searchItems = get.items.search(all = TRUE, type1 = TRUE, cdfs = c(0,1,0)),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
   h=2
   v = 1
   sum = 0
@@ -494,7 +494,7 @@ test_that("VARMA search works with predictions (cdfs)", {
   cc = 0
   for (m in res$aic$target1$model$all){
 
-    M = VarmaEstim( y= as.matrix(Endo[,m$depIndices, drop = FALSE]),
+    M = estim.varma( y= as.matrix(Endo[,m$depIndices, drop = FALSE]),
                params = m$parameters,
                x = as.matrix(Exo[,m$exoIndices, drop = FALSE]),
                newX = as.matrix(newX[,m$exoIndices]), maxHorizon = 3,
@@ -517,21 +517,21 @@ test_that("VARMA search works with predictions (extreme bounds)", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = matrix(c(7,8,5,6,7,8,5,6,7,5,6,7),3,4)
-  res = VarmaSearch(Endo, Exo, 2, maxHorizon = 3, newX = newX,
+  res = search.varma(Endo, Exo, 2, maxHorizon = 3, newX = newX,
                     ySizes = c(2L,3L), maxParams = c(2,1,2,0,0,0), xGroups = list(c(1L,2L), c(3L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"), c("crps", "mae"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, type1 = TRUE, cdfs = c(0,1,0), extremeMultiplier = 2),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                    searchItems = get.items.search(all = TRUE, type1 = TRUE, cdfs = c(0,1,0), extremeMultiplier = 2),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
   mn = Inf
   mx = -Inf
   v = 1
   h = 2
   for (m in res$aic$target1$model$all){
 
-    M = VarmaEstim( y= Endo[,m$depIndices, drop = FALSE],
+    M = estim.varma( y= Endo[,m$depIndices, drop = FALSE],
                params = m$parameters,
                x = Exo[,m$exoIndices, drop = FALSE],
                newX = newX[,m$exoIndices, drop = FALSE], maxHorizon = 3,
@@ -553,15 +553,15 @@ test_that("VARMA search works with predictions (mixture)", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = matrix(c(7,8,5,6,7,8,5,6,7,5,6,7),3,4)
-  res = VarmaSearch(Endo, Exo, 1, maxHorizon = 3, newX = newX,
+  res = search.varma(Endo, Exo, 1, maxHorizon = 3, newX = newX,
                     ySizes = c(1L), maxParams = c(1,1,1,0,0,0), xGroups = list(c(1L),c(2L)),
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic"), c("crps", "mae"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic"), c("crps", "mae"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, type1 = TRUE, cdfs = c(0,1,0), extremeMultiplier = 2,
+                    searchItems = get.items.search(all = TRUE, type1 = TRUE, cdfs = c(0,1,0), extremeMultiplier = 2,
                                                  mixture4 = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
 
   coefs = c()
   vars = c()
@@ -569,7 +569,7 @@ test_that("VARMA search works with predictions (mixture)", {
   v = 1
   h = 1
   for (m in res$aic$target1$model$all){
-    M = VarmaEstim( y= Endo[,m$depIndices,drop = FALSE],
+    M = estim.varma( y= Endo[,m$depIndices,drop = FALSE],
                params = m$parameters,
                x = Exo[,m$exoIndices,drop = FALSE],
                newX = newX[,m$exoIndices,drop = FALSE], maxHorizon = 3,
@@ -600,15 +600,15 @@ test_that("VARMA summary works", {
   Endo = x[,1:3]
   Exo = x[,4:7]
   newX = matrix(c(7,8,5,6,7,8,5,6,7,5,6,7),3,4)
-  res = VarmaSearch(Endo, Exo, 2, newX = newX,
+  res = search.varma(Endo, Exo, 2, newX = newX,
                     ySizes = c(2L), maxParams = c(2,2,2,0,0,0), xGroups = list(c(1L,2L)),
                     maxHorizon = 3,
                     simUsePreviousEstim = FALSE,
-                    searchOptions = GetSearchOptions(printMsg = printMsg),
-                    measureOptions = GetMeasureOptions(c("aic", "sic"), c("crps", "rmse", "direction"),
+                    searchOptions = get.options.search(printMsg = printMsg),
+                    measureOptions = get.options.measure(c("aic", "sic"), c("crps", "rmse", "direction"),
                                                        horizons = c(1L,2L), simFixSize = 2),
-                    searchItems = GetSearchItems(all = TRUE, type1 = TRUE),
-                    modelCheckItems = GetModelCheckItems(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
+                    searchItems = get.items.search(all = TRUE, type1 = TRUE),
+                    modelCheckItems = get.items.modelcheck(estimation = FALSE, prediction = FALSE, predictionBoundMultiplier = 0))
   su =summary(res, Endo, Exo, addModelAll = TRUE, addItem1 = TRUE, newX = newX, test = TRUE)
 
 })
@@ -616,7 +616,7 @@ test_that("VARMA summary works", {
 
 
 
-test_that("SurEstim SplitSearch works (no subsetting)", {
+test_that("estim.varma SplitSearch works (no subsetting)", {
   skip_on_cran()
 
   Endo = x[,1:3]
@@ -629,19 +629,19 @@ test_that("SurEstim SplitSearch works (no subsetting)", {
   xGroups = list(c(1L), c(2L),c(1L,2L),c(3L),c(1L,2L,3L))
   numTargets = 2
   maxHorizon = 3;
-  searchItems = GetSearchItems(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
+  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  measureOptions = GetMeasureOptions(c("sic", "aic"), c("crps"), seed = -400)
-  searchOptions = GetSearchOptions(FALSE, printMsg = FALSE)
-  modelCheckItems = GetModelCheckItems(prediction = FALSE, predictionBoundMultiplier = 0)
+  measureOptions = get.options.measure(c("sic", "aic"), c("crps"), seed = -400)
+  searchOptions = get.options.search(FALSE, printMsg = FALSE)
+  modelCheckItems = get.items.modelcheck(prediction = FALSE, predictionBoundMultiplier = 0)
 
-  split = VarmaSearch_s(y = Endo, x = Exo, ySizes = list(c(1L,2L), c(3L)), counts = c(NA, NA),
+  split = search.varma.stepwise(y = Endo, x = Exo, ySizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  xGroups = xGroups,
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, modelCheckItems = modelCheckItems,
                       newX = newX, maxHorizon = maxHorizon, savePre = NULL)
 
-  whole = VarmaSearch(y = Endo, x = Exo, ySizes = c(1L,2L,3L),
+  whole = search.varma(y = Endo, x = Exo, ySizes = c(1L,2L,3L),
                     numTargets = numTargets,  xGroups = xGroups,
                     searchItems = searchItems, measureOptions = measureOptions,
                     searchOptions = searchOptions,modelCheckItems = modelCheckItems,

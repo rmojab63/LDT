@@ -6,3 +6,4 @@
 ^Meta$
 ^vignettes/data$
 ^LICENSE\.md$
+^man-roxygen$

@@ -33,17 +33,14 @@ NumericVector GetDistance(NumericMatrix data,
 }
 
 // [[Rcpp::export(.ClusterH)]]
-List ClusterH(NumericVector distances, int numVariables,
-              std::string linkage = "single") {
+List ClusterH(NumericVector distances, std::string linkage) {
 
-  if (numVariables * (numVariables - 1) != 2 * distances.length())
-    throw std::logic_error(
-        "Invalid number of variables. '2 * distances.length() != numVariables "
-        "* (numVariables - 1)'.");
+  double n = (1 + sqrt(1 + 8 * distances.length())) / 2;
+  int numVariables = std::floor(n);
+  if (std::abs(n - numVariables) > 1e-16 || numVariables <= 1)
+    throw std::logic_error("Invalid distance vector. It should be the lower "
+                           "triangle of a symmetric matrix.");
 
-  if (numVariables <= 1)
-    throw std::logic_error(
-        "Invalid number of variables. It must be larger than 1.");
   boost::algorithm::to_lower(linkage);
   HClusterLinkage linkage0 = FromString_HClusterLinkage(linkage.c_str());
 

@@ -22,7 +22,7 @@ test_that("Frequency conversion (from DateList to Daily) works", {
 
 test_that("Frequency conversion (from Daily to Multi-Day) works", {
 
-  startFreq <- f.daily(2022,9,1)
+  startFreq <- f.daily(c(2022,9,1))
   v <- variable(c(1,2,3,4,5,6), startFreq)
   w <- convert.to.multidaily(v,2,function(x)mean(x),FALSE)
   expect_equal(c(1.5,3.5,5.5), w$data)
@@ -53,7 +53,7 @@ test_that("Frequency conversion (from Daily to Multi-Day) works", {
 
 test_that("Frequency conversion (from Daily to Weekly) works", {
 
-  startFreq <- f.daily(2023,6,1) # It is Thursday
+  startFreq <- f.daily(c(2023,6,1)) # It is Thursday
   v <- variable(c(1:14), startFreq) # two weeks
 
   w <- convert.to.weekly(v,"thu",function(x)mean(x)) # start from Thursday
@@ -80,7 +80,7 @@ test_that("Frequency conversion (from Daily to Weekly) works", {
 
 test_that("Frequency conversion (from Daily to X-Times-A-Year) works", {
 
-  startFreq <- f.daily(2023,1,1)
+  startFreq <- f.daily(c(2023,1,1))
   v <- variable(c(1:(365*2)), startFreq)
 
   # Monthly

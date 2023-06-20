@@ -23,4 +23,4 @@ NULL
 #' @docType data
 #' @name vig_data
 #' @format A list
-NULL
+"vig_data"

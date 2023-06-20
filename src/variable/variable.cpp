@@ -323,7 +323,9 @@ void Variable<Tw>::ConvertTo_Weekly(
     auto start =
         dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
     auto wd = start.mDay.day_of_week();
-    auto pre_end = FromString_DayOfWeek(ToLower(wd.as_short_string()));
+    std::string wd_ss = wd.as_short_string();
+    boost::algorithm::to_lower(wd_ss);
+    auto pre_end = FromString_DayOfWeek(wd_ss.c_str());
     auto diff = DayOfWeekRange::Distance(firstDayOfWeek, pre_end, true);
 
     std::vector<std::vector<Tv>> weeks;

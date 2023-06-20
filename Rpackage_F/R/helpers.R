@@ -2,37 +2,27 @@
 
 #' Scenarios for Removing \code{NA}s
 #'
-#' Use this to remove \code{NA} from a matrix. You can optimize the size of information by this method.
+#' Use this function to remove \code{NA} values from a matrix. This helps you to optimize the size of the information.
 #'
-#' @param data A matrix that contains \code{NA}.
-#' @param countFun A function to determine how strategies are
-#' sorted. Default function counts the number of observations.
-#' You might want to give columns a higher level of importance
-#' for example by using \code{nRows*nCols^1.5}.
-#' @param rowIndices Indices of the sorted rows to search.
-#' Use it to create jumps for large number of rows (E.g.,
-#' if the first sorted strategies suggest small number of
-#' columns and you are looking for other strategies).
+#' @param data A matrix that contains \code{NA} values.
+#' @param countFun A function to determine how strategies are sorted. The default function counts the number of observations.
+#' You might want to give columns a higher level of importance, for example, by using \code{nRows*nCols^1.5}.
+#' @param rowIndices The indices of the sorted rows to search.
+#' Use this to create jumps for a large number of rows (e.g., if the first sorted strategies suggest a small number of columns and you are looking for other strategies).
 #' Use \code{NULL} to disable it.
-#' @param colIndices Similar to \code{rowIndices} for columns.
+#' @param colIndices Similar to \code{rowIndices}, but for columns.
 #' @param printMsg If \code{TRUE}, it prints the progress.
 #'
 #' @details
-#' When a matrix has \code{NA}, one can omit columns
-#' with \code{NA}, rows with \code{NA}, or a combination of
-#' these two. The total number of observations is a function
-#' of the order. This function tries all combinations and returns the results.
-#'
+#' When a matrix has \code{NA} values, one can omit columns with \code{NA}, rows with \code{NA}, or a combination of these two. The total number of observations is a function of the order. This function tries all combinations and returns the results.
 #'
 #' @return A list of lists, each with the following elements:
-#' \tabular{ll}{
-#'    \code{nRows} \tab number of rows in the matrix.\cr
-#'   \code{nCols} \tab number of cols in the matrix.\cr
-#'    \code{colFirst} \tab whether to remove columns or rows first.\cr
-#'    \code{colRemove} \tab indexes of the columns to be removed.\cr
-#'    \code{rowRemove} \tab indexes of the rows to be removed.
-#'   }
-#'
+#'    \item{nRows}{The number of rows in the matrix.}
+#'   \item{nCols}{The number of columns in the matrix.}
+#'    \item{colFirst}{Whether to remove columns or rows first.}
+#'    \item{colRemove}{The indices of the columns to be removed.}
+#'    \item{rowRemove}{The indices of the rows to be removed.}
+#' 
 #' @export
 #'
 #' @examples
@@ -129,25 +119,28 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
 
 #' Calculate Long-run Growth
 #'
-#' Use this to calculate long-run growth of a time-series data.
+#' Use this function to calculate the long-run growth of a time-series data.
 #'
-#' @param data (numeric vector) Determines the data of the series.
-#' @param continuous (logical) if \code{TRUE}, it will use the continuous formula.
-#' @param isPercentage (logical) If the unit of measurement in \code{data} is percentage (e.g., growth rate), use \code{TRUE}. The long-run growth rate is calculated by the arithmetic mean for the continuous case and the geometric mean otherwise. If missing data exists, it returns \code{NA}.
-#' @param trimStart If the number of leading \code{NA}s is larger than this number, the function returns NA. Otherwise, it finds the first non-NA value and continues the calculations.
+#' @param data A numeric vector that represents the data of the series.
+#' @param continuous A logical value indicating whether to use the continuous formula.
+#' @param isPercentage A logical value indicating whether the unit of measurement in \code{data} is a percentage (e.g., growth rate).
+#' If \code{TRUE}, the long-run growth rate is calculated by the arithmetic mean for the continuous case and the geometric mean otherwise.
+#' If missing data exists, it returns \code{NA}.
+#' @param trimStart If the number of leading \code{NA}s is larger than this number, the function returns \code{NA}.
+#' Otherwise, it finds the first non-NA value and continues the calculations.
 #' @param trimEnd Similar to \code{trimStart}, but for the end of the series.
 #' @param skipZero If \code{TRUE}, leading and trailing zeros are skipped, similar to \code{NA}.
 #'
 #' @details
-#' A variable can have continuous growth (\eqn{y(t)=y(0) (1+g_1)(1+g_2)\ldots (1+g_t)})
-#' or discrete growth (\eqn{y(t)=y(0)e^{g_1}e^{g_2}\ldots e^{g_t}}) over \eqn{t} periods.
+#' A variable can have discrete growth (\eqn{y(t)=y(0) (1+g_1)(1+g_2)\ldots (1+g_t)})
+#' or continuous growth (\eqn{y(t)=y(0)e^{g_1}e^{g_2}\ldots e^{g_t}}) over \eqn{t} periods.
 #' \eqn{y(0)} is the first value and \eqn{y(n)} is the last value.
 #' By long-run growth rate, we mean a number such as \eqn{g} such that if
 #' we start from \eqn{y(0)} and the variable growth is \eqn{g} every period,
 #' we reach \eqn{y(t)} after t periods. This number summarizes all \eqn{g_i}s,
 #' however, it is not generally the average of these rates.
 #'
-#' @return Long-run growth rate (percentage)
+#' @return The long-run growth rate (percentage).
 #' @export
 #'
 #' @examples

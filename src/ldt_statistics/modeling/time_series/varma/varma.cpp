@@ -60,9 +60,6 @@ std::tuple<Matrix<Tv>, Matrix<Tv>>
 Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
                 Matrix<Tv> *intercept, Matrix<Tv> *exocoef, Matrix<Tv> *sigma,
                 Ti n, Ti skip, unsigned int seed, Matrix<Tv> *y0, Ti horizon) {
-
-  throw std::logic_error("Check the MNormal test.");
-
   Ti m = sigma ? sigma->ColsCount
                : (ar->size() > 0 ? ar->at(0)->ColsCount
                                  : (ma->size() > 0 ? ma->at(0)->ColsCount
@@ -105,11 +102,12 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
     exodata = Matrix<Tv>(new std::vector<Tv>((count + horizon) * k), k,
                          count + horizon); // (count + horizon) * k
 
-    throw std::logic_error("not implemented (exogenous is varma simulation).");
-    // Matrix<Tv>::FillRandom_normal(&exodata, unifseed(eng), 0, 1);
+    std::normal_distribution<Tv> dist(1000, 600000);
+    for (Ti i = 0; i < exodata.length(); i++)
+      exodata.Data[i] = dist(eng);
   }
 
-  auto e = NormalM(m, {}, sigma, (count + horizon), false, true, 0);
+  auto e = NormalM(m, nullptr, sigma, (count + horizon), false, true, 0);
 
   auto shocks = new Tv[e.StorageSize];
   Tv *We = new Tv[e.WorkSize];
@@ -127,9 +125,9 @@ Varma::Simulate(std::vector<Matrix<Tv> *> *ar, std::vector<Matrix<Tv> *> *ma,
     tmp2 = new Matrix<Tv>(new Tv[k], k); // k
 
   for (Ti i = std::max(p, q); i < count; i++) {
-    e.pSample->GetColumn0(i, tmp);
+    e.Sample.GetColumn0(i, tmp);
     for (Ti j = 1; j <= q; j++) {
-      e.pSample->GetColumn0(i - j, tmp1);
+      e.Sample.GetColumn0(i - j, tmp1);
       ma->at(j - 1)->Dot0(tmp1, tmp0);
       tmp.Add_in0(tmp0);
     }

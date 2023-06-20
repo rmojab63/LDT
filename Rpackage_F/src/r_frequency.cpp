@@ -3,6 +3,8 @@
 using namespace Rcpp;
 using namespace ldt;
 
+
+
 // [[Rcpp::export(.F_cross_section)]]
 SEXP F_CrossSection(int position) {
   List F = List::create(_["class"] = (int)FrequencyClass::kCrossSection,
@@ -314,28 +316,25 @@ List ToString_F0(SEXP value) {
   return I;
 }
 
-SEXP Parse_F_week(FrequencyClass fClass, Frequency *F) {
 
+SEXP To_SEXP_week(FrequencyClass fClass, Frequency *F) {
+
+  auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
   switch (fClass) {
 
   case FrequencyClass::kWeekly: {
-    auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
     return F_Weekly(f.mDay.year(), f.mDay.month(), f.mDay.day());
   }
   case FrequencyClass::kMultiWeekly: {
-    auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
     return F_MultiWeekly(f.mDay.year(), f.mDay.month(), f.mDay.day(), f.mMulti);
   }
   case FrequencyClass::kDaily: {
-    auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
     return F_Daily(f.mDay.year(), f.mDay.month(), f.mDay.day());
   }
   case FrequencyClass::kMultiDaily: {
-    auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
     return F_MultiDaily(f.mDay.year(), f.mDay.month(), f.mDay.day(), f.mMulti);
   }
   case FrequencyClass::kDailyInWeek: {
-    auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
     return F_DailyInWeek(f.mDay.year(), f.mDay.month(), f.mDay.day(),
                          ToString(f.mRange.mStart), ToString(f.mRange.mEnd),
                          true);
@@ -347,39 +346,38 @@ SEXP Parse_F_week(FrequencyClass fClass, Frequency *F) {
   }
 }
 
-// [[Rcpp::export(.Parse_F)]]
-SEXP Parse_F(std::string str, std::string classStr) {
-  FrequencyClass fClass;
-  auto F = Frequency::Parse(str, classStr, fClass);
+SEXP To_SEXP(Frequency* F, std::vector<std::string> &listItems,
+             std::vector<boost::gregorian::date> &listItemsDate){
+  FrequencyClass fClass = F->mClass;
 
   switch (fClass) {
   case FrequencyClass::kCrossSection: {
-    auto f = dynamic_cast<FrequencyCrossSection const &>(*F.get());
+    auto f = dynamic_cast<FrequencyCrossSection const &>(*F);
     return F_CrossSection(f.mPosition);
   }
 
   case FrequencyClass::kYearly: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_Yearly(f.mYear);
   }
   case FrequencyClass::kQuarterly: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_Quarterly(f.mYear, f.mPosition);
   }
   case FrequencyClass::kMonthly: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_Monthly(f.mYear, f.mPosition);
   }
   case FrequencyClass::kMultiYear: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_MultiYearly(f.mYear, f.mYearMulti);
   }
   case FrequencyClass::kXTimesAYear: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_XTimesAYear(f.mYear, f.mPartitionCount, f.mPosition);
   }
   case FrequencyClass::kXTimesZYears: {
-    auto f = dynamic_cast<FrequencyYearBased const &>(*F.get());
+    auto f = dynamic_cast<FrequencyYearBased const &>(*F);
     return F_XTimesZYears(f.mYear, f.mPartitionCount, f.mYearMulti,
                           f.mPosition);
   }
@@ -389,52 +387,79 @@ SEXP Parse_F(std::string str, std::string classStr) {
   case FrequencyClass::kDaily:
   case FrequencyClass::kMultiDaily:
   case FrequencyClass::kDailyInWeek:
-    return Parse_F_week(fClass, F.get());
+    return To_SEXP_week(fClass, F);
 
   case FrequencyClass::kHourly: {
-    auto f = dynamic_cast<FrequencyDayBased const &>(*F.get());
-    auto fw = Parse_F_week(f.mDay.mClass, &f.mDay);
+    auto f = dynamic_cast<FrequencyDayBased const &>(*F);
+    auto fw = To_SEXP_week(f.mDay.mClass, &f.mDay);
     return F_Hourly(fw, f.mPosition);
   }
   case FrequencyClass::kMinutely: {
-    auto f = dynamic_cast<FrequencyDayBased const &>(*F.get());
-    auto fw = Parse_F_week(f.mDay.mClass, &f.mDay);
+    auto f = dynamic_cast<FrequencyDayBased const &>(*F);
+    auto fw = To_SEXP_week(f.mDay.mClass, &f.mDay);
     return F_Minutely(fw, f.mPosition);
   }
   case FrequencyClass::kSecondly: {
-    auto f = dynamic_cast<FrequencyDayBased const &>(*F.get());
-    auto fw = Parse_F_week(f.mDay.mClass, &f.mDay);
+    auto f = dynamic_cast<FrequencyDayBased const &>(*F);
+    auto fw = To_SEXP_week(f.mDay.mClass, &f.mDay);
     return F_Secondly(fw, f.mPosition);
   }
   case FrequencyClass::kXTimesADay: {
-    auto f = dynamic_cast<FrequencyDayBased const &>(*F.get());
-    auto fw = Parse_F_week(f.mDay.mClass, &f.mDay);
+    auto f = dynamic_cast<FrequencyDayBased const &>(*F);
+    auto fw = To_SEXP_week(f.mDay.mClass, &f.mDay);
     return F_XTimesADay(fw, f.mPartitionCount, f.mPosition);
   }
 
   case FrequencyClass::kListString: {
-    auto f0 = FrequencyList<std::string>("", nullptr);
-    std::vector<std::string> items0;
-    FrequencyList<std::string>::Parse0(str, classStr, fClass, f0, &items0);
-    auto dd = F_ListString(items0, f0.mValue);
+    auto f = dynamic_cast<FrequencyList<std::string> const &>(*F);
+    auto dd = F_ListString(listItems, f.mValue);
     return dd;
   }
 
   case FrequencyClass::kListDate: {
-    auto f0 = FrequencyList<boost::gregorian::date>(boost::gregorian::date(),
-                                                    nullptr);
-    std::vector<boost::gregorian::date> items0;
-    FrequencyList<boost::gregorian::date>::Parse0(str, classStr, fClass, f0,
-                                                  &items0);
-    std::vector<std::string> items1;
-    for (auto &d : items0)
-      items1.push_back(boost::gregorian::to_iso_string(d));
-    auto dd = F_ListDate(items1, boost::gregorian::to_iso_string(f0.mValue));
+    if (listItems.size() == 0){
+    for (auto &d : listItemsDate)
+      listItems.push_back(boost::gregorian::to_iso_string(d));
+    }
+    auto f = dynamic_cast<FrequencyList<boost::gregorian::date> const &>(*F);
+    auto dd = F_ListDate(listItems, boost::gregorian::to_iso_string(f.mValue));
     return dd;
   }
 
   default:
     throw std::logic_error("not implemeted for this type of frequency");
+  }
+}
+
+
+
+
+// [[Rcpp::export(.Parse_F)]]
+SEXP Parse_F(std::string str, std::string classStr) {
+
+  FrequencyClass fClass;
+  auto F = Frequency::Parse(str, classStr, fClass);
+
+  std::vector<std::string> listItems;
+  std::vector<boost::gregorian::date> listItemsDate;
+  if (F.get()->mClass == FrequencyClass::kListString){
+
+    auto f0 = FrequencyList<std::string>("", nullptr);
+    FrequencyList<std::string>::Parse0(str, classStr, fClass, f0, &listItems);
+    return To_SEXP(&f0, listItems, listItemsDate);
+
+  }
+  else if (F.get()->mClass == FrequencyClass::kListDate){
+
+    auto f0 = FrequencyList<boost::gregorian::date>(boost::gregorian::date(),
+                                                    nullptr);
+    FrequencyList<boost::gregorian::date>::Parse0(str, classStr, fClass, f0,
+                                                  &listItemsDate);
+    return To_SEXP(&f0, listItems, listItemsDate);
+
+  }
+  else{
+    return To_SEXP(F.get(), listItems, listItemsDate);
   }
 }
 
@@ -482,3 +507,38 @@ std::vector<std::string> Sequence_F(SEXP from, SEXP to, int by)
 
   return list;
 }
+
+// [[Rcpp::export(.F_GetClass)]]
+int F_GetClass(std::string name) {
+  return (int)FromString_FrequencyClass(name.c_str());
+}
+
+// [[Rcpp::export(.F_Next)]]
+SEXP F_Next(SEXP freq, int steps)
+{
+  std::vector<std::string> listItems;
+  std::vector<boost::gregorian::date> listItemsDate;
+  auto F = GetFreqFromSEXP(freq, listItems, listItemsDate);
+  auto f = F.get();
+
+  f->Next(steps);
+
+  return To_SEXP(f, listItems, listItemsDate);
+}
+
+// [[Rcpp::export(.F_Minus)]]
+int F_Minus(SEXP freq1, SEXP freq2)
+{
+  std::vector<std::string> listItems1;
+  std::vector<boost::gregorian::date> listItemsDate1;
+  auto F1 = GetFreqFromSEXP(freq1, listItems1, listItemsDate1);
+  auto f1 = F1.get();
+
+  std::vector<std::string> listItems2;
+  std::vector<boost::gregorian::date> listItemsDate2;
+  auto F2 = GetFreqFromSEXP(freq2, listItems2, listItemsDate2);
+  auto f2 = F2.get();
+  return f1->Minus(*f2);
+}
+
+
