@@ -1063,11 +1063,6 @@ TEST(Distributions_T, gld_FKML_Ms_T_from_moments) {
   ASSERT_NEAR(variance, dis.GetVariance(), 1e-5);
   ASSERT_NEAR(skewness, dis.GetSkewness(), 1e-3);
   ASSERT_NEAR(kurtosis, dis.GetKurtosis(), 1e-3);
-
-  // export
-  // Tv props[9];
-  // Tv args[4]{ std::get<0>(Ls), std::get<1>(Ls), std::get<2>(Ls),
-  // std::get<3>(Ls) }; dist_props(props, 9, args, {}, 0);
 }
 
 TEST(Distributions_T, mixture_sample) {

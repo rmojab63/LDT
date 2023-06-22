@@ -232,55 +232,79 @@ private:
 
 */
 
-/// @brief Nelder-Mead optimization. The original code:
-///    Copyright(c) 1997 Michael F. Hutt Released under the MIT License
+/// @brief Nelder-Mead optimization.
 class LDT_EXPORT NelderMead {
 
 public:
   /// @brief Gets the required size of the work array (real)
   Ti WorkSize = 0;
 
-  /// @brief Sets the maximum number of iterations
-  Ti MaxIterations = 100;
+  Ti StorageSize = 0;
 
-  /// @brief Sets the reflection coefficient
-  Tv Alpha = 1.0;
+  /// @brief Sets the reflection coefficient (default = 1.0). This parameter
+  /// controls how far the worst point is reflected through the centroid of the
+  /// remaining points.
+  Tv ParamReflection = 1.0;
 
-  /// @brief Sets the contraction coefficient
-  Tv Beta = 0.5;
+  /// @brief Sets the expansion coefficient (default = 2.0). This parameter
+  /// controls how far the reflected point is expanded along the line connecting
+  /// it to the centroid.
+  Tv ParamExpansion = 2.0;
 
-  /// @brief Sets the expansion coefficient
-  Tv Gamma = 2.0;
+  /// @brief Sets the contraction coefficient (default = 0.5). This
+  /// parameter controls how far the worst point is contracted towards the
+  /// centroid.
+  Tv ParamContraction = 0.5;
 
-  /// @brief Sets the epsilon
-  Tv Epsilon = 1e-8;
+  /// @brief Sets the shrink coefficient (default = 0.5). This parameter
+  /// controls how much the simplex is shrunk towards the best point when all
+  /// other moves are rejected.
+  Tv ParamShrink = 0.5;
 
-  /// @brief Sets the scale parameter
-  Tv Scale = 1.0;
+  /// @brief Sets the tolerance for convergence (default = 1e-6). The
+  /// algorithm terminates when the difference between the best and worst points
+  /// in the simplex is less than this value.
+  Tv Tolerance = 1e-6;
+
+  /// @brief Sets the maximum number of iterations (default = 1000). The
+  /// algorithm terminates after this many iterations if it has not converged
+  /// yet.
+  Ti MaxIteration = 1000;
 
   /// @brief Gets the current number of iterations
   Ti Iter = 0;
 
-  /// @brief Gets the standard error of the function values, used for stopping
-  /// the iterations
-  Tv Std = NAN;
+  /// @brief difference between the best and worst points in the simplex at the
+  /// last iteration.
+  Tv Diff = NAN;
 
-  /// @brief Minimum value of the objective function
+  /// @brief Minimum value of the objective function. The value might be added
+  /// with a penalty if the problem is bounded
   Tv Min = NAN;
+
+  /// @brief After Minimize, the optimal solution found by the
+  /// algorithm
+  Matrix<Tv> Result;
 
   /// @brief Initializes a new instance of the class
   /// @param n Expected number of variables
   NelderMead(Ti n);
 
-  /// @brief Finds the minimum
-  /// @param objective Objective function
-  /// @param start Starting point
-  /// @param work Work array of size \ref WorkSize
-  /// @param constrain Constraints
-  /// @return Minimum value of the objective function
-  Tv Minimize(const std::function<Tv(const Matrix<Tv> &)> &objective,
-              Matrix<Tv> &start, Tv *work,
-              const std::function<void(Matrix<Tv> &)> *constrain = nullptr);
+  /// @brief Minimizes a given objective function
+  ///
+  /// @param Tv The value type of the objective function.
+  /// @param objective The objective function to minimize.
+  /// @param start The starting point for the optimization.
+  /// @param work work array
+  /// @param storage  storage array
+  ///@param lower Use it to restrict the solution
+  /// @param upper use it to restrict the solution
+  /// @param penaltyMultiplier restricting the solution is done by defining a
+  /// penalty function. You can increase the penalty by this multiplier.
+  void Minimize(const std::function<Tv(const Matrix<Tv> &)> &objective,
+                const Matrix<Tv> &start, Tv *work, Tv *storage,
+                const Matrix<Tv> *lower = nullptr,
+                const Matrix<Tv> *upper = nullptr, Tv penaltyMultiplier = 10);
 
   /// @brief Nelder-mead optimization for univariate function
   /// @param f univariate function
@@ -311,9 +335,10 @@ public:
   /// Use a large but finite value for C. Infinity or relatively large number
   /// can cause numerical issues and may result in an unstable optimization
   /// process.
-  static std::tuple<Tv,Ti> Minimize1(const std::function<Tv(const Tv &)> &objective, Tv x0,
-                      Tv step = 0.1, int max_iter = 100, Tv tol = 1e-6,
-                      Tv x_min = NAN, Tv x_max = NAN);
+  static std::tuple<Tv, Ti>
+  Minimize1(const std::function<Tv(const Tv &)> &objective, Tv x0,
+            Tv step = 0.1, int max_iter = 100, Tv tol = 1e-6, Tv x_min = NAN,
+            Tv x_max = NAN);
 };
 
 } // namespace ldt

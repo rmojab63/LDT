@@ -22,6 +22,7 @@ print.ldtsearch <- function(x, ...) {
       round(x$counts$failedCount / x$counts$searchedCount * 100,1), "%)\n",
       sep = ""
   )
+  cat("elapsed (secs):", prettyNum(x$info$diffTimeSecs, big.mark = ","), "\n")
   cat("--------\n")
   if (x$counts$failedCount > 0){
     cat("Failures:\n")
@@ -1015,7 +1016,7 @@ cdfIndex = 0, ...) {
 #' as a shape. Each element must also be a list with the following elements:
 #' 1.\code{value}: estimated coefficient,
 #' 2.\code{y}: vertical position (default=0),
-#' 3.\code{shape}: shape of the point (default="circle"), and other usual attributes.
+#' 3.\code{pch}: \code{pch} of the point (default="1"), and other usual attributes.
 #' @param bounds A list where each element is bound estimation information (e.g.
 #' output of an extreme bound analysis) to be drawn as a rectangle. Each element is defined by the following items:
 #' 1.\code{xmin}: where bound starts on x-axis,
@@ -1086,14 +1087,7 @@ cdfIndex = 0, ...) {
 #'
 coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distributions = NULL,
                        newPlot = TRUE, xlim = NULL, ylim = NULL,
-                       boundFun = function(b, type) {
-                         if
-                         (type == "xmin" || type == "ymin") {
-                           0.9 * b
-                         } else {
-                           1.1 * b
-                         }
-                       },
+                       boundFun = function(b, type) ifelse(type == "xmin" || type == "ymin",0.9 * b,1.1 * b),
                        legendsTitle = c("Point", "Bound", "Interval", "Density"),
                        legendSize = 5, ...) {
 
@@ -1233,7 +1227,7 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     i <- 0
     for (g in points) {
       i <- i + 1
-      pch <- if.not.null(g$pch, 21)
+      pch <- if.not.null(g$pch, 4)
       col <- if.not.null(g$col, "black")
       cex <- if.not.null(g$cex, 3)
       graphics::points(
@@ -1353,7 +1347,6 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     ) # set pch for better placement
   }
 }
-
 
 
 get_coef_stars <- function(pvalue, formatLatex) {
@@ -1496,8 +1489,15 @@ get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", f
   }
 
   # Function to format the numbers
+
   if (is.null(formatNumFun))
-    formatNumFun = function(colIndex, x) sprintf(numFormat, x)
+    formatNumFun = function(colIndex, x) {
+      if (is.integer(x))
+        x
+      else
+        sprintf0(numFormat, x)
+    }
+
 
   # Function to replace special characters
   if(is.null(textFun_sub))
@@ -1541,8 +1541,8 @@ get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", f
   #    include other rows:
   dep_cel_code <- "dep."
   row_names <- unlist(c(textFun(dep_cel_code, NULL),
-                 lapply(row_names, function(n) textFun(n, "ename")),
-                 lapply(regInfo, function(n) textFun(n, "rname"))))
+                        lapply(row_names, function(n) textFun(n, "ename")),
+                        lapply(regInfo, function(n) textFun(n, "rname"))))
   row_names0 <- unlist(c(dep_cel_code, row_names0, regInfo))
 
 
@@ -1634,6 +1634,14 @@ get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", f
 
       }
     }
+  }
+
+  if (length(estimList) == 1){ # header is the same for all
+    colnames(r_table) <- r_table[1,]
+    r_table <- r_table[2:nrow(r_table),,drop=FALSE]
+  }
+  else if (length(depList) == 1){
+    r_table <- r_table[2:nrow(r_table),,drop=FALSE]
   }
 
   return(r_table)

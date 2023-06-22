@@ -221,6 +221,31 @@ public:
   }
 
   template <bool skipNAN>
+  static void MinIndex(const Tw *data, const Ti &length, Tw &min, Ti &index) {
+    if (length == 0) {
+      min = NAN;
+      index = -1;
+    } else {
+      index = -1;
+      min = INFINITY;
+      Tv d;
+      for (Ti i = 0; i < length; i++) {
+        d = data[i];
+
+        if constexpr (skipNAN) {
+          if (std::isnan(d))
+            continue;
+        }
+
+        if (d < min) {
+          min = d;
+          index = i;
+        }
+      }
+    }
+  }
+
+  template <bool skipNAN>
   static void Max(const Tw *data, const Ti &length, Tw &max) {
     if (length == 0)
       max = NAN;
@@ -238,6 +263,32 @@ public:
 
         if (d > max)
           max = d;
+      }
+    }
+  }
+
+  template <bool skipNAN>
+  static void MaxIndex(const Tw *data, const Ti &length, Tw &max, Ti &index) {
+    if (length == 0) {
+      max = NAN;
+      index = -1;
+    } else {
+      index = -1;
+      max = -INFINITY;
+      double d;
+      Ti i;
+      for (i = 0; i < length; i++) {
+        d = data[i];
+
+        if constexpr (skipNAN) {
+          if (std::isnan(d))
+            continue;
+        }
+
+        if (d > max) {
+          max = d;
+          index = i;
+        }
       }
     }
   }

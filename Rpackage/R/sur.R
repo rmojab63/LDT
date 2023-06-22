@@ -91,6 +91,9 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
   res <- .SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
                     yGroups, searchSigMaxIter, searchSigMaxProb, measureOptions,
                     modelCheckItems, searchItems, searchOptions)
+
+  res$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(res$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
+                                               as.POSIXct(res$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
   res
 }
 
@@ -161,6 +164,16 @@ estim.sur <- function(y, x, addIntercept = TRUE,
                    simFixSize, simTrainRatio,
                    simTrainFixSize, simSeed,
                    simMaxConditionNumber, printMsg)
+
+  res$info$searchSigMaxIter = searchSigMaxIter
+  res$info$addIntercept = addIntercept
+  res$info$searchSigMaxProb=searchSigMaxProb
+  res$info$simFixSize=simFixSize
+  res$info$simTrainFixSize=simTrainFixSize
+  res$info$simTrainRatio=simTrainRatio
+  res$info$simSeed=simSeed
+  res$info$simMaxConditionNumber=simMaxConditionNumber
+
   res
 }
 
@@ -228,6 +241,51 @@ search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), 
 }
 
 
+sur.to.latex.eqs <- function(sigma, coef, intercept, numFormat = "%.2f") {
+  num_y <- ncol(coef)
+  num_x <- nrow(coef) - ifelse(intercept, 1, 0)
+  eqs <- character(num_y)
+  for (i in seq_len(num_y)) {
+    b <- coef[, i]
+    if (intercept) {
+      eqs[i] <- paste0("Y_", i, " = ", sprintf0(numFormat, b[1]))
+      if (num_x > 0) {
+        eqs[i] <- paste0(eqs[i], " + ", paste0(sprintf0(numFormat, b[-1]), " X_", seq_len(num_x), collapse = " + "))
+      }
+    } else {
+      eqs[i] <- paste0("Y_", i, " = ", paste0(sprintf0(numFormat, b), " X_", seq_len(num_x), collapse = " + "))
+    }
+    eqs[i] <- paste0(eqs[i], " + E_", i, ", \\sigma_",i,"^2 = ", sprintf0(numFormat, sigma[[i,i]]))
+  }
+  eqs_latex <- paste(eqs, collapse = " \\\\ ")
+
+  return(eqs_latex)
+}
+
+sur.to.latex.mat <- function(sigma, coef, intercept = TRUE, numFormat = "%.2f",
+                             num_x_break = 3, y_label = "Y", x_label= "X", e_label = "E") {
+  num_y <- ncol(coef)
+  num_x <- nrow(coef)
+
+  y_vec <- latex.variable.vector(num_y, y_label)
+
+  coef_t <- t(coef)
+  x_mat <- latex.matrix(mat = coef_t, numFormat = numFormat)
+
+  x_vec <- latex.variable.vector(num_x, x_label, intercept, num_x_break)
+
+  e_vec <- latex.variable.vector(num_y, e_label)
+
+  s_mat <- latex.matrix(mat = sigma, numFormat = numFormat)
+
+  eq_latex <- paste0(y_vec, " = ", x_mat," ", x_vec," + ", e_vec, ", \\Sigma = ", s_mat)
+
+
+
+  return(eq_latex)
+}
+
+
 #' Generate Random Sample from an SUR Model
 #'
 #' This function generates a random sample from an Seemingly Unrelated Regression model.
@@ -238,19 +296,26 @@ search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), 
 #' If it is an integer value, it specifies the number of independent variables in each equation of the SUR model and coefficient matrix is generated randomly.
 #' @param nObs Number of observations to generate.
 #' @param intercept If \code{TRUE}, an intercept is included in the model as the first exogenous variable.
+#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
+#' If \code{NULL}, conversion to latex or html representations are disabled.
 #'
 #' @return A list with the following items:
 #'   \item{y}{matrix, the generated dependent variable.}
 #'   \item{x}{matrix, the generated independent variable.}
 #'   \item{e}{matrix, the generated errors.}
+#'   \item{sigma}{matrix, the covariance matrix of the disturbances.}
 #'   \item{coef}{matrix, the coefficients used in the model.}
 #'   \item{intercept}{logical, whether an intercept was included in the model.}
+#'   \item{eqsLatex}{character string, Latex representation of the equations of the system.}
+#'   \item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 #'
 #' @export
 #' @importFrom stats rnorm
 #' @example man-roxygen/ex-sim.sur.R
 #' @seealso [sim.varma],[estim.sur],[search.sur]
-sim.sur <- function(sigma = 1L, coef = 1L, nObs = 100, intercept = TRUE) {
+sim.sur <- function(sigma = 1L, coef = 1L,
+                    nObs = 100, intercept = TRUE,
+                    numFormat = "%.2f") {
 
   nObs = as.integer(nObs)
   if (nObs <= 0)
@@ -269,10 +334,10 @@ sim.sur <- function(sigma = 1L, coef = 1L, nObs = 100, intercept = TRUE) {
     } else {
       num_y <- nrow(sigma)
     }
-    coef <- matrix(rnorm((num_x + 1) * num_y), ncol = num_y)
+    coef <- matrix(rnorm((num_x + ifelse(intercept, 1, 0)) * num_y), ncol = num_y)
   } else {
     num_y <- ncol(coef)
-    num_x <- ncol(coef) - ifelse(intercept, 1, 0)
+    num_x <- nrow(coef) - ifelse(intercept, 1, 0)
   }
 
   if (is.null(sigma)) {
@@ -290,24 +355,51 @@ sim.sur <- function(sigma = 1L, coef = 1L, nObs = 100, intercept = TRUE) {
     }
   }
 
-  x <- matrix(rnorm(nObs * num_x), ncol = num_x)
-
-  if (intercept){
-    x <- cbind(rep(1,nObs),x)
+  if (num_x == 0){
+    if (intercept)
+      x <- matrix(rep(1,nObs), ncol = 1)
+    else
+      x <- matrix()
   }
+  else{
+    x <- matrix(rnorm(nObs * num_x), ncol = num_x)
+    if (intercept){
+      x <- cbind(rep(1,nObs),x)
+    }
+  }
+
+
 
   errors <- rand.mnormal(nObs, mu = rep(0, num_y), sigma = sigma)
   e <- errors$sample
-  y <- x %*% coef + e
+  if (length(x) != 0)
+    y <- x %*% coef + e
+  else
+    y <- e
 
   colnames(y) <- paste0("Y",c(1:ncol(y)))
-  if (intercept)
-    colnames(x) <- c("Intercept", paste0("X",c(1:num_x)))
-  else
-    colnames(x) <- paste0("X",c(1:num_x))
+  if (num_x == 0){
+    if (intercept)
+      colnames(x) <- c("Intercept")
+  }
+  else {
+    if (intercept)
+      colnames(x) <- c("Intercept", paste0("X",c(1:num_x)))
+    else
+      colnames(x) <- paste0("X",c(1:num_x))
+  }
   colnames(e) <- paste0("E",c(1:ncol(e)))
 
-  result <- list(y = y, x = x, e = e, coef = coef, intercept = intercept)
+  colnames(sigma) <- colnames(y)
+  rownames(sigma) <- colnames(y)
+  rownames(coef) <- colnames(x)
+  colnames(coef) <- colnames(y)
+
+  result <- list(y = y, x = x, e = e,
+                 sigma = sigma, coef = coef,
+                 intercept = intercept,
+                 eqsLatex = ifelse(is.null(numFormat), NULL, sur.to.latex.eqs(sigma, coef, intercept, as.character(numFormat))),
+                 eqsLatexSys = ifelse(is.null(numFormat), NULL, sur.to.latex.mat(sigma, coef, intercept, as.character(numFormat))))
 
   return(result)
 }

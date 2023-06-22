@@ -244,3 +244,28 @@ TEST(NelderMead_T, univariate) {
       NelderMead::Minimize1(absf_sin, 0.0, 0.1, 100, 1e-7, M_PI, 3 * M_PI / 2);
   ASSERT_NEAR(M_PI, std::get<0>(res), 1e-4);
 }
+
+TEST(NelderMead_T, multivar) {
+
+  auto optim = NelderMead(3);
+  auto start = Matrix<Tv>(new double[3]{2.0, 2.0, 2.0}, 3, 1);
+  std::function<double(const Matrix<Tv> &)> sphere =
+      [](const Matrix<Tv> &x) -> double {
+    double sum = 0.0;
+    for (size_t i = 0; i < x.length(); ++i)
+      sum += x.Data[i] * x.Data[i];
+    return sum;
+  };
+  auto work = new double[optim.WorkSize];
+  auto storage = new double[optim.StorageSize];
+  optim.Minimize(sphere, start, work, storage);
+
+  ASSERT_TRUE(std::abs(optim.Result.Data[0]) < 1e-3);
+  ASSERT_TRUE(std::abs(optim.Result.Data[1]) < 1e-3);
+  ASSERT_TRUE(std::abs(optim.Result.Data[2]) < 1e-3);
+
+  // restrict
+  auto lower = Matrix<Tv>(new double[3]{-4, 2.0, -INFINITY}, 3, 1);
+  auto upper = Matrix<Tv>(new double[3]{4, 5.0, INFINITY}, 3, 1);
+  optim.Minimize(sphere, start, work, storage, &lower, &upper);
+}

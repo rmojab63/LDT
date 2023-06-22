@@ -160,20 +160,31 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
   }
 
   auto optim = NelderMead(2);
-  optim.Alpha = nelderMeadOptions["alpha"];
-  optim.Beta = nelderMeadOptions["beta"];
-  optim.Gamma = nelderMeadOptions["gamma"];
-  optim.MaxIterations = nelderMeadOptions["maxIterations"];
-  optim.Epsilon = nelderMeadOptions["epsilon"];
-  optim.Scale = nelderMeadOptions["scale"];
+  optim.ParamContraction = nelderMeadOptions["contraction"];
+  optim.ParamReflection = nelderMeadOptions["reflection"];
+  optim.ParamShrink = nelderMeadOptions["shrink"];
+  optim.ParamExpansion = nelderMeadOptions["expansion"];
+  optim.Tolerance = nelderMeadOptions["tolerance"];
+  optim.MaxIteration = nelderMeadOptions["maxIterations"];
 
   auto ps =
       DistributionGld::GetFromMoments(mean, variance, skewness, excessKurtosis,
                                       type, optim, start_[0], start_[1]);
 
+  if (optim.Iter == optim.MaxIteration)
+    Rf_warning("Maximum number of iteration reached in GLD estimation.");
+
+  if (printMsg){
+    Rprintf("....\n");
+    Rprintf("Iteration=%i\n", optim.Iter);
+    Rprintf("Objective Minimum=%i\n", optim.Min);
+    Rprintf("Parameters=%f, %f, %f, %f\n", std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),
+            std::get<3>(ps));
+  }
+
   NumericVector result = {std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),
-                          std::get<3>(ps)};
-  result.names() = std::vector<std::string>({"L1", "L2", "L3", "L4"});
+                          std::get<3>(ps), (double)optim.Iter};
+  result.names() = std::vector<std::string>({"L1", "L2", "L3", "L4", "Iter"});
 
   return result;
 }

@@ -50,13 +50,13 @@
 #'
 #' @seealso [estim.dc], [search.dc.stepwise]
 search.dc <- function(y, x, w = NULL, xSizes = NULL,
-                     xPartitions = NULL, costMatrices = NULL,
-                     searchLogit = TRUE, searchProbit = FALSE,
-                     optimOptions = get.options.newton(), aucOptions = get.options.roc(),
-                     measureOptions = get.options.measure(),
-                     modelCheckItems = get.items.modelcheck(),
-                     searchItems = get.items.search(),
-                     searchOptions = get.options.search()){
+                      xPartitions = NULL, costMatrices = NULL,
+                      searchLogit = TRUE, searchProbit = FALSE,
+                      optimOptions = get.options.newton(), aucOptions = get.options.roc(),
+                      measureOptions = get.options.measure(),
+                      modelCheckItems = get.items.modelcheck(),
+                      searchItems = get.items.search(),
+                      searchOptions = get.options.search()){
 
   y = as.matrix(y)
   x = as.matrix(x)
@@ -151,10 +151,10 @@ search.dc <- function(y, x, w = NULL, xSizes = NULL,
 #' @example man-roxygen/ex-estim.dc.R
 #' @seealso [search.dc], [search.dc.stepwise]
 estim.dc <- function(y, x, w = NULL,
-                    distType = c("logit", "probit"), newX = NULL,
-                    pcaOptionsX = NULL, costMatrices = NULL,
-                    aucOptions = get.options.roc(), simFixSize = 200,
-                    simTrainFixSize = 0, simTrainRatio = 0.5, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
+                     distType = c("logit", "probit"), newX = NULL,
+                     pcaOptionsX = NULL, costMatrices = NULL,
+                     aucOptions = get.options.roc(), simFixSize = 200,
+                     simTrainFixSize = 0, simTrainRatio = 0.5, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
 {
 
   y = as.matrix(y)
@@ -195,21 +195,21 @@ estim.dc <- function(y, x, w = NULL,
 # get estimation from search result
 GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, distType, ...) {
   M <- estim.dc(y,
-               x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
-               w = w,
-               distType = distType,
-               newX = if (is.null(exoIndices) || is.null(searchRes$info$newX)) {
-                 NULL
-               } else {
-                 as.matrix(searchRes$info$newX[, exoIndices])
-               },
-               pcaOptionsX = NULL,
-               costMatrices = searchRes$info$costMatrices,
-               simFixSize = searchRes$info$measureOptions$simFixSize,
-               simTrainRatio = searchRes$info$measureOptions$trainRatio,
-               simTrainFixSize = searchRes$info$measureOptions$trainFixSize,
-               simSeed = abs(searchRes$info$measureOptions$seed),
-               printMsg = printMsg
+                x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
+                w = w,
+                distType = distType,
+                newX = if (is.null(exoIndices) || is.null(searchRes$info$newX)) {
+                  NULL
+                } else {
+                  as.matrix(searchRes$info$newX[, exoIndices])
+                },
+                pcaOptionsX = NULL,
+                costMatrices = searchRes$info$costMatrices,
+                simFixSize = searchRes$info$measureOptions$simFixSize,
+                simTrainRatio = searchRes$info$measureOptions$trainRatio,
+                simTrainFixSize = searchRes$info$measureOptions$trainFixSize,
+                simSeed = abs(searchRes$info$measureOptions$seed),
+                printMsg = printMsg
   )
 
   return(M)
@@ -240,11 +240,39 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #'
 #' @seealso [search.dc], [estim.dc]
 search.dc.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                       countSteps = c(NA, 40, 30, 20),
-                       savePre = NULL, ...) {
+                               countSteps = c(NA, 40, 30, 20),
+                               savePre = NULL, ...) {
   Search_s("dc", x, xSizeSteps, countSteps, savePre, y = y, ...)
 }
 
+
+dc.to.latex.eqs <- function(coef, probit, numFormat = "%.2f") {
+
+  if (is.null(xNames))
+    xNames <- paste0("X_",c(1:length(coef)))
+
+  terms <- character(length(coef))
+  terms[1] <- sprintf0(numFormat, coef[1])
+  for (i in seq_along(coef)[-1]) {
+    # avoid +- signs
+    if (coef[i] >= 0) {
+      sign <- " + "
+    } else {
+      sign <- " - "
+    }
+    terms[i] <- paste0(sign, sprintf(numFormat, abs(coef[i])), " ", xNames[i])
+  }
+
+  formula_str <- paste(terms, collapse = "")
+
+  if (probit) {
+    formula_str <- paste0("P(Y = 1 | ", paste(xNames[-1], collapse = ", "), ") = \\Phi(", formula_str, ")")
+  } else {
+    formula_str <- paste0("P(Y = 1 | ", paste(xNames[-1], collapse = ", "), ") = \\frac{1}{1 + e^{-(", formula_str, ")}}")
+  }
+
+  return(formula_str)
+}
 
 #' Generate Random Sample from a DC Model
 #'

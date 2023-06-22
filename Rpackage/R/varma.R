@@ -593,6 +593,7 @@ varma.to.latex.eqs <- function(arList, int, exoCoef, maList, numFormat = "%.2f")
     if (eq < numEq) {
       latex_str <- paste0(latex_str, "\\\\")
     }
+    latex_str <- paste0("\\begin{aligned} ", latex_str, " \\end{aligned}")
   }
 
   return(latex_str)
@@ -625,7 +626,9 @@ varma.to.latex.eqs <- function(arList, int, exoCoef, maList, numFormat = "%.2f")
 #' # see 'search.varma' or 'estim.varma' functions.
 #'
 #' @seealso [estim.varma]
-get.varma.params <- function(coef, numAR = 1, numMA = 0, numExo = 0, intercept = TRUE, numFormat = "%.2f") {
+get.varma.params <- function(coef, numAR = 1, numMA = 0,
+                             numExo = 0, intercept = TRUE,
+                             numFormat = "%.2f") {
   coef <- as.matrix(coef)
   numEq <- nrow(coef)
   numAR <- as.integer(numAR)

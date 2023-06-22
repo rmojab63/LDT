@@ -478,3 +478,84 @@ if.not.null <- function(arg, default = NULL) {
   }
   return(arg)
 }
+
+sprintf0 <- function(numFormat, x) {
+  if (length(x) == 0) {
+    return(ifelse(x==0,"0",sprintf(numFormat, x)))
+  } else {
+    return(sapply(x, function(d)ifelse(d==0,0,sprintf(numFormat, d))))
+  }
+}
+
+
+#' Convert a matrix to LaTeX code
+#'
+#' This function takes a matrix and returns the LaTeX code for the matrix,
+#' using the specified matrix environment and number format.
+#'
+#' @param mat A matrix to convert to LaTeX code.
+#' @param env A character string specifying the matrix environment to use.
+#'   Possible values are "bmatrix", "pmatrix", "Bmatrix", "vmatrix", and "Vmatrix".
+#' @param numFormat A character string specifying the format to use when displaying the numbers.
+#'   This value can be any valid format string accepted by the sprintf function.
+#'
+#' @return A character string containing the LaTeX code for the matrix.
+#'
+#' @examples
+#' #mat <- matrix(1:4, ncol = 2)
+#' #latex.matrix(mat)
+#' #latex.matrix(mat, env = "pmatrix")
+#' #latex.matrix(mat, numFormat = "%.0f")
+latex.matrix <- function(mat, env = "bmatrix", numFormat = "%.2f") {
+
+  mat_str <- apply(mat, 1, function(row) {
+    paste0(sprintf0(numFormat, row), collapse = " & ")
+  })
+  mat_str <- paste(mat_str, collapse = " \\\\ ")
+  mat_str <- paste0("\\begin{", env, "} ", mat_str, " \\end{", env, "}")
+  return(mat_str)
+}
+
+#' Generate LaTeX code for a variable vector
+#'
+#'
+#' @param vec_size An integer specifying the size of the vector.
+#' @param label A character string specifying the label to use when filling the cell values.
+#' @param intercept A logical value indicating whether to add `1` to the vector.
+#' @param max_size An integer specifying the maximum size of the vector before using `\\vdots` to remove middle elements.
+#' @param env A character string specifying the matrix environment to use.
+#'   Possible values are "bmatrix", "pmatrix", "Bmatrix", "vmatrix", and "Vmatrix".
+#'
+#' @return A character string containing the LaTeX code for the vector.
+#'
+#' @examples
+#' #latex.variable.vector(3, "X")
+#' #latex.variable.vector(5, "X")
+#' #latex.variable.vector(5, "X", intercept = FALSE)
+latex.variable.vector <- function(vec_size, label, intercept = FALSE, max_size = 3, env = "pmatrix") {
+
+
+  if (vec_size == 0){
+    if (intercept)
+      vec_names <- paste0("\\begin{",env,"}   1 \\end{",env,"}")
+    else
+      vec_names <- paste0("\\begin{",env,"} \\end{",env,"}")
+  }
+  else if (vec_size <= max_size) {
+    vec_names <- paste0(label,"_", seq_len(vec_size - ifelse(intercept,1,0)), collapse = " \\\\ ")
+    if (intercept) {
+      vec_names <- paste0("1 \\\\ ", vec_names)
+    }
+    vec_names <- paste0("\\begin{",env,"} ", vec_names, " \\end{",env,"}")
+  } else {
+    vec_names <- paste0("\\begin{",env,"}")
+    if (intercept) {
+      vec_names <- paste0(vec_names,"1 \\\\ ",label,"_1 \\\\ \\vdots \\\\ ",label,"_", vec_size - 1)
+    } else {
+      vec_names <- paste0(vec_names,label,"_1 \\\\ \\vdots \\\\ ",label,"_", vec_size)
+    }
+    vec_names <- paste0(vec_names,"\\end{",env,"}")
+  }
+
+  return(vec_names)
+}

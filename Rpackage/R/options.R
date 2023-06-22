@@ -60,26 +60,29 @@ CheckRocOptions <- function(O){
 
 #' Options for Nelder-Mead Optimization
 #'
-#'
+#' Use this function to get the required options when Nelder-Mead optimization is needed such as [s.gld.from.moments] function.
 #'
 #' @param maxIterations (int) Maximum number of iterations.
-#' @param epsilon (double) A small value to test convergence.
-#' @param alpha (double) the reflection coefficient.
-#' @param beta (double) the contraction coefficient.
-#' @param gamma (double) the expansion coefficient.
-#' @param scale (double) A scale in initializing the simplex.
+#' @param tolerance A small number to determine the convergence.
+#' The algorithm terminates when the difference between the best and worst points in the simplex is less than this value.
+#' @param reflection A number for reflection coefficient.
+#' It controls how far the worst point is reflected through the centroid of the remaining points.
+#' @param expansion A number that determines the expansion coefficient.
+#' It controls how far the reflected point is expanded along the line connecting it to the centroid.
+#' @param contraction A number that determines the contraction coefficient.
+#' It controls how far the worst point is contracted towards the centroid.
+#' @param shrink A number that determines the shrink coefficient.
+#' It controls how much the simplex is shrunk towards the best point when all other moves are rejected.
 #'
 #' @return A list with the given options.
-#'
-#'  TODO: export
-#'
-get.options.neldermead <- function(maxIterations = 100, epsilon = 1e-8,
-                                   alpha = 1, beta = 0.5, gamma = 2,
-                                   scale = 1){
+#' @export
+get.options.neldermead <- function(maxIterations = 100, tolerance = 1e-6,
+                                   reflection = 1, expansion = 2, contraction = 0.5,
+                                   shrink = 1){
   O = list(maxIterations = maxIterations,
-           epsilon = epsilon, alpha = alpha,
-           beta = beta, gamma = gamma,
-           scale = scale)
+           tolerance = tolerance, reflection = reflection,
+           expansion = expansion, contraction = contraction,
+           shrink = shrink)
   O = CheckNelderMeadOptions(O)
   O
 }
@@ -87,30 +90,30 @@ get.options.neldermead <- function(maxIterations = 100, epsilon = 1e-8,
 
 CheckNelderMeadOptions <- function(O){
   O$maxIterations <- as.integer(O$maxIterations)
-  O$epsilon <- as.numeric(O$epsilon)
-  O$alpha <- as.numeric(O$alpha)
-  O$beta <- as.numeric(O$beta)
-  O$gamma <- as.numeric(O$gamma)
-  O$scale <- as.numeric(O$scale)
+  O$tolerance <- as.numeric(O$tolerance)
+  O$reflection <- as.numeric(O$reflection)
+  O$expansion <- as.numeric(O$expansion)
+  O$contraction <- as.numeric(O$contraction)
+  O$shrink <- as.numeric(O$shrink)
 
 
   if (O$maxIterations <= 0)
     stop("Invalid Nelder-Mead option: 'maxIterations' must be positive.")
 
-  if (O$epsilon < 0)
-    stop("Invalid Nelder-Mead option: 'epsilon' cannot be negative.")
+  if (O$tolerance < 0)
+    stop("Invalid Nelder-Mead option: 'tolerance' cannot be negative.")
 
-  if (O$alpha <= 0)
-    stop("Invalid Nelder-Mead option: 'alpha' must be positive.")
+  if (O$reflection <= 0)
+    stop("Invalid Nelder-Mead option: 'reflection' must be positive.")
 
-  if (O$beta <= 0)
-    stop("Invalid Nelder-Mead option: 'beta' must be positive.")
+  if (O$expansion <= 0)
+    stop("Invalid Nelder-Mead option: 'expansion' must be positive.")
 
-  if (O$gamma <= 0)
-    stop("Invalid Nelder-Mead option: 'gamma' must be positive.")
+  if (O$contraction <= 0)
+    stop("Invalid Nelder-Mead option: 'contraction' must be positive.")
 
-  if (O$scale <= 0)
-    stop("Invalid Nelder-Mead option: 'scale' must be positive.")
+  if (O$shrink <= 0)
+    stop("Invalid Nelder-Mead option: 'shrink' must be positive.")
 
   O
 }

@@ -116,42 +116,65 @@ s.roc <- function(y, scores, weights = NULL,
 #'
 #' Calculates the parameters of the generalized lambda distribution (FKML), given the first four moments of the distribution.
 #'
+#' @param mean A number for the mean of the distribution.
+#' @param variance A number for the variance of the distribution.
+#' @param skewness A number for the skewness of the distribution.
+#' @param excessKurtosis A number for the excess kurtosis of the distribution.
+#' @param type An integer to restrict the shape of the distribution. See details section.
+#' @param start A numeric vector of size 2 for the starting value.
+#' @param nelderMeadOptions A list of options for Nelder-Mead algorithm. Use [get.options.neldermead] for initialization.
+#' @param printMsg Set to \code{TRUE} to enable printing some details.
+#'
 #' @details
 #' The type of the distribution is determined by one or two restrictions:
-#' - **type 0:** general
-#' - **type 1:** symmetric 'type 0'
-#' - **type 2:** uni-modal continuous tail: p3<1 & p4<1
-#' - **type 3:** symmetric 'type 2' p3==p4
-#' - **type 4:** uni-modal continuous tail finite slope  p3<=0.5 &  p4<=5
-#' - **type 5:** symmetric 'type 4' p3==p4
-#' - **type 6:** uni-modal truncated density curves: p3>=2 & p4>=2 (includes uniform distribution)
-#' - **type 7:** symmetric 'type 6' p3==p4
-#' - **type 8:** S shaped p3>2 & 1<p4<2 or 1<p3<2 & p4>2
-#' - **type 9:** U shaped 1<p3<=2 and 1<p4<=2
-#' - **type 10:** symmetric 'type 9' p4==p4
-#' - **type 11:** monotone p3>1 & p4<=1
+#' \itemize{
+#' \item **type 0:** general, no restriction
+#' \item **type 1:** symmetric 'type 0', p3 == p4
+#' \item **type 2:** uni-modal continuous tail, p3 < 1 & p4 < 1
+#' \item **type 3:** symmetric 'type 2', p3 == p4
+#' \item **type 4:** uni-modal continuous tail finite slope, p3 <= 0.5 & p4 <= 0.5
+#' \item **type 5:** symmetric 'type 4', p3 == p4
+#' \item **type 6:** uni-modal truncated density curves, p3 >= 2 & p4 >= 2 (includes uniform distribution)
+#' \item **type 7:** symmetric 'type 6', p3 == p4
+#' \item **type 8:** S shaped, (p3 > 2 & 1 < p4 < 2) or (1 < p3 < 2 & p4 > 2)
+#' \item **type 9:** U shaped, (1 < p3 <= 2) and (1 < p4 <= 2)
+#' \item **type 10:** symmetric 'type 9', p3 == p4
+#' \item **type 11:** monotone, p3 > 1 & p4 <= 1
+#' }
 #'
-#' @param mean (double) mean of the distribution.
-#' @param variance (double) variance of the distribution.
-#' @param skewness (double) skewness of the distribution.
-#' @param excessKurtosis (double) excess kurtosis of the distribution.
-#' @param type (int) The type of the distribution.
-#' @param start (numeric vector, length=2) starting value for p3 and p4. Use null for c(0,0).
-#' @param nelderMeadOptions (list) The optimization parameters. Use null for default.
-#' @param printMsg (bool) If \code{TRUE}, details are printed.
+#' @return A vector of length 5. The first 4 elements are the parameters of the GLD distribution.
+#' The last one is the number of iterations.
 #'
-#'
-#' @return a vector with the parameters of the GLD distribution.
-#' export (TODO: the Nelder-Mead algorithm in the c++ code need revision)
-#'
+#' @export
 #' @examples
-#' #res = s.gld.from.moments(0,1,0,0,0,c(0,0))
+#' res = s.gld.from.moments(0,1,0,0, start = c(0,0), type = 4)
+#' probs <- seq(0.1,0.9,0.1)
+#' x = s.gld.quantile(probs, res[1],res[2],res[3],res[4])
+#' y = s.gld.density.quantile(probs, res[1],res[2],res[3],res[4])
+#' plot(x,y)
+#' lines(x,y)
+#'
+#'
 s.gld.from.moments <- function(mean = 0, variance = 1,
                                skewness = 0, excessKurtosis = 0,
                                type = 0, start = NULL,
                                nelderMeadOptions = get.options.neldermead(),
                                printMsg = FALSE)
 {
+  mean <- as.numeric(mean)
+  variance <- as.numeric(variance)
+  skewness <- as.numeric(skewness)
+  excessKurtosis <- as.numeric(excessKurtosis)
+  if (is.null(start))
+    start <- c(0,0)
+  start <- as.numeric(start)
+  if (length(start) != 2)
+    stop("start must be a numeric vector of size 2.")
+  if (is.null(nelderMeadOptions))
+    nelderMeadOptions <- get.options.neldermead()
+  CheckNelderMeadOptions(nelderMeadOptions)
+  printMsg <- as.logical(printMsg)
+
   res <- .GetGldFromMoments(mean , variance, skewness, excessKurtosis,
                             type, start, nelderMeadOptions, printMsg)
   res
@@ -210,8 +233,8 @@ s.gld.quantile <- function(probs, p1, p2, p3, p4)
 #' probs <- seq(0.1,0.9,0.1)
 #' x = s.gld.quantile(probs, 0,1,0,0)
 #' y = s.gld.density.quantile(probs, 0,1,0,0)
-#' # plot(x,y)
-#' # lines(x,y)
+#' plot(x,y)
+#' lines(x,y)
 #' @seealso [s.gld.quantile]
 s.gld.density.quantile <- function(probs, p1, p2, p3, p4)
 {

@@ -94,12 +94,12 @@ test_that("Pca works with zero variance columns", {
 
 test_that("GldFromMoments works", {
 
-  res = s.gld.from.moments(0,1,0,0,0,c(0,0))
+  res = s.gld.from.moments(0,1,0,0, start = c(0,0), type = 4)
   #resR = gld::fit.fkml.moments.val(moments=c(mean=0, variance=1, skewness=0,
   #                                    kurtosis=3), starting.point = c(0,0))
   #lambda = as.numeric(resR$lambda)
-  lambda = c(1.051238729527833e-07, 1.463551748074293e+00, 1.349123923194031e-01, 1.349125904877055e-01)
-  expect_equal(as.numeric(res), lambda, tolerance = 1e-4)
+  lambda <- c(6.72393226737002e-05, 1.46375447283582, 0.134754823266661, 0.1348815721514)
+  expect_equal(lambda, as.numeric(res)[1:4], tolerance = 1e-4)
 
 })
 

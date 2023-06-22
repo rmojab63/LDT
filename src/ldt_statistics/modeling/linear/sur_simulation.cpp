@@ -37,8 +37,11 @@ SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
   Model = SurExtended(
       N0, m, k, isRestricted, false, // NANs must be removed before
       false, N1, maxSigSearchIter, doForcVariance, pcaOptionsY, pcaOptionsX);
+
   WorkSize = Split.StorageSize + Model.StorageSize + Model.WorkSize;
+  // I have generated Split.WorkSizeI here
   WorkSize += N1 * m; // for errors matrix
+
   StorageSize = m * (Ti)measuresOut.size();
 }
 
@@ -56,39 +59,39 @@ void SurSimulation::AddError(std::string state) {
 
 Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
              const Tv *errors, const Tv *means, const Tv *variances) {
-  Tv avg = 0;
+  Tv sum = 0;
   switch (e) {
   case ldt::ScoringType::kDirection:
     throw std::logic_error("not implemented (direction)");
   case ldt::ScoringType::kSign:
     for (Ti i = 0; i < length; i++)
-      avg += actuals[i] * means[i] > 0 ? 1 : 0;
+      sum += actuals[i] * means[i] > 0 ? 1 : 0;
     break;
   case ldt::ScoringType::kMae:
     for (Ti i = 0; i < length; i++)
-      avg += std::abs(errors[i]);
+      sum += std::abs(errors[i]);
     break;
   case ldt::ScoringType::kScaledMae:
     for (Ti i = 0; i < length; i++)
-      avg += std::abs(errors[i] / actuals[i]);
+      sum += std::abs(errors[i] / actuals[i]);
     break;
   case ldt::ScoringType::kRmse:
     for (Ti i = 0; i < length; i++)
-      avg += std::pow(errors[i], 2.0);
+      sum += std::pow(errors[i], 2.0);
     break;
   case ldt::ScoringType::kScaledRmse:
     for (Ti i = 0; i < length; i++)
-      avg += std::pow(errors[i] / actuals[i], 2.0);
+      sum += std::pow(errors[i] / actuals[i], 2.0);
     break;
   case ldt::ScoringType::kCrps:
     for (Ti i = 0; i < length; i++)
-      avg += Scoring::GetScoreCrpsNormal(errors[i], 0, std::sqrt(variances[i]));
+      sum += Scoring::GetScoreCrpsNormal(errors[i], 0, std::sqrt(variances[i]));
     break;
   default:
     throw std::logic_error("not implemented (averaging scores)");
   }
 
-  return avg;
+  return sum;
 }
 
 void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
@@ -105,6 +108,7 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   // Ti km = k * m;
 
   Results = Matrix<Tv>(storage, (Ti)pMeasuresOut->size(), m);
+  Results.SetValue(0.0);
 
   std::mt19937 eng;
   if (seed == 0) {
@@ -112,18 +116,21 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     eng = std::mt19937(rdev());
   } else
     eng = std::mt19937(seed);
+
   Ti p = 0;
   Split.Calculate(data, &work[p], mTrainPerc, mTrainFixSize);
   p += Split.StorageSize;
   auto model_storage = &work[p];
   p += Model.StorageSize;
+  auto model_work = &work[p];
+  p += Model.WorkSize;
+  auto error_work = &work[p];
+  p += Split.Sample1.RowsCount * m;
 
   auto newY = Matrix<Tv>(Split.Sample1.Data, Split.Sample1.RowsCount, m);
   auto newX = Matrix<Tv>(&Split.Sample1.Data[m * Split.Sample1.RowsCount],
                          Split.Sample1.RowsCount, k);
-  auto errors = Matrix<Tv>(&work[p], Split.Sample1.RowsCount, m);
-
-  auto other_work = &work[p];
+  auto errors = Matrix<Tv>(error_work, Split.Sample1.RowsCount, m);
 
   Ti i, j, s, invalidCounts = 0;
   ValidCounts = 0;
@@ -136,18 +143,12 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     Split.Shuffle(data, Split_d.get(), eng);
 
     try {
-      Model.Calculate(Split.Sample0, m, model_storage, other_work, R,
+      Model.Calculate(Split.Sample0, m, model_storage, model_work, R,
                       sigSearchMaxProb, &newX, nullptr);
       if (Model.Model.condition_number > maxCondNum)
         throw std::logic_error("Model check failed: Maximum CN");
     } catch (std::exception &ex) {
       AddError(ex.what());
-      continue;
-    } catch (std::string &ex) {
-      AddError(ex.c_str());
-      continue;
-    } catch (const char *ex) {
-      AddError(ex);
       continue;
     } catch (...) {
       AddError("unknown error!");
@@ -177,14 +178,11 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
         if (cancel)
           return;
         s = j * errors.RowsCount;
-        Results.Set0(i, j,
-                     sumScores(e, errors.RowsCount, &newY.Data[s],
-                               &errors.Data[s],
-                               &Model.Projections.Means.Data[s],
-                               &Model.Projections.Variances
-                                    .Data[s])); // TODO: individual averages
-                                                // might reduce rounding errors
-                                                // (just use for RMSE)
+        Results.Set_Plus0(i, j,
+                          sumScores(e, errors.RowsCount, &newY.Data[s],
+                                    &errors.Data[s],
+                                    &Model.Projections.Means.Data[s],
+                                    &Model.Projections.Variances.Data[s]));
       }
     }
   }
