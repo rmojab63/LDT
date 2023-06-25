@@ -11,6 +11,30 @@
 
 namespace ldt {
 
+/// @brief An iterator class for rows (matrix is column major)
+template <class Tw = Tv> class LDT_EXPORT MatIterator {
+
+private:
+  /// @brief pointer to the current element in row
+  Tw *ptr;
+
+  /// @brief stride between elements in the row
+  Ti stride;
+
+public:
+  MatIterator<Tw>(Tw *p, Ti s);
+
+  MatIterator<Tw> &operator++();
+
+  MatIterator<Tw> operator++(Ti);
+
+  bool operator==(const MatIterator<Tw> &rhs) const;
+
+  bool operator!=(const MatIterator<Tw> &rhs) const;
+
+  Tw &operator*();
+};
+
 /// @brief A matrix with an array
 /// @tparam Tw type of data in the matrix array
 template <class Tw = Tv> class LDT_EXPORT Matrix {
@@ -69,6 +93,45 @@ public:
   Matrix<Tw>(Tw defaultValue, std::vector<Tw> &values, Ti m, Ti n = 1);
 
   ~Matrix<Tw>();
+
+  // #pragma endregion
+
+  // #pragma region Iterators
+
+  /// @brief Returns an iterator to the beginning of the matrix.
+  /// @return The iterator.
+  Tw *begin();
+
+  /// @brief Returns an iterator to the end of the matrix.
+  /// @return The iterator
+  Tw *end();
+
+  /// @brief Returns an iterator to the beginning of a specific column of the
+  /// matrix.
+  /// @param col The column
+  /// @return The iterator
+  /// @example for (auto it = m.ColBegin(j); it != m.ColBegin(j); ++it) {}
+  /// Use nested loops for iterating over multiple columns
+  Tw *ColBegin(Ti col);
+
+  /// @brief Returns an iterator to the end of a specific column of the matrix.
+  /// @param col The column
+  /// @return The iterator
+  Tw *ColEnd(Ti col);
+
+  /// @brief Returns an iterator to the beginning of a specific row of the
+  /// matrix.
+  /// @param row The row
+  /// @return The iterator
+  /// @example for (auto it = m.RowBegin(j); it != m.RowEnd(j); ++it) {}
+  /// Use nested loops for iterating over multiple columns.
+  MatIterator<Tw> RowBegin(Ti row);
+
+  /// @brief Returns an iterator to the end of a specific row of the
+  /// matrix.
+  /// @param row The row
+  /// @return The iterator
+  MatIterator<Tw> RowEnd(Ti row);
 
   // #pragma endregion
 
@@ -1749,6 +1812,9 @@ public:
   /// @return true, if all values are equal to the given value
   bool All(Tw value) const;
 };
+
+extern template class ldt::MatIterator<Ti>;
+extern template class ldt::MatIterator<Tv>;
 
 extern template class ldt::Matrix<Ti>;
 extern template class ldt::Matrix<Tv>;

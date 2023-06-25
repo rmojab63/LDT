@@ -1,5 +1,4 @@
 
-
 #' Search for Best Discrete-Choice Models
 #'
 #' Use this function to create a discrete-choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation measures.
@@ -46,10 +45,10 @@
 #' @export
 #' @importFrom stats glm
 #'
-#' @example man-roxygen/ex-search.dc.R
+#' @example man-roxygen/ex-search.bin.R
 #'
-#' @seealso [estim.dc], [search.dc.stepwise]
-search.dc <- function(y, x, w = NULL, xSizes = NULL,
+#' @seealso [estim.bin], [search.bin.stepwise]
+search.bin <- function(y, x, w = NULL, xSizes = NULL,
                       xPartitions = NULL, costMatrices = NULL,
                       searchLogit = TRUE, searchProbit = FALSE,
                       optimOptions = get.options.newton(), aucOptions = get.options.roc(),
@@ -113,6 +112,10 @@ search.dc <- function(y, x, w = NULL, xSizes = NULL,
                    optimOptions, aucOptions, measureOptions ,
                    modelCheckItems, searchItems,
                    searchOptions)
+
+  res$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(res$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
+                                               as.POSIXct(res$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+  res$info$isWeighted <- ifelse(is.null(w),FALSE, TRUE)
   res
 }
 
@@ -125,10 +128,10 @@ search.dc <- function(y, x, w = NULL, xSizes = NULL,
 #' @param x A matrix of exogenous data with variables in the columns.
 #' @param w Weights of the observations in \code{y}.
 #' \code{NULL} means equal weights for all observations.
-#' @param distType A character string that shows the distribution assumption. It can be \code{logit} or \code{probit}.
+#' @param probType A character string that shows the probability assumption. It can be \code{logit} or \code{probit}.
 #' @param newX A numeric matrix where for each row in it, probabilities are projected and reported. It can be \code{NULL}.
 #' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
-#' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.dc] for more information and initialization.
+#' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.bin] for more information and initialization.
 #' @param aucOptions A list of options for AUC calculation. See and use \code{[get.options.roc()]} for more information and initialization.
 #' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
 #' @param simTrainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
@@ -145,16 +148,17 @@ search.dc <- function(y, x, w = NULL, xSizes = NULL,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' The main purpose of exporting this method is to show the inner calculations of the search process in [search.dc] function. See the details of this function for more information.
+#' The main purpose of exporting this method is to show the inner calculations of the search process in [search.bin] function. See the details of this function for more information.
 #'
 #' @export
-#' @example man-roxygen/ex-estim.dc.R
-#' @seealso [search.dc], [search.dc.stepwise]
-estim.dc <- function(y, x, w = NULL,
-                     distType = c("logit", "probit"), newX = NULL,
+#' @example man-roxygen/ex-estim.bin.R
+#' @seealso [search.bin], [search.bin.stepwise]
+estim.bin <- function(y, x, w = NULL,
+                     probType = c("logit", "probit"), newX = NULL,
                      pcaOptionsX = NULL, costMatrices = NULL,
-                     aucOptions = get.options.roc(), simFixSize = 200,
-                     simTrainFixSize = 0, simTrainRatio = 0.5, simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
+                     aucOptions = get.options.roc(), simFixSize = 0,
+                     simTrainFixSize = 0, simTrainRatio = 0.75,
+                     simSeed = 0, weightedEval = FALSE, printMsg = FALSE)
 {
 
   y = as.matrix(y)
@@ -168,7 +172,7 @@ estim.dc <- function(y, x, w = NULL,
   weightedEval = as.logical(weightedEval)
   printMsg = as.logical(printMsg)
 
-  distType <- match.arg(as.character(distType), c("logit", "probit"))
+  probType <- match.arg(as.character(probType), c("logit", "probit"))
 
   if (is.null(pcaOptionsX) == FALSE)
     pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
@@ -184,7 +188,7 @@ estim.dc <- function(y, x, w = NULL,
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  res <- .EstimDc(y, x, w, distType, newX,
+  res <- .EstimDc(y, x, w, probType, newX,
                   pcaOptionsX, costMatrices,
                   aucOptions, simFixSize, simTrainRatio,
                   simTrainFixSize, simSeed,
@@ -193,16 +197,12 @@ estim.dc <- function(y, x, w = NULL,
 }
 
 # get estimation from search result
-GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, distType, ...) {
-  M <- estim.dc(y,
+GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, probType, newX, ...) {
+  M <- estim.bin(y,
                 x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
                 w = w,
-                distType = distType,
-                newX = if (is.null(exoIndices) || is.null(searchRes$info$newX)) {
-                  NULL
-                } else {
-                  as.matrix(searchRes$info$newX[, exoIndices])
-                },
+                probType = probType,
+                newX = if (is.null(exoIndices) || is.null(newX)) NULL else newX[, exoIndices, drop=FALSE],
                 pcaOptionsX = NULL,
                 costMatrices = searchRes$info$costMatrices,
                 simFixSize = searchRes$info$measureOptions$simFixSize,
@@ -229,27 +229,26 @@ GetEstim_dc <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, d
 #' Select an appropriate value for \code{bestK} in the options.
 #' @param savePre A directory for saving and loading the progress.
 #' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
-#' @param ... other arguments to pass to [search.dc()] function such as the \code{w} argument.
+#' @param ... other arguments to pass to [search.bin()] function such as the \code{w} argument.
 #' Note that \code{xSizes} is ineffective here.
 #'
-#' @return Similar to [search.dc] function.
+#' @return Similar to [search.bin] function.
 #' @export
 #'
 #' @examples
-#' # See the example in the 'search.dc' function.
+#' # See the example in the 'search.bin' function.
 #'
-#' @seealso [search.dc], [estim.dc]
-search.dc.stepwise <- function(y, x, xSizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                               countSteps = c(NA, 40, 30, 20),
+#' @seealso [search.bin], [estim.bin]
+search.bin.stepwise <- function(y, x, xSizeSteps = list(c(1), c(2)),
+                               countSteps = c(NA, 10),
                                savePre = NULL, ...) {
-  Search_s("dc", x, xSizeSteps, countSteps, savePre, y = y, ...)
+  Search_s("bin", x, xSizeSteps, countSteps, savePre, y = y, ...)
 }
 
 
-dc.to.latex.eqs <- function(coef, probit, numFormat = "%.2f") {
+bin.to.latex.eq <- function(coef, probit, numFormat = "%.2f") {
 
-  if (is.null(xNames))
-    xNames <- paste0("X_",c(1:length(coef)))
+  xNames <- paste0("X_",c(1:length(coef)))
 
   terms <- character(length(coef))
   terms[1] <- sprintf0(numFormat, coef[1])
@@ -265,10 +264,12 @@ dc.to.latex.eqs <- function(coef, probit, numFormat = "%.2f") {
 
   formula_str <- paste(terms, collapse = "")
 
+  cond_str = ifelse(length(xNames) == 4, paste(xNames[-1], collapse = ", "), paste(c(xNames[2], "...",xNames[length(xNames)]), collapse = ", "))
+
   if (probit) {
-    formula_str <- paste0("P(Y = 1 | ", paste(xNames[-1], collapse = ", "), ") = \\Phi(", formula_str, ")")
+    formula_str <- paste0("P(Y = 1 | ", cond_str, ") = \\Phi(", formula_str, ")")
   } else {
-    formula_str <- paste0("P(Y = 1 | ", paste(xNames[-1], collapse = ", "), ") = \\frac{1}{1 + e^{-(", formula_str, ")}}")
+    formula_str <- paste0("P(Y = 1 | ", cond_str, ") = \\frac{1}{1 + e^{-(", formula_str, ")}}")
   }
 
   return(formula_str)
@@ -283,28 +284,46 @@ dc.to.latex.eqs <- function(coef, probit, numFormat = "%.2f") {
 #' @param nObs The number of observations to generate.
 #' @param probit Logical value indicating whether to generate data from a probit model
 #'   (if \code{TRUE}) or a logit model (if \code{FALSE}).
+#' @param maxWeight Integer value indicating the maximum weight of the observations.
+#' If \code{1}, observations are not weighted.
+#' If larger than \code{1}, a vector of weights is generated and included in the return list. The weights are drawn from a discrete uniform distribution with a maximum value determined by \code{maxWeight}.
+#' If weighted, a larger sample is created (\code{nObs * sampleFactor * maxWeight}) and a subset of them is randomly selected, where the probability of selection is determined by the weight.
 #' @param pPos The percentage of positive observations (\code{y=1}) in the dependent variable y.
 #'   Must be between 0 and 1.
+#'   In the current implementation, this is independent of the weights, if \code{maxWeight} is larger than 1.
 #' @param sampleFactor The factor used to control the size of the initial sample.
 #'   A larger value generates a larger initial sample, which can increase the accuracy
 #'   of the generated sample but also takes more time and memory.
+#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
+#' If \code{NULL}, conversion to latex or html representations are disabled.
+#' @param toNumeric If \code{TRUE}, \code{y} and \code{w} are transformed to have numeric vector.
+#' Otherwise, they contain an integer vector.
 #'
 #' @return A list with the following items:
 #'   \item{y}{The dependent variable.}
 #'   \item{x}{The independent variables.}
+#'   \item{w}{The weights of the observations. It is null if \code{weighted} is \code{FALSE}.}
+#'   \item{p1}{Prob(Y=1)}
 #'   \item{coef}{The coefficients of the regression.}
 #'   \item{probit}{Logical value indicating whether data was generated from a probit model.}
 #'   \item{pPos}{The percentage of negative observations in y.}
+#'   \item{eqLatex}{Latex representation of the model formula.}
 #'
 #' @export
 #' @importFrom stats pnorm rnorm rbinom
-#' @example man-roxygen/ex-sim.dc.R
+#' @example man-roxygen/ex-sim.bin.R
 #'
-#' @seealso [estim.dc], [search.dc]
-sim.dc <- function(coef = 2L, nObs = 100, probit = FALSE, pPos = 0.5, sampleFactor = 2) {
+#' @seealso [estim.bin], [search.bin]
+sim.bin <- function(coef = 2L, nObs = 100, probit = FALSE,
+                    maxWeight = 1, pPos = 0.5,
+                    sampleFactor = 4, numFormat = "%.2f", toNumeric = TRUE) {
 
   if (nObs <= 0)
     stop("nObs must be a positive integer")
+
+  sampleFactor_orig <- sampleFactor
+  if (maxWeight > 1)
+    sampleFactor = sampleFactor * maxWeight
 
   probit <- as.logical(probit)
 
@@ -341,8 +360,24 @@ sim.dc <- function(coef = 2L, nObs = 100, probit = FALSE, pPos = 0.5, sampleFact
   }
 
   # Generate the dependent variable
-  y <- matrix(as.numeric(rbinom(n = nObs * sampleFactor, size = 1, prob = p1)), ncol = 1)
-  colnames(y) <- "Y"
+  y <- matrix(rbinom(n = nObs * sampleFactor, size = 1, prob = p1), ncol = 1)
+
+  if (maxWeight > 1){
+
+    w <- matrix(sample(1:maxWeight, size = nObs * sampleFactor, replace = TRUE), ncol = 1)
+
+    # randomly select a subset the observations
+    # observations with larger weight has larger probability of being selected
+    idx <- sample(seq_len(nObs * sampleFactor), size = nObs * sampleFactor_orig,
+                  prob = w, replace = FALSE)
+    y <- y[idx, , drop = FALSE]
+    x <- x[idx, , drop = FALSE]
+    w <- w[idx, , drop = FALSE]
+    p1 <- p1[idx, , drop = FALSE]
+  }
+  else{
+    w <- NULL
+  }
 
   # Remove observations until we have nPos positive observations
   nPos <- round(nObs * pPos)
@@ -351,6 +386,9 @@ sim.dc <- function(coef = 2L, nObs = 100, probit = FALSE, pPos = 0.5, sampleFact
     posIndexes <- sample(which(y == 1), posToRemove)
     y <- y[-posIndexes, , drop = FALSE]
     x <- x[-posIndexes, , drop = FALSE]
+    w <- w[-posIndexes, , drop = FALSE]
+    p1 <- p1[-posIndexes, , drop = FALSE]
+
   } else if (posToRemove < 0) {
     stop("Failed to generate enough positive observations. Try increasing the sampleFactor argument.")
   }
@@ -361,10 +399,25 @@ sim.dc <- function(coef = 2L, nObs = 100, probit = FALSE, pPos = 0.5, sampleFact
     negIndexes <- sample(which(y == 0), negToRemove)
     y <- y[-negIndexes, , drop = FALSE]
     x <- x[-negIndexes, , drop = FALSE]
+    w <- w[-negIndexes, , drop = FALSE]
+    p1 <- p1[-negIndexes, , drop = FALSE]
+
   } else if (negToRemove < 0) {
     stop("Failed to generate enough negative observations. Try increasing the sampleFactor argument.")
   }
 
+  if (toNumeric){
+    y = matrix(as.numeric(y), ncol = 1)
+    w = matrix(as.numeric(w), ncol = 1)
+  }
+  colnames(y) <- "Y"
+  colnames(w) <- "W"
+  p1 = matrix(p1, ncol = 1)
+  colnames(p1) <- "P1"
+
   # Return the results as a list
-  list(y = y, x = x, coef = coef, probit = probit, pPos = pPos)
+  list(y = y, x = x, w = w, p1 = p1, coef = coef,
+       probit = probit, pPos = pPos,
+       eqLatex = bin.to.latex.eq(coef, probit, numFormat))
 }
+

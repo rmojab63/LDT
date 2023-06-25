@@ -117,7 +117,7 @@ struct LDT_EXPORT SearchMeasureOptions {
      mIndexOfDirection = -1, mIndexOfMae = -1, mIndexOfMaeSc = -1,
      mIndexOfRmse = -1, mIndexOfRmseSc = -1, mIndexOfCrps = -1,
      mIndexOfCostMatrixIn = -1, mIndexOfCostMatrixOut = -1, mIndexOfAucIn = -1,
-     mIndexOfAucOut = -1;
+     mIndexOfAucOut = -1, mIndexOfBrierIn = -1, mIndexOfBrierOut = -1;
 };
 
 /// @brief Different options for checking models in the search

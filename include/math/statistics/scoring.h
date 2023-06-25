@@ -23,6 +23,9 @@ enum class GoodnessOfFitType {
 
   /// @brief Area under ROC
   kAuc = 110,
+
+  /// @brief Brier score
+  kBrier = 115
 };
 
 /// @brief Converts a \ref GoodnessOfFitType to string
@@ -40,6 +43,8 @@ inline const char *ToString(GoodnessOfFitType v, bool abr = true) {
     return abr ? "frequencyCostIn" : "Custom Frequency Cost";
   case GoodnessOfFitType::kAuc:
     return abr ? "aucIn" : "Area Under ROC (In-Sample)";
+  case GoodnessOfFitType::kBrier:
+    return abr ? "brierIn" : "Brier Score (In-Sample)";
   default:
     return "[Unknown 'GoodnessOfFitType']";
   }
@@ -57,6 +62,8 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
     return GoodnessOfFitType::kFrequencyCost;
   else if (StartsWith("auc", v))
     return GoodnessOfFitType::kAuc;
+  else if (StartsWith("bri", v))
+    return GoodnessOfFitType::kBrier;
 
   throw std::logic_error(
       std::string("Invalid enum name: 'GoodnessOfFit Type'. value=") +
@@ -107,7 +114,10 @@ enum class ScoringType {
   kFrequencyCost = 100,
 
   /// @brief Area under ROC
-  kAuc
+  kAuc = 110,
+
+  /// @brief Brier score
+  kBrier = 115
 };
 
 /// @brief Converts a \ref ScoringRule to string
@@ -139,7 +149,10 @@ inline const char *ToString(ScoringType v, bool abr = true) {
                : "Custom Frequency Cost<Tv> (Out-of-Sample)";
 
   case ScoringType::kAuc:
-    return abr ? "aucOut" : "Area Under ROC";
+    return abr ? "aucOut" : "Area Under ROC (Out-of-Sample)";
+
+  case ScoringType::kBrier:
+    return abr ? "brierOut" : "Brier Score (Out-of-Sample)";
 
   default:
     return "[Unknown 'ScoringType']";
@@ -172,6 +185,9 @@ inline ScoringType FromString_ScoringType(const char *v) {
 
   else if (StartsWith("auc", v))
     return ScoringType::kAuc;
+
+  else if (StartsWith("bri", v))
+    return ScoringType::kBrier;
 
   throw std::logic_error(
       std::string("Invalid enum name: 'Scoring Type'. value=") +

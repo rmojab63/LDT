@@ -65,9 +65,11 @@ void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   // discrete choice
   mIndexOfCostMatrixIn = IndexOf(MeasuresIn, GoodnessOfFitType::kFrequencyCost);
   mIndexOfAucIn = IndexOf(MeasuresIn, GoodnessOfFitType::kAuc);
+  mIndexOfBrierIn = IndexOf(MeasuresIn, GoodnessOfFitType::kBrier);
 
   mIndexOfCostMatrixOut = IndexOf(MeasuresOut, ScoringType::kFrequencyCost);
   mIndexOfAucOut = IndexOf(MeasuresOut, ScoringType::kAuc);
+  mIndexOfBrierOut = IndexOf(MeasuresOut, ScoringType::kBrier);
 }
 
 void SearchModelChecks::Update(const SearchMeasureOptions &measures) {

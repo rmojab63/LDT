@@ -47,8 +47,8 @@ TEST(DiscreteChoice_t, logit) {
   Matrix<Tv> stor = Matrix<Tv>(Z, x.RowsCount, model.NumChoices);
   model.GetProbabilities(x, stor, Q);
 
-  ASSERT_NEAR(stor.Get(0, 0), 0.4368774, 1e-4);
-  ASSERT_NEAR(stor.Get(1, 1), 1.0 - 0.53749, 1e-4);
+  ASSERT_NEAR(stor.Get(0, 0), 1 - 0.4368774, 1e-4);
+  ASSERT_NEAR(stor.Get(1, 1), 0.53749, 1e-4);
 
   delete[] Q;
   delete[] Z;
@@ -92,8 +92,8 @@ TEST(DiscreteChoice_t, probit) {
   Matrix<Tv> stor = Matrix<Tv>(Z, x.RowsCount, model.NumChoices);
   model.GetProbabilities(x, stor, Q);
 
-  ASSERT_NEAR(stor.Get(0, 0), 0.4353621, 1e-4);
-  ASSERT_NEAR(stor.Get(1, 1), 1.0 - 0.5370332, 1e-4);
+  ASSERT_NEAR(stor.Get(0, 0), 1 - 0.4353621, 1e-4);
+  ASSERT_NEAR(stor.Get(1, 1), 0.5370332, 1e-4);
 
   delete[] Q;
   delete[] Z;
@@ -244,9 +244,9 @@ TEST(DiscreteChoice_t, probit_ordered_large) {
   auto dis = Distribution<DistributionType::kUniformDis>(0, NumCutoff);
   dis.GetSample(y.Data, n, 340);
   for (Ti i = 0; i < n; i++) {
-    x.Set(i, 0, 1.0);
-    x.Set(i, 1, sqrt(dis.GetSample1(reg) * dis.GetSample1(reg)));
-    x.Set(i, 2, sqrt(dis.GetSample1(reg) * dis.GetSample1(reg)));
+    x.Set0(i, 0, 1.0);
+    x.Set0(i, 1, sqrt(dis.GetSample1(reg) * dis.GetSample1(reg)));
+    x.Set0(i, 2, sqrt(dis.GetSample1(reg) * dis.GetSample1(reg)));
   }
   // auto ystr = y.ToString0();
   // auto xstr = x.ToString0();
@@ -381,7 +381,7 @@ TEST(DiscreteChoice_t, CrossValidate) {
   auto model = DiscreteChoiceSim<true, DiscreteChoiceModelType::kBinary,
                                  DiscreteChoiceDistType::kLogit>(
       source.RowsCount, source.ColsCount, 2, trainRatio, 0, ct_vec.size(), true,
-      true, nullptr);
+      true, true, nullptr);
   model.Seed = 340;
   model.SimulationMax = 100;
   auto W = new Tv[model.WorkSize];
@@ -391,7 +391,7 @@ TEST(DiscreteChoice_t, CrossValidate) {
   RocOptions rocOptions;
   model.Calculate(source, &ct_vec, S, W, Wi, cancel, rocOptions);
 
-  ASSERT_NEAR(model.CostRatios.Data[0], 0.3320, 1e-14); // self
+  ASSERT_NEAR(model.CostRatios.Data[0], 0.1275, 1e-14); // self
   ASSERT_NEAR(model.CostRatios.Data[0], model.CostRatios.Data[1], 1e-16);
   ASSERT_NEAR(model.CostRatios.Data[0], model.CostRatios.Data[2], 1e-16);
 
@@ -512,7 +512,7 @@ TEST(DiscreteChoice_t, CrossValidate_pca) {
   auto model = DiscreteChoiceSim<false, DiscreteChoiceModelType::kBinary,
                                  DiscreteChoiceDistType::kLogit>(
       source.RowsCount, source.ColsCount, 2, trainRatio, 0, ct_vec.size(), true,
-      true, &pcaoptions);
+      true, true, &pcaoptions);
   model.Seed = 340;
   model.SimulationMax = 100;
   auto W = new Tv[model.WorkSize];
@@ -553,6 +553,9 @@ TEST(DiscreteChoice_t, searcherSmall) {
   measures.TrainRatio = 0.8;
   measures.SimFixSize = 10;
   measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
+  measures.MeasuresIn.push_back(GoodnessOfFitType::kAic);
+  measures.MeasuresIn.push_back(GoodnessOfFitType::kAuc);
+  measures.MeasuresIn.push_back(GoodnessOfFitType::kBrier);
 
   checks.Estimation = true;
 

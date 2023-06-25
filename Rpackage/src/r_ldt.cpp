@@ -659,9 +659,9 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
       auto colnames = std::vector<std::string>({"Mean", "Count", "SumWeights"});
       for (auto i = 0; i < length1; i++) {
         model.CombineCdfAt(eIndex, tIndex, i, k, list, cdf);
-        mat.Set(i, 0, cdf.GetMean());
-        mat.Set(i, 1, (double)cdf.GetCount());
-        mat.Set(i, 2, cdf.GetSumOfWeights());
+        mat.Set0(i, 0, cdf.GetMean());
+        mat.Set0(i, 1, (double)cdf.GetCount());
+        mat.Set0(i, 2, cdf.GetSumOfWeights());
       }
       L_1[k] = as_matrix(mat, &length1Names, &colnames);
       L_1_names.push_back(std::string("cdf") + std::to_string(k + 1));
@@ -678,8 +678,8 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
     auto colnames = std::vector<std::string>({"Lower", "Upper"});
     for (auto i = 0; i < length1; i++) {
       model.CombineExtremeBounds(eIndex, tIndex, i, list, min, max);
-      mat.Set(i, 0, min);
-      mat.Set(i, 1, max);
+      mat.Set0(i, 0, min);
+      mat.Set0(i, 1, max);
     }
 
     L[2] = as_matrix(mat, &length1Names, &colnames);
@@ -694,12 +694,12 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
         {"Mean", "Variance", "Skewness", "Kurtosis", "Count", "SumWeights"});
     for (auto i = 0; i < length1; i++) {
       model.CombineMixture(eIndex, tIndex, i, list, mixture);
-      mat.Set(i, 0, mixture.GetMean());
-      mat.Set(i, 1, (double)mixture.GetVariancePopulation());
-      mat.Set(i, 2, (double)mixture.GetSkewnessPopulation());
-      mat.Set(i, 3, (double)mixture.GetKurtosisPopulation());
-      mat.Set(i, 4, (double)mixture.GetCount());
-      mat.Set(i, 5, (double)mixture.Sum());
+      mat.Set0(i, 0, mixture.GetMean());
+      mat.Set0(i, 1, (double)mixture.GetVariancePopulation());
+      mat.Set0(i, 2, (double)mixture.GetSkewnessPopulation());
+      mat.Set0(i, 3, (double)mixture.GetKurtosisPopulation());
+      mat.Set0(i, 4, (double)mixture.GetCount());
+      mat.Set0(i, 5, (double)mixture.Sum());
     }
     L[3] = as_matrix(mat, &length1Names, &colnames);
   } else
@@ -744,6 +744,8 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
                       _["searchedCount"] = wrap(result.SearchedCount),
                       _["failedCount"] = wrap(fcount),
                       _["failedDetails"] = wrap(failDetails));
+  if (fcount > 0)
+    warning("Error occurred in the search process. See 'result$counts'.");
 
   for (auto eIndex = 0; eIndex < searchItems.LengthEvals; eIndex++) {
 
@@ -799,8 +801,8 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
           auto colnames = std::vector<std::string>({"Mean", "Count"});
           for (auto i = 0; i < covars; i++) {
             model.CombineInclusionWeights(eIndex, tIndex, i, list0, incweights);
-            mat.Set(i, 0, incweights.GetMean());
-            mat.Set(i, 1, (double)incweights.GetCount());
+            mat.Set0(i, 0, incweights.GetMean());
+            mat.Set0(i, 1, (double)incweights.GetCount());
           }
           L_i_t_m[2] = as_matrix(mat, &inclusionNames, &colnames);
 

@@ -1,7 +1,7 @@
 
 #' Get Options for ROC and AUC Calculations
 #'
-#' Use this function to get the required options for [search.dc], [estim.dc], or [s.roc] functions.
+#' Use this function to get the required options for [search.bin], [estim.bin], or [s.roc] functions.
 #'
 #' @param lowerThreshold A number representing the lower bound for calculating partial AUC.
 #' @param upperThreshold A number representing the upper bound for calculating partial AUC.
@@ -22,7 +22,7 @@
 #'
 #'
 #' @export
-#' @seealso [search.dc], [estim.dc], [s.roc]
+#' @seealso [search.bin], [estim.bin], [s.roc]
 get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
                             pessimistic = FALSE, costs = NULL, costMatrix = NULL){
 
@@ -122,7 +122,7 @@ CheckNelderMeadOptions <- function(O){
 
 #' Get Options for PCA
 #'
-#' Use this function to get PCA options in [estim.dc], [estim.sur], [estim.varma], or [s.pca] functions.
+#' Use this function to get PCA options in [estim.bin], [estim.sur], [estim.varma], or [s.pca] functions.
 #'
 #' @param ignoreFirst A number representing the number of variables to exclude at the beginning of data matrices (such as intercept) from PCA.
 #' @param exactCount A number that determines the number of components to be used. If zero, the number of components is determined by the \code{cutoffRate}.
@@ -137,7 +137,7 @@ CheckNelderMeadOptions <- function(O){
 #' # See 's.pca' function.
 #'
 #' @export
-#' @seealso [estim.dc], [estim.sur], [estim.varma], [s.pca]
+#' @seealso [estim.bin], [estim.sur], [estim.varma], [s.pca]
 get.options.pca <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
   O = list(
     ignoreFirst = ignoreFirst, exactCount = exactCount,
@@ -216,7 +216,7 @@ CheckLbfgsOptions <- function(O){
 
 #' Get Options for Newton Optimization
 #'
-#' Use this function to get optimization options in [estim.dc] or [search.dc] functions.
+#' Use this function to get optimization options in [estim.bin] or [search.bin] functions.
 #'
 #' @param maxIterations An integer representing the maximum number of iterations.
 #' @param functionTol A small value used to test the convergence of the objective function.
@@ -417,8 +417,8 @@ CheckModelCheckItems <- function(O){
 #'
 #' Use this function to get measuring options in \code{search.?} functions.
 #'
-#' @param typesIn A list of evaluation measures when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, or \code{aucIn}. \code{NULL} means no measure.
-#' @param typesOut A list of evaluation measures in a pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, or \code{aucOut}. Null means no measure.
+#' @param typesIn A list of evaluation measures when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{brierIn}, or \code{aucIn}. \code{NULL} means no measure.
+#' @param typesOut A list of evaluation measures in a pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{scaledRmse}, \code{mae}, \code{scaledMae}, \code{crps}, \code{frequencyCostOut}, \code{brierOut}, or \code{aucOut}. Null means no measure.
 #' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
 #' @param trainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
 #' @param trainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.

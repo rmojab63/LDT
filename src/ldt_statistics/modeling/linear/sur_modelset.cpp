@@ -164,7 +164,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
   for (i = 0; i < weights.RowsCount; i++) { // evaluation index
     for (j = 0; j < weights.ColsCount;
          j++) { // target index (use TargetsPositions to interpret)
-      weight = weights.Get(i, j);
+      weight = weights.Get0(i, j);
       if (std::isnan(weight))
         continue;
 
@@ -182,8 +182,8 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
         for (t = 0; t < this->SizeG; t++) {
           auto ek = new EstimationKeep(
               weight, &this->CurrentIndices, nullptr, &EndoIndexes,
-              DModel.Model.beta.Get(t, j),
-              std::pow(DModel.Model.e_beta_std.Get(t, j), 2));
+              DModel.Model.beta.Get0(t, j),
+              std::pow(DModel.Model.e_beta_std.Get0(t, j), 2));
           this->Push1(*ek, i, TargetsPositions.at(j),
                       this->CurrentIndices.Data[t] -
                           this->pItems->LengthDependents);

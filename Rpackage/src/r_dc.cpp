@@ -194,13 +194,13 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
 
   L.attr("class") =
       std::vector<std::string>({"ldtsearchdc", "ldtsearch", "list"});
-  L.attr("method") = "dc";
+  L.attr("method") = "bin";
 
   return L;
 }
 
 // [[Rcpp::export(.EstimDc)]]
-SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
+SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string probType, SEXP newX,
              SEXP pcaOptionsX, SEXP costMatrices, List aucOptions,
              int simFixSize, double simTrainRatio, int simTrainFixSize,
              int simSeed, bool weightedEval, bool printMsg) {
@@ -272,7 +272,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
   DiscreteChoiceModelType modelType0 =
       FromString_DiscreteChoiceModelType(modelType);
   DiscreteChoiceDistType distType0 =
-      FromString_DiscreteChoiceDistType(distType.c_str());
+      FromString_DiscreteChoiceDistType(probType.c_str());
   if (printMsg) {
     Rprintf("Model Type=%s\n", ToString(modelType0));
     Rprintf("Distribution Type=%s\n", ToString(distType0));
@@ -317,7 +317,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
     simmodel = DiscreteChoiceSimBase::GetFromType(
         hasWeight, modelType0, distType0, mat.RowsCount, mat.ColsCount,
         numChoices, simTrainRatio, simTrainFixSize, costMatrices0.size(), true,
-        true, hasPcaX ? &pcaOptions0 : nullptr, weightedEval);
+        true, true, hasPcaX ? &pcaOptions0 : nullptr, weightedEval);
     simmodelf = std::unique_ptr<DiscreteChoiceSimBase>(simmodel);
     simmodel->SimulationMax = simFixSize;
     simmodel->Seed = simSeed;
@@ -364,28 +364,31 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
     exoNames_pca = exoNames;
 
   // Measures
-  int measureCount = 5; // logL, aic, sic, aucIn, costIn,
+  int measureCount = 6; // logL, aic, sic, brierIn aucIn, costIn,
   if (simFixSize > 0)
-    measureCount += 2; // aucOut, costOut
+    measureCount += 3; // brierOur aucOut, costOut
   int eqCount = 1;
   auto measuresResD = std::unique_ptr<double[]>(
       new double[measureCount * eqCount]); // for 1 equation
   auto measuresRes =
       ldt::Matrix<double>(measuresResD.get(), measureCount, eqCount);
   auto measuresResRowNames = std::vector<std::string>(
-      {"logL", "aic", "sic",
-       "aucIn", // keep names consistent with the measures in the search
+      {"logL", "aic", "sic", "brierIn",
+       "aucIn", // keep names consistent with the measures in the estimation
        "frequencyCostIn"});
-  measuresRes.Set(0, 0, model.Model->LogL);
-  measuresRes.Set(1, 0, model.Model->Aic);
-  measuresRes.Set(2, 0, model.Model->Sic);
-  measuresRes.Set(3, 0, model.Auc);
-  measuresRes.Set(4, 0, model.CostRatioAvg);
+  measuresRes.Set0(0, 0, model.Model->LogL);
+  measuresRes.Set0(1, 0, model.Model->Aic);
+  measuresRes.Set0(2, 0, model.Model->Sic);
+  measuresRes.Set0(3, 0, model.BrierScore);
+  measuresRes.Set0(4, 0, model.Auc);
+  measuresRes.Set0(5, 0, model.CostRatioAvg);
   if (simFixSize > 0) {
+    measuresResRowNames.push_back("brierOut");
     measuresResRowNames.push_back("aucOut");
     measuresResRowNames.push_back("frequencyCostOut");
-    measuresRes.Set(5, 0, simmodel->Auc);
-    measuresRes.Set(6, 0, simmodel->CostRatios.Mean());
+    measuresRes.Set0(6, 0, simmodel->BrierScore);
+    measuresRes.Set0(7, 0, simmodel->Auc);
+    measuresRes.Set0(8, 0, simmodel->CostRatios.Mean());
   }
 
   List L = List::create(
@@ -423,7 +426,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string distType, SEXP newX,
 
   L.attr("class") =
       std::vector<std::string>({"ldtestimdc", "ldtestim", "list"});
-  L.attr("method") = "dc";
+  L.attr("method") = "bin";
 
   return L;
 }

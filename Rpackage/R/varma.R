@@ -245,8 +245,8 @@ GetEstim_varma <- function(searchRes, endoIndices,
 #' # See the example in the 'search.varma' function.
 #'
 #' @seealso [search.varma], [estim.varma]
-search.varma.stepwise <- function(y, ySizeSteps = list(c(1, 2), c(3, 4), c(5), c(6:10)),
-                                  countSteps = c(NA, 40, 30, 20),
+search.varma.stepwise <- function(y, ySizeSteps = list(c(1), c(2)),
+                                  countSteps = c(NA, 10),
                                   savePre = NULL, ...) {
   Search_s("varma", y, ySizeSteps, countSteps, savePre, ...)
 }

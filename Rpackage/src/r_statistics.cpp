@@ -127,8 +127,8 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   auto points = ldt::Matrix<double>(points_d.get(), auc->Points.size(), 2);
   auto colnames = std::vector<std::string>({"FP Rate", "TP Rate"});
   for (auto i = 0; i < (int)auc->Points.size(); i++) {
-    points.Set(i, 0, std::get<0>(auc0->Points.at(i)));
-    points.Set(i, 1, std::get<1>(auc0->Points.at(i)));
+    points.Set0(i, 0, std::get<0>(auc0->Points.at(i)));
+    points.Set0(i, 1, std::get<1>(auc0->Points.at(i)));
   }
 
   List L = List::create(_["n"] = wrap(N), _["auc"] = wrap(auc->Result),
@@ -174,12 +174,12 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
   if (optim.Iter == optim.MaxIteration)
     Rf_warning("Maximum number of iteration reached in GLD estimation.");
 
-  if (printMsg){
+  if (printMsg) {
     Rprintf("....\n");
     Rprintf("Iteration=%i\n", optim.Iter);
     Rprintf("Objective Minimum=%i\n", optim.Min);
-    Rprintf("Parameters=%f, %f, %f, %f\n", std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),
-            std::get<3>(ps));
+    Rprintf("Parameters=%f, %f, %f, %f\n", std::get<0>(ps), std::get<1>(ps),
+            std::get<2>(ps), std::get<3>(ps));
   }
 
   NumericVector result = {std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),

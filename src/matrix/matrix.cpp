@@ -67,6 +67,58 @@ Matrix<Tw>::Matrix(Tw defvalue, std::vector<Tw> &values, Ti m, Ti n)
 
 // #pragma endregion
 
+// #pragma region Iterators
+
+template <typename Tw> Tw *Matrix<Tw>::begin() { return Data; }
+
+template <typename Tw> Tw *Matrix<Tw>::end() {
+  return Data + RowsCount * ColsCount;
+}
+
+template <typename Tw> Tw *Matrix<Tw>::ColBegin(Ti col) {
+  return Data + col * RowsCount;
+}
+
+template <typename Tw> Tw *Matrix<Tw>::ColEnd(Ti col) {
+  return Data + (col + 1) * RowsCount;
+}
+
+template <typename Tw>
+MatIterator<Tw>::MatIterator(Tw *p, int s) : ptr(p), stride(s) {}
+
+template <typename Tw> MatIterator<Tw> &MatIterator<Tw>::operator++() {
+  ptr += stride;
+  return *this;
+}
+
+template <typename Tw> MatIterator<Tw> MatIterator<Tw>::operator++(Ti) {
+  MatIterator tmp(*this);
+  operator++();
+  return tmp;
+}
+
+template <typename Tw>
+bool MatIterator<Tw>::operator==(const MatIterator &rhs) const {
+  return ptr == rhs.ptr;
+}
+
+template <typename Tw>
+bool MatIterator<Tw>::operator!=(const MatIterator &rhs) const {
+  return ptr != rhs.ptr;
+}
+
+template <typename Tw> Tw &MatIterator<Tw>::operator*() { return *ptr; }
+
+template <typename Tw> MatIterator<Tw> Matrix<Tw>::RowBegin(Ti row) {
+  return MatIterator(Data + row, RowsCount);
+}
+
+template <typename Tw> MatIterator<Tw> Matrix<Tw>::RowEnd(Ti row) {
+  return MatIterator(Data + row + ColsCount * RowsCount, RowsCount);
+}
+
+// #pragma endregion
+
 // #pragma region Data
 
 template <typename Tw> void Matrix<Tw>::Restructure(Ti newrows, Ti newcols) {
@@ -125,7 +177,7 @@ template <typename Tw> bool Matrix<Tw>::IsSymmetric(Tw epsilon) const {
     for (Ti j = 0; j < N; j++) {
       if (i >= j)
         continue;
-      d = std::abs(Get(i, j) - Get(j, i));
+      d = std::abs(Get0(i, j) - Get0(j, i));
       if (d > epsilon)
         return false;
     }
@@ -3131,6 +3183,9 @@ template <typename Tj> std::string join(const std::vector<Tj> *numbers) {
 }
 
 // #pragma endregion
+
+template class ldt::MatIterator<Ti>;
+template class ldt::MatIterator<Tv>;
 
 template class ldt::Matrix<Ti>;
 template class ldt::Matrix<Tv>;

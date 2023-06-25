@@ -74,7 +74,7 @@ The last line is used for reporting purposes. Like before, I report the LaTeX fo
 
 Note that this representation is not very appropriate for the estimated model because it does not report the estimated standard errors and there are better ways to do so. However, it suits our purpose here. Also, note that you can get better results (in terms of lower difference between actual and estimated coefficients) by increasing the sample size.
 
-The following code does the same by using the function in the `ldt` package:
+The following code does the same by using the `estim.sur` function in the `ldt` package:
 
 ```{r}
 fit <- estim.sur(sample$y, sample$x[,-1], addIntercept = TRUE) 
@@ -109,7 +109,7 @@ coefs.plot(intervals = list(list(value = coefs[3,1], label = "X2->Y1", col = "re
 ## Significance search
 In the previous subsection, we knew the exact structure of the system’s equations. Apart from common assumptions such as linearity and normality, we also knew the explanatory variables in the equations. Unless you have selected a very low number of observations (`num_obs` parameter), the estimated parameters are significant and relatively close to the actual values.
 
-However, this may not be realistic enough. Let’s consider a situation where we do not know the explanatory variables of the equations. We assume that we know all the relevant variables in the system and limit the level of uncertainty and other practical issues by restricting the number of these variables. The following code reflects our assumptions:
+However, this may not be realistic enough. Let’s consider a situation where we do not know the explanatory variables of the equations. We assume that there are some irrelevant variables in the system. Of course, we limit the level of uncertainty and other practical issues by restricting the number of these variables. The following code reflects our assumptions:
 
 ```{r}
 num_obs <- 100
@@ -181,7 +181,7 @@ search_res
 
 This code is time-consuming and is not evaluated here. However, on my system, the elapsed time is 17 seconds and the number of searched models is 368830. Note that if we change our previous guess and assume that the maximum number of relevant variables is larger, for example 5, the size of the practical model set becomes 3847591 (10 times larger) and this is estimated in 210 seconds (12 times larger). We are using SIC as the performance measure and these elapsed times increase if we rely on out-of-sample simulation and their corresponding measures. Therefore, we need to focus on some subsets of the model set. But how should we prioritize one part of the model set over another before the estimation and evaluation stage?
 
-One might reduce the number of potential explanatory variables by using theory or statistical testing, similar to the top-to-bottom approach we talked about before. Since ldt dislikes user discretion, it provides a more systematic approach. The idea behind it is simple: smaller models are estimated, variables are selected, larger models are estimated with a lower number of variables. Here is the code:
+One might reduce the number of potential explanatory variables by using theory or statistical testing, similar to the top-to-bottom approach we talked about before. Since `ldt` dislikes user discretion, it provides a more systematic approach. The idea behind it is simple: smaller models are estimated, variables are selected, larger models are estimated with a lower number of potential explanatory variables. Here is the code:
 
 ```{r}
 x_size_steps = list(c(1, 2), c(3), c(4), c(5))
@@ -196,11 +196,11 @@ search_step_res <-
 search_step_res
 ```
 
-The first two lines define the steps. We use all variables (`NA` in count_steps means all) to estimate models with sizes defined as the first element of `x_size_steps` (`r paste(x_size_steps[[1]], collapse = ", ")`). Then we select `r count_steps[[2]]` number of variables (2nd element in count_steps) from the information provided by the best models and estimate models with sizes determined by the second element of `x_size_steps` (`r paste(x_size_steps[[2]], collapse = ", ")`). And so on.
+The first two lines define the steps. We use all variables (`NA` in `count_steps` means all) to estimate models with sizes defined as the first element of `x_size_steps` (`r paste(x_size_steps[[1]], collapse = ", ")`). Then we select `r count_steps[[2]]` number of variables (2nd element in count_steps) from the information provided by the best models and estimate models with sizes determined by the second element of `x_size_steps` (`r paste(x_size_steps[[2]], collapse = ", ")`). And so on.
 
 The size of the model subset and running time are greatly reduced. However, let’s see its performance.
 
-To study or report results, we should use the summary function. The output of a search project in `ldt` does not contain estimation results but only the minimum level of information to replicate them. The summary function does the job and estimates the models. Here is the code:
+To study or report results, we should use the `summary` function. The output of a search project in `ldt` does not contain estimation results but only the minimum level of information to replicate them. The `summary` function does the job and estimates the models. Here is the code:
 
 ```{r}
 ssum <- summary(search_step_res, y = sample$y, x = sample$x)
@@ -228,7 +228,7 @@ The algorithm has omitted all irrelevant variables and found the restrictions on
 It’s important to note that the results are specific to the selected seed. Drawing general conclusions is beyond the scope of this text.
 
 ## Pseudo out-of-sample evaluations 
-You might think you can do better. In this section, we will discuss another aspect of `ldt`: pseudo out-of-sample evaluation. Since `ldt` is rather atheoretical, it tries to compare models based on their predictive power. Of course, we are not generally talking about time and future in SUR models, and by pseudo out-of-sample evaluation, we are referring to the cross-validation practice.
+In this section, we will discuss another aspect of `ldt`: pseudo out-of-sample evaluation. Since `ldt` is rather atheoretical, it tries to compare models based on their predictive power. Of course, we are not generally talking about time and future in SUR models, and by pseudo out-of-sample evaluation, we are referring to the cross-validation practice.
 
 The following code is similar to the code in the previous section, but we define a pseudo out-of-sample process:
 

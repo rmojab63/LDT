@@ -13,6 +13,12 @@
 #' generally a measure of the relative quality of a model. This function
 #' converts the value of a measure to such a number.
 #'
+#' These are the details of the transformations:
+#' \itemize{
+#' \item direction, sign, AUC -> weight = measure
+#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 measure)
+#' }
+#'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
 #' @return A numeric value representing the converted measure.
@@ -41,6 +47,8 @@ s.weight.from.measure <- function(value, measureName)
 #' See \code{\link{get.options.measure}} function for the list of available options.
 #'
 #' @details
+#' See [s.weight.from.measure] for a discussion.
+#'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
 #' @return A numeric value representing the converted weight.
@@ -65,7 +73,7 @@ s.measure.from.weight <- function(value, measureName)
 #' This function calculates the required points for plotting the ROC curve and the AUC.
 #'
 #' @param y A numeric vector (\code{Nx1}) representing the actual values.
-#' @param scores A numeric vector (\code{Nx1}) representing the calculated probabilities for the negative observations.
+#' @param scores A numeric vector (\code{Nx1}) representing the calculated probabilities for the **negative** observations.
 #' @param weights A numeric vector (\code{Nx1}) representing the weights of the observations.
 #' Use \code{NULL} for equal weights.
 #' @param options A list from \code{\link{get.options.roc}} function for more options.

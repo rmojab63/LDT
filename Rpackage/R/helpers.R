@@ -269,8 +269,8 @@ combineSearch <- function(list, type1Name = "coefs") {
 
 #' Stepwise estimation
 #'
-#' @param method sur, dc or varma
-#' @param data exogenous (for sur and dc) or endogenous (for varma)
+#' @param method sur, bin or varma
+#' @param data exogenous (for sur and bin) or endogenous (for varma)
 #' @param sizes determines the steps
 #' @param counts determines the size in each step
 #' @param savePre if not \code{NULL}, it saves and tries to load the
@@ -351,7 +351,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
             for (b in c(1:length(tar$model$bests))) {
               bst <- tar$model$bests[[b]]
               names <- NULL
-              if (method == "sur" || method == "dc")
+              if (method == "sur" || method == "bin")
                 names <- x_i_names[bst$exoIndices]
               else
                 names <- x_i_names[bst$depIndices]
@@ -396,8 +396,8 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
 
     if (method == "sur") {
       estims[[i]] <- search.sur(x = data_i, xSizes = size_i, ...)
-    } else if (method == "dc") {
-      estims[[i]] <- search.dc(x = data_i, xSizes = size_i, ...)
+    } else if (method == "bin") {
+      estims[[i]] <- search.bin(x = data_i, xSizes = size_i, ...)
     } else if (method == "varma") {
       estims[[i]] <- search.varma(y = data_i, ySizes = size_i, ...)
     } else {
@@ -432,13 +432,17 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   if (method == "sur") {
     class(result) <- c("ldtsearchsur", "ldtsearch", "list")
     attr(result, "method") <- "sur"
-  } else if (method == "dc") {
+  } else if (method == "bin") {
     class(result) <- c("ldtsearchdc", "ldtsearch", "list")
-    attr(result, "method") <- "dc"
+    attr(result, "method") <- "bin"
   } else if (method == "varma") {
     class(result) <- c("ldtsearchvarma", "ldtsearch", "list")
     attr(result, "method") <- "varma"
   }
+
+  result$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(result$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
+                                               as.POSIXct(result$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+
 
   return(result)
 }

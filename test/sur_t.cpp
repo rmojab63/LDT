@@ -287,7 +287,7 @@ TEST(Sur_t, sim_t) {
   auto meangamma = model.Model.gamma.Mean();
 
   auto measures = std::vector<ScoringType>(
-      {ScoringType::kMae, ScoringType::kRmse, ScoringType::kCrps});
+      {ScoringType::kRmse, ScoringType::kMae, ScoringType::kRmse});
 
   auto simmodel =
       SurSimulation(N, m, k, 0.8, 0, measures, true, 10, nullptr, nullptr);

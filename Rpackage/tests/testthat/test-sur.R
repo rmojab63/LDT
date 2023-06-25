@@ -330,12 +330,14 @@ test_that("search.sur works for out-of-sample", {
                   Exo[,res$rmse$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 4, simTrainRatio = 0.75, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
 
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]), as.numeric(1/res$rmse$target1$model$bests$best1$weight), tolerance = 1e-10)
+  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]),
+              as.numeric(s.measure.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
 
   for (m in res$crps$target1$model$all){
     M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                  simFixSize = 4, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
-    expect_equal(as.numeric(M$measures[which(rownames(res1$measures)=="crps"),1]), as.numeric(1/m$weight), tolerance = 1e-10)
+    expect_equal(as.numeric(M$measures[which(rownames(res1$measures)=="crps"),1]),
+                 as.numeric(s.measure.from.weight(m$weight, "crps")), tolerance = 1e-10)
   }
 
   # change Indexes
@@ -406,15 +408,31 @@ test_that("search.sur works for fixed training sample", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.65,
+                  measureOptions = get.options.measure(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
-  res1 = estim.sur(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
-                  as.matrix(Exo[,res$rmse$target1$model$bests$best1$exoIndices]),
+  res1 = estim.sur(as.matrix(y[,res$mae$target1$model$bests$best1$depIndices]),
+                  as.matrix(Exo[,res$mae$target1$model$bests$best1$exoIndices]),
                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
                   printMsg = printMsg)
+  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="mae"),1]),
+               as.numeric(s.measure.from.weight(res$mae$target1$model$bests$best1$weight, "mae")), tolerance = 1e-10)
 
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]), as.numeric(1/res$rmse$target1$model$bests$best1$weight), tolerance = 1e-10)
+  res1 = estim.sur(as.matrix(y[,res$crps$target1$model$bests$best1$depIndices]),
+                   as.matrix(Exo[,res$crps$target1$model$bests$best1$exoIndices]),
+                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
+                   printMsg = printMsg)
+  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="crps"),1]),
+               as.numeric(s.measure.from.weight(res$crps$target1$model$bests$best1$weight, "crps")), tolerance = 1e-10)
+
+
+  res1 = estim.sur(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
+                   as.matrix(Exo[,res$rmse$target1$model$bests$best1$exoIndices]),
+                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
+                   printMsg = printMsg)
+  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]),
+               as.numeric(s.measure.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
+
 })
 
 test_that("search.sur works with restricted aic", {

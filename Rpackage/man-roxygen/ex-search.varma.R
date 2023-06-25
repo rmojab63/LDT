@@ -6,7 +6,7 @@ num_x_r <- 3L # number of relevant explanatory variables
 num_x_ir <-
   20 # (relatively large) number of irrelevant explanatory variables
 set.seed(340)
-sample <- sim.dc(num_x_r, n)
+sample <- sim.bin(num_x_r, n)
 x_ir <- lapply(1:num_x_ir, function(x) rnorm(n))
 
 # prepare data:
@@ -18,7 +18,7 @@ model1 <- glm(Y ~ . - Y, data = data, family = binomial())
 summary(model1)
 
 # You can also use this package estimation function:
-model2 <- estim.dc(sample$y, data[, 3:ncol(data), drop = FALSE])
+model2 <- estim.bin(sample$y, data[, 3:ncol(data), drop = FALSE])
 # format and print coefficients:
 coefs2 <- data.frame(model2$estimations[1:4])
 colnames(coefs2) <- names(model2$estimations)[1:4]
@@ -28,7 +28,7 @@ print(coefs2)
 x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
 measure_options <-
   get.options.measure(typesIn = c("sic")) # We use SIC for searching
-search_res <- search.dc(sample$y, data[, 3:ncol(data)],
+search_res <- search.bin(sample$y, data[, 3:ncol(data)],
                         xSizes = x_sizes, measureOptions = measure_options)
 print(search_res$sic$target1$model$bests$best1$exoIndices) # print best model's explanatory indexes
 
@@ -45,7 +45,7 @@ print(coefs3)
 x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
 counts_steps = c(NA, 10, 9)
 search_items <- get.items.search(bestK = 10)
-search_step_res <- search.dc.stepwise(
+search_step_res <- search.bin.stepwise(
   sample$y,
   data[, 3:ncol(data)],
   xSizeSteps = x_sizes_steps,

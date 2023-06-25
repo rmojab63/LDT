@@ -323,6 +323,10 @@ public:
   /// \ref Projections)
   Tv CostRatioAvg = NAN;
 
+  /// @brief Brier score, the mean squared difference between predicted
+  /// probabilities and actual outcomes.
+  Tv BrierScore = NAN;
+
   /// @brief Initializes a new instance of this class
   /// @param modelType Type of model
   /// @param distType Type of distribution
@@ -410,7 +414,11 @@ public:
   Matrix<Tv> CostRatios;
 
   /// @brief After \ref Calculate, average value of AUC
-  Tv Auc = 0;
+  Tv Auc = NAN;
+
+  /// @brief Brier score, the mean squared difference between predicted
+  /// probabilities and actual outcomes.
+  Tv BrierScore = NAN;
 
   /// @brief Get a simulation class from types. Arguments are passed to the
   /// class or the constructors
@@ -418,8 +426,8 @@ public:
   GetFromType(bool hasWeight, DiscreteChoiceModelType modelType,
               DiscreteChoiceDistType distType, Ti rows, Ti cols, Ti numChoices,
               Tv trainPercentage, Ti trainFixSize, Ti costMatrixCount,
-              bool doAuc, bool doFrequecyTable, PcaAnalysisOptions *pcaOptions,
-              bool weightedEval);
+              bool doBrier, bool doAuc, bool doFrequecyTable,
+              PcaAnalysisOptions *pcaOptions, bool weightedEval);
 
   virtual void Calculate(const Matrix<Tv> &data,
                          const std::vector<Matrix<Tv>> *costMatrixes,
@@ -446,6 +454,7 @@ class LDT_EXPORT DiscreteChoiceSim : public DiscreteChoiceSimBase {
   Ti mNumChoices = 0;
   bool mDoAuc = false;
   bool mWeightedEval = false;
+  bool mDoBrier = false;
 
 public:
   /// @brief Initializes a new instance of this class
@@ -468,8 +477,8 @@ public:
   /// simulations
   /// @param weightedEval If true, weights are used in evaluations
   DiscreteChoiceSim(Ti rows, Ti cols, Ti numChoices, Tv trainPercentage,
-                    Ti trainFixSize, Ti costMatrixCount, bool doAuc,
-                    bool doFrequencyTable = false,
+                    Ti trainFixSize, Ti costMatrixCount, bool doBrier,
+                    bool doAuc, bool doFrequencyTable = false,
                     PcaAnalysisOptions *pcaOptions = nullptr,
                     bool weightedEval = false);
 

@@ -21,12 +21,20 @@ dx = as.data.frame(x)
 
 test_that("Discrete choice (binary) estimation works", {
 
-  for (disType in c("logit", "probit")){
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:5], NULL, disType, printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = disType))
+  for (probType in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, newX = x[,3:5], probType, printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
     expect_equal(as.numeric(resR$coefficients), as.numeric(res$estimations$gamma), tolerance = 1e-5)
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
+
+    glm_pp <- predict(resR, type = "response")
+    brier_score <- mean((dx$V1 - glm_pp)^2)
+    expect_equal(brier_score, res$measures[4,1], tolerance = 1e-1)
+
+    auc <- ldt::s.roc(dx$V1, 1 - glm_pp) # 1- glm_pp because of s.roc behaviour
+    expect_equal(auc$auc, res$measures[5,1], tolerance = 1e-1)
+
   }
 })
 
@@ -37,10 +45,10 @@ test_that("Discrete choice (binary) estimation works with PCA", {
   pcaOp$ignoreFirst = 0 #It automatically adds and ignores intercept
   pcaOp$exactCount = 3
 
-  for (disType in c("logit", "probit")){
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, disType, pcaOptions = pcaOp, printMsg = printMsg)
+  for (probType in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, probType, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, family = binomial(link = disType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, family = binomial(link = probType))
     expect_equal(abs(as.numeric(resR$coefficients)), abs(as.numeric(res$estimations$gamma)), tolerance = 1e-4) # abs? they are related to PC
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
@@ -49,10 +57,10 @@ test_that("Discrete choice (binary) estimation works with PCA", {
 
 test_that("Discrete choice (binary, weighted) estimation works", {
 
-  disType = "probit" # the test fails for "logit" (I think this is because of the glm estimation)
+  probType = "probit" # the test fails for "logit" (I think this is because of the glm estimation)
 
-  res <- estim.dc(x[,1,drop=FALSE], x[,3:5], x[,6,drop = FALSE], disType, printMsg = printMsg)
-  resR <- glm(V1 ~ V3 + V4 + V5, data = dx, weights = x[,6], family = quasibinomial(link = disType))
+  res <- estim.bin(x[,1,drop=FALSE], x[,3:5], x[,6,drop = FALSE], probType, printMsg = printMsg)
+  resR <- glm(V1 ~ V3 + V4 + V5, data = dx, weights = x[,6], family = quasibinomial(link = probType))
   # quasibinomial (to avoid a warning (non-integer #successes in a binomial glm!))
   # see: https://stackoverflow.com/a/12954119
   expect_equal(as.numeric(resR$coefficients), as.numeric(res$estimations$gamma), tolerance = 1e-4)
@@ -68,10 +76,10 @@ test_that("Discrete choice (binary, weighted) estimation works with PCA", {
   pcaOp$ignoreFirst = 0
   pcaOp$exactCount = 3
 
-  for (disType in c("logit", "probit")){
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6,drop = FALSE], disType, pcaOptions = pcaOp, printMsg = printMsg)
+  for (probType in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6,drop = FALSE], probType, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6,drop = FALSE], family = quasibinomial(link = disType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6,drop = FALSE], family = quasibinomial(link = probType))
     expect_equal(abs(as.numeric(resR$coefficients)), abs(as.numeric(res$estimations$gamma)), tolerance = 1e-5) # abs? they are related to PCs
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
@@ -95,9 +103,9 @@ test_that("Discrete choice (binary, weighted, logL) estimation works", {
   colnames(m)<-colnames(Z0)
   Zw = rbind(Z0,m)
 
-  for (disType in c("logit", "probit")){
-    res <- estim.dc(y, Z, w, disType, printMsg = printMsg)
-    resw <- estim.dc(yw, Zw, ww, disType, printMsg = printMsg)
+  for (probType in c("logit", "probit")){
+    res <- estim.bin(y, Z, w, probType, printMsg = printMsg)
+    resw <- estim.bin(yw, Zw, ww, probType, printMsg = printMsg)
     expect_equal(res$estimations$gamma, resw$estimations$gamma)
     expect_equal(res$estimations$gammaVar, resw$estimations$gammaVar)
     expect_equal(res$measures[1,1], resw$measures[1,1])
@@ -112,15 +120,15 @@ test_that("Discrete choice (binary, weighted, logL) estimation works", {
 
 test_that("Discrete choice (binary, weighted) projection works", {
 
-  for (disType in c("logit", "probit")){
+  for (probType in c("logit", "probit")){
     newX <- dx[6:7,3:5]
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:5], NULL, disType, newX = as.matrix(newX), printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = disType))
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, probType, newX = as.matrix(newX), printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
 
 
     resRp = predict(resR, newdata = newX, type="response")
-    expect_equal(resRp[[1]], res$projection[1,1], tolerance = 1e-5)
-    expect_equal(resRp[[2]], res$projection[2,1], tolerance = 1e-5)
+    expect_equal(resRp[[1]], res$projection[1,2], tolerance = 1e-5)
+    expect_equal(resRp[[2]], res$projection[2,2], tolerance = 1e-5)
   }
 })
 
@@ -134,40 +142,41 @@ test_that("Discrete choice (binary, weighted) projection works with PCA", {
   newX <- x[6:10,3:ncol(x)]
   projY <- as.data.frame(predict(pr, newdata = newX ))
 
-  for (disType in c("logit", "probit")){
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6, drop=FALSE], disType, newX, pcaOptions = pcaOp, printMsg = printMsg)
+  for (probType in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6, drop=FALSE], probType, newX, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6], family = quasibinomial(link = disType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6], family = quasibinomial(link = probType))
 
     resRp = predict(resR, newdata = projY, type="response")
-    expect_equal(resRp[[1]], res$projection[1,1], tolerance = 1e-5)
-    expect_equal(resRp[[2]], res$projection[2,1], tolerance = 1e-5)
+    expect_equal(resRp[[1]], res$projection[1,2], tolerance = 1e-5)
+    expect_equal(resRp[[2]], res$projection[2,2], tolerance = 1e-5)
   }
 })
 
 test_that("Discrete choice (binary) projection works", {
 
-  for (disType in c("logit", "probit")){
+  for (probType in c("logit", "probit")){
     newX <- dx[5:6,3:5]
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:5], NULL, disType, as.matrix(newX), printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = disType))
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, probType, as.matrix(newX), printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
 
 
     resRp = predict(resR, newdata = newX, type="response")
-    expect_equal(resRp[[1]], res$projection[1,1], tolerance = 1e-5)
-    expect_equal(resRp[[2]], res$projection[2,1], tolerance = 1e-5)
+    expect_equal(resRp[[1]], res$projection[1,2], tolerance = 1e-5)
+    expect_equal(resRp[[2]], res$projection[2,2], tolerance = 1e-5)
   }
 })
 
 test_that("Discrete choice (binary) scoring works", {
 
-  for (disType in c("logit", "probit")){
+  for (probType in c("logit", "probit")){
     newX <- x[5:6,3:4]
     c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # if probability is < 0.5, count as an error (1 cost)
     c2=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # same as c1
     c3=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
 
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:4], NULL, disType, newX =  newX, costMatrices = list(c1,c2, c3), printMsg = printMsg)
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:4], NULL, probType,
+                     newX =  newX, costMatrices = list(c1,c2, c3), simFixSize = 50, printMsg = printMsg)
 
     expect_equal(res$simulation$costRatios[[1]],res$simulation$costRatios[[2]], tolerance = 1e-16)
     expect_equal(res$simulation$costRatios[[1]], 1 - res$simulation$costRatios[[3]], tolerance = 1e-14)
@@ -183,13 +192,14 @@ test_that("Discrete choice (binary) scoring works with PCA", {
   pcaOp$exactCount = 3
   newX <- x[6:10,3:ncol(x)]
 
-  for (disType in c("logit", "probit")){
+  for (probType in c("logit", "probit")){
 
     c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # if probability is < 0.5, count as an error (1 cost)
     c2=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # same as c1
     c3=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
 
-    res <- estim.dc(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, disType, newX, list(c1,c2, c3), pcaOptions = pcaOp, printMsg = printMsg)
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, probType, newX,
+                     list(c1,c2, c3), pcaOptions = pcaOp, simFixSize = 50, printMsg = printMsg)
 
     expect_equal(res$simulation$costRatios[[1]],res$simulation$costRatios[[2]], tolerance = 1e-16)
     expect_equal(res$simulation$costRatios[[1]], 1 - res$simulation$costRatios[[3]], tolerance = 1e-14)
@@ -205,7 +215,7 @@ test_that("Discrete choice search (avgCost,best) works", {
   c2=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
   g1 = c(1L,2L)
   g2 = c(3L,4L)
-  res <- search.dc(x[,1,drop=FALSE], x[,3:7],
+  res <- search.bin(x[,1,drop=FALSE], x[,3:7],
                   searchOptions = get.options.search(printMsg = printMsg),
                               measureOptions = get.options.measure(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2), xSizes = c(1L,2L))
@@ -221,7 +231,7 @@ test_that("Discrete choice search (avgCost,best, weighted) works", {
   g1 = c(1L,2L)
   g2 = c(3L,4L)
   g3 = c(5L,6L)
-  res <- search.dc(x[,1,drop=FALSE], x[,3:8], x[,10,drop=FALSE],
+  res <- search.bin(x[,1,drop=FALSE], x[,3:8], x[,10,drop=FALSE],
                   searchOptions = get.options.search(printMsg = printMsg),
                   measureOptions = get.options.measure(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2,g3), xSizes = c(1L,2L,3L))
@@ -237,7 +247,7 @@ test_that("Discrete choice search (avgCost,all) works", {
   c2=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
   g1 = c(1L,2L)
   g2 = c(3L,4L)
-  res <- search.dc(x[,1,drop=FALSE], x[,3:7], searchOptions = get.options.search(printMsg = printMsg),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:7], searchOptions = get.options.search(printMsg = printMsg),
                   measureOptions = get.options.measure(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2), xSizes = c(1L,2L),
                               searchItems = get.items.search(bestK = 0, all = TRUE))
@@ -266,13 +276,13 @@ test_that("Discrete choice search (aic, one model) works", {
 
   g1 = c(1L)
   g2 = c(2L)
-  res <- search.dc(x[,1,drop=FALSE], x[,3:4],
+  res <- search.bin(x[,1,drop=FALSE], x[,3:4],
                   searchOptions = get.options.search(printMsg = printMsg),
                   measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                               xPartitions = list(g1,g2), xSizes = c(2L),
                               searchItems = get.items.search(bestK = 1, all = TRUE))
 
-  res1 = estim.dc(x[,1,drop=FALSE],x[,c(3,4)],NULL, distType = "logit", printMsg = printMsg)
+  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, probType = "logit", printMsg = printMsg)
   expect_equal(res$aic$target1$model$bests$best1$weight, exp(-0.5*res1$measures[2,1]), tolerance = 1e-14)
 
 
@@ -288,13 +298,13 @@ test_that("Discrete choice search (avgCost, one model) works", {
   g2 = c(2L)
   tratio = 0.8
 
-  res <- search.dc(x[,1,drop=FALSE], x[,3:4], searchOptions = get.options.search(printMsg = printMsg),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:4], searchOptions = get.options.search(printMsg = printMsg),
                   measureOptions = get.options.measure(typesIn = c(), typesOut = c("frequencyCost"),
                                                                                  seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2L), costMatrices = list(c1),
                               searchItems = get.items.search(bestK = 1, all = FALSE))
 
-  res1 = estim.dc(x[,1,drop=FALSE],x[,c(3,4)],NULL, distType = "logit",
+  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, probType = "logit",
                         costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                         simTrainRatio = tratio, printMsg = printMsg)
   expect_equal(res$frequencyCostOut$target1$model$bests$best1$weight, 1 - res1$simulation$costRatios[[1]], tolerance = 1e-14) # note that in search, it is 1-cost score
@@ -310,7 +320,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
   g2 = c(4L,5L,6L,7L,8L,9L)
   tratio = 0.8
 
-  res <- search.dc(x[,1,drop=FALSE], x[,3:20], searchOptions = get.options.search(printMsg = printMsg),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:20], searchOptions = get.options.search(printMsg = printMsg),
                   measureOptions = get.options.measure(typesIn = c("sic"), typesOut = c("frequencyCost"),
                                                                                   seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2L), costMatrices = list(c1),
@@ -323,7 +333,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
 
     # note that in the indexes, we should adjust the indexes too
     aa<-a$exoIndices+2
-    resB = estim.dc(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, distType = "logit",
+    resB = estim.bin(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, probType = "logit",
                           costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                           simTrainRatio = tratio, printMsg = printMsg)
     expect_equal(a[[1]], 1 - resB$simulation$costRatios[[1]]) # note that in search, it is 1-cost score
@@ -354,11 +364,11 @@ test_that("Discrete choice search (NA) works", {
 
   g1 = c(1L,2L)
   g2 = c(3L,4L)
-  res1 <- search.dc(y0, Z0, w0, searchOptions = get.options.search(printMsg = printMsg),
+  res1 <- search.bin(y0, Z0, w0, searchOptions = get.options.search(printMsg = printMsg),
                    measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
                                searchItems = get.items.search(bestK = 1, all = FALSE))
-  res2 <- search.dc(yNA, ZNA, wNA, searchOptions = get.options.search(printMsg = printMsg),
+  res2 <- search.bin(yNA, ZNA, wNA, searchOptions = get.options.search(printMsg = printMsg),
                    measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
                                searchItems = get.items.search(bestK = 1, all = FALSE))
@@ -372,11 +382,11 @@ test_that("Discrete choice search (parallel) works", {
 
   g1 = c(1L,2L,3L,4L,5L,6L)
   g2 = c(7L,8L,9L,10L,11L,12L)
-  res1 <- search.dc(x[,1,drop=FALSE], x[,3:20], measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res1 <- search.bin(x[,1,drop=FALSE], x[,3:20], measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
                                searchItems = get.items.search(bestK = 1, all = TRUE),
                                searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
-  res2 <- search.dc(x[,1,drop=FALSE], x[,3:20], measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res2 <- search.bin(x[,1,drop=FALSE], x[,3:20], measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
                                searchItems = get.items.search(bestK = 1, all = TRUE),
                                searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg))
@@ -391,14 +401,14 @@ test_that("Discrete choice search works with restricted AIC", {
   Exo=x[,4:20]
   g1 = c(1L,2L,3L,4L,5L,6L)
   g2 = c(7L,8L,9L,10L,11L,12L)
-  res = search.dc(x[,1,drop=FALSE], Exo, measureOptions = get.options.measure(typesIn = c("aic", "auc"), typesOut = c()),
+  res = search.bin(x[,1,drop=FALSE], Exo, measureOptions = get.options.measure(typesIn = c("aic", "auc"), typesOut = c()),
                                    xPartitions = list(g1,g2), xSizes = c(1L,2L),
                                    modelCheckItems = get.items.modelcheck(maxAic = 1.45),
                                    searchItems = get.items.search(bestK = 1, all = TRUE),
                                    searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
   alls = list()
   for (m in res$aic$target1$model$all){
-    M = estim.dc(y, x = as.matrix(Exo[,m$exoIndices]), printMsg = printMsg)
+    M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]), printMsg = printMsg)
     alls = append(alls, M$measures[2,1])
     expect_true(as.numeric(M$measures[2,1]) <= 1.45)
   }
@@ -409,7 +419,7 @@ test_that("Discrete choice search works with inclusion weights", {
 
   y=x[,c(1), drop = FALSE]
   Exo=x[,4:7]
-  res = search.dc(y, Exo, measureOptions = get.options.measure(typesIn = c("auc"), typesOut = c()),
+  res = search.bin(y, Exo, measureOptions = get.options.measure(typesIn = c("auc"), typesOut = c()),
                                    xSizes = c(1L,2L),
                                    searchItems = get.items.search(bestK = 1, all = TRUE, inclusion = TRUE),
                                    searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
@@ -439,7 +449,7 @@ test_that("Discrete choice search works with coefficients (bests)", {
 
   y=x[,c(1), drop=FALSE]
   Exo=x[,4:7]
-  res = search.dc(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
                                    searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE),
                                    searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
@@ -469,7 +479,7 @@ test_that("Discrete choice search works with coefficients (bests)", {
     expect_equal(item$best1$exoIndices, best_coef2$exoIndices, tolerance = 1e-10)
 
     # are mean and variance equal?
-    M = estim.dc(y,
+    M = estim.bin(y,
                        x = as.matrix(Exo[,item$best1$exoIndices]),
                        simFixSize = 0, printMsg = printMsg)
     expect_equal(exp(-0.5 * M$measures[2,1]), item$best1$weight, tolerance = 1e-10)
@@ -484,7 +494,7 @@ test_that("Discrete choice search works with coefficients (cdfs)", {
 
   y=x[,c(1), drop=FALSE]
   Exo=x[,4:7]
-  res = search.dc(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
                                    searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 cdfs = c(0,1)),
@@ -497,7 +507,7 @@ test_that("Discrete choice search works with coefficients (cdfs)", {
 
       if (any(m$exoIndices==u)){
         ind = which(m$exoIndices == u) + 1 #+1 for intercept
-        M = estim.dc(y, x = as.matrix(Exo[,m$exoIndices]),
+        M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
                            simFixSize = 0, printMsg = printMsg)
         coef = M$estimations$gamma[ind]
         sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -518,7 +528,7 @@ test_that("Discrete choice search works with coefficients (extreme bounds)", {
 
   y=x[,c(1),drop=FALSE]
   Exo=x[,4:7]
-  res = search.dc(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
                                    searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 extremeMultiplier = 2),
@@ -530,7 +540,7 @@ test_that("Discrete choice search works with coefficients (extreme bounds)", {
 
     if (any(m$exoIndices==h)) {
       ind = which(m$exoIndices == h) + 1 #+1 for intercept
-      M = estim.dc(y, x = as.matrix(Exo[,m$exoIndices]),
+      M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
                          simFixSize = 0, printMsg = printMsg)
       coef = M$estimations$gamma[ind]
       sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -548,7 +558,7 @@ test_that("Discrete choice search works with coefficients (mixture)", {
 
   y=x[,c(1),drop=FALSE]
   Exo=x[,4:7]
-  res = search.dc(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, measureOptions = get.options.measure(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
                                    searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 extremeMultiplier = 2, mixture4 = TRUE),
@@ -560,7 +570,7 @@ test_that("Discrete choice search works with coefficients (mixture)", {
   h = 1
   for (m in res$aic$target1$model$all){
     if (any(m$exoIndices==h)) {
-      M = estim.dc(y, x = as.matrix(Exo[,m$exoIndices]),
+      M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
                          simFixSize = 0, printMsg = printMsg)
       ind = which(m$exoIndices == h) + 1 #+1 for intercept
       coefs = append(coefs,M$estimations$gamma[ind])
@@ -589,7 +599,7 @@ test_that("Discrete choice summary works", {
   y=x[,c(1),drop=FALSE]
   Exo=x[,4:7]
 
-  res <- search.dc(y, Exo,searchLogit = TRUE, searchProbit = TRUE,costMatrices = list(c1, c2),
+  res <- search.bin(y, Exo,searchLogit = TRUE, searchProbit = TRUE,costMatrices = list(c1, c2),
                   measureOptions = get.options.measure(typesIn = c("sic", "aic", "aucIn", "frequencyCost"), typesOut = c("frequencyCost", "auc"),
                                                      seed = -400,
                                                      simFixSize = 10, trainRatio = 0.75, trainFixSize = 0),
@@ -619,12 +629,12 @@ test_that("Discrete choice SplitSearch works (no subsetting)", {
   measureOptions = get.options.measure(c("sic", "aic"), c("frequencyCost"), seed = -400)
   searchOptions = get.options.search(FALSE, printMsg = FALSE)
 
-  split = search.dc.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
+  split = search.bin.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                      costMatrices = list(c1, c2),
                       searchItems = searchItems, measureOptions = measureOptions,
                       searchOptions = searchOptions, savePre = NULL)
 
-  whole = search.dc(y, Exo, xSizes = c(1L,2L,3L),
+  whole = search.bin(y, Exo, xSizes = c(1L,2L,3L),
                    costMatrices = list(c1, c2),
                     searchItems = searchItems, measureOptions = measureOptions,
                     searchOptions = searchOptions)

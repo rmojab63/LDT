@@ -48,7 +48,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     Model = DiscreteChoiceSim<hasWeight, modelType, distType>(
         numObs, cols, this->mNumChoices, measures.TrainRatio,
         (Ti)measures.TrainFixSize, (Ti)costMatrixes.size(),
-        measures.mIndexOfAucOut != -1, false, nullptr,
+        measures.mIndexOfBrierOut != -1, measures.mIndexOfAucOut != -1, false,
+        nullptr,
         measures.WeightedEval); // no PCA in search
     Model.Seed = seed;
     Model.SimulationMax = measures.SimFixSize;
@@ -81,7 +82,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
   Weights = Matrix<Tv>(numMeas, 1);
   this->WorkSize += numMeas; // weights matrix
 
-  if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1) {
+  if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1 ||
+      measures.mIndexOfBrierIn != -1) {
     if (hasWeight && measures.WeightedEval)
       CostIn = std::unique_ptr<FrequencyCostBase>(
           new FrequencyCost<true>((Ti)costMatrixes.size()));
@@ -210,10 +212,30 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
           measures.mIndexOfSic, 0,
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Sic));
 
-    if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1) {
+    if (measures.mIndexOfCostMatrixIn != -1 || measures.mIndexOfAucIn != -1 ||
+        measures.mIndexOfBrierIn != -1) {
       Probs.SetData(&work[s]);
       s += Probs.length();
       DModel.GetProbabilities(X, Probs, &work[s]);
+
+      if (measures.mIndexOfBrierIn != -1) {
+
+        Tv brier = 0;
+        Tv yi, wi = 1, sum = 0;
+        Ti i = -1;
+        for (auto ap = Probs.ColBegin(1); ap != Probs.ColEnd(1); ++ap) {
+          i++;
+          yi = Y.Data[i];
+          if constexpr (hasWeight) {
+            wi = measures.WeightedEval ? W.Data[i] : 1;
+          }
+          brier += wi * std::pow(yi - (*ap), 2);
+          sum += wi;
+        }
+        brier /= sum;
+        Weights.Set0(measures.mIndexOfBrierIn, 0,
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kBrier, brier));
+      }
 
       if (measures.mIndexOfCostMatrixIn != -1) {
         if (this->pOptions->RequestCancel)
@@ -224,7 +246,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
             hasWeight ? (measures.WeightedEval ? &W : nullptr) : nullptr,
             &work[s]);
         Weights.Set0(measures.mIndexOfCostMatrixIn, 0,
-                     1 - CostIn.get()->AverageRatio);
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kFrequencyCost,
+                                             CostIn.get()->AverageRatio));
       }
       if (measures.mIndexOfAucIn != -1) {
 
@@ -235,7 +258,9 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
             Y, Probs,
             hasWeight ? (measures.WeightedEval ? &W : nullptr) : nullptr,
             *pAucOptions);
-        Weights.Set0(measures.mIndexOfAucIn, 0, AucIn.get()->Result);
+        Weights.Set0(measures.mIndexOfAucIn, 0,
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kAuc,
+                                             AucIn.get()->Result));
       }
     }
   }
@@ -244,11 +269,15 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     Ti cc = (Ti)measures.MeasuresIn.size();
     if (measures.mIndexOfCostMatrixOut != -1)
       Weights.Set0(cc + measures.mIndexOfCostMatrixOut, 0,
-                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kFrequencyCost,
-                                           Model.CostRatios.Mean()));
+                   Scoring::ToWeight(ScoringType::kFrequencyCost,
+                                     Model.CostRatios.Mean()));
     if (measures.mIndexOfAucOut != -1)
       Weights.Set0(cc + measures.mIndexOfAucOut, 0,
-                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kAuc, Model.Auc));
+                   Scoring::ToWeight(ScoringType::kAuc, Model.Auc));
+
+    if (measures.mIndexOfBrierOut != -1)
+      Weights.Set0(cc + measures.mIndexOfBrierOut, 0,
+                   Scoring::ToWeight(ScoringType::kBrier, Model.BrierScore));
   }
 
   if (this->pOptions->RequestCancel)
@@ -259,7 +288,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   bool allNan = true;
   Tv weight;
   for (Ti i = 0; i < Weights.RowsCount; i++) { // evaluation index
-    weight = Weights.Get(i, 0);
+    weight = Weights.Data[i];
     if (std::isnan(weight))
       continue;
     allNan = false;
@@ -279,7 +308,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
       for (Ti t = 0; t < this->SizeG + 1 + this->mNumChoices - 2; t++) {
         auto ek =
             new EstimationKeep(weight, &this->CurrentIndices, &extra, nullptr,
-                               DModel.Beta.Data[t], DModel.BetaVar.Get(t, t));
+                               DModel.Beta.Data[t], DModel.BetaVar.Get0(t, t));
         if (t == 0) // intercept
           this->Push1(*ek, i, 0, 0);
         else if (t <= this->SizeG) // beta parameter

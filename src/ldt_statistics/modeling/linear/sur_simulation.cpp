@@ -194,4 +194,14 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     throw std::logic_error("Model check failed: Minimum Valid Simulations");
 
   Results.Divide_in((Tv)ValidCounts);
+
+  i = -1;
+  for (auto &e : *pMeasuresOut) {
+    i++;
+    if (e == ScoringType::kRmse || e == ScoringType::kScaledRmse)
+      for (j = 0; j < m; j++) {
+        s = j * errors.RowsCount;
+        Results.Set0(i, j, std::sqrt(Results.Get0(i, j)));
+      }
+  }
 }

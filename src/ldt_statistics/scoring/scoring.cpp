@@ -138,11 +138,16 @@ Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &measure) {
   switch (type) {
   case GoodnessOfFitType::kAic:
   case GoodnessOfFitType::kSic:
+  case GoodnessOfFitType::kBrier:
     return std::exp(-0.5 * measure);
+    // Note that exp(-0.5 * x) transformation is invariant to translation. so we
+    // can use the running algorithm
+
   case GoodnessOfFitType::kAuc:
     return measure;
   case GoodnessOfFitType::kFrequencyCost:
     return 1 - measure;
+
   default:
     throw std::logic_error("not implemented goodness-of-fit type to weight");
   }
@@ -152,11 +157,13 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
   switch (type) {
   case GoodnessOfFitType::kAic:
   case GoodnessOfFitType::kSic:
-    return -2 * std::log(weight);
+  case GoodnessOfFitType::kBrier:
+    return -2.0 * std::log(weight);
   case GoodnessOfFitType::kAuc:
     return weight;
   case GoodnessOfFitType::kFrequencyCost:
     return 1 - weight;
+
   default:
     throw std::logic_error("not implemented goodness-of-fit type to weight");
   }
@@ -172,13 +179,20 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &measure) {
   case ScoringType::kScaledMae:
   case ScoringType::kRmse:
   case ScoringType::kScaledRmse:
-    return (Tv)1 / measure; // ????
-
+  case ScoringType::kBrier:
   case ScoringType::kCrps:
-    return (Tv)1 / measure; // ????
+    return std::exp(-0.5 * measure);
+
+  case ScoringType::kAuc:
+    return measure;
+
+  case ScoringType::kFrequencyCost:
+    return 1 - measure;
 
   default:
-    throw std::logic_error("not implemented scoring type to weight");
+    throw std::logic_error(format("The given scoring type (value={}) is "
+                                  "whether invalid or not implemented.",
+                                  (int)type));
   }
 }
 
@@ -192,10 +206,15 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
   case ScoringType::kScaledMae:
   case ScoringType::kRmse:
   case ScoringType::kScaledRmse:
-    return (Tv)1 / weight; // ????
-
   case ScoringType::kCrps:
-    return (Tv)1 / weight; // ????
+  case ScoringType::kBrier:
+    return -2 * std::log(weight);
+
+  case ScoringType::kAuc:
+    return weight;
+
+  case ScoringType::kFrequencyCost:
+    return 1 - weight;
 
   default:
     throw std::logic_error("not implemented scoring type to weight");

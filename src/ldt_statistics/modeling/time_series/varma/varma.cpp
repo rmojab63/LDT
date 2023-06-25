@@ -437,7 +437,7 @@ void MlUpdateResid(const Matrix<Tv> &gamma, Varma &model, const Matrix<Tv> *R,
         l = model.Sizes.MaLags.at(c);
         if (i + l >= n)
           break;
-        model.Result.Xt.Set(i + l, row, rr);
+        model.Result.Xt.Set0(i + l, row, rr);
         row++;
       }
     }

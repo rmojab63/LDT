@@ -323,7 +323,7 @@ test_that("V-ARMA search works for Out-Sample", {
                     ySizes = c(1L,2L), maxParams = c(2,1,2,0,0,0), xGroups = list(c(1L,2L)),
                     simUsePreviousEstim = FALSE, maxHorizon = 2,
                     searchOptions = get.options.search(printMsg = printMsg),
-                    measureOptions = get.options.measure(c(), c("crps", "mae", "direction"),
+                    measureOptions = get.options.measure(c(), c("crps", "mae", "rmse"),
                                                        horizons = c(1L,2L), simFixSize = 2),
                     searchItems = get.items.search(all = TRUE), newX = newX,
                     modelCheckItems = get.items.modelcheck(estimation = TRUE, prediction = TRUE,
@@ -332,7 +332,12 @@ test_that("V-ARMA search works for Out-Sample", {
   for (m in res$crps$target1$model$all){
     M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
               params =  m$parameters, simFixSize = 2, addIntercept = FALSE, simUsePreviousEstim = FALSE, printMsg = printMsg)
-     expect_equal(1/m$weight, as.numeric(M$measures[10,1]), tolerance = 1e-10)
+     expect_equal(s.measure.from.weight(m$weight, "crps"), as.numeric(M$measures[10,1]), tolerance = 1e-10)
+  }
+  for (m in res$rmse$target1$model$all){
+    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
+                    params =  m$parameters, simFixSize = 2, addIntercept = FALSE, simUsePreviousEstim = FALSE, printMsg = printMsg)
+    expect_equal(s.measure.from.weight(m$weight, "rmse"), as.numeric(M$measures[8,1]), tolerance = 1e-10)
   }
 
   # replace indexes

@@ -57,6 +57,42 @@ public:
     ASSERT_EQ(mV.Data[1], (Tw)100);
   }
 
+  template <class Tw> static void iterators0() {
+    Tw data[] = {1, 2, 3, 4, 5, 6};
+    auto m = Matrix<Tw>(data, (Ti)2, (Ti)3);
+
+    Tw sum = 0;
+    for (auto &d : m)
+      sum += d;
+    ASSERT_EQ(21, sum);
+
+    // columns
+    sum = 0;
+    for (auto it = m.ColBegin(1); it != m.ColEnd(1); ++it)
+      sum += *it;
+    ASSERT_EQ(7, sum);
+
+    // generally you should use nested loops to iterate over multiple rows and
+    // columns, however I guess the following might work:
+    sum = 0;
+    for (auto it = m.ColBegin(1); it != m.ColEnd(2); ++it)
+      sum += *it;
+    ASSERT_EQ(18, sum);
+
+    // rows
+    sum = 0;
+    for (auto it = m.RowBegin(1); it != m.RowEnd(1); ++it)
+      sum += *it;
+    ASSERT_EQ(12, sum);
+
+    sum = 0;
+    for (int row = 0; row <= 1; ++row) {
+      for (auto it = m.RowBegin(row); it != m.RowEnd(row); ++it)
+        sum += *it;
+    }
+    ASSERT_EQ(21, sum);
+  }
+
   template <class Tw> static void getdata0() {
     Tw data[] = {1, 2, 3, 4, 5, 6};
     auto mat = Matrix<Tw>(data, (Ti)2, (Ti)3);
@@ -1021,6 +1057,11 @@ public:
 TEST(Matrix_T, initialize) {
   matrix_t::initialize0<Tv>();
   matrix_t::initialize0<Ti>();
+}
+
+TEST(Matrix_T, iterators) {
+  matrix_t::iterators0<Tv>();
+  matrix_t::iterators0<Ti>();
 }
 
 TEST(Matrix_T, getdata) {

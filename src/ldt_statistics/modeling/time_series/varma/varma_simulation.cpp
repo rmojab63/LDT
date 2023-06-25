@@ -498,9 +498,9 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
           continue;
         if (KeepDetails) {
           for (int vi = 0; vi < yy; vi++)
-            Details.push_back(std::make_tuple(se, c, h, vi, last.Data[vi],
-                                              act.Get(vi, k), forc.Get(vi, k),
-                                              err.Get(vi, k), std.Get(vi, k)));
+            Details.push_back(std::make_tuple(
+                se, c, h, vi, last.Data[vi], act.Get0(vi, k), forc.Get0(vi, k),
+                err.Get0(vi, k), std.Get0(vi, k)));
         }
         for (Ti i = 0; i < temp.RowsCount; i++) {
           me.Set0(i, k, me.Get0(i, k) + temp.Get0(i, k));

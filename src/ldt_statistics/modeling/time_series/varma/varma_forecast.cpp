@@ -222,7 +222,7 @@ void VarmaForecast::Calculate(const Varma &estimate, const Matrix<Tv> *exo,
           temp.DotTr(Gs.at(s), &temp0);
           auto j = s + armax_d;
           for (Ti i = 0; i < g; i++)
-              v_storage.Set(j, i, v_storage.Get(j, i) + temp0.Get(i, i));
+              v_storage.Set0(j, i, v_storage.Get0(j, i) + temp0.Get0(i, i));
       }
       */
     }

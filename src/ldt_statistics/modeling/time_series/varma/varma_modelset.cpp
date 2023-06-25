@@ -246,13 +246,13 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Result.Aic);
       for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set(measures.mIndexOfAic, t, weight);
+        weights.Set0(measures.mIndexOfAic, t, weight);
     }
     if (measures.mIndexOfSic >= 0) {
       weight =
           GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Result.Sic);
       for (t = 0; t < (Ti)targetPositions.size(); t++)
-        weights.Set(measures.mIndexOfSic, t, weight);
+        weights.Set0(measures.mIndexOfSic, t, weight);
     }
   }
 
@@ -276,37 +276,37 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     j = (Ti)this->pMeasures->MeasuresIn.size();
     for (t = 0; t < (Ti)targetPositions.size(); t++) {
       if (measures.mIndexOfSign >= 0)
-        weights.Set(
+        weights.Set0(
             j + measures.mIndexOfSign, t,
             Scoring::ToWeight(ScoringType::kSign,
                               Model.ResultAggs.Get0(measures.mIndexOfSign, t)));
       if (measures.mIndexOfDirection >= 0)
-        weights.Set(j + measures.mIndexOfDirection, t,
-                    Scoring::ToWeight(
-                        ScoringType::kDirection,
-                        Model.ResultAggs.Get0(measures.mIndexOfDirection, t)));
+        weights.Set0(j + measures.mIndexOfDirection, t,
+                     Scoring::ToWeight(
+                         ScoringType::kDirection,
+                         Model.ResultAggs.Get0(measures.mIndexOfDirection, t)));
       if (measures.mIndexOfMae >= 0)
-        weights.Set(
+        weights.Set0(
             j + measures.mIndexOfMae, t,
             Scoring::ToWeight(ScoringType::kMae,
                               Model.ResultAggs.Get0(measures.mIndexOfMae, t)));
       if (measures.mIndexOfMaeSc >= 0)
-        weights.Set(j + measures.mIndexOfMaeSc, t,
-                    Scoring::ToWeight(
-                        ScoringType::kScaledMae,
-                        Model.ResultAggs.Get0(measures.mIndexOfMaeSc, t)));
+        weights.Set0(j + measures.mIndexOfMaeSc, t,
+                     Scoring::ToWeight(
+                         ScoringType::kScaledMae,
+                         Model.ResultAggs.Get0(measures.mIndexOfMaeSc, t)));
       if (measures.mIndexOfRmse >= 0)
-        weights.Set(
+        weights.Set0(
             j + measures.mIndexOfRmse, t,
             Scoring::ToWeight(ScoringType::kRmse,
                               Model.ResultAggs.Get0(measures.mIndexOfRmse, t)));
       if (measures.mIndexOfRmseSc >= 0)
-        weights.Set(j + measures.mIndexOfRmseSc, t,
-                    Scoring::ToWeight(
-                        ScoringType::kScaledRmse,
-                        Model.ResultAggs.Get0(measures.mIndexOfRmseSc, t)));
+        weights.Set0(j + measures.mIndexOfRmseSc, t,
+                     Scoring::ToWeight(
+                         ScoringType::kScaledRmse,
+                         Model.ResultAggs.Get0(measures.mIndexOfRmseSc, t)));
       if (measures.mIndexOfCrps >= 0)
-        weights.Set(
+        weights.Set0(
             j + measures.mIndexOfCrps, t,
             Scoring::ToWeight(ScoringType::kCrps,
                               Model.ResultAggs.Get0(measures.mIndexOfCrps, t)));
@@ -343,8 +343,8 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
           auto ek = new EstimationKeep(
               weight, &ExoIndexes, &Params, &this->CurrentIndices,
-              FModel.Forecast.Get(j, t + Model.Forecast.StartIndex),
-              FModel.Variance.Get(j, t + Model.Forecast.StartIndex));
+              FModel.Forecast.Get0(j, t + Model.Forecast.StartIndex),
+              FModel.Variance.Get0(j, t + Model.Forecast.StartIndex));
           this->Push1(*ek, i, targetPositions.at(j), t);
         }
       }

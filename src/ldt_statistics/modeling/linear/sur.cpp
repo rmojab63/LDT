@@ -347,7 +347,7 @@ void Sur::estim_search(Ti N, Ti m, Tv *work, Tv sigSearchMaxProb) {
     pR->SetValue(0);
     j = 0;
     for (auto i : sig_inds) {
-      pR->Set(i, j, 1); // rows with significant coefficient must have 1
+      pR->Set0(i, j, 1); // rows with significant coefficient must have 1
       j++;
     }
 

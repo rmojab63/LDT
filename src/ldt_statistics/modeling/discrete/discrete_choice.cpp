@@ -1057,23 +1057,23 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
       for (Ti i = 0; i < m; i++) {
         fxb = std::exp(xb.Data[i]);
         if (std::isinf(fxb))
-          fxb = 1; // the limit (positive and nevative?)
+          fxb = 1; // the limit (positive and negative?)
         else
           fxb = fxb / ((Tv)1 + fxb);
 
-        result.Set(i, 0, fxb);
-        result.Set(i, 1, (Tv)1 - fxb);
+        result.Set0(i, 1, fxb);
+        result.Set0(i, 0, (Tv)1 - fxb);
       }
     } else if constexpr (distType == DiscreteChoiceDistType::kProbit) {
       Tv c;
       for (Ti i = 0; i < m; i++) {
         c = dist_normal_cdf(xb.Data[i], (Tv)0, (Tv)1);
-        result.Set(i, 0, c);
-        result.Set(i, 1, (Tv)1 - c);
+        result.Set0(i, 1, c);
+        result.Set0(i, 0, (Tv)1 - c);
       }
     } else if constexpr (true) {
       throw std::logic_error(
-          "not implemented (discerete choice distribution type).");
+          "not implemented (discrete choice distribution type).");
     }
   } else if constexpr (modelType == DiscreteChoiceModelType::kOrdered) {
     Ti j;
@@ -1091,10 +1091,11 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
 
           // should we check infinity like the binary case ??!!
 
-          result.Set(i, j, F - preF);
+          result.Set0(i, j, F - preF);
           // update
           if (j == this->NumCutoff - 1) {
-            result.Set(i, j + 1, (Tv)1 - F);
+            result.Set0(i, j + 1,
+                        (Tv)1 - F); // TODO: Check if the indexation is correct
             break;
           }
           preF = F;
@@ -1107,11 +1108,13 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         preF = (Tv)0;
         xib = xb.Data[i];
         for (j = 0; j < this->NumCutoff + 1; j++) {
-          F = dist_normal_cdf(mui - xib, (Tv)0, (Tv)1);
-          result.Set(i, j, F - preF);
+          F = dist_normal_cdf(
+              mui - xib, (Tv)0,
+              (Tv)1); // TODO: Check if the indexation is correct
+          result.Set0(i, j, F - preF);
           // update
           if (j == this->NumCutoff - 1) {
-            result.Set(i, j + 1, (Tv)1 - F);
+            result.Set0(i, j + 1, (Tv)1 - F);
             break;
           }
           preF = F;
@@ -1120,10 +1123,10 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
       }
     } else if constexpr (true) {
       throw std::logic_error(
-          "not implemented (discerete choice distribution type).");
+          "not implemented (discrete choice distribution type).");
     }
   } else if constexpr (true) {
-    throw std::logic_error("not implemented (discerete choice model type).");
+    throw std::logic_error("not implemented (discrete choice model type).");
   }
 }
 

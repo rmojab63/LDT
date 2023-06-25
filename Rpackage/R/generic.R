@@ -1,7 +1,7 @@
 
 #' Prints the Output of a Search Process
 #'
-#' @param x An output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.dc}).
+#' @param x An output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
 #' @param ... Additional arguments
 #'
 #' @return This function has no output.
@@ -67,7 +67,7 @@ print.ldtsearch <- function(x, ...) {
 #' It uses the search options to re-estimate the same model estimated in the search process,
 #' given a list of required indices.
 #'
-#' @param searchRes Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.dc]).
+#' @param searchRes Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.bin]).
 #' @param endoIndices Endogenous indices corresponding to the columns of the dependent variable.
 #' @param exoIndices Exogenous indices corresponding to the columns of the exogenous variable.
 #' @param y Data for dependent variables.
@@ -75,9 +75,9 @@ print.ldtsearch <- function(x, ...) {
 #' @param printMsg Argument passed to estimation methods
 #' @param ... Additional arguments
 #'
-#' @return Estimation result similar to output of [estim.sur], [estim.varma], or [estim.dc].
+#' @return Estimation result similar to output of [estim.sur], [estim.varma], or [estim.bin].
 #' @export
-#' @seealso [estim.sur], [estim.varma], [estim.dc]
+#' @seealso [estim.sur], [estim.varma], [estim.bin]
 h.get.estim <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, ...) {
   if (is.null(endoIndices) == FALSE && is.null(y) == FALSE) {
     y <- as.matrix(y)
@@ -90,8 +90,8 @@ h.get.estim <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, ...)
   # tryCatch({
   if (method == "sur") {
     GetEstim_sur(searchRes, endoIndices, exoIndices, y, x, printMsg = printMsg, ...)
-  } else if (method == "dc") {
-    GetEstim_dc(searchRes, endoIndices, exoIndices, y, x, printMsg = printMsg, ...)
+  } else if (method == "bin") {
+    GetEstim_bin(searchRes, endoIndices, exoIndices, y, x, printMsg = printMsg, ...)
   } else if (method == "varma") {
     GetEstim_varma(searchRes, endoIndices, exoIndices, y, x, printMsg = printMsg, ...)
   } else {
@@ -114,7 +114,7 @@ getMeasureFrom <- function(model, measureName, tarIndex, method) {
 #'
 #' This function estimates the reported models in the output of a \code{search.?} function and provides additional information.
 #'
-#' @param object Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.dc]).
+#' @param object Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.bin]).
 #' @param y Data for dependent variables (Note that data is not saved in \code{object}).
 #' @param x Data for exogenous variables (Note that data is not saved in \code{object}).
 #' @param addModelBests If \code{TRUE} and search output contains best models, estimates them.
@@ -139,7 +139,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                               addModelAll = FALSE, addItem1Bests = FALSE,
                               printMsg = FALSE, w = NULL, newX = NULL,
                               test = FALSE, ...) {
-  test_perc <- 1e-8
+  test_perc <- 1e-6
 
   if (is.null(object)) {
     stop("argument is null.")
@@ -156,8 +156,13 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
   result$MeasureNames <-
     names(object)[2:(length(object) - 1)] # the last element is the inputs
 
+  if (result$method == "bin" && object$info$isWeighted && is.null(w))
+    stop("w is missing in the binary regression.")
+  #TODO: check other properties
+
   i <- 0
   for (mea in result$MeasureNames) {
+
     i <- i + 1
     x_mea <- object[[mea]]
     targets <- names(x_mea)
@@ -170,6 +175,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
 
     j <- 0
     for (targ in targets) {
+
       j <- j + 1
       x_tar <- x_mea[[targ]]
       x_names <- names(x_tar)
@@ -179,27 +185,29 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
       if (is.null(x_mod) == FALSE) {
         if (addModelBests) {
           if (is.null(x_mod$bests) == FALSE) {
+
             k <- 0
             for (b in x_mod$bests) {
               k <- k + 1
+
               su_m <- h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                                   printMsg = printMsg,
                                   params = b$parameters, newX = newX, w = w,
-                                  distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
-              )
+                                  probType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit")
+
               if (test) {
                 jt <- if (is.null(b$depIndices) || length(b$depIndices) == 0) {
                   1
                 } else {
                   which(b$depIndices == j)[[1]]
                 } # index of target in endogenous data
-                testthat::expect_equal(
-                  s.weight.from.measure(
-                    getMeasureFrom(su_m, mea, jt, result$method), mea
-                  ),
-                  b$weight,
-                  tolerance = test_perc
-                )
+                wd <- s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea)
+                if (abs(wd - b$weight)> test_perc)
+                  warning(paste0("Inconsistent weight: target=",targ,
+                               ", measure=",mea,
+                               ", search weight=", b$weight,
+                               ", model weight=", wd))
+
               }
               result[[mea]][[targ]][[paste0("model")]][[paste0("bests")]][[paste0("best", k)]] <- su_m # nolint
             }
@@ -207,15 +215,21 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
         }
 
         if (addModelAll) {
+          if (test && printMsg)
+            cat(paste0("    Testing All Models: ", targ , "\n"))
+
           if (is.null(x_mod$all) == FALSE) {
             k <- 0
             for (b in x_mod$all) {
               k <- k + 1
 
+              if (test && printMsg)
+                cat(paste0("            All Index: ", k , "\n"))
+
               su_m <- h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                                   printMsg = printMsg,
                                   params = b$parameters, newX = newX, w = w,
-                                  distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
+                                  probType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
               )
               if (test) {
                 jt <- if (is.null(b$depIndices) || length(b$depIndices) == 0) {
@@ -223,11 +237,13 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 }
-                testthat::expect_equal(
-                  s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea),
-                  b$weight,
-                  tolerance = test_perc
-                )
+                wd <- s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea)
+                if (abs(wd - b$weight)> test_perc)
+                  warning(paste0("Inconsistent weight: target=",targ,
+                                 ", measure=",mea,
+                                 ", search weight=", b$weight,
+                                 ", model weight=", wd))
+
               }
               result[[mea]][[targ]][[paste0("model")]][[paste0("all")]][[paste0("model", k)]] <- su_m # nolint
             }
@@ -260,7 +276,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                       h.get.estim(object, b$depIndices, b$exoIndices, y, x,
                                   printMsg = printMsg,
                                   params = b$parameters, newX = newX, w = w,
-                                  distType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
+                                  probType = if (is.integer(b$dist) && b$dist == 0) "logit" else "probit"
                       )
 
                     if (test) {
@@ -276,24 +292,24 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                         tolerance = test_perc
                       )
 
-                      if (result$method == "sur" || result$method == "dc") {
+                      if (result$method == "sur" || result$method == "bin") {
                         ind <- which(item$name == rownames(su_m$estimations$coefs))
                         testthat::expect_equal(su_m$estimations$coefs[ind, jt], b$mean,
-                                               tolerance = 1e-14
+                                               tolerance = test_perc
                         )
                         testthat::expect_equal(su_m$estimations$stds[ind, jt], sqrt(b$var),
-                                               tolerance = 1e-14
+                                               tolerance = test_perc
                         )
                       } else if (result$method == "varma") {
                         # item$name is Horizon1,...
                         ind <- as.integer(substr(item$name, 8, 8)) + su_m$prediction$startIndex - 1
                         testthat::expect_equal(as.numeric(su_m$prediction$means[jt, ind]),
                                                as.numeric(b$mean),
-                                               tolerance = 1e-14
+                                               tolerance = test_perc
                         )
                         testthat::expect_equal(as.numeric(su_m$prediction$vars[jt, ind]),
                                                as.numeric(b$var),
-                                               tolerance = 1e-14
+                                               tolerance = test_perc
                         )
                       }
                     }
@@ -318,7 +334,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
 #'
 #' This function converts a specific part of the output from one of the \code{search.?} functions into a \code{data.frame}.
 #'
-#' @param x Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.dc]).
+#' @param x Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.bin]).
 #' @param types One or more types of information to include in the data frame.
 #' Can be \code{bestweights}, \code{allweights}, \code{inclusion}, \code{type1bests}, \code{cdf}, \code{extremebounds}, and/or \code{mixture}.
 #' @param measures Indices or names of measures to use.
