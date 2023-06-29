@@ -30,6 +30,7 @@ variable <- function(data, startFrequency = NULL, name = NULL, fields = NULL) {
     startFrequency <- f.cross.section(1)
 
   res <- .Variable(data, name, startFrequency, fields)
+  attr(res, "ldtf") <- startFrequency
   res
 }
 
@@ -110,6 +111,47 @@ print.ldtv <- function(x, ...) {
   return(NULL)
 }
 
+#' Coerce Variable to 'numeric'
+#'
+#' @param x Variable with \code{data} field.
+#' @param ... Other arguments.
+#'
+#' @return \code{data} in x.
+#' @export
+as.numeric.ldtv <- function(x, ...){
+  as.numeric(x$data)
+}
+
+#' Get Length of Data in a Variable
+#'
+#' @param x Variable with \code{data} field.
+#'
+#' @return Length of \code{data} in \code{x}.
+#' @export
+length.ldtv <- function(x){
+  length(x$data)
+}
+
+
+#' Get Row Names of a Variable
+#'
+#' @param x Variable with \code{startFrequency} field
+#'
+#' @return A character string vector with frequencies of the observations as the row names.
+#' @export
+row.names.ldtv <- function(x){
+  if (is.null(x)) {
+    stop("argument is null.")
+  }
+  if (any(class(x) == "ldtv") == FALSE) {
+    stop("Invalid class")
+  }
+  if (any(class(x$startFrequency) == "ldtf") == FALSE) {
+    stop("Invalid frequency class")
+  }
+  res <- get.seq(x$startFrequency, length(x$data))
+  res
+}
 
 #' Convert Variable to Data Frame
 #'
@@ -150,6 +192,8 @@ as.data.frame.ldtv <- function(x, ...) {
   freqs <- get.seq0(x$startFrequency, length(x$data))
   rownames(df) <- freqs
 
+  attr(df, "ldtf") <- x$startFrequency
+
   df
 }
 
@@ -168,8 +212,6 @@ as.data.frame.ldtv <- function(x, ...) {
 #' @return A list with the following members:
 #' \item{data}{A numeric matrix representing the final data after the requested fixes. It is a matrix with variables in the columns and frequencies as the row names.}
 #' \item{info}{An integer matrix containing information about the columns of the final data, such as range of data, missing data, lags/leads, etc.}
-#' \item{startFrequency}{The start frequency of the data.}
-#' \item{startClass}{The frequency class of the data.}
 #'
 #' @export
 #' @examples
@@ -191,5 +233,6 @@ bind.variables <- function(varList, interpolate = FALSE,
   varList = as.list(varList)
 
   res <- .BindVariables(varList, interpolate, adjustLeadLags, numExo, horizon)
+
   res
 }

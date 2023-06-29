@@ -98,14 +98,14 @@ enum class ScoringType {
   /// @brief Mean Absolute Error
   kMae = 5,
 
-  /// @brief Similar to 'MAE' but error is divided by the actual value
-  kScaledMae = 6,
+  /// @brief Mean Absolute Percentage Error
+  kMape = 6,
 
   /// @brief Root Mean Squared Error
   kRmse = 10,
 
-  /// @brief Similar to 'RMAE', but error is divided by the actual value
-  kScaledRmse = 11,
+  /// @brief Root Mean Squared Percentage Error
+  kRmspe = 11,
 
   /// @brief Continuous Ranked Probability Score
   kCrps = 20,
@@ -134,12 +134,12 @@ inline const char *ToString(ScoringType v, bool abr = true) {
 
   case ScoringType::kMae:
     return abr ? "mae" : "Mean Absolute Error";
-  case ScoringType::kScaledMae:
-    return abr ? "scaledMae" : "Scaled Mean Absolute Error";
+  case ScoringType::kMape:
+    return abr ? "mape" : "Mean Absolute Percentage Error";
   case ScoringType::kRmse:
     return abr ? "rmse" : "Root Mean Squared Error";
-  case ScoringType::kScaledRmse:
-    return abr ? "scaledRmse" : "Scaled Root Mean Squared Error";
+  case ScoringType::kRmspe:
+    return abr ? "rmspe" : "Root Mean Squared Percentage Error";
 
   case ScoringType::kCrps:
     return abr ? "crps" : "Continuous Ranked Probability Score";
@@ -170,12 +170,12 @@ inline ScoringType FromString_ScoringType(const char *v) {
 
   else if (StartsWith("mae", v))
     return ScoringType::kMae;
-  else if (StartsWith("scaledmae", v) || StartsWith("maescaled", v))
-    return ScoringType::kScaledMae;
+  else if (StartsWith("map", v))
+    return ScoringType::kMape;
   else if (StartsWith("rms", v))
     return ScoringType::kRmse;
-  else if (StartsWith("scaledrmse", v) || StartsWith("rmsescaled", v))
-    return ScoringType::kScaledRmse;
+  else if (StartsWith("rmsp", v))
+    return ScoringType::kRmspe;
 
   else if (StartsWith("crp", v))
     return ScoringType::kCrps;

@@ -8,9 +8,6 @@
 #include "pca.h"
 #include "searchers.h"
 #include <Rcpp.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <chrono>
 #include <cstring>
 #include <exception>
@@ -113,7 +110,8 @@ void UpdateMeasureOptions(bool printMsg, List &measureOptions,
                           bool isTimeSeries, bool isDc);
 
 void ReportProgress(bool pringMsg, int reportInterval, ldt::ModelSet &model,
-                    bool &estimating, ldt::SearchOptions &options);
+                    bool &estimating, ldt::SearchOptions &options,
+                    int allCount);
 
 List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &searchItems,
                         std::vector<std::string> &measureNames, int length1,

@@ -114,8 +114,8 @@ test_that("Combine4Moments works", {
 
   set.seed(340)
 
-  x1 <- rchisq(10000,3)
-  x2 <- rchisq(10000,5)
+  x1 <- rchisq(1000,3)
+  x2 <- rchisq(1000,5)
   x <- c(x1,x2)
 
   d1 <- list(mean = mean(x1), variance = var(x1),

@@ -368,6 +368,7 @@ public:
   VarmaRestrictionType mRestriction;
   PcaAnalysisOptions *pPcaOptionsY = nullptr;
   PcaAnalysisOptions *pPcaOptionsX = nullptr;
+  Ti mHorizon = 0;
 
   Ti WorkSize = 0;
   Ti StorageSize = 0;

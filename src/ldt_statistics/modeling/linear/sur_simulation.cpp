@@ -71,7 +71,7 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
     for (Ti i = 0; i < length; i++)
       sum += std::abs(errors[i]);
     break;
-  case ldt::ScoringType::kScaledMae:
+  case ldt::ScoringType::kMape:
     for (Ti i = 0; i < length; i++)
       sum += std::abs(errors[i] / actuals[i]);
     break;
@@ -79,7 +79,7 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
     for (Ti i = 0; i < length; i++)
       sum += std::pow(errors[i], 2.0);
     break;
-  case ldt::ScoringType::kScaledRmse:
+  case ldt::ScoringType::kRmspe:
     for (Ti i = 0; i < length; i++)
       sum += std::pow(errors[i] / actuals[i], 2.0);
     break;
@@ -195,10 +195,11 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
 
   Results.Divide_in((Tv)ValidCounts);
 
+  // sqrt for RMSE or RMSPE
   i = -1;
   for (auto &e : *pMeasuresOut) {
     i++;
-    if (e == ScoringType::kRmse || e == ScoringType::kScaledRmse)
+    if (e == ScoringType::kRmse || e == ScoringType::kRmspe)
       for (j = 0; j < m; j++) {
         s = j * errors.RowsCount;
         Results.Set0(i, j, std::sqrt(Results.Get0(i, j)));

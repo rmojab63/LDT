@@ -57,9 +57,9 @@ void SearchMeasureOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   mIndexOfDirection = IndexOf(MeasuresOut, ScoringType::kDirection);
   mIndexOfSign = IndexOf(MeasuresOut, ScoringType::kSign);
   mIndexOfMae = IndexOf(MeasuresOut, ScoringType::kMae);
-  mIndexOfMaeSc = IndexOf(MeasuresOut, ScoringType::kScaledMae);
+  mIndexOfMaeSc = IndexOf(MeasuresOut, ScoringType::kMape);
   mIndexOfRmse = IndexOf(MeasuresOut, ScoringType::kRmse);
-  mIndexOfRmseSc = IndexOf(MeasuresOut, ScoringType::kScaledRmse);
+  mIndexOfRmseSc = IndexOf(MeasuresOut, ScoringType::kRmspe);
   mIndexOfCrps = IndexOf(MeasuresOut, ScoringType::kCrps);
 
   // discrete choice

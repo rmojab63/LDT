@@ -88,12 +88,17 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
+  startTime <- Sys.time()
+
   res <- .SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
                     yGroups, searchSigMaxIter, searchSigMaxProb, measureOptions,
                     modelCheckItems, searchItems, searchOptions)
 
-  res$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(res$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
-                                               as.POSIXct(res$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+  endTime <- Sys.time()
+
+  res$info$startTime <- startTime
+  res$info$endTime <- endTime
+
   res
 }
 
@@ -126,7 +131,16 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' The main purpose of exporting this method is to show the inner calculations of the search process in [search.sur] function. See the details of this function for more information.
+#' Seemingly Unrelated Regression (SUR) is a type of statistical model that includes multiple regression equations.
+#' The general form of an SUR model with m equations can be written as: \eqn{y_i=X_i\beta_i+\epsilon_i}, where $i=1\ldots m$ determines the index of the equation.
+#' In this model, each equation may have different sets of independent variables and it is assumed that the disturbances between the equations are correlated.
+#' The OLS estimator is a consistent estimator for this model, but it is not generally asymptotically efficient (except when disturbances are uncorrelated between equations or each equation contains exactly the same set of regressors).
+#' The OLS variance matrix is used to calculate the Feasible Generalized Least Squares (FGLS) estimator, which is both consistent and asymptotically efficient (under regularity conditions).
+#'
+#' In the current implementation, this function focuses on zero restrictions and/or significance search.
+#' Therefore, there is a common \code{x} argument for all equations.
+#' In fact, the main purpose of exporting this method is to show the inner calculations of the search process in [search.sur] function.
+#' Note that the focus in \code{ldt} is model uncertainty and for more sophisticated implementations of the FGLS estimator, you may consider using other packages such as \code{systemfit}.
 #'
 #' @export
 #' @example man-roxygen/ex-estim.sur.R

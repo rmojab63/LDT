@@ -21,9 +21,6 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   if (numTargets < 1)
     throw std::logic_error("Number of targets must be positive.");
 
-  auto startTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
-
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
@@ -128,6 +125,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
     throw std::logic_error("More memory is required for running the project.");
   }
 
+  auto alli = model.Modelset.GetExpectedNumberOfModels();
+
   // handle unhandled exceptions in the async function
   // model.CheckStart();
   auto f = std::async(std::launch::async, [&] {
@@ -135,10 +134,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options);
-
-  auto endTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
+  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options,
+                 alli);
 
   if (options.RequestCancel)
     return R_NilValue;
@@ -153,7 +150,6 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                               "predictions", "horizon");
 
   L["info"] = List::create(
-      _["startTime"] = wrap(startTime), _["endTime"] = wrap(endTime),
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["seasonsCount"] = wrap(seasonsCount),
       _["olsStdMultiplier"] = wrap(olsStdMultiplier),
@@ -182,9 +178,6 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   if (is<NumericMatrix>(y) == false)
     throw std::logic_error("'y' must be a 'numeric matrix'.");
   y = as<NumericMatrix>(y);
-
-  auto startTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
 
   if (x != R_NilValue) {
     if (is<NumericMatrix>(x) == false)
@@ -291,7 +284,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
 
     measures = std::vector<ScoringType>(
         {ScoringType::kSign, ScoringType::kDirection, ScoringType::kMae,
-         ScoringType::kScaledMae, ScoringType::kRmse, ScoringType::kScaledRmse,
+         ScoringType::kMape, ScoringType::kRmse, ScoringType::kRmspe,
          ScoringType::kCrps});
     measureNames = std::vector<std::string>();
     for (auto &a : measures)

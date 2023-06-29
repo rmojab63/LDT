@@ -275,7 +275,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         sxxx.Restructure0(T, Sizes.MaStart);
         Result.gamma.Restructure0(g, Sizes.MaStart);
 
-        Result.Xt.TrDot0(Result.Xt, sxx);
+        Result.Xt.Dot_AtA0(sxx);
         Result.cn = sxx.Norm('1');
         info = sxx.Inv0();
         if (info != 0) {
@@ -293,7 +293,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
 
         // variance of gamma
         if (Sizes.HasMa == false && !R) {
-          Result.resid.DotTr0(Result.resid, Result.sigma2);
+          Result.resid.Dot_AAt(Result.sigma2);
           Result.sigma2.Multiply_in(
               (Tv)1 / (Tv)T); // dof adjustment: (T- Result.gamma.ColsCount)
           sxx.Kron(Result.sigma2, Result.gammavar);
@@ -339,7 +339,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.y.Subtract0(Result.resid, Result.resid);
 
           // variance of gamma
-          Result.resid.DotTr0(Result.resid, Result.sigma2);
+          Result.resid.Dot_AAt(Result.sigma2);
           Result.sigma2.Multiply_in((Tv)1 / (Tv)T);
           sxx.Kron(Result.sigma2, Result.gammavar);
         }
@@ -384,7 +384,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         vecY.Subtract0(Result.resid, Result.resid); // vec.resid
 
         // variance of regression
-        Result.resid.DotTr0(Result.resid, Result.sigma2);
+        Result.resid.Dot_AAt(Result.sigma2);
         Result.sigma2.Multiply_in((Tv)1 / (Tv)T);
       }
     }
@@ -520,8 +520,8 @@ void SetDetails(Varma &varma, const Matrix<Tv> *R) {
 
 void CalculateGoodness(Varma &varma, Ti T, Ti g, Ti f, Tv max_vf) {
   auto ll = (-(T * g * c_ln_2Pi_plus_one) - max_vf) / (Tv)2;
-  auto aic = ((Tv)2 * g * f - (Tv)2 * ll) / (Tv)T;
-  auto sic = (std::log(T) * g * f - (Tv)2 * ll) / (Tv)T;
+  auto aic = ((Tv)2 * g * f - (Tv)2 * ll);
+  auto sic = (std::log(T) * g * f - (Tv)2 * ll);
 
   varma.Result.LogLikelihood = ll;
   varma.Result.Aic = aic;
@@ -562,19 +562,18 @@ void Varma::EstimateMl(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   auto g = Sizes.EqsCount;
   auto f = Sizes.NumParamsEq;
   auto T = Sizes.T;
-  if (R)
+  if (R && R->length() > 0)
     q = R->ColsCount;
 
   if (Sizes.HasMa == false && !R) {
     if (mDoDetails) {
       SetDetails(*this, R);
       // logarithm Likelihood
-      auto copsigma2 = new Tv[Result.sigma2.length()];
-      auto mcopsigma2 = Matrix<Tv>(copsigma2, g, g);
+      auto copsigma2 = std::unique_ptr<Tv[]>(new Tv[Result.sigma2.length()]);
+      auto mcopsigma2 = Matrix<Tv>(copsigma2.get(), g, g);
       Result.sigma2.CopyTo(mcopsigma2);
       CalculateGoodness(*this, T, g, f,
                         std::log(mcopsigma2.Det_pd0()) * Result.y.ColsCount);
-      delete[] copsigma2;
     }
     return;
   }

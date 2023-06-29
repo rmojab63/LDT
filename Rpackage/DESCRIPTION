@@ -28,7 +28,6 @@ Suggests:
     testthat,
     rmarkdown,
     kableExtra,
-    MTS,
     moments,
     systemfit
 LinkingTo: 

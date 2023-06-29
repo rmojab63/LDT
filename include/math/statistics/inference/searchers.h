@@ -462,7 +462,7 @@ public:
   /// @param effective If true, it tries to consider the size of the models and
   /// generates a weighted count
   /// @return Size of this searcher
-  Ti GetCount(bool effective = false);
+  Ti GetCount(bool effective = false) const;
 };
 
 /// @brief A helper class for testing
@@ -527,11 +527,11 @@ public:
 
   /// @brief Gets the expected number of models
   /// @return expected number of models
-  Ti GetExpectedNumberOfModels();
+  Ti GetExpectedNumberOfModels() const;
 
   /// @brief Gets the number of the estimated of models
   /// @return Number of the estimated of models
-  Ti GetNumberOfEstimatedModels();
+  Ti GetNumberOfEstimatedModels() const;
 
   /// @brief Combines information in all the searchers
   /// @param result On exit, contains combined information

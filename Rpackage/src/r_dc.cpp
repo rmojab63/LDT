@@ -66,9 +66,6 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   if (is<NumericMatrix>(x) == false)
     throw std::logic_error("'x' must be a 'numeric matrix'.");
 
-  auto startTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
-
   int numTargets = 1;
 
   bool printMsg = false;
@@ -157,6 +154,8 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     throw std::logic_error("More memory is required for running the project.");
   }
 
+  auto alli = model->Modelset.GetExpectedNumberOfModels();
+
   // handle unhandled exceptions in the async function
   // model->CheckStart();
   auto f = std::async(std::launch::async, [&] {
@@ -164,11 +163,8 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model->Modelset, estimating,
-                 options);
-
-  auto endTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
+  ReportProgress(printMsg, reportInterval, model->Modelset, estimating, options,
+                 alli);
 
   if (options.RequestCancel)
     return R_NilValue;
@@ -184,7 +180,6 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
                               colNames_w, "coefs", "item");
 
   L["info"] = List::create(
-      _["startTime"] = wrap(startTime), _["endTime"] = wrap(endTime),
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["costMatrices"] = costMatrices, _["searchLogit"] = wrap(searchLogit),
       _["searchProbit"] = wrap(searchProbit), _["optimOptions"] = optimOptions,
@@ -200,7 +195,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
 }
 
 // [[Rcpp::export(.EstimDc)]]
-SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string probType, SEXP newX,
+SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
              SEXP pcaOptionsX, SEXP costMatrices, List aucOptions,
              int simFixSize, double simTrainRatio, int simTrainFixSize,
              int simSeed, bool weightedEval, bool printMsg) {
@@ -272,7 +267,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string probType, SEXP newX,
   DiscreteChoiceModelType modelType0 =
       FromString_DiscreteChoiceModelType(modelType);
   DiscreteChoiceDistType distType0 =
-      FromString_DiscreteChoiceDistType(probType.c_str());
+      FromString_DiscreteChoiceDistType(linkFunc.c_str());
   if (printMsg) {
     Rprintf("Model Type=%s\n", ToString(modelType0));
     Rprintf("Distribution Type=%s\n", ToString(distType0));

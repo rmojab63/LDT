@@ -97,14 +97,12 @@ static double logL(Matrix<Tv> &resid_var_copy, Ti N, Ti m) {
   */
 }
 
-static Tv aic(Tv logL, Ti N, Ti k) { return (2 * k - 2 * logL) / (Tv)N; }
+static Tv aic(Tv logL, Ti N, Ti k) { return (2 * k - 2 * logL); }
 
-static Tv sic(Tv logL, Ti N, Ti k) {
-  return (std::log(N) * k - 2 * logL) / (Tv)N;
-}
+static Tv sic(Tv logL, Ti N, Ti k) { return (std::log(N) * k - 2 * logL); }
 
 static Tv hqic(Tv logL, Ti N, Ti k) {
-  return (std::log(std::log(N)) * 2 * k - 2 * logL) / (Tv)N;
+  return (std::log(std::log(N)) * 2 * k - 2 * logL);
 }
 
 // static Tv aic_weight(Tv criterion) { return std::exp(((Tv)-0.5) * criterion);
@@ -149,10 +147,10 @@ void Sur::calculate_details(Ti N, Ti m, Tv *work, bool just_probs,
 
   // Goodness of Fit
   r2 = R2(y, resid);
-  f = F(r2, N, m, k0 * m, f_prob);
-  Aic = aic(logLikelihood, N, m);
-  Sic = sic(logLikelihood, N, m);
-  Hqic = hqic(logLikelihood, N, m);
+  f = F(r2, N, m, k0m, f_prob);
+  Aic = aic(logLikelihood, N, k0m);
+  Sic = sic(logLikelihood, N, k0m);
+  Hqic = hqic(logLikelihood, N, k0m);
 }
 
 void Sur::estim_un(Ti N, Ti m, Tv *work,

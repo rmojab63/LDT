@@ -38,8 +38,8 @@ TEST(DiscreteChoice_t, logit) {
   ASSERT_NEAR(model.BetaZ.Data[0], 0.8713, 1e-4);
   ASSERT_NEAR(model.BetaProb.Data[1], 0.3545, 1e-4);
   ASSERT_NEAR(model.LogL, -13.41503, 1e-4);
-  ASSERT_NEAR(model.Aic, 1.54150, 1e-4);
-  ASSERT_NEAR(model.Sic, 1.64107, 1e-4);
+  ASSERT_NEAR(model.Aic, 30.830059, 1e-4);
+  ASSERT_NEAR(model.Sic, 32.821524, 1e-4);
 
   // test probabilities calculations
   Tv *Q = new Tv[x.RowsCount + model.NumChoices - 2];
@@ -82,8 +82,8 @@ TEST(DiscreteChoice_t, probit) {
   ASSERT_NEAR(model.BetaZ.Data[0], 0.883, 1e-3);
   ASSERT_NEAR(model.BetaProb.Data[1], 0.349, 1e-3);
   ASSERT_NEAR(model.LogL, -13.410, 1e-3);
-  ASSERT_NEAR(model.Aic, 1.54150, 1e-3);
-  ASSERT_NEAR(model.Sic, 1.64107, 1e-3);
+  ASSERT_NEAR(model.Aic, 30.820732, 1e-3);
+  ASSERT_NEAR(model.Sic, 32.812196, 1e-3);
 
   // test probabilities calculations
 
@@ -134,8 +134,8 @@ TEST(DiscreteChoice_t, logit_ordered) {
   ASSERT_NEAR(model.BetaZ.Data[0], 0.7524, 1e-4);
   ASSERT_NEAR(model.BetaProb.Data[1], 0.6595, 1e-4);
   ASSERT_NEAR(model.LogL, -26.2937, 1e-4);
-  ASSERT_NEAR(model.Aic, 3.0293, 1e-4);
-  ASSERT_NEAR(model.Sic, 3.2285, 1e-4);
+  ASSERT_NEAR(model.Aic, 60.587574141235237, 1e-4);
+  ASSERT_NEAR(model.Sic, 64.570503235451199, 1e-4);
 
   // test probabilities calculations
 
@@ -213,8 +213,8 @@ TEST(DiscreteChoice_t, probit_ordered) {
   ASSERT_NEAR(model.BetaProb.Data[1], 0.7712450, 1e-4);
 
   ASSERT_NEAR(model.LogL, -26.34849, 1e-4);
-  ASSERT_NEAR(model.Aic, 3.034849, 1e-4);
-  ASSERT_NEAR(model.Sic, 3.23399, 1e-4);
+  ASSERT_NEAR(model.Aic, 60.696984139962069, 1e-4);
+  ASSERT_NEAR(model.Sic, 64.679913234178031, 1e-4);
 
   // test probabilities calculations
   Tv *Q = new Tv[x.RowsCount + model.NumChoices - 2];

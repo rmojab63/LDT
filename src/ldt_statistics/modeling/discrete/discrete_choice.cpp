@@ -146,8 +146,9 @@ void calculate_goodness(DiscreteChoice<modelType, distType> &model) {
   // non-weight observations (e.g. by ungrouping), but Aic and Sic will differ
 
   auto k = model.Beta.length();
-  model.Aic = (2 * k - 2 * model.LogL) / model.NumObs;
-  model.Sic = (std::log(model.NumObs) * k - 2 * model.LogL) / model.NumObs;
+  model.Aic = (2 * k - 2 * model.LogL);
+  model.Sic = (std::log(model.NumObs) * k - 2 * model.LogL);
+  // TODO: check division by number of observations (I can't remember why)
 }
 
 static void ordermu(Ti k0, const Matrix<Tv> *Beta, Matrix<Tv> *mu, Ti NumCutoff,

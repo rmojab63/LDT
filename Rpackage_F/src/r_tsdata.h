@@ -34,6 +34,9 @@ std::unique_ptr<ldt::Frequency>
 GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
                 std::vector<boost::gregorian::date> &listItemsDate);
 
+SEXP To_SEXP(ldt::Frequency* F, std::vector<std::string> &listItems,
+             std::vector<boost::gregorian::date> &listItemsDate);
+
 void UpdateVariableFromSEXP(
     Rcpp::List w, ldt::Variable<double> &variable,
     std::vector<std::string> &listItems,

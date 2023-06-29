@@ -86,7 +86,7 @@ void Scoring::GetScore(ScoringType type, Matrix<Tv> &result, Matrix<Tv> &act,
   case ScoringType::kMae:
     err.Apply0([](Tv x) -> Tv { return std::abs(x); }, result);
     break;
-  case ScoringType::kScaledMae:
+  case ScoringType::kMape:
     for (i = 0; i < act.length(); i++) {
       if (act.Data[i] == 0)
         result.Data[i] = NAN; //??
@@ -99,7 +99,7 @@ void Scoring::GetScore(ScoringType type, Matrix<Tv> &result, Matrix<Tv> &act,
     err.Apply0([](Tv x) -> Tv { return x * x; },
                result); // note that a sqrt is required for aggregating
     break;
-  case ScoringType::kScaledRmse:
+  case ScoringType::kRmspe:
     for (i = 0; i < act.length(); i++) {
       if (act.Data[i] == 0)
         result.Data[i] = NAN; //??
@@ -124,9 +124,9 @@ void Scoring::GetScore(ScoringType type, Matrix<Tv> &result, Matrix<Tv> &act,
 bool Scoring::RequiresVariance(const ScoringType &type) {
   switch (type) {
   case ScoringType::kMae:
-  case ScoringType::kScaledMae:
+  case ScoringType::kMape:
   case ScoringType::kRmse:
-  case ScoringType::kScaledRmse:
+  case ScoringType::kRmspe:
     return false;
   default:
     return true;
@@ -176,9 +176,9 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &measure) {
     return measure;
 
   case ScoringType::kMae:
-  case ScoringType::kScaledMae:
+  case ScoringType::kMape:
   case ScoringType::kRmse:
-  case ScoringType::kScaledRmse:
+  case ScoringType::kRmspe:
   case ScoringType::kBrier:
   case ScoringType::kCrps:
     return std::exp(-0.5 * measure);
@@ -203,9 +203,9 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
     return weight;
 
   case ScoringType::kMae:
-  case ScoringType::kScaledMae:
+  case ScoringType::kMape:
   case ScoringType::kRmse:
-  case ScoringType::kScaledRmse:
+  case ScoringType::kRmspe:
   case ScoringType::kCrps:
   case ScoringType::kBrier:
     return -2 * std::log(weight);

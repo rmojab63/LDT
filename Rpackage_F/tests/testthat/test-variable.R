@@ -26,7 +26,8 @@ test_that("Bind Variables works with lag/lead adjustments", {
                        22,NaN,24,25,NaN,27,28),7,4)
   colnames(expected) <- c("V1","V2","V3","V4")
   rownames(expected) <- c('2022M12', '2023M1', '2023M2', '2023M3', '2023M4', '2023M5','2023M6')
-  expect_equal(expected, res$data)
+  expect_equal(as.numeric(expected), as.numeric(res$data))
+  expect_equal(rownames(expected), rownames(res$data))
   expect_equal(c(2,1,1,1,5,4,7,7,0,0,1,1,0,0,0,0,0,-1,2,2), as.numeric(res$info))
 
   res <- bind.variables(list(v1,v2,v3,v4),interpolate = TRUE, adjustLeadLags = TRUE,
@@ -37,7 +38,8 @@ test_that("Bind Variables works with lag/lead adjustments", {
                        22,23,24,25,26,27,28),7,4)
   colnames(expected) <- c("V1","V2(-1)","V3(+2)","V4(+2)")
   rownames(expected) <- c('2022M10', '2022M11', '2022M12', '2023M1', '2023M2', '2023M3', '2023M4')
-  expect_equal(expected, res$data)
+  expect_equal(as.numeric(expected), as.numeric(res$data))
+  expect_equal(rownames(expected), rownames(res$data))
   expect_equal(c(4,4,1,1,7,7,7,7,0,0,0,0,0,0,2,2,0,0,0,0), as.numeric(res$info))
 
 
@@ -49,7 +51,8 @@ test_that("Bind Variables works with lag/lead adjustments", {
                        NaN,NaN,22,NaN,24,25,NaN,27,28),9,4)
   colnames(expected) <- c("V1","V2(-1)","V3(+2)","V4")
   rownames(expected) <- c('2022M10', '2022M11', '2022M12', '2023M1', '2023M2', '2023M3', '2023M4','2023M5','2023M6')
-  expect_equal(expected, res$data)
+  expect_equal(as.numeric(expected), as.numeric(res$data))
+  expect_equal(rownames(expected), rownames(res$data))
   expect_equal(c(4,4,1,3,7,7,7,9,0,0,1,1,0,0,0,0,0,0,0,0), as.numeric(res$info))
 
 

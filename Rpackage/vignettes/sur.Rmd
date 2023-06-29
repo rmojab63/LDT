@@ -43,7 +43,7 @@ sample <- sim.sur(num_eq, num_exo, num_obs, TRUE)
 print(sample$coef)
 ```
 
-We know the parameters of the system because they are included in the output of the `sim.sur` function. This system has 2 equations or dependent variables. Each equation has an intercept and `r num_exo-1` exogenous variables. There are no restrictions imposed on the system. The sample size is `r num_obs`. All coefficients of the model are generated randomly and are listed in the output sample. This includes a positive definite matrix of regression covariance and a matrix of coefficients (where the first row includes the intercept coefficients). The LaTeX code for the equations of the system is in the `eqsLatex` element. It results in the following representation:
+We know the parameters of the system because they are included in the output of the `sim.sur` function. This system has 2 equations or dependent variables. Each equation has an intercept and `r num_exo-1` exogenous variables. There are no restrictions imposed on the system. The sample size is `r num_obs`. All coefficients of the model are generated randomly and are listed in the output `sample`. This includes a positive definite matrix of regression covariance and a matrix of coefficients (where the first row includes the intercept coefficients). The LaTeX code for the equations of the system is in the `eqsLatex` element. It results in the following representation:
 
 \begin{aligned} `r sample$eqsLatex` \end{aligned}
 

@@ -19,10 +19,9 @@
 #' @return A list of lists, each with the following elements:
 #'    \item{nRows}{The number of rows in the matrix.}
 #'   \item{nCols}{The number of columns in the matrix.}
-#'    \item{colFirst}{Whether to remove columns or rows first.}
 #'    \item{colRemove}{The indices of the columns to be removed.}
 #'    \item{rowRemove}{The indices of the rows to be removed.}
-#' 
+#'
 #' @export
 #'
 #' @examples
@@ -61,7 +60,7 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
     }
     result[[length(result) + 1]] <- list(
       nRows = Nrow - length(rowRemove),
-      nCols = Ncol - length(colRemove), colFirst = TRUE,
+      nCols = Ncol - length(colRemove),
       colRemove = sort(colRemove), rowRemove = as.integer(sort(rowRemove))
     )
     if (printMsg)
@@ -94,7 +93,7 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
     }
     result[[length(result) + 1]] <- list(
       nRows = Nrow - length(rowRemove),
-      nCols = Ncol - length(colRemove), colFirst = FALSE,
+      nCols = Ncol - length(colRemove),
       colRemove = as.integer(sort(colRemove)), rowRemove = sort(rowRemove)
     )
 
@@ -108,6 +107,8 @@ remove.na.strategies <- function(data, countFun = function(nRows, nCols) nRows *
   inx <- sort(sapply(result, function(r) countFun(r$nRows, r$nCols)),
               index.return = TRUE, decreasing = TRUE
   )
+
+  #TODO: remove duplicate items
 
   result <- result[inx$ix]
   result
@@ -212,6 +213,7 @@ get.longrun.growth <- function(data, continuous = FALSE, isPercentage = FALSE,
     }
   }
 }
+
 
 #' Get Descriptive Statistics
 #'

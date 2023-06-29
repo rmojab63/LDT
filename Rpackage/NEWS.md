@@ -4,11 +4,10 @@
 
 ### Changes
 
-* Moving frequency related data to a 'tdata' package,
-* Renaming R function,
-* updating documentations, 
-* Removing previous vignettes,
-* Adding a more descriptive vignettes,
+* Moving frequency related functions to a 'tdata' package,
+* Renaming R functions,
+* Updating documentations, 
+* Removing previous vignettes and adding more descriptive ones,
 * Many fixes.
 
 ## ldt 0.2.0 (2023-02-27)

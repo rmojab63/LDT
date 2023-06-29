@@ -9,7 +9,7 @@ fit <- glm(Y ~ X1 + X2, data = data, family = binomial())
 # you can compare fit$coefficients and sample$coef
 
 # Estimate using estim.bin in this package
-fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], probType = "logit",
+fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], linkFunc = "logit",
                  newX = sample$x[,2:3, drop=FALSE])
 
 # Generate data from a probit model with specified coefficients
@@ -21,5 +21,5 @@ colnames(data) <- c(colnames(sample1$y),colnames(sample1$x))
 fit <- glm(Y ~ X1 + X2, data = data, family = binomial( link = "probit"))
 
 # Estimate using estim.bin in this package
-fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], probType = "probit")
+fit1 <- estim.bin(sample$y, sample$x[,2:3, drop=FALSE], linkFunc = "probit")
 

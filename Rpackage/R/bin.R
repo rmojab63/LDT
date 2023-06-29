@@ -107,15 +107,21 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
   else
     searchOptions <- CheckSearchOptions(searchOptions)
 
+  startTime <- Sys.time()
+
   res <- .SearchDc(y, x, w, xSizes, xPartitions, costMatrices,
                    searchLogit, searchProbit,
                    optimOptions, aucOptions, measureOptions ,
                    modelCheckItems, searchItems,
                    searchOptions)
 
-  res$info$diffTimeSecs <- as.numeric(difftime(as.POSIXct(res$info$endTime, format = "%Y-%b-%d %H:%M:%S"),
-                                               as.POSIXct(res$info$startTime, format = "%Y-%b-%d %H:%M:%S"), units = "secs"))
+  endTime <- Sys.time()
+
+  res$info$startTime <- startTime
+  res$info$endTime <- endTime
+
   res$info$isWeighted <- ifelse(is.null(w),FALSE, TRUE)
+
   res
 }
 
@@ -128,7 +134,7 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 #' @param x A matrix of exogenous data with variables in the columns.
 #' @param w Weights of the observations in \code{y}.
 #' \code{NULL} means equal weights for all observations.
-#' @param probType A character string that shows the probability assumption. It can be \code{logit} or \code{probit}.
+#' @param linkFunc A character string that shows the probability assumption. It can be \code{logit} or \code{probit}.
 #' @param newX A numeric matrix where for each row in it, probabilities are projected and reported. It can be \code{NULL}.
 #' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.bin] for more information and initialization.
@@ -148,13 +154,22 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' The main purpose of exporting this method is to show the inner calculations of the search process in [search.bin] function. See the details of this function for more information.
+#'
+#' Binary regression is a statistical technique used to estimate the probability of one of two possible outcomes, represented by a binary dependent variable that takes on two values, such as 0 and 1.
+#' This is achieved by modeling the relationship between one or more independent variables and the binary dependent variable.
+#' The most commonly used binary regression models are the logit model, also known as logistic regression, and the probit model, also known as probit regression.
+#' In general, a binary regression model can be written as \eqn{f(p) = \beta_0 + \beta_1x_1 + \ldots + \beta_kx_k}, where \eqn{p} is the probability that \eqn{y} is 1 and \eqn{f} is the link function.
+#' For logistic regression, the logit function is used as the link function: \eqn{f(p) = \ln{\frac{p}{1-p}}}.
+#' For probit regression, the probit function is used as the link function: \eqn{f(p) = \Phi^{-1}(p)}, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
+#' The parameters of the binary regression model are estimated using maximum likelihood estimation.
+#'
+#' Note that the focus in \code{ldt} is model uncertainty and the main purpose of exporting this method is to show the inner calculations of the search process in [search.bin] function.
 #'
 #' @export
 #' @example man-roxygen/ex-estim.bin.R
 #' @seealso [search.bin], [search.bin.stepwise]
 estim.bin <- function(y, x, w = NULL,
-                     probType = c("logit", "probit"), newX = NULL,
+                     linkFunc = c("logit", "probit"), newX = NULL,
                      pcaOptionsX = NULL, costMatrices = NULL,
                      aucOptions = get.options.roc(), simFixSize = 0,
                      simTrainFixSize = 0, simTrainRatio = 0.75,
@@ -172,7 +187,7 @@ estim.bin <- function(y, x, w = NULL,
   weightedEval = as.logical(weightedEval)
   printMsg = as.logical(printMsg)
 
-  probType <- match.arg(as.character(probType), c("logit", "probit"))
+  linkFunc <- match.arg(as.character(linkFunc), c("logit", "probit"))
 
   if (is.null(pcaOptionsX) == FALSE)
     pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
@@ -188,7 +203,7 @@ estim.bin <- function(y, x, w = NULL,
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  res <- .EstimDc(y, x, w, probType, newX,
+  res <- .EstimDc(y, x, w, linkFunc, newX,
                   pcaOptionsX, costMatrices,
                   aucOptions, simFixSize, simTrainRatio,
                   simTrainFixSize, simSeed,
@@ -197,11 +212,11 @@ estim.bin <- function(y, x, w = NULL,
 }
 
 # get estimation from search result
-GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, probType, newX, ...) {
+GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, linkFunc, newX, ...) {
   M <- estim.bin(y,
                 x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
                 w = w,
-                probType = probType,
+                linkFunc = linkFunc,
                 newX = if (is.null(exoIndices) || is.null(newX)) NULL else newX[, exoIndices, drop=FALSE],
                 pcaOptionsX = NULL,
                 costMatrices = searchRes$info$costMatrices,

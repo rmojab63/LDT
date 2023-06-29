@@ -74,7 +74,7 @@ get.class.id <- function(frequency){
 #'
 #' freq <- f.x.times.a.day(f.daily(c(2023,5,16)),13, 12)
 #' freq_class_id <- get.class.id0(freq)
-#' 
+#'
 #' freq1 <- f.monthly(2020,3)
 #' freq1_class_id <- get.class.id0(freq1)
 get.class.id0 <- function(frequency){
@@ -172,5 +172,46 @@ get.seq0 <- function(start, length, by = 1){
     stop("Invalid 'by' value. It cannot be zero." )
 
   res <- .Sequence_F0(start, length, by)
+  res
+}
+
+
+#' Get Next Frequency
+#'
+#' Use this function to get the next frequency.
+#'
+#' @param freq A frequency.
+#' @param count Determines the number of steps. If negative,
+#'   it returns the previous frequency.
+#'
+#' @return The next frequency after the given frequency.
+#' @export
+#'
+#' @examples
+#' f <- f.yearly(2000)
+#' fn <- next.freq(f, 10) # this is 2010
+next.freq <- function(freq, count){
+  count = as.integer(count)
+  res <- .F_Next(freq, count)
+  res
+}
+
+#' Get Interval between two frequencies
+#'
+#' Use this function to get the number of intervals between two frequencies.
+#'
+#' @param freq1 The first frequency.
+#' @param freq2 The second frequency.
+#'
+#' @return The number of intervals between the two frequencies (\code{freq1} - \code{freq2}).
+#' @export
+#'
+#' @examples
+#' f1 <- f.yearly(2000)
+#' f2 <- f.yearly(2010)
+#' count <- minus.freqs(f1, f2) # this is -10
+#' count <- minus.freqs(f2, f1) # this is 10
+minus.freqs <- function(freq1, freq2){
+  res <- .F_Minus(freq1, freq2)
   res
 }

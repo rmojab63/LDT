@@ -187,9 +187,14 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   }
   rownames(res) = wrap(rns);
 
+
+  std::vector<std::string> listItems0;
+  std::vector<boost::gregorian::date> listItemsDate0;
+
+  res.attr("ldtf") =  To_SEXP(vs.StartFrequency.get(), listItems0, listItemsDate0);
+
   auto L =
-      List::create(_["data"] = res, _["info"] = info,
-                   _["startFrequency"] = vs.StartFrequency.get()->ToString(),
-                   _["startClass"] = vs.StartFrequency.get()->ToClassString());
+      List::create(_["data"] = res,
+                   _["info"] = info);
   return L;
 }

@@ -114,7 +114,7 @@ LDT_C_EXPORT void LDT_Forecast(double *data, int dataRows, int dataCols,
       measures.Horizons.push_back(i);
     measures.MeasuresIn.push_back(ldt::GoodnessOfFitType::kAic);
     measures.MeasuresOut = std::vector<ldt::ScoringType>(
-        {ScoringType::kDirection, ScoringType::kScaledRmse,
+        {ScoringType::kDirection, ScoringType::kRmspe,
     ScoringType::kCrps}); measures.SimFixSize = 0; measures.TrainRatio = 0.7;
     */
 }

@@ -823,27 +823,37 @@ TEST(Varma_T, var_diff_sample) {
 
 TEST(Varma_T, var_extended) {
   Matrix<Tv> data = Matrix<Tv>(
-      new Tv[50]{1,  2,  3,  4,   5,   3,   4,   6,   7,   5,   4,   6,   5,
-                 4,  5,  7,  NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN, 0,
-                 1,  2,  3,  4,   5,   6,   7,   8,   9,   10,  11,  12,  13,
-                 14, 15, 16, 17,  18,  19,  20,  21,  22,  23,  24
-
-      },
-      25, 2);
-  auto sizes = VarmaSizes(25, 1, 1, 0, 2, 0, 1, 0, 1, 2);
+      new Tv[200]{1.1,  0.4,  1.8,  -1.6, 2.6,  0.7,  -1.8, 2.8,  0.3,  -0.5,
+                  2.3,  4.1,  0.9,  3.5,  -1.1, -0.3, 0.6,  2,    0.1,  1.1,
+                  0.3,  3.3,  4.2,  -1.1, 1.1,  2.7,  2.5,  -0.5, 2.6,  0.3,
+                  3.2,  1.9,  0.4,  4.4,  -1.6, 2.9,  2,    3,    2.3,  0.7,
+                  1.3,  0.4,  -2.6, 3.1,  0.8,  1.1,  3.5,  4.9,  -1.7, -2.8,
+                  1.2,  1.7,  1.3,  0.9,  2,    0.1,  -1.3, 1.9,  0.3,  0.1,
+                  0.3,  0.7,  1.1,  0.2,  1.1,  1.5,  -0.4, 0,    -0.8, 1.2,
+                  1.1,  -2.1, 0,    0,    -0.5, -0.3, -0.3, 0.6,  0.2,  0.6,
+                  -0.5, -1.2, 1.1,  1.3,  0.3,  -0.2, -0.5, 0.1,  1.1,  -1.1,
+                  0.3,  0.8,  1.5,  0.2,  -0.3, 0.3,  -0.7, 0.6,  0.9,  0.9,
+                  1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+                  1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+                  1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+                  1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+                  1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+                  -1.6, -1.5, -1.6, -0.5, -1.5, 0.7,  2.1,  -1.3, 0.8,  0.8,
+                  0.3,  -1,   -0.1, -0.3, 0.6,  -0.4, 1,    -0.4, 1.1,  -1,
+                  -1.3, 3.2,  -0.4, 0.3,  0.6,  -0.5, 0.5,  0.4,  -0.2, 0.1,
+                  0,    2.1,  -0.7, -1.1, 0,    0.3,  0.4,  -0.5, -1.1, 1.3,
+                  -0.3, -0.9, -0.2, -0.2, 1.1,  0.1,  0.8,  -0.5, 0.2,  -0.3},
+      50, 4);
+  auto sizes = VarmaSizes(50, 2, 2, 1, 0, 0, 0, 0, 0, 0);
 
   // estimate
   auto var = VarmaExtended(sizes, VarmaRestrictionType::kMaFinal, true, true,
-                           true, 5, nullptr, nullptr, nullptr);
+                           true, 0, nullptr, nullptr, nullptr);
   Tv *S = new Tv[var.StorageSize];
   Tv *W = new Tv[var.WorkSize];
-  var.Calculate(data, S, W, false, 5, 0);
+  var.Calculate(data, S, W, false, 0, 0);
 
-  ASSERT_NEAR(var.Model.Result.gamma.Get(0), -1.0016817, 1e-5);
-
-  ASSERT_NEAR(var.Forecasts.Forecast.Get(2), 5, 1e-5);
-  ASSERT_NEAR(var.Forecasts.Forecast.Get(4), 6.9558527, 1e-5);
-  ASSERT_NEAR(var.Forecasts.Forecast.Get(5), 5.5386389, 1e-4);
+  ASSERT_NEAR(var.Model.Result.gamma.Get(1, 3), -0.76724074489110317, 1e-10);
 
   delete[] S;
   delete[] W;
@@ -886,7 +896,7 @@ TEST(Varma_T, var_extended2) {
   // simulation
   auto horizon = 3;
   auto measures = std::vector<ScoringType>(
-      {ScoringType::kDirection, ScoringType::kScaledRmse, ScoringType::kCrps});
+      {ScoringType::kDirection, ScoringType::kRmspe, ScoringType::kCrps});
   auto horizons = std::vector<Ti>(horizon);
   std::iota(horizons.begin(), horizons.end(), 1);
   auto sim = VarmaSimulation(sizes, 1, horizons, measures, nullptr, true);

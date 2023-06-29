@@ -140,7 +140,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
       if (measures.mIndexOfMaeSc >= 0)
         weights.Set0(
             j + measures.mIndexOfMaeSc, t,
-            Scoring::ToWeight(ScoringType::kScaledMae,
+            Scoring::ToWeight(ScoringType::kMape,
                               Model.Results.Get0(measures.mIndexOfMaeSc, t)));
       if (measures.mIndexOfRmse >= 0)
         weights.Set0(
@@ -150,7 +150,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
       if (measures.mIndexOfRmseSc >= 0)
         weights.Set0(
             j + measures.mIndexOfRmseSc, t,
-            Scoring::ToWeight(ScoringType::kScaledRmse,
+            Scoring::ToWeight(ScoringType::kRmspe,
                               Model.Results.Get0(measures.mIndexOfRmseSc, t)));
       if (measures.mIndexOfCrps >= 0)
         weights.Set0(

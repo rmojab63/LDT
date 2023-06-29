@@ -111,5 +111,179 @@ plot(factor(rownames(df_var_weekly)),
 There are other frequency types and conversion functions available in the `tdata` package that you can explore on your own.
 
 
+## Other functions
+In this subsection, I will talk about some other functions in `tdata` package. These are not the main functions, but just some related subject to time and data.
+
+### 1. Long-run growth
+ In this subsection, we will discuss long-run growth and use the tdata package to calculate and plot it. First, let’s review some mathematical concepts.
+
+A variable can change continuously or discretely over time. 
+\begin{align}
+&y(t)=y(0)e^{g_1}e^{g_2}\ldots g^{g_t}\\
+&y_t=y_0(1+g_1)(1+g_2)\ldots(1+g_t)
+\end{align}
+
+The starting condition is represented by $y_0$ and $y(0)$, while $y_t$ and $y(t)$ represents the value of the variable $t$ periods. The $g_i \times 100$ for $i=1\ldots t$ are the discrete or continuous growth rates in different periods.
+
+Recall that we have two formulas for calculating growth rate in one period:
+\begin{align}
+&G_c=(\ln{\frac{y(t+1)}{y(t)}})\times 100\\
+&G_d=(\frac{y_{t+1}}{y_t}-1)\times 100
+\end{align}
+
+for $y_i>0$ for all $i$. Also, recall that we have this approximation: $ln(1+x) \approx x$ when $x$ is small. Therefore, it might not be important which one we choose for variables such as GDP. However, assume that the growth rates are large, e.g., in one period the value increases from 1 to 2. It is clear that the growth rate is 100%. Using the continuous formula gives us 69.3% and by using the discrete one we get 100%. Does this mean the continuous formula is wrong? Definitely not. When we say “the value increases from 1 to 2”, we are assuming that the growth is discrete. Therefore, if you are wondering which of these formulas to use, think about your assumptions and your mathematical model. It is generally easier to work with the continuous formula because the derivative of $ln$ is easier to compute.
+
+Interest rate is a similar concept to growth rate, and let’s study these formulas from that perspective. Assume that you lend $y_0$ amount of money at time $t=0$. If the annual interest rate is $r$, at the end of the first year you will have $y_0*(1+r)$. Let’s assume that interest is paid monthly and you lend the interest too. At the end of the first month, you will have $y_0*(1+\frac{r}{12})$. Then, at the end of the second month, you will have $y_0*(1+\frac{r}{12})^2$. And so on. At the end of the year, you will have $y_0*(1+\frac{r}{12})^12$. At the end of the second year, you will have $y_0*(1+\frac{r}{12})^24$. At the end of $t$ years, you will have $y_0*(1+\frac{r}{12})^12t$. We can similarly split the year into smaller periods and calculate the limit when we move from 12 toward infinity in the formula. If we use L’Hopital’s rule and calculate such a limit, we will find the continuous formula: $y_t=y_0 e^{rt}$. Compared to the previos discussion, we have one scalar value $r$ here.
+
+Let's get back to the long-run formulas. We are looking for a scalar value $g$ in which we can summarize all the other $g_i$s, such that:
+\begin{align}
+&y(t)=y(0)e^{g_c t}\\
+&y_t=y_0(1+g_d)^t
+\end{align}
+
+This single value does what all other growth rates achieve together: it take us from the starting point ($y_0$ or $y(0)$) to the end point ($y_t$ or $y(t)$). We call $\bar{G}_c = g_c\times 100$ and $\bar{G}_d=g_d \times 100$ the continuous and discrete long-run growth rates. It is important to note that $\bar{G}_c$ and $\bar{G}_d$ are not exactly equal (The discussion is similar to the discussion about $G_c$ and $G_d$ above).
+
+Given the data $\{y_i\}_{i=0}^t$ where $y_i>0$ for all $i$, the following formula calculates the long-run continuous growth rates:
+\begin{align}
+&\bar{G}_c = \frac{\ln{\frac{y(t)}{y(0)}}}{t}\times 100\\
+&\bar{G}_c = \frac{G_{c1}+G_{c2}+\ldots+G_{ct}}{t}
+\end{align}
+
+in which $G_{ci}$ is the continuous growth rate at period $i$. Recall that $\ln{x}+ln{y}=\ln{xy}$ for $x,y\in\mathbb{R}$. 
+
+The two similar formulas for the discrete case are:
+
+\begin{align}
+&\bar{G}_d = (\frac{y_t}{y_0}-1)^{\frac{1}{t}}\times 100\\
+&\bar{G}_d =(\sqrt[t]{\Pi_{i=1}^{t}(1+\frac{G_{di}}{100})}-1)\times 100
+\end{align}
+
+These are more complicated compared to the continuous case. As I said before, it is much easier to deal with continuous assumption.
+
+It is important to note that the formulas for calculating growth rates may not be applicable when the data can be negative or $\{y_i\}_{i=0}^t$ contains negative values. In such cases, alternative methods may be needed to measure growth or change over time. One possible approach is to add a constant to all values to make them positive before calculating the growth rates. However, this approach may not always be suitable and it is crucial to carefully evaluate the context of the data before applying any transformation.
+ 
+The following code creates two `tdata` variables which contain the real GDP per capita (PPP) of Korea and Iran from 1990 to 2021. Data source is "World Development Indicators" and data code is "NY.GDP.PCAP.PP.KD".
+
+```{r}
+y_kor <- variable(data = c(12656, 13882, 14591, 15436, 16698, 18120, 19365, 20368, 19184, 21233, 22964, 23894, 25591, 26260, 27516, 28641, 29991, 31570, 32275, 32364, 34394, 35389, 36049, 37021, 37967, 38829, 39815, 40957, 41966, 42759, 42397, 44232),
+                    startFrequency = f.yearly(1990),
+                    name = "Korea, GDP per capita, PPP (constant 2017 international $), World Bank")
+
+y_iri <- variable(data = c(9442, 10240, 10331, 10114, 9904, 10007, 10504, 10495, 10548, 10590, 11026, 11098, 11879, 12786, 13127, 13329, 13781, 14690, 14526, 14474, 15099, 15302, 14542, 14113, 14539, 14011, 14969, 15163, 14629, 14084, 14432, 15005),
+                    startFrequency = f.yearly(1990),
+                    name = "Iran, Rep., GDP per capita, PPP (constant 2017 international $), World Bank")
+```
+
+We can use the `get.longrun.growth` function to calculate the long-run growth rates and plot the trends.
+
+
+```{r, echo=FALSE, fig.width=6, fig.height=4, fig.cap="GDP per capita of IRI and KOR: Data and longrun trend over time"}
+kor_rate_c <- get.longrun.growth(y_kor$data, TRUE, FALSE)
+kor_rate_d <- get.longrun.growth(y_kor$data, FALSE, FALSE)
+iri_rate_c <- get.longrun.growth(y_iri$data, TRUE, FALSE)
+iri_rate_d <- get.longrun.growth(y_iri$data, FALSE, FALSE)
+ 
+s_kor <- y_kor$data[1] * exp(kor_rate_c/100 * (0:(length(y_kor$data) - 1)))
+s_iri <- y_iri$data[1] * exp(iri_rate_c/100 * (0:(length(y_iri$data) - 1)))
+# s_kor_d <- data[1] * (1 + kor_rate_d) ^ (0:(length(y_kor) - 1))
+# s_iri_d <- data[1] * (1 + iri_rate_d) ^ (0:(length(y_iri) - 1))
+
+all <- c(s_kor, s_iri, y_kor$data, y_iri$data)
+labels <- row.names(as.data.frame(y_kor))
+
+# plot data
+plot(labels, y_kor$data, type = "l", col="black", lwd = 2, lty = 1, 
+     ylab = "PPP (constant 2017 international $)",
+     xlab = "Time",
+     cex.lab = 0.8,
+     cex.axis = 0.8,
+     ylim = c(min(all),max(all))*1.1)
+lines(labels, y_iri$data, col = "blue", lwd = 2, lty = 1)
+
+# plot trends
+lines(labels, s_kor, col = "green", lwd = 1, lty = 3)
+lines(labels, s_iri, col = "red", lwd = 1, lty = 3)
+
+legend("topleft", legend = c("KOR", "IRI", 
+                             sprintf("KOR Trend (con.=%.1f%%, dis.=%.1f%%",kor_rate_c, kor_rate_d), 
+                             sprintf("IRI Trend (con.=%.1f%%, dis.=%.1f%%",iri_rate_c, iri_rate_d)),
+       bg = "transparent", 
+       col = c("black", "blue", "green", "red"),
+       lwd = c(2,2,1,1),
+       lty = c(1,1,3,3),
+       bty = "n",
+       cex = 0.8)
+```
+
+
+
+### 2. NA starategies
+Data cleaning is a crucial early step in the data analytics process, which may involve handling missing or NA observations. There are several methods to deal with missing values, including replacing them with substitutes from other records or datasets, estimating values based on other available information through imputation, or using a mathematical function to fit a curve to the available data points through interpolation. However, sometimes it may be necessary to remove `NA` observations from the data before analysis. In this section, we will discuss a common scenario when working with cross-sectional data where NA values exist in some variables.
+
+
+Let’s begin with a simple example. Consider the following data table, where the variables are in columns and the observations are in rows:
+
+\begin{equation}
+\begin{array}{c|ccc}
+   & V_1 & V_2 & V_3 \\
+   \hline
+O_1 & 1  & 2  & 3 \\
+O_2 & 4  & NA & 5 \\
+O_3 & 7  & NA & 9 \\
+O_4 & 10  & 11  & 12 
+\end{array}
+\end{equation}
+
+If we remove $V_2$, the resulting data table will have 8 observations. However, if we remove $O_2$ and $O_3$ observations, the final data table will have only 6 observations. Assuming that all observations are equally important, removing $V_2$ would be the best strategy. Now, consider the following structure:
+        
+\begin{equation}
+\begin{array}{c|ccc}
+   & V_1 & V_2 & V_3 \\
+   \hline
+O_1 & NA  & 2  & NA \\
+O_2 & 4  & 5 & 5 \\
+O_3 & NA  & 6 & 9 \\
+O_4 & NA  & 11  & 12 
+\end{array}
+\end{equation}
+
+In this case, the best strategy would be to remove $V_1$ and $O_1$. Now, consider the following data table:
+
+\begin{equation}
+\begin{array}{c|ccc}
+   & V_1 & V_2 & V_3 & V_4\\
+   \hline
+O_1 & NA  & 2  & NA & NA \\
+O_2 & 5  & 6 & 7 & 8 \\
+O_3 & 9  & NA & 11 & 12 \\
+O_4 & 13  & 14  & NA & NA \\
+O_5 & 17  & 18  & 19 & 20 \\
+\end{array}
+\end{equation}
+
+Can you see what the best strategy would be in this case? What if it is more important to keep variables instead of observations.
+
+The `remove.na.strategies` function in the `tdata` package can help you decide on a proper order for removing columns and rows. Here is an example using the data from the previous example:
+
+```{r}
+st <- remove.na.strategies(data = matrix(c(NA,2,NA,NA,5,6,7,8,9,NA,
+                                           11,12,13,14,NA,NA,17,18,19,20),
+                                         ncol = 4,
+                                         byrow = TRUE))
+```
+
+```{r echo=FALSE}
+first <- st[[1]]
+second <- st[[2]]
+fc1 = paste0(first$colRemove, collapse = ", ")
+fr1 = paste0(first$rowRemove, collapse = ", ")
+fc2 = paste0(second$colRemove, collapse = ", ")
+fr2 = paste0(second$rowRemove, collapse = ", ")
+```
+
+The first element of the output shows the best strategy where the final data table has `r first$nRows*first$nCols` observations by removing columns with indices reported in `colRemove` (which is `r fc1`) and rows with indices reported in `rowRemove` (which is `r fr1`). The second-best strategy results in a final matrix with `r second$nRows*second$nCols` observations and suggests removing rows with indices reported in `rowRemove` (which is `r fr2`) and no columns. 
+
+We can use the `countFun` argument to increase the weight of columns. For example, if we use `countFun = function(nRows, nCols) nRows * nCols^2`, the best strategy would be to remove rows with indices reported in `rowRemove` (which is `r fr2`).
+
 
 

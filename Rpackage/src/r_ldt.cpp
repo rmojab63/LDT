@@ -519,15 +519,14 @@ NumericMatrix cbind_vectormatrix(NumericVector a, NumericMatrix b,
 }
 
 void ReportProgress(bool printMsg, int reportInterval, ModelSet &model,
-                    bool &estimating, SearchOptions &options) {
+                    bool &estimating, SearchOptions &options, int allCount) {
   auto start = std::chrono::system_clock::now();
   if (printMsg)
     Rprintf("Calculations Started ...\n");
   int c = 0;
-  auto alli = model.GetExpectedNumberOfModels();
   if (printMsg)
-    Rprintf("Expected Number of Models = %i\n", alli);
-  double all = (double)alli;
+    Rprintf("Expected Number of Models = %i\n", allCount);
+  double all = (double)allCount;
   int i = 0;
   while (estimating) {
 
@@ -556,7 +555,7 @@ void ReportProgress(bool printMsg, int reportInterval, ModelSet &model,
       double remains_mins = (all - c) * elapsed_mins.count() / c;
       if (printMsg)
         Rprintf("    Searched=%i, All=%i  (%.2f%%, %.1f minutes remains)\n", c,
-                alli, percentage > 100 || percentage < 0 ? NAN : percentage,
+                allCount, percentage > 100 || percentage < 0 ? NAN : percentage,
                 remains_mins < 0 ? NAN : remains_mins);
       prePecentage = percentage;
     }

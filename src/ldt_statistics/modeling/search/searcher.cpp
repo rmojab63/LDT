@@ -215,7 +215,7 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
                       Matrix<Ti> &groupIndexes, const Ti &sizeG,
                       const std::vector<Ti> &groupSizes,
                       const std::vector<std::vector<Ti>> &groupIndexMap,
-                      const Ti &fixFirstG, Ti &fixFirstI) {
+                      const Ti &fixFirstG, const Ti &fixFirstI) {
   // move the inner indexes
   auto g = &groupIndexMap.at(groupIndexes.Data[0]);
   for (Ti i = 0; i < sizeG; i++) {
@@ -256,7 +256,7 @@ bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
                    *pGroupIndexMap, mFixFirstGroups, mFixFirstItems);
 }
 
-Ti Searcher::GetCount(bool effective) {
+Ti Searcher::GetCount(bool effective) const {
   // auto r = SizeG - mFixFirstGroups;
   // auto n = pGroupIndexMap->size() - mFixFirstGroups;
   // auto countG = choose((Ti)n, (Ti)r); // use boost 'binomial_coefficient'

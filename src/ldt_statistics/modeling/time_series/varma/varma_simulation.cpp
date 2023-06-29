@@ -292,7 +292,7 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     for (Ti i = 0; i < mm; i++) {
       auto m = &Results.at(i);
       if (measures.at(i) == ScoringType::kRmse ||
-          measures.at(i) == ScoringType::kScaledRmse) {
+          measures.at(i) == ScoringType::kRmspe) {
         for (k = 0; k < m->RowsCount; k++)
           m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
       } else {
@@ -305,10 +305,10 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
   if (cancel)
     return;
 
-  // average (aggregate ove horizons)
+  // average (aggregate over horizons)
   for (Ti i = 0; i < mm; i++) {
     if (measures.at(i) == ScoringType::kRmse ||
-        measures.at(i) == ScoringType::kScaledRmse) {
+        measures.at(i) == ScoringType::kRmspe) {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, std::sqrt(ResultAggs.Get0(i, k) / (Tv)counter));
     } else {
@@ -524,7 +524,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
     for (Ti i = 0; i < mm; i++) {
       auto m = &Results.at(i);
       if (measures.at(i) == ScoringType::kRmse ||
-          measures.at(i) == ScoringType::kScaledRmse) {
+          measures.at(i) == ScoringType::kRmspe) {
         for (k = 0; k < m->RowsCount; k++)
           m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
       } else {
@@ -537,7 +537,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
   // average (aggregate ove horizons)
   for (Ti i = 0; i < mm; i++) {
     if (measures.at(i) == ScoringType::kRmse ||
-        measures.at(i) == ScoringType::kScaledRmse) {
+        measures.at(i) == ScoringType::kRmspe) {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, std::sqrt(ResultAggs.Get0(i, k) / (Tv)counter));
     } else {

@@ -22,9 +22,6 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
     throw std::logic_error(
         "Invalid 'numFixXPartitions'. It cannot be negative.");
 
-  auto startTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
-
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
@@ -106,6 +103,8 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
     throw std::logic_error("More memory is required for running the project.");
   }
 
+  auto alli = model.Modelset.GetExpectedNumberOfModels();
+
   // handle unhandled exceptions in the async function
   // model.CheckStart();
   auto f = std::async(std::launch::async, [&] {
@@ -113,10 +112,8 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options);
-
-  auto endTime = boost::posix_time::to_simple_string(
-      boost::posix_time::second_clock::local_time());
+  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options,
+                 alli);
 
   if (options.RequestCancel)
     return R_NilValue;
@@ -128,7 +125,6 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
                               colNames, "coefs", "item");
 
   L["info"] = List::create(
-      _["startTime"] = wrap(startTime), _["endTime"] = wrap(endTime),
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["searchSigMaxIter"] = wrap(searchSigMaxIter),
       _["searchSigMaxProb"] = wrap(searchSigMaxProb),
@@ -316,8 +312,8 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
 
   auto measures = std::vector<ScoringType>(
       {// report all measures
-       ScoringType::kMae, ScoringType::kScaledMae, ScoringType::kRmse,
-       ScoringType::kScaledRmse, ScoringType::kCrps, ScoringType::kSign});
+       ScoringType::kMae, ScoringType::kMape, ScoringType::kRmse,
+       ScoringType::kRmspe, ScoringType::kCrps, ScoringType::kSign});
   auto measureNames = std::vector<std::string>();
   for (auto &a : measures)
     measureNames.push_back(ToString(a));

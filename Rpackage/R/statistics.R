@@ -494,7 +494,10 @@ s.cluster.h.group <- function(data, nGroups = 2, threshold = 0,
 #' s2 <- rand.mnormal(10, mu = c(1,1), sigma = NA, p = 2)
 #' s3 <- rand.mnormal(10, p = 2, byRow = FALSE) #standard normal
 #'
-rand.mnormal <- function(n, mu = NULL, sigma = NULL, p = NULL, byRow = TRUE) {
+rand.mnormal <- function(n, mu = NULL,
+                         sigma = NULL,
+                         p = NULL,
+                         byRow = TRUE) {
   if (length(mu) == 1 && is.na(mu) && length(sigma) == 1 && is.na(sigma)) {
     if (is.null(p)) stop("Please specify the dimension 'p' of the distribution")
     mu <- runif(p)

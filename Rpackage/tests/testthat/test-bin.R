@@ -21,9 +21,9 @@ dx = as.data.frame(x)
 
 test_that("Discrete choice (binary) estimation works", {
 
-  for (probType in c("logit", "probit")){
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, newX = x[,3:5], probType, printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
+  for (linkFunc in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, newX = x[,3:5], linkFunc, printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = linkFunc))
     expect_equal(as.numeric(resR$coefficients), as.numeric(res$estimations$gamma), tolerance = 1e-5)
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
@@ -45,10 +45,10 @@ test_that("Discrete choice (binary) estimation works with PCA", {
   pcaOp$ignoreFirst = 0 #It automatically adds and ignores intercept
   pcaOp$exactCount = 3
 
-  for (probType in c("logit", "probit")){
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, probType, pcaOptions = pcaOp, printMsg = printMsg)
+  for (linkFunc in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, linkFunc, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, family = binomial(link = probType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, family = binomial(link = linkFunc))
     expect_equal(abs(as.numeric(resR$coefficients)), abs(as.numeric(res$estimations$gamma)), tolerance = 1e-4) # abs? they are related to PC
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
@@ -57,10 +57,10 @@ test_that("Discrete choice (binary) estimation works with PCA", {
 
 test_that("Discrete choice (binary, weighted) estimation works", {
 
-  probType = "probit" # the test fails for "logit" (I think this is because of the glm estimation)
+  linkFunc = "probit" # the test fails for "logit" (I think this is because of the glm estimation)
 
-  res <- estim.bin(x[,1,drop=FALSE], x[,3:5], x[,6,drop = FALSE], probType, printMsg = printMsg)
-  resR <- glm(V1 ~ V3 + V4 + V5, data = dx, weights = x[,6], family = quasibinomial(link = probType))
+  res <- estim.bin(x[,1,drop=FALSE], x[,3:5], x[,6,drop = FALSE], linkFunc, printMsg = printMsg)
+  resR <- glm(V1 ~ V3 + V4 + V5, data = dx, weights = x[,6], family = quasibinomial(link = linkFunc))
   # quasibinomial (to avoid a warning (non-integer #successes in a binomial glm!))
   # see: https://stackoverflow.com/a/12954119
   expect_equal(as.numeric(resR$coefficients), as.numeric(res$estimations$gamma), tolerance = 1e-4)
@@ -76,10 +76,10 @@ test_that("Discrete choice (binary, weighted) estimation works with PCA", {
   pcaOp$ignoreFirst = 0
   pcaOp$exactCount = 3
 
-  for (probType in c("logit", "probit")){
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6,drop = FALSE], probType, pcaOptions = pcaOp, printMsg = printMsg)
+  for (linkFunc in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6,drop = FALSE], linkFunc, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6,drop = FALSE], family = quasibinomial(link = probType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6,drop = FALSE], family = quasibinomial(link = linkFunc))
     expect_equal(abs(as.numeric(resR$coefficients)), abs(as.numeric(res$estimations$gamma)), tolerance = 1e-5) # abs? they are related to PCs
     sum_resR=summary(resR)
     expect_equal(as.numeric(sum_resR$cov.scaled), as.numeric(res$estimations$gammaVar), tolerance = 1e-1)
@@ -103,9 +103,9 @@ test_that("Discrete choice (binary, weighted, logL) estimation works", {
   colnames(m)<-colnames(Z0)
   Zw = rbind(Z0,m)
 
-  for (probType in c("logit", "probit")){
-    res <- estim.bin(y, Z, w, probType, printMsg = printMsg)
-    resw <- estim.bin(yw, Zw, ww, probType, printMsg = printMsg)
+  for (linkFunc in c("logit", "probit")){
+    res <- estim.bin(y, Z, w, linkFunc, printMsg = printMsg)
+    resw <- estim.bin(yw, Zw, ww, linkFunc, printMsg = printMsg)
     expect_equal(res$estimations$gamma, resw$estimations$gamma)
     expect_equal(res$estimations$gammaVar, resw$estimations$gammaVar)
     expect_equal(res$measures[1,1], resw$measures[1,1])
@@ -120,10 +120,10 @@ test_that("Discrete choice (binary, weighted, logL) estimation works", {
 
 test_that("Discrete choice (binary, weighted) projection works", {
 
-  for (probType in c("logit", "probit")){
+  for (linkFunc in c("logit", "probit")){
     newX <- dx[6:7,3:5]
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, probType, newX = as.matrix(newX), printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, linkFunc, newX = as.matrix(newX), printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = linkFunc))
 
 
     resRp = predict(resR, newdata = newX, type="response")
@@ -142,10 +142,10 @@ test_that("Discrete choice (binary, weighted) projection works with PCA", {
   newX <- x[6:10,3:ncol(x)]
   projY <- as.data.frame(predict(pr, newdata = newX ))
 
-  for (probType in c("logit", "probit")){
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6, drop=FALSE], probType, newX, pcaOptions = pcaOp, printMsg = printMsg)
+  for (linkFunc in c("logit", "probit")){
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], x[,6, drop=FALSE], linkFunc, newX, pcaOptions = pcaOp, printMsg = printMsg)
 
-    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6], family = quasibinomial(link = probType))
+    resR <- glm(V1 ~ PC1 + PC2 + PC3, data = y, weights = x[,6], family = quasibinomial(link = linkFunc))
 
     resRp = predict(resR, newdata = projY, type="response")
     expect_equal(resRp[[1]], res$projection[1,2], tolerance = 1e-5)
@@ -155,10 +155,10 @@ test_that("Discrete choice (binary, weighted) projection works with PCA", {
 
 test_that("Discrete choice (binary) projection works", {
 
-  for (probType in c("logit", "probit")){
+  for (linkFunc in c("logit", "probit")){
     newX <- dx[5:6,3:5]
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, probType, as.matrix(newX), printMsg = printMsg)
-    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = probType))
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:5], NULL, linkFunc, as.matrix(newX), printMsg = printMsg)
+    resR <- glm(V1 ~ V3 + V4 + V5, data = dx, family = binomial(link = linkFunc))
 
 
     resRp = predict(resR, newdata = newX, type="response")
@@ -169,13 +169,13 @@ test_that("Discrete choice (binary) projection works", {
 
 test_that("Discrete choice (binary) scoring works", {
 
-  for (probType in c("logit", "probit")){
+  for (linkFunc in c("logit", "probit")){
     newX <- x[5:6,3:4]
     c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # if probability is < 0.5, count as an error (1 cost)
     c2=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # same as c1
     c3=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
 
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:4], NULL, probType,
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:4], NULL, linkFunc,
                      newX =  newX, costMatrices = list(c1,c2, c3), simFixSize = 50, printMsg = printMsg)
 
     expect_equal(res$simulation$costRatios[[1]],res$simulation$costRatios[[2]], tolerance = 1e-16)
@@ -192,13 +192,13 @@ test_that("Discrete choice (binary) scoring works with PCA", {
   pcaOp$exactCount = 3
   newX <- x[6:10,3:ncol(x)]
 
-  for (probType in c("logit", "probit")){
+  for (linkFunc in c("logit", "probit")){
 
     c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # if probability is < 0.5, count as an error (1 cost)
     c2=matrix(c(0.5,1, 1, 0, 1, 0),2,3) # same as c1
     c3=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
 
-    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, probType, newX,
+    res <- estim.bin(x[,1,drop=FALSE], x[,3:ncol(x)], NULL, linkFunc, newX,
                      list(c1,c2, c3), pcaOptions = pcaOp, simFixSize = 50, printMsg = printMsg)
 
     expect_equal(res$simulation$costRatios[[1]],res$simulation$costRatios[[2]], tolerance = 1e-16)
@@ -282,7 +282,7 @@ test_that("Discrete choice search (aic, one model) works", {
                               xPartitions = list(g1,g2), xSizes = c(2L),
                               searchItems = get.items.search(bestK = 1, all = TRUE))
 
-  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, probType = "logit", printMsg = printMsg)
+  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, linkFunc = "logit", printMsg = printMsg)
   expect_equal(res$aic$target1$model$bests$best1$weight, exp(-0.5*res1$measures[2,1]), tolerance = 1e-14)
 
 
@@ -304,7 +304,7 @@ test_that("Discrete choice search (avgCost, one model) works", {
                               xPartitions = list(g1,g2), xSizes = c(2L), costMatrices = list(c1),
                               searchItems = get.items.search(bestK = 1, all = FALSE))
 
-  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, probType = "logit",
+  res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, linkFunc = "logit",
                         costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                         simTrainRatio = tratio, printMsg = printMsg)
   expect_equal(res$frequencyCostOut$target1$model$bests$best1$weight, 1 - res1$simulation$costRatios[[1]], tolerance = 1e-14) # note that in search, it is 1-cost score
@@ -333,7 +333,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
 
     # note that in the indexes, we should adjust the indexes too
     aa<-a$exoIndices+2
-    resB = estim.bin(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, probType = "logit",
+    resB = estim.bin(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, linkFunc = "logit",
                           costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                           simTrainRatio = tratio, printMsg = printMsg)
     expect_equal(a[[1]], 1 - resB$simulation$costRatios[[1]]) # note that in search, it is 1-cost score
@@ -608,7 +608,7 @@ test_that("Discrete choice summary works", {
                   searchItems = get.items.search(bestK = 5, type1=TRUE, all = TRUE),
                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
 
-  su =summary(res, y, Exo, addModelBests = TRUE,
+  su =summary(res, y = y, x = Exo, addModelBests = TRUE,
               addModelAll = FALSE, addItem1 = FALSE, w = NULL, test = TRUE)
 
 })

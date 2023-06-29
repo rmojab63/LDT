@@ -82,7 +82,7 @@ The following code does the same by using the `estim.bin` function in the `ldt` 
 ```{r}
 fit_l <- estim.bin(sample_l$y, sample_l$x[,-1], sample_l$w) 
 
-fit_p <- estim.bin(sample_p$y, sample_p$x[,-1], sample_p$w, probType = "probit") 
+fit_p <- estim.bin(sample_p$y, sample_p$x[,-1], sample_p$w, linkFunc = "probit") 
 
 res_table <- get.coefs.table(list(Logit = fit_l, Probit = fit_p), 
                              regInfo = c("obs"), formatLatex = FALSE)
@@ -164,9 +164,9 @@ sample_l_new$x <- cbind(sample_l_new$x, matrix(rnorm(nrow(sample_l_new$x) * 50),
 
 In our experiment, there are `r ncol(sample_l$x)-num_exo` irrelevant and `r num_exo-1` relevant variables. The number of irrelevant data is relatively large and their names start with the `z` character. The second line of code creates out-of-sample data in the extended sample for use in prediction.
 
-The following code uses the search.bin function to find the actual model:
+The following code uses the `search.bin` function to find the actual model:
 
-```{r echo=FALSE}
+```{r eval=FALSE, include=TRUE}
 search_res <- search.bin(sample_l$y, sample_l$x[,-1], sample_l$w,
                         xSizes = c(1:5), 
                         measureOptions = get.options.measure(typesIn = c("sic")))
@@ -188,7 +188,6 @@ search_step_res <-
                       measureOptions = get.options.measure(typesIn = c("aic","sic", "auc", "brier")),
                       searchItems = get.items.search(bestK = 10))
 search_step_res
-
 ```
 
 The first two lines define the steps. We use all variables (`NA` in `count_steps` means all) to estimate models with sizes defined as the first element of `x_size_steps`. Then we select a number of variables from the information provided by the best models and estimate models with sizes determined by the second element of `x_size_steps`. And so on.
@@ -263,7 +262,7 @@ search_step_res <-
 search_step_res
 ```
 
-We use `r measure_options$trainRatio` ratio of the observations (determined by trainRatio) for estimating and the rest for testing. We repeat this experiment `r measure_options$simFixSize` times (determined by `simFixSize`). We can report the result similar to the previous discussion:
+We use `r measure_options$trainRatio` ratio of the observations (determined by `trainRatio`) for estimating and the rest for testing. We repeat this experiment `r measure_options$simFixSize` times (determined by `simFixSize`). We can report the result similar to the previous discussion:
 
 ```{r echo=FALSE}
 ssum <- summary(search_step_res, 

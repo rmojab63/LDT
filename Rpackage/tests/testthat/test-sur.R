@@ -40,6 +40,11 @@ test_that("estim.sur estimation works with NO restrictions (OLS)", {
   expect_equal(as.numeric(res$estimations$gamma), cofs, tolerance = 1e-8)
   expect_equal(as.numeric(res$estimations$sigma),
                rcov, tolerance = 1e-8) # adjusted dof
+
+  # I couldn't get equal AIC. It seems that the number of parameters in systemfit
+  # is not 8 in this specific example, but 9.
+  # TODO: Why +1 ? see also rank documentation
+
 })
 
 test_that("estim.sur peojection works with NO restrictions (OLS)", {
