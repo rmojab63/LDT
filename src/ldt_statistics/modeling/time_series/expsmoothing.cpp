@@ -9,9 +9,9 @@
 
 using namespace ldt;
 
-//#pragma region export
+// #pragma region export
 
-//#pragma endregion
+// #pragma endregion
 
 template <ExpSmoothingType type> int expsmoothing<type>::check_getexpclass() {
   if (_additive_season != Null && _seasonCount == 0)
@@ -356,7 +356,7 @@ void setLastSeason(bool additive, Tv *seasons, unsigned short &seasonsCount) {
   }
 }
 
-//#pragma region recursives A
+// #pragma region recursives A
 
 // table 2.2, hyndman, et ct (2008)
 
@@ -586,9 +586,9 @@ void rec_AM_dM(bool sim, Ti t, unsigned short seasonCount, Tv &y, Tv alpha,
   seasons[rem] += gamma * e / temp;
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region recursives M
+// #pragma region recursives M
 
 // table 2.2, hyndman, et ct (2008)
 // see also table 2.3
@@ -818,7 +818,7 @@ void rec_MM_dM(bool sim, Ti t, unsigned short seasonCount, Tv &y, Tv alpha,
   seasons[rem] += gamma * e0 / temp;
 }
 
-//#pragma endregion
+// #pragma endregion
 
 void initializestates_size(Ti countUse, unsigned short seasonCount,
                            Ti &workSize) {
@@ -1397,7 +1397,7 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
     res->last_seasons->Data[i] = seasons[i];
 }
 
-//#pragma region Simulate
+// #pragma region Simulate
 
 template <ExpSmoothingType type>
 void expsmoothing<type>::simulate(ExpSmoothingResultTv *pars, Tv *storage, Ti n,
@@ -1562,9 +1562,9 @@ void expsmoothing<type>::simulate(ExpSmoothingResultTv *pars, Tv *storage, Ti n,
   }
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Forecast
+// #pragma region Forecast
 
 template <ExpSmoothingType type>
 void forecastSim(Ti h, ExpSmoothingResultTv *estim, Matrix<Tv> *forecast,
@@ -1945,40 +1945,40 @@ void expsmoothing_base::interval(Tv &lower, Tv &upper, Tv forecast, Tv sd,
   upper = norm.GetQuantile(1 - prob);
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region Out - of - Sample
+// #pragma region Out - of - Sample
 
 Ti expsmoothing_outsample_res::getStorageSize() {
 
-  Ti s = measures->length();
+  Ti s = metrics->length();
   if (hasDetails)
     for (auto &m : *details)
-      s += m->act_for_sd->length() + m->measures->length();
+      s += m->act_for_sd->length() + m->metrics->length();
   return s;
 }
 
 void expsmoothing_outsample_res::setStorage(Tv *storage) {
   Ti q = 0;
-  measures->SetData(0, &storage[q]);
-  q += measures->length();
+  metrics->SetData(0, &storage[q]);
+  q += metrics->length();
   if (hasDetails) {
     for (auto &m : *details) {
       m->act_for_sd->Data = &storage[q];
       q += m->act_for_sd->length();
-      m->measures->SetData(0, &storage[q]);
-      q += m->measures->length();
+      m->metrics->SetData(0, &storage[q]);
+      q += m->metrics->length();
     }
   }
 }
 
 expsmoothing_outsample_res::~expsmoothing_outsample_res() {
-  delete measures;
+  delete metrics;
   if (hasDetails) {
     for (Ti i = 0; i < (Ti)details->size(); i++) {
       auto m = details->at(i);
       delete m->act_for_sd;
-      delete m->measures;
+      delete m->metrics;
       delete m;
     }
     delete details;
@@ -1987,7 +1987,7 @@ expsmoothing_outsample_res::~expsmoothing_outsample_res() {
 
 template <ExpSmoothingType type>
 void expsmoothing<type>::calculatemeasure(
-    bool forsize, std::vector<Ti> *measures, std::vector<Ti> *horizons,
+    bool forsize, std::vector<Ti> *metrics, std::vector<Ti> *horizons,
     Ti outOfSampleCount, Tv outOfSamplePercentage, bool keepDetails,
     expsmoothing_outsample_res *result, Matrix<Tv> *data,
     ExpSmoothingResultTv *initials, Ti initializeLength, Tv *WORK,
@@ -2018,11 +2018,11 @@ void expsmoothing<type>::calculatemeasure(
 
   result->WORKsize = estim_w + estim_s + fore_w + fore_s + 5 * hh;
 
-  Ti mm = measures->size();
+  Ti mm = metrics->size();
   Ti row = 0;
   if (forsize) {
-    result->measures = new Matrix<Tv>(
-        hh, mm); // row i is for horizons[i] in different measures
+    result->metrics =
+        new Matrix<Tv>(hh, mm); // row i is for horizons[i] in different metrics
 
     if (keepDetails) {
       result->details =
@@ -2032,7 +2032,7 @@ void expsmoothing<type>::calculatemeasure(
         re->sampleEnd = se;
         re->isValid = false; // default is false
         re->act_for_sd = new Matrix<Tv>(hh, 3);
-        re->measures = new Matrix<Tv>(hh, mm);
+        re->metrics = new Matrix<Tv>(hh, mm);
         result->details->at(row) = re;
         row++;
       }
@@ -2164,7 +2164,7 @@ void expsmoothing<type>::calculatemeasure(
     result->validCount++;
 
     Ti c = 0;
-    for (auto &eval : *measures) {
+    for (auto &eval : *metrics) {
       Scoring::calculate_forecast_measure(false, eval, &err, &temp, &act, &forc,
                                           &std, last, {});
 
@@ -2173,13 +2173,13 @@ void expsmoothing<type>::calculatemeasure(
       for (auto &h : *horizons) {
         if (h > effectiveH)
           continue;
-        result->measures->Set_Plus0(k, c, temp.Data[k]);
+        result->metrics->Set_Plus0(k, c, temp.Data[k]);
         k++;
       }
 
       if (keepDetails) {
         auto stdd = temp.ToString();
-        details->measures->SetColumn(c, &temp);
+        details->metrics->SetColumn(c, &temp);
       }
 
       c++;
@@ -2192,19 +2192,18 @@ void expsmoothing<type>::calculatemeasure(
   /// Tv[])"/>
   for (Ti j = 0; j < hh; j++) {
     Tv o = (Tv)1 / counters[j]; // denominator for horizon j
-    for (Ti i = 0; i < (Ti)measures->size(); i++) {
-      if (measures->at(i) == 0 || measures->at(i) == 9) // RMSE or Scaled RMSE
-        result->measures->Set0(j, i,
-                               std::sqrt(result->measures->Get0(j, i) * o));
+    for (Ti i = 0; i < (Ti)metrics->size(); i++) {
+      if (metrics->at(i) == 0 || metrics->at(i) == 9) // RMSE or Scaled RMSE
+        result->metrics->Set0(j, i, std::sqrt(result->metrics->Get0(j, i) * o));
       else
-        result->measures->Set0(j, i, result->measures->Get0(j, i) * o);
+        result->metrics->Set0(j, i, result->metrics->Get0(j, i) * o);
     }
   }
 
   data->Restructure0(T, 1);
 }
 
-//#pragma endregion
+// #pragma endregion
 
 template class ldt::expsmoothing<ExpSmoothingType::aaa>;
 template class ldt::expsmoothing<ExpSmoothingType::aam>;

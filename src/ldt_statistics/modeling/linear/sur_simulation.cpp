@@ -9,11 +9,11 @@
 using namespace ldt;
 
 SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
-                             const std::vector<ScoringType> &measuresOut,
+                             const std::vector<ScoringType> &metricsOut,
                              bool isRestricted, Ti maxSigSearchIter,
                              PcaAnalysisOptions *pcaOptionsY,
                              PcaAnalysisOptions *pcaOptionsX) {
-  pMeasuresOut = &measuresOut;
+  pMetricsOut = &metricsOut;
 
   mTrainPerc = trainRatio;
   mTrainFixSize = trainFixSize;
@@ -28,7 +28,7 @@ SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
   Split_d = std::unique_ptr<Ti[]>(new Ti[Split.WorkSizeI]);
 
   auto doForcVariance = false;
-  for (auto &s : measuresOut)
+  for (auto &s : metricsOut)
     if (Scoring::RequiresVariance(s)) {
       doForcVariance = true;
       break;
@@ -42,7 +42,7 @@ SurSimulation::SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
   // I have generated Split.WorkSizeI here
   WorkSize += N1 * m; // for errors matrix
 
-  StorageSize = m * (Ti)measuresOut.size();
+  StorageSize = m * (Ti)metricsOut.size();
 }
 
 void SurSimulation::AddError(std::string state) {
@@ -107,7 +107,7 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   Ti k = data.ColsCount - m;
   // Ti km = k * m;
 
-  Results = Matrix<Tv>(storage, (Ti)pMeasuresOut->size(), m);
+  Results = Matrix<Tv>(storage, (Ti)pMetricsOut->size(), m);
   Results.SetValue(0.0);
 
   std::mt19937 eng;
@@ -172,7 +172,7 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
       throw std::logic_error("Model check failed: Minimum Valid Simulations");
 
     i = -1;
-    for (auto &e : *pMeasuresOut) {
+    for (auto &e : *pMetricsOut) {
       i++;
       for (j = 0; j < m; j++) {
         if (cancel)
@@ -197,12 +197,19 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
 
   // sqrt for RMSE or RMSPE
   i = -1;
-  for (auto &e : *pMeasuresOut) {
+  for (auto &e : *pMetricsOut) {
     i++;
+
     if (e == ScoringType::kRmse || e == ScoringType::kRmspe)
       for (j = 0; j < m; j++) {
         s = j * errors.RowsCount;
         Results.Set0(i, j, std::sqrt(Results.Get0(i, j)));
+      }
+
+    // convert to percentage
+    if (e == ScoringType::kMape || e == ScoringType::kRmspe)
+      for (j = 0; j < m; j++) {
+        Results.Set0(i, j, Results.Get0(i, j) * 100);
       }
   }
 }

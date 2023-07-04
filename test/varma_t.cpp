@@ -895,11 +895,11 @@ TEST(Varma_T, var_extended2) {
 
   // simulation
   auto horizon = 3;
-  auto measures = std::vector<ScoringType>(
+  auto metrics = std::vector<ScoringType>(
       {ScoringType::kDirection, ScoringType::kRmspe, ScoringType::kCrps});
   auto horizons = std::vector<Ti>(horizon);
   std::iota(horizons.begin(), horizons.end(), 1);
-  auto sim = VarmaSimulation(sizes, 1, horizons, measures, nullptr, true);
+  auto sim = VarmaSimulation(sizes, 1, horizons, metrics, nullptr, true);
   sim.KeepDetails = true;
   S = new Tv[sim.StorageSize];
   W = new Tv[sim.WorkSize];
@@ -1031,8 +1031,8 @@ TEST(Varma_T, outofsample) {
   auto horizons = std::vector<Ti>({1, 3});
   Ti outcount = 4;
   // bool keepdetails = true;
-  auto measures = std::vector<ScoringType>({ScoringType::kRmse});
-  auto sim = VarmaSimulation(sizes, outcount, horizons, measures, nullptr);
+  auto metrics = std::vector<ScoringType>({ScoringType::kRmse});
+  auto sim = VarmaSimulation(sizes, outcount, horizons, metrics, nullptr);
   sim.KeepDetails = true;
   auto W = new Tv[sim.WorkSize];
   auto S = new Tv[sim.StorageSize];
@@ -1044,20 +1044,20 @@ TEST(Varma_T, outofsample) {
   ASSERT_NEAR(result.details.at(0).sampleEnd, (Ti)4);
   ASSERT_NEAR(result.details.at(0).forecast.Get(0, 1), 4.1201140, 1e-5);
   ASSERT_NEAR(result.details.at(0).actual.Get(1, 0), 6, 1e-6);
-  ASSERT_NEAR(result.details.at(0).measures.at(0).Get(1, 1), 5.9865124, 1e-5);
+  ASSERT_NEAR(result.details.at(0).metrics.at(0).Get(1, 1), 5.9865124, 1e-5);
 
   // 17
   ASSERT_NEAR(result.details.at(1).sampleEnd, (Ti)3);
   ASSERT_NEAR(result.details.at(1).forecast.Get(1, 1), 4.35570892, 1e-5);
   ASSERT_NEAR(result.details.at(1).actual.Get(0, 1), 4, 1e-6);
-  ASSERT_NEAR(result.details.at(1).measures.at(0).Get(0, 1), 0.00543269,
+  ASSERT_NEAR(result.details.at(1).metrics.at(0).Get(0, 1), 0.00543269,
   1e-5);
 
   // 19
   ASSERT_NEAR(result.details.at(3).sampleEnd, (Ti)1);
   ASSERT_NEAR(result.details.at(3).forecast.Get(0, 0), 4.03157163, 1e-5);
   ASSERT_NEAR(result.details.at(3).actual.Get(1, 0), 5, 1e-6);
-  ASSERT_NEAR(result.details.at(3).measures.at(0).Get(1, 0), 0.13348641,
+  ASSERT_NEAR(result.details.at(3).metrics.at(0).Get(1, 0), 0.13348641,
   1e-5);
   */
 
@@ -1071,7 +1071,7 @@ TEST(Varma_T, outofsample) {
 }
 
 TEST(Varma_T, outofsample2) { // similar to the previous test, just change the
-                              // measures & horizons length
+                              // metrics & horizons length
 
   auto y0 = Matrix<Tv>(new Tv[40]{1, 8, 7, 6, 5, 4, 4, 4, 1, 2, 3, 2, 2, 7,
                                   4, 3, 4, 3, 2, 4, 4, 7, 4, 2, 6, 0, 5, 9,
@@ -1092,9 +1092,9 @@ TEST(Varma_T, outofsample2) { // similar to the previous test, just change the
   auto horizons = std::vector<Ti>({1, 2, 3});
   Ti outcount = 4;
   // bool keepdetails = true;
-  auto measures =
+  auto metrics =
       std::vector<ScoringType>({ScoringType::kCrps, ScoringType::kRmse});
-  auto sim = VarmaSimulation(sizes, outcount, horizons, measures);
+  auto sim = VarmaSimulation(sizes, outcount, horizons, metrics);
   auto W = new Tv[sim.WorkSize];
   auto S = new Tv[sim.StorageSize];
   bool cancel = false;
@@ -1138,18 +1138,18 @@ TEST(Varma_T, outofsample_compare) { // row-wise and extended
   auto horizons = std::vector<Ti>({1});
   Ti outcount = 1;
   // bool keepdetails = true;
-  auto measures =
+  auto metrics =
       std::vector<ScoringType>({ScoringType::kCrps, ScoringType::kRmse});
 
   auto sim_ex =
-      VarmaSimulation(sizes, outcount, horizons, measures, nullptr, true);
+      VarmaSimulation(sizes, outcount, horizons, metrics, nullptr, true);
   sim_ex.KeepDetails = true;
   auto W = new Tv[sim_ex.WorkSize];
   auto S = new Tv[sim_ex.StorageSize];
   sim_ex.CalculateE(S, W, data, 1e12, 2, false, true);
 
   auto sim_r =
-      VarmaSimulation(sizes, outcount, horizons, measures, nullptr, false);
+      VarmaSimulation(sizes, outcount, horizons, metrics, nullptr, false);
   auto W_r = new Tv[sim_r.WorkSize];
   auto S_r = new Tv[sim_r.StorageSize];
   auto restriction = VarmaRestriction(sizes, VarmaRestrictionType::kMaFinal);
@@ -1181,9 +1181,9 @@ TEST(Varma_T, outofsample_dir) {
   auto horizons = std::vector<Ti>({1, 3});
   Ti outcount = 4;
   // bool keepdetails = true;
-  auto measures = std::vector<ScoringType>(
+  auto metrics = std::vector<ScoringType>(
       {ScoringType::kCrps, ScoringType::kDirection, ScoringType::kRmse});
-  auto sim = VarmaSimulation(sizes, outcount, horizons, measures);
+  auto sim = VarmaSimulation(sizes, outcount, horizons, metrics);
   sim.KeepDetails = true;
   auto W = new Tv[sim.WorkSize];
   auto S = new Tv[sim.StorageSize];
@@ -1212,10 +1212,10 @@ TEST(Varma_T, outofsample_dir) {
    Tv v4 = ((f1_h1_2019 < y1_18&& y1_19 < y1_18) ? 1 : 0) +
            ((f1_h1_2019 > y1_18 && y1_19 > y1_18) ? 1 : 0);
 
-   ASSERT_NEAR(result.details.at(0).measures.at(1).Get(0, 0), v1);
-   ASSERT_NEAR(result.details.at(1).measures.at(1).Get(0, 0), v2);
-   ASSERT_NEAR(result.details.at(2).measures.at(1).Get(0, 0), v3);
-   ASSERT_NEAR(result.details.at(3).measures.at(1).Get(0, 0), v4);
+   ASSERT_NEAR(result.details.at(0).metrics.at(1).Get(0, 0), v1);
+   ASSERT_NEAR(result.details.at(1).metrics.at(1).Get(0, 0), v2);
+   ASSERT_NEAR(result.details.at(2).metrics.at(1).Get(0, 0), v3);
+   ASSERT_NEAR(result.details.at(3).metrics.at(1).Get(0, 0), v4);
    */
   ASSERT_NEAR(sim.Results.at(1).Get(0, 0), 0.750, 1e-16);
 
@@ -1242,10 +1242,10 @@ TEST(Varma_T, outofsample_dir) {
   v4 = ((f2_h1_2019 < y2_18&& y2_19 < y2_18) ? 1 : 0) +
           ((f2_h1_2019 > y2_18 && y2_19 > y2_18) ? 1 : 0);
 
-  ASSERT_NEAR(result.details.at(0).measures.at(1).Get(1, 0), v1);
-  ASSERT_NEAR(result.details.at(1).measures.at(1).Get(1, 0), v2);
-  ASSERT_NEAR(result.details.at(2).measures.at(1).Get(1, 0), v3);
-  ASSERT_NEAR(result.details.at(3).measures.at(1).Get(1, 0), v4);
+  ASSERT_NEAR(result.details.at(0).metrics.at(1).Get(1, 0), v1);
+  ASSERT_NEAR(result.details.at(1).metrics.at(1).Get(1, 0), v2);
+  ASSERT_NEAR(result.details.at(2).metrics.at(1).Get(1, 0), v3);
+  ASSERT_NEAR(result.details.at(3).metrics.at(1).Get(1, 0), v4);
   */
   ASSERT_NEAR(sim.Results.at(1).Get(1, 0), 0.750, 1e-16);
 
@@ -1266,8 +1266,8 @@ TEST(Varma_T, outofsample_dir) {
   v4 = ((f3_h3_2019 < y3_18&& y3_19 < y3_18) ? 1 : 0) +
           ((f3_h3_2019 > y3_18 && y3_19 > y3_18) ? 1 : 0);
 
-  ASSERT_NEAR(result.details.at(0).measures.at(1).Get(2, 1), v1);
-  ASSERT_NEAR(result.details.at(1).measures.at(1).Get(2, 1), v2);
+  ASSERT_NEAR(result.details.at(0).metrics.at(1).Get(2, 1), v1);
+  ASSERT_NEAR(result.details.at(1).metrics.at(1).Get(2, 1), v2);
   */
   ASSERT_NEAR(sim.Results.at(1).Get(2, 1), 1.0, 1e-16);
 }
@@ -1300,7 +1300,7 @@ TEST(Varma_T, var_search) {
 
   auto items = SearchItems();
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
   items.KeepBestCount = 2;
@@ -1315,17 +1315,17 @@ TEST(Varma_T, var_search) {
   auto sizes = std::vector<Ti>({1});
   auto exo = std::vector<std::vector<Ti>>({{6}});
   auto endogroups = std::vector<std::vector<Ti>>({{0}, {1}, {2}});
-  measures.SimFixSize = 2;
-  measures.Horizons = std::vector<Ti>({1});
-  measures.MeasuresIn = std::vector<GoodnessOfFitType>(
+  metrics.SimFixSize = 2;
+  metrics.Horizons = std::vector<Ti>({1});
+  metrics.MetricsIn = std::vector<GoodnessOfFitType>(
       {GoodnessOfFitType::kAic, GoodnessOfFitType::kSic});
-  measures.MeasuresOut =
+  metrics.MetricsOut =
       std::vector<ScoringType>({ScoringType::kDirection, ScoringType::kRmse});
-  measures.TrainFixSize = 4;
+  metrics.TrainFixSize = 4;
   auto parm = std::vector<Ti>({2, 1, 2, 0, 0, 0});
 
   auto modelset =
-      VarmaModelset(searchOptions, items, measures, checks, sizes, endogroups,
+      VarmaModelset(searchOptions, items, metrics, checks, sizes, endogroups,
                     data, parm, 0, exo, true, nullptr, 2, items.Length1);
   auto W = new Tv[modelset.Modelset.WorkSize];
   modelset.Modelset.Start(W, nullptr);

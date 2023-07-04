@@ -377,7 +377,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       }
 
       # TODO: we can use or fill the gap with Inclusion weights. However,
-      # first we should determine which measure or target to use ?!
+      # first we should determine which metric or target to use ?!
 
       if (printMsg) {
         cat(paste0("Selected Variables: ", paste0(vars, sep = ";", collapse = ""), "\n"))
@@ -386,7 +386,7 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
       data_i <- data_i[, vars, drop = FALSE]
     }
     if (any(ncol(data_i) < size_i)) {
-      warning("There is not enough variables in this step. Increase the value of
+      warning("There are not enough variables in this step. Increase the value of
       'bestK' or if you have fix variables, adjust the sizes. Search is stoped.")
       break
     }

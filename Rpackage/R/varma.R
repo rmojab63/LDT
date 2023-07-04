@@ -1,7 +1,7 @@
 
 #' Search for Best VARMA Models
 #'
-#' Use this function to create a Vector Autoregressive Moving Average model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation measures.
+#' Use this function to create a Vector Autoregressive Moving Average model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
 #' @param y A matrix of endogenous data with variables in the columns.
 #' @param x A matrix of exogenous data with variables in the columns. It can be \code{NULL}.
@@ -24,8 +24,8 @@
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
 #' @param lbfgsOptions A list containing L-BFGS optimization options.
 #' Use [get.options.lbfgs] function for initialization.
-#' @param measureOptions A list of options for measuring performance.
-#' Use [get.options.measure] function to get them.
+#' @param metricOptions A list of options for measuring performance.
+#' Use [get.options.metric] function to get them.
 #' @param modelCheckItems A list of options for excluding a subset of the model set.
 #' See and use [get.items.modelcheck] function to get them.
 #' @param searchItems A list of options for specifying the purpose of the search.
@@ -35,7 +35,7 @@
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each measure, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
 #' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
 #'
 #' Note that the output does not contain any estimation results,
@@ -50,7 +50,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
                          seasonsCount = 0, maxHorizon = 0,
                          newX = NULL, simUsePreviousEstim = TRUE,
                          olsStdMultiplier = 2.0, lbfgsOptions = get.options.lbfgs(),
-                         measureOptions = get.options.measure(),
+                         metricOptions = get.options.metric(),
                          modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
                          searchOptions = get.options.search()){
   y = as.matrix(y)
@@ -81,10 +81,10 @@ search.varma <- function(y, x = NULL, numTargets = 1,
   else
     lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
 
-  if (is.null(measureOptions))
-    measureOptions = get.options.measure()
+  if (is.null(metricOptions))
+    metricOptions = get.options.metric()
   else
-    measureOptions <- CheckMeasureOptions(measureOptions)
+    metricOptions <- CheckmetricOptions(metricOptions)
 
   if (is.null(modelCheckItems))
     modelCheckItems = get.items.modelcheck()
@@ -108,7 +108,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
                       xGroups, maxParams, seasonsCount, maxHorizon,
                       newX, simUsePreviousEstim,
                       olsStdMultiplier, lbfgsOptions,
-                      measureOptions,modelCheckItems,searchItems,searchOptions)
+                      metricOptions,modelCheckItems,searchItems,searchOptions)
 
   endTime <- Sys.time()
 
@@ -136,8 +136,8 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @param pcaOptionsX A list of options to use principal components of \code{x}, instead of the actual values. Set to \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param maxHorizon An integer representing the maximum prediction horizon. Set to zero to disable prediction.
 #' @param newX A matrix containing new exogenous variables to be used in predictions. Its columns must be the same as \code{x}.
-#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable simulation.
-#' @param simHorizons An integer vector representing the prediction horizons to be used in pseudo out-of-sample simulations. See also [get.options.measure()].
+#' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable simulation.
+#' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.options.metric()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
 #' @param printMsg Set to \code{TRUE} to enable printing some details.
@@ -145,7 +145,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-#' \item{measures}{Value of different goodness of fit and out-of-sample performance measures. }
+#' \item{metrics}{Value of different goodness of fit and out-of-sample performance metrics. }
 #' \item{prediction}{Information on the predicted values.}
 #' \item{simulation}{Information on the simulations. }
 #' \item{info}{Some other general information.}
@@ -253,8 +253,8 @@ GetEstim_varma <- function(searchRes, endoIndices,
                    } else {
                      as.matrix(newX[, exoIndices])
                    },
-                   simFixSize = searchRes$info$measureOptions$simFixSize,
-                   simHorizons = searchRes$info$measureOptions$simHorizons,
+                   simFixSize = searchRes$info$metricOptions$simFixSize,
+                   simHorizons = searchRes$info$metricOptions$simHorizons,
                    simUsePreviousEstim = searchRes$info$simUsePreviousEstim,
                    simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
                    printMsg = printMsg
@@ -274,7 +274,7 @@ GetEstim_varma <- function(searchRes, endoIndices,
 #' Its size determines the number of steps.
 #' @param countSteps An integer vector to determine the number of variables to be used in each step.
 #' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
+#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
 #' Select an appropriate value for \code{bestK} in the options.
 #' @param savePre A directory for saving and loading the progress.
 #' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.

@@ -1,7 +1,7 @@
 
 #' Search for Best Discrete-Choice Models
 #'
-#' Use this function to create a discrete-choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation measures.
+#' Use this function to create a discrete-choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
 #' @param y A matrix of endogenous data with variable in the column.
 #' @param x A matrix of exogenous data with variables in the columns.
@@ -17,15 +17,15 @@
 #' Given the number of choices \code{n}, a frequency cost matrix is an \code{m x n+1} matrix.
 #' The first column determines the thresholds.
 #' Elements in the \code{j}-th column determine the costs corresponding to the \code{j-1}-th choice in \code{y}.
-#' It can be \code{NULL} if it is not selected in \code{measureOptions}.
+#' It can be \code{NULL} if it is not selected in \code{metricOptions}.
 #' @param searchLogit If \code{TRUE}, logit regressions are added to the model set.
 #' @param searchProbit If \code{TRUE}, probit regressions are added to the model set.
 #' @param optimOptions A list for Newton optimization options.
 #' Use [get.options.newton] function to get the options.
 #' @param aucOptions A list for AUC calculation options.
 #' Use [get.options.roc] function to get the options.
-#' @param measureOptions A list of options for measuring performance.
-#' Use [get.options.measure] function to get them.
+#' @param metricOptions A list of options for measuring performance.
+#' Use [get.options.metric] function to get them.
 #' @param modelCheckItems A list of options for excluding a subset of the model set.
 #' See and use [get.items.modelcheck] function to get them.
 #' @param searchItems A list of options for specifying the purpose of the search.
@@ -36,7 +36,7 @@
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each measure, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
 #' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
 #'
 #' Note that the output does not contain any estimation results,
@@ -52,7 +52,7 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
                       xPartitions = NULL, costMatrices = NULL,
                       searchLogit = TRUE, searchProbit = FALSE,
                       optimOptions = get.options.newton(), aucOptions = get.options.roc(),
-                      measureOptions = get.options.measure(),
+                      metricOptions = get.options.metric(),
                       modelCheckItems = get.items.modelcheck(),
                       searchItems = get.items.search(),
                       searchOptions = get.options.search()){
@@ -87,10 +87,10 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  if (is.null(measureOptions))
-    measureOptions = get.options.measure()
+  if (is.null(metricOptions))
+    metricOptions = get.options.metric()
   else
-    measureOptions <- CheckMeasureOptions(measureOptions)
+    metricOptions <- CheckmetricOptions(metricOptions)
 
   if (is.null(modelCheckItems))
     modelCheckItems = get.items.modelcheck()
@@ -111,7 +111,7 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 
   res <- .SearchDc(y, x, w, xSizes, xPartitions, costMatrices,
                    searchLogit, searchProbit,
-                   optimOptions, aucOptions, measureOptions ,
+                   optimOptions, aucOptions, metricOptions ,
                    modelCheckItems, searchItems,
                    searchOptions)
 
@@ -139,9 +139,9 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 #' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.bin] for more information and initialization.
 #' @param aucOptions A list of options for AUC calculation. See and use \code{[get.options.roc()]} for more information and initialization.
-#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
-#' @param simTrainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
-#' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
+#' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
+#' @param simTrainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
+#' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param weightedEval If \code{TRUE}, weights will be used in evaluations.
 #' @param printMsg Set to \code{TRUE} to enable printing some details.
@@ -149,7 +149,7 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-#' \item{measures}{Value of different goodness of fit and out-of-sample performance measures.}
+#' \item{metrics}{Value of different goodness of fit and out-of-sample performance metrics.}
 #' \item{projections}{Information on the projected values, if \code{newX} is provided.}
 #' \item{info}{Some other general information.}
 #'
@@ -220,10 +220,10 @@ GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, 
                 newX = if (is.null(exoIndices) || is.null(newX)) NULL else newX[, exoIndices, drop=FALSE],
                 pcaOptionsX = NULL,
                 costMatrices = searchRes$info$costMatrices,
-                simFixSize = searchRes$info$measureOptions$simFixSize,
-                simTrainRatio = searchRes$info$measureOptions$trainRatio,
-                simTrainFixSize = searchRes$info$measureOptions$trainFixSize,
-                simSeed = abs(searchRes$info$measureOptions$seed),
+                simFixSize = searchRes$info$metricOptions$simFixSize,
+                simTrainRatio = searchRes$info$metricOptions$trainRatio,
+                simTrainFixSize = searchRes$info$metricOptions$trainFixSize,
+                simSeed = abs(searchRes$info$metricOptions$seed),
                 printMsg = printMsg
   )
 
@@ -240,7 +240,7 @@ GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, 
 #' @param xSizeSteps A list of model dimensions to be estimated in each step. Its size determines the number of steps.
 #' @param countSteps A integer vector to determine the number of variables to be used in each step.
 #' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
+#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
 #' Select an appropriate value for \code{bestK} in the options.
 #' @param savePre A directory for saving and loading the progress.
 #' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.

@@ -31,7 +31,7 @@ VarmaSimulationDetail::~VarmaSimulationDetail() {
 
 VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
                                  const std::vector<Ti> &horizons,
-                                 const std::vector<ScoringType> &measures,
+                                 const std::vector<ScoringType> &metrics,
                                  LimitedMemoryBfgsbOptions *optimOptions,
                                  bool isExtended,
                                  VarmaRestrictionType restriction,
@@ -39,7 +39,7 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
                                  PcaAnalysisOptions *pcaOptionsX) {
   pSizes = &sizes;
   pHorizons = &horizons;
-  pMeasures = &measures;
+  pMetrics = &metrics;
   mCount = count;
   auto count0 = mCount;
   if (count == 0 || count0 >= sizes.T)
@@ -52,11 +52,11 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
   IsExtended = isExtended;
   auto horizonMax = horizons.at(horizons.size() - 1);
 
-  StorageSize = (Ti)(measures.size() * horizons.size() *
-                     sizes.EqsCount); // for each measure and horizon and
+  StorageSize = (Ti)(metrics.size() * horizons.size() *
+                     sizes.EqsCount); // for each metric and horizon and
                                       // variable, there is a value
-  Results = std::vector<Matrix<Tv>>(measures.size());
-  StorageSize += (Ti)measures.size() * sizes.EqsCount;
+  Results = std::vector<Matrix<Tv>>(metrics.size());
+  StorageSize += (Ti)metrics.size() * sizes.EqsCount;
   WorkSize = 0;
   // calculate work size
   if (IsExtended) {
@@ -91,18 +91,18 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     return;
 
   auto horizons = *pHorizons;
-  auto measures = *pMeasures;
+  auto metrics = *pMetrics;
   auto sizes = *pSizes;
   Ti hh = (Ti)horizons.size();
   Ti hMin = horizons.at(0);
   Ti hMax = horizons.at(hh - 1);
   auto T = data.ColsCount;
-  Ti mm = (Ti)measures.size();
+  Ti mm = (Ti)metrics.size();
   Ti yy = sizes.EqsCount; // number of endogenous data
   bool isRestricted = R && R->length() > 0;
 
   // check size
-  auto tempm = VarmaSimulation(sizes, mCount, horizons, measures,
+  auto tempm = VarmaSimulation(sizes, mCount, horizons, metrics,
                                &Model.Result.Optim.Options);
   if (WorkSize < tempm.WorkSize || StorageSize < tempm.StorageSize)
     throw std::logic_error("inconsistent arguments in VARMA simulation");
@@ -253,7 +253,7 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     ValidCounts++;
 
     Ti c = 0;
-    for (auto &eval : measures) {
+    for (auto &eval : metrics) {
       if (cancel)
         return;
       Scoring::GetScore(eval, temp, act, forc, err, std, last);
@@ -272,7 +272,7 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
       }
 
       // if (keepDetails) {
-      //     temp.CopyTo(details->measures.at(c));
+      //     temp.CopyTo(details->metrics.at(c));
       // }
       c++;
     }
@@ -291,13 +291,20 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     auto o = (Tv)1 / (Tv)counters[j];
     for (Ti i = 0; i < mm; i++) {
       auto m = &Results.at(i);
-      if (measures.at(i) == ScoringType::kRmse ||
-          measures.at(i) == ScoringType::kRmspe) {
+      if (metrics.at(i) == ScoringType::kRmse ||
+          metrics.at(i) == ScoringType::kRmspe) {
         for (k = 0; k < m->RowsCount; k++)
           m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
       } else {
         for (k = 0; k < m->RowsCount; k++)
           m->Set0(k, j, m->Get0(k, j) * o);
+      }
+
+      // convert to percentage
+      if (metrics.at(i) == ScoringType::kMape ||
+          metrics.at(i) == ScoringType::kRmspe) {
+        for (k = 0; k < m->RowsCount; k++)
+          m->Set0(k, j, m->Get0(k, j) * 100);
       }
     }
   }
@@ -307,8 +314,8 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
 
   // average (aggregate over horizons)
   for (Ti i = 0; i < mm; i++) {
-    if (measures.at(i) == ScoringType::kRmse ||
-        measures.at(i) == ScoringType::kRmspe) {
+    if (metrics.at(i) == ScoringType::kRmse ||
+        metrics.at(i) == ScoringType::kRmspe) {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, std::sqrt(ResultAggs.Get0(i, k) / (Tv)counter));
     } else {
@@ -322,7 +329,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
                                  Tv maxCondNum, Tv stdMultipler, bool coefUncer,
                                  bool usePreviousEstim) {
   auto horizons = *pHorizons;
-  auto measures = *pMeasures;
+  auto metrics = *pMetrics;
   auto sizes = *pSizes;
   Ti hh = (Ti)horizons.size();
   Ti hMin = horizons.at(0);
@@ -338,11 +345,11 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
     throw std::logic_error("Data is not valid.");
 
   auto T = D.End - D.Start + 1;
-  Ti mm = (Ti)measures.size();
+  Ti mm = (Ti)metrics.size();
   Ti yy = sizes.EqsCount; // number of endogenous data
 
   // check size
-  auto tempm = VarmaSimulation(sizes, mCount, horizons, measures,
+  auto tempm = VarmaSimulation(sizes, mCount, horizons, metrics,
                                &EModel.Model.Result.Optim.Options, true,
                                EModel.mRestriction, EModel.mCheckNan,
                                EModel.pPcaOptionsY, EModel.pPcaOptionsX);
@@ -487,7 +494,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
     ValidCounts++;
 
     Ti c = 0;
-    for (auto &eval : measures) {
+    for (auto &eval : metrics) {
       Scoring::GetScore(eval, temp, act, forc, err, std, last);
 
       // summation for calculating mean
@@ -510,7 +517,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
       }
 
       // if (keepDetails) {
-      //     temp.CopyTo(details->measures.at(c));
+      //     temp.CopyTo(details->metrics.at(c));
       // }
       c++;
     }
@@ -523,8 +530,8 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
     auto o = (Tv)1 / (Tv)counters[j];
     for (Ti i = 0; i < mm; i++) {
       auto m = &Results.at(i);
-      if (measures.at(i) == ScoringType::kRmse ||
-          measures.at(i) == ScoringType::kRmspe) {
+      if (metrics.at(i) == ScoringType::kRmse ||
+          metrics.at(i) == ScoringType::kRmspe) {
         for (k = 0; k < m->RowsCount; k++)
           m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
       } else {
@@ -536,8 +543,8 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
 
   // average (aggregate ove horizons)
   for (Ti i = 0; i < mm; i++) {
-    if (measures.at(i) == ScoringType::kRmse ||
-        measures.at(i) == ScoringType::kRmspe) {
+    if (metrics.at(i) == ScoringType::kRmse ||
+        metrics.at(i) == ScoringType::kRmspe) {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, std::sqrt(ResultAggs.Get0(i, k) / (Tv)counter));
     } else {

@@ -19,7 +19,7 @@ ModelSet::ModelSet(std::vector<Searcher *> &searchers,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
                    const SearchOptions &searchOptions,
                    const SearchItems &searchItems,
-                   const SearchMeasureOptions &measures,
+                   const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks) {
   pSearchers = &searchers;
   pGroupIndexMap = &groupIndexMap;
@@ -27,7 +27,7 @@ ModelSet::ModelSet(std::vector<Searcher *> &searchers,
   pOptions = &searchOptions;
   pItems = &searchItems;
   pChecks = &checks;
-  pMeasures = &measures;
+  pMetrics = &metrics;
 
   // calculate sizes
   WorkSize = 0;

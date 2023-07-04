@@ -108,14 +108,14 @@ LDT_C_EXPORT void LDT_Forecast(double *data, int dataRows, int dataCols,
     auto options = SearchOptions();
     options.Parallel = true;
 
-    // measures
-    auto measures = SearchMeasureOptions();
+    // metrics
+    auto metrics = SearchMetricOptions();
     for (auto i = 1; i <= horizon; i++)
-      measures.Horizons.push_back(i);
-    measures.MeasuresIn.push_back(ldt::GoodnessOfFitType::kAic);
-    measures.MeasuresOut = std::vector<ldt::ScoringType>(
+      metrics.Horizons.push_back(i);
+    metrics.MetricsIn.push_back(ldt::GoodnessOfFitType::kAic);
+    metrics.MetricsOut = std::vector<ldt::ScoringType>(
         {ScoringType::kDirection, ScoringType::kRmspe,
-    ScoringType::kCrps}); measures.SimFixSize = 0; measures.TrainRatio = 0.7;
+    ScoringType::kCrps}); metrics.SimFixSize = 0; metrics.TrainRatio = 0.7;
     */
 }
 

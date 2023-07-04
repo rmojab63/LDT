@@ -539,7 +539,7 @@ TEST(DiscreteChoice_t, searcherSmall) {
 
   auto items = SearchItems();
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
   items.KeepBestCount = 2;
@@ -550,12 +550,12 @@ TEST(DiscreteChoice_t, searcherSmall) {
   items.KeepMixture = true;
   items.Length1 = 2 + 1 + 4 - 2;
 
-  measures.TrainRatio = 0.8;
-  measures.SimFixSize = 10;
-  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kAic);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kAuc);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kBrier);
+  metrics.TrainRatio = 0.8;
+  metrics.SimFixSize = 10;
+  metrics.MetricsOut.push_back(ScoringType::kFrequencyCost);
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kAic);
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kAuc);
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kBrier);
 
   checks.Estimation = true;
 
@@ -575,7 +575,7 @@ TEST(DiscreteChoice_t, searcherSmall) {
   RocOptions rocOptions;
   auto modelset =
       DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
-          searchOptions, items, measures, checks, sizes, source, costs, groups,
+          searchOptions, items, metrics, checks, sizes, source, costs, groups,
           newton, rocOptions, true, true);
 
   auto W = new Tv[modelset.Modelset.WorkSize];
@@ -701,7 +701,7 @@ TEST(DiscreteChoice_t, searcherLarager) {
 
   auto items = SearchItems();
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
   items.KeepBestCount = 4;
@@ -713,13 +713,13 @@ TEST(DiscreteChoice_t, searcherLarager) {
 
   auto sizes = std::vector<Ti>({2});
 
-  measures.TrainRatio = 0.8;
-  measures.Seed = -340;
-  measures.SimFixSize = 200;
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kAuc);
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kFrequencyCost);
-  measures.MeasuresOut.push_back(ScoringType::kFrequencyCost);
-  measures.MeasuresOut.push_back(ScoringType::kAuc);
+  metrics.TrainRatio = 0.8;
+  metrics.Seed = -340;
+  metrics.SimFixSize = 200;
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kAuc);
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kFrequencyCost);
+  metrics.MetricsOut.push_back(ScoringType::kFrequencyCost);
+  metrics.MetricsOut.push_back(ScoringType::kAuc);
 
   auto gr1 = std::vector<Ti>({0});
   auto gr2 = std::vector<Ti>({1});
@@ -730,7 +730,7 @@ TEST(DiscreteChoice_t, searcherLarager) {
   auto newton = Newton();
   RocOptions rocOptions;
   auto modelset = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, measures, checks, sizes, source, costs,
+      true, true, searchOptions, items, metrics, checks, sizes, source, costs,
       groups, true, false, newton, rocOptions);
 
   // add groups
@@ -794,7 +794,7 @@ TEST(DiscreteChoice_t, searcherNan) {
 
   auto items = SearchItems();
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
   items.KeepBestCount = 4;
@@ -806,10 +806,10 @@ TEST(DiscreteChoice_t, searcherNan) {
 
   auto sizes = std::vector<Ti>({2});
 
-  measures.TrainRatio = 0.8;
-  measures.Seed = 340;
-  measures.SimFixSize = 0;
-  measures.MeasuresIn.push_back(GoodnessOfFitType::kAic);
+  metrics.TrainRatio = 0.8;
+  metrics.Seed = 340;
+  metrics.SimFixSize = 0;
+  metrics.MetricsIn.push_back(GoodnessOfFitType::kAic);
 
   auto gr1 = std::vector<Ti>({0});
   auto gr2 = std::vector<Ti>({1});
@@ -818,10 +818,10 @@ TEST(DiscreteChoice_t, searcherNan) {
   auto vms = std::vector<Matrix<Tv>>();
   RocOptions rocOptions;
   auto modelset1 = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, measures, checks, sizes, source1, vms,
+      true, true, searchOptions, items, metrics, checks, sizes, source1, vms,
       groups, true, false, newton, rocOptions);
   auto modelset2 = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, measures, checks, sizes, source2, vms,
+      true, true, searchOptions, items, metrics, checks, sizes, source2, vms,
       groups, true, false, newton, rocOptions);
 
   // add groups

@@ -1,7 +1,7 @@
 
 #' Search for Best SUR Models
 #'
-#' Use this function to create a Seemingly Unrelated Regression model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation measures.
+#' Use this function to create a Seemingly Unrelated Regression model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
 #' @param y A matrix of endogenous data with variables in the columns.
 #' @param x A matrix of exogenous data with variables in the columns.
@@ -19,8 +19,8 @@
 #' @param yGroups A list of integer vectors that determine different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.
 #' @param searchSigMaxIter An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
 #' @param searchSigMaxProb A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
-#' @param measureOptions A list of options for measuring performance.
-#' Use [get.options.measure] function to get them.
+#' @param metricOptions A list of options for measuring performance.
+#' Use [get.options.metric] function to get them.
 #' @param modelCheckItems A list of options for excluding a subset of the model set.
 #' See and use [get.items.modelcheck] function to get them.
 #' @param searchItems A list of options for specifying the purpose of the search.
@@ -30,7 +30,7 @@
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each measure, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
 #' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
 #'
 #' Note that the output does not contain any estimation results,
@@ -44,7 +44,7 @@
 search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
                       xPartitions = NULL, numFixXPartitions = 0,
                       yGroups = NULL, searchSigMaxIter = 0,
-                      searchSigMaxProb = 0.1, measureOptions = get.options.measure(),
+                      searchSigMaxProb = 0.1, metricOptions = get.options.metric(),
                       modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
                       searchOptions = get.options.search()){
 
@@ -68,10 +68,10 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
       yGroups[[i]] = as.integer(yGroups[[i]])
   }
 
-  if (is.null(measureOptions))
-    measureOptions = get.options.measure()
+  if (is.null(metricOptions))
+    metricOptions = get.options.metric()
   else
-    measureOptions <- CheckMeasureOptions(measureOptions)
+    metricOptions <- CheckmetricOptions(metricOptions)
 
   if (is.null(modelCheckItems))
     modelCheckItems = get.items.modelcheck()
@@ -91,7 +91,7 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
   startTime <- Sys.time()
 
   res <- .SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
-                    yGroups, searchSigMaxIter, searchSigMaxProb, measureOptions,
+                    yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions,
                     modelCheckItems, searchItems, searchOptions)
 
   endTime <- Sys.time()
@@ -116,9 +116,9 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @param newX A matrix with new exogenous data to be used in the projections. Its number of columns must be equal to \code{x}. It can be \code{NULL}.
 #' @param pcaOptionsY A list of options to use principal components of the \code{y}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
-#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
-#' @param simTrainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
-#' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
+#' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
+#' @param simTrainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
+#' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param simMaxConditionNumber A number for the maximum value for the condition number in the simulation.
 #' @param printMsg Set to \code{TRUE} to enable printing some details.
@@ -126,7 +126,7 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-#' \item{measures}{Value of different goodness of fit and out-of-sample performance measures. }
+#' \item{metrics}{Value of different goodness of fit and out-of-sample performance metrics. }
 #' \item{projections}{Information on the projected values, if \code{newX} is provided.}
 #' \item{info}{Some other general information.}
 #'
@@ -211,10 +211,10 @@ GetEstim_sur <- function(searchRes, endoIndices,
     newX = NULL,
     pcaOptionsY = NULL,
     pcaOptionsX = NULL,
-    simFixSize = searchRes$info$measureOptions$simFixSize,
-    simTrainRatio = searchRes$info$measureOptions$trainRatio,
-    simTrainFixSize = searchRes$info$measureOptions$trainFixSize,
-    simSeed = abs(searchRes$info$measureOptions$seed),
+    simFixSize = searchRes$info$metricOptions$simFixSize,
+    simTrainRatio = searchRes$info$metricOptions$trainRatio,
+    simTrainFixSize = searchRes$info$metricOptions$trainFixSize,
+    simSeed = abs(searchRes$info$metricOptions$seed),
     simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
     printMsg = printMsg
   )
@@ -234,7 +234,7 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' Its size determines the number of steps.
 #' @param countSteps An integer vector to determine the number of variables to be used in each step.
 #' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all measures and targets) are selected until the corresponding suggested number is reached.
+#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
 #' Select an appropriate value for \code{bestK} in the options.
 #' @param savePre A directory for saving and loading the progress.
 #' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.

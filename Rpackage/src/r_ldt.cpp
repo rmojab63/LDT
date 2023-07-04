@@ -340,29 +340,29 @@ void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
   }
 }
 
-void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
-                   List &modelCheckItems, SearchMeasureOptions &res_measure,
+void UpdateOptions(bool printMsg, List &searchItems, List &metricOptions,
+                   List &modelCheckItems, SearchMetricOptions &res_metric,
                    SearchItems &res_items, SearchModelChecks &res_checks,
-                   std::vector<std::string> &measuresNames, int length1,
+                   std::vector<std::string> &metricsNames, int length1,
                    int exoCount, int numTargets, int numDependents,
                    bool isTimeSeries, bool type1NeedsModelEstim,
                    const char *length1Informtion, bool isDc) {
-  if (as<int>(measureOptions["simFixSize"]) == 0)
-    measureOptions["typesOut"] = List();
-  auto molist = as<List>(measureOptions["typesOut"]);
+  if (as<int>(metricOptions["simFixSize"]) == 0)
+    metricOptions["typesOut"] = List();
+  auto molist = as<List>(metricOptions["typesOut"]);
   if (molist.length() == 0) {
-    measureOptions["simFixSize"] = 0;
-    measureOptions["trainFixSize"] = 0;
-    measureOptions["trainRatio"] = 0;
+    metricOptions["simFixSize"] = 0;
+    metricOptions["trainFixSize"] = 0;
+    metricOptions["trainRatio"] = 0;
   }
 
-  UpdateMeasureOptions(printMsg, measureOptions, res_measure, measuresNames,
-                       isTimeSeries, isDc);
+  UpdatemetricOptions(printMsg, metricOptions, res_metric, metricsNames,
+                      isTimeSeries, isDc);
 
   UpdateSearchItems(printMsg, searchItems, res_items, length1, 0,
                     length1Informtion, nullptr, type1NeedsModelEstim, false);
 
-  UpdateModelCheckItems(printMsg, modelCheckItems, res_checks, res_measure,
+  UpdateModelCheckItems(printMsg, modelCheckItems, res_checks, res_metric,
                         res_items);
 
   res_items.LengthTargets = numTargets; // Modelset will use it
@@ -706,7 +706,7 @@ static void add_Lengthi(List L, int eIndex, int tIndex, ModelSet &model,
 }
 
 List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
-                        std::vector<std::string> &measureNames, int length1,
+                        std::vector<std::string> &metricNames, int length1,
                         const char *extra1Label,
                         std::vector<std::string> *extra1Names,
                         int exoIndexesPlus,
@@ -719,7 +719,7 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
   std::vector<std::string> namesL;
   namesL.push_back("counts");
   for (auto eIndex = 0; eIndex < searchItems.LengthEvals; eIndex++)
-    namesL.push_back(measureNames.at(eIndex));
+    namesL.push_back(metricNames.at(eIndex));
   namesL.push_back("info");
 
   List L = List(1 + searchItems.LengthEvals + 1);
@@ -1050,7 +1050,7 @@ void UpdateSearchOptions(List &searchOptions, SearchOptions &options,
 
 void UpdateModelCheckItems(bool printMsg, List &checkOptions,
                            SearchModelChecks &checks,
-                           const SearchMeasureOptions &measures,
+                           const SearchMetricOptions &metrics,
                            const SearchItems &items) {
 
   checks.Estimation = as<bool>(checkOptions["estimation"]);
@@ -1066,7 +1066,7 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
   checks.MaxConditionNumber = as<double>(checkOptions["maxConditionNumber"]);
   checks.Prediction = as<bool>(checkOptions["prediction"]);
 
-  checks.Update(measures);
+  checks.Update(metrics);
 
   if (printMsg) {
 
@@ -1087,7 +1087,7 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
       if (checks.mCheckCN_all)
         Rprintf("        - CN < %.1e\n", checks.MaxConditionNumber);
     }
-    if (measures.SimFixSize > 0) {
+    if (metrics.SimFixSize > 0) {
       Rprintf("    - Out-of-Sample:\n");
       bool has = false;
       if (checks.mCheckCN) {
@@ -1111,72 +1111,72 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
   }
 }
 
-void UpdateMeasureOptions(bool printMsg, List &measureOptions,
-                          SearchMeasureOptions &measures,
-                          std::vector<std::string> &measureNames,
-                          bool isTimeSeries, bool isDc) {
+void UpdatemetricOptions(bool printMsg, List &metricOptions,
+                         SearchMetricOptions &metrics,
+                         std::vector<std::string> &metricNames,
+                         bool isTimeSeries, bool isDc) {
 
   bool isOutOfSampleRandom = isTimeSeries == false;
   // bool supportsSimRatio = isTimeSeries;
 
-  auto measuresOut0 = as<StringVector>(measureOptions["typesOut"]);
-  auto measuresIn0 = as<StringVector>(measureOptions["typesIn"]);
-  auto lmeasureOut = measuresOut0.length();
-  auto lmeasureIn = measuresIn0.length();
+  auto metricsOut0 = as<StringVector>(metricOptions["typesOut"]);
+  auto metricsIn0 = as<StringVector>(metricOptions["typesIn"]);
+  auto lmetricOut = metricsOut0.length();
+  auto lmetricIn = metricsIn0.length();
 
-  if (lmeasureIn == 0 && lmeasureOut == 0)
+  if (lmetricIn == 0 && lmetricOut == 0)
     throw std::logic_error(
-        "No measure is specified. Check the inputs (also, check the number "
+        "No metric is specified. Check the inputs (also, check the number "
         "of simulations).");
-  if (lmeasureIn > 0) {
-    for (auto i = 0; i < lmeasureIn; i++) {
-      auto a = as<std::string>(measuresIn0[i]);
+  if (lmetricIn > 0) {
+    for (auto i = 0; i < lmetricIn; i++) {
+      auto a = as<std::string>(metricsIn0[i]);
       boost::algorithm::to_lower(a);
       auto eval = FromString_GoodnessOfFitType(a.c_str());
-      measures.MeasuresIn.push_back(eval);
+      metrics.MetricsIn.push_back(eval);
     }
   }
-  if (lmeasureOut > 0) {
-    for (auto i = 0; i < lmeasureOut; i++) {
-      auto a = as<std::string>(measuresOut0[i]);
+  if (lmetricOut > 0) {
+    for (auto i = 0; i < lmetricOut; i++) {
+      auto a = as<std::string>(metricsOut0[i]);
       boost::algorithm::to_lower(a);
       auto eval = FromString_ScoringType(a.c_str());
-      measures.MeasuresOut.push_back(eval);
+      metrics.MetricsOut.push_back(eval);
     }
   }
 
-  measures.SimFixSize = as<int>(measureOptions["simFixSize"]);
-  // measures.SimRatio = Rf_asInteger(GetListElement(measureOptions,
+  metrics.SimFixSize = as<int>(metricOptions["simFixSize"]);
+  // metrics.SimRatio = Rf_asInteger(GetListElement(metricOptions,
   // "simratio"));
-  measures.Seed = as<int>(measureOptions["seed"]);
+  metrics.Seed = as<int>(metricOptions["seed"]);
 
-  if (isTimeSeries && lmeasureOut > 0) {
+  if (isTimeSeries && lmetricOut > 0) {
 
-    IntegerVector hors = measureOptions["horizons"];
+    IntegerVector hors = metricOptions["horizons"];
     for (auto i = 0; i < hors.length(); i++)
-      measures.Horizons.push_back(hors[i]);
+      metrics.Horizons.push_back(hors[i]);
 
-    measures.TrainFixSize = 0;
-    measures.TrainRatio = 0;
+    metrics.TrainFixSize = 0;
+    metrics.TrainRatio = 0;
   } else {
-    measures.TrainFixSize = as<int>(measureOptions["trainFixSize"]);
-    measures.TrainRatio = as<double>(measureOptions["trainRatio"]);
+    metrics.TrainFixSize = as<int>(metricOptions["trainFixSize"]);
+    metrics.TrainRatio = as<double>(metricOptions["trainRatio"]);
   }
 
-  measures.Update(isOutOfSampleRandom,
-                  isTimeSeries); // update after filling measure vectors
+  metrics.Update(isOutOfSampleRandom,
+                 isTimeSeries); // update after filling metric vectors
 
   if (printMsg) {
     Rprintf("Measuring Options:\n");
     Rprintf("    - In-Sample:");
   }
-  if (measures.MeasuresIn.size() > 0) {
-    for (auto i = 0; i < lmeasureIn; i++) {
-      auto str = ToString(measures.MeasuresIn.at(i), true);
-      measureNames.push_back(str);
+  if (metrics.MetricsIn.size() > 0) {
+    for (auto i = 0; i < lmetricIn; i++) {
+      auto str = ToString(metrics.MetricsIn.at(i), true);
+      metricNames.push_back(str);
       if (printMsg) {
         Rprintf(str);
-        if (i != lmeasureIn - 1)
+        if (i != lmetricIn - 1)
           Rprintf(", ");
       }
     }
@@ -1188,14 +1188,14 @@ void UpdateMeasureOptions(bool printMsg, List &measureOptions,
   if (printMsg)
     Rprintf("    - Out-Of-Sample:");
 
-  if (measures.MeasuresOut.size() > 0) {
+  if (metrics.MetricsOut.size() > 0) {
 
-    for (auto i = 0; i < lmeasureOut; i++) {
-      auto str = ToString(measures.MeasuresOut.at(i), true);
-      measureNames.push_back(str);
+    for (auto i = 0; i < lmetricOut; i++) {
+      auto str = ToString(metrics.MetricsOut.at(i), true);
+      metricNames.push_back(str);
       if (printMsg) {
         Rprintf(str);
-        if (i != lmeasureOut - 1)
+        if (i != lmetricOut - 1)
           Rprintf(", ");
       }
     }
@@ -1203,31 +1203,30 @@ void UpdateMeasureOptions(bool printMsg, List &measureOptions,
       Rprintf("\n");
 
     if (printMsg) {
-      // if (supportsSimRatio && measures.SimRatio > 0)
+      // if (supportsSimRatio && metrics.SimRatio > 0)
       //	Rprintf("        - Simulation (Ratio) = %i\n",
-      // measures.SimRatio); else
-      Rprintf("        - Simulation Count = %i\n", measures.SimFixSize);
+      // metrics.SimRatio); else
+      Rprintf("        - Simulation Count = %i\n", metrics.SimFixSize);
 
       if (isTimeSeries == false) {
-        if (measures.TrainRatio > 0)
-          Rprintf("        - Train Size (Ratio) = %f\n", measures.TrainRatio);
+        if (metrics.TrainRatio > 0)
+          Rprintf("        - Train Size (Ratio) = %f\n", metrics.TrainRatio);
         else
-          Rprintf("        - Train Size = %i (fixed)\n", measures.TrainFixSize);
+          Rprintf("        - Train Size = %i (fixed)\n", metrics.TrainFixSize);
       }
       if (isOutOfSampleRandom)
-        Rprintf("        - Seed = %i\n", measures.Seed);
+        Rprintf("        - Seed = %i\n", metrics.Seed);
 
-      if (measures.Horizons.size() > 0)
+      if (metrics.Horizons.size() > 0)
         Rprintf("        - Horizons = %s\n",
-                VectorToCsv(measures.Horizons).c_str());
+                VectorToCsv(metrics.Horizons).c_str());
     }
   } else if (printMsg)
     Rprintf("none\n");
 
   if (isDc) {
-    measures.WeightedEval = as<bool>(measureOptions["weightedEval"]);
+    metrics.WeightedEval = as<bool>(metricOptions["weightedEval"]);
     if (printMsg)
-      Rprintf("    - Weighted = %s\n",
-              measures.WeightedEval ? "true" : "false");
+      Rprintf("    - Weighted = %s\n", metrics.WeightedEval ? "true" : "false");
   }
 }

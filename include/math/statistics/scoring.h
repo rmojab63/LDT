@@ -9,7 +9,7 @@
 
 namespace ldt {
 
-/// @brief Types of in-sample measures
+/// @brief Types of in-sample metrics
 enum class GoodnessOfFitType {
 
   /// @brief Akaike information criterion
@@ -73,20 +73,20 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
 /// @brief A helper class for \ref GoodnessOfFitType related methods
 class LDT_EXPORT GoodnessOfFit {
 public:
-  /// @brief Converts a \ref GoodnessOfFitType measure to weight
+  /// @brief Converts a \ref GoodnessOfFitType metricsIn to weight
   /// @param type The type
-  /// @param measure The measure
+  /// @param metricsIn The metric
   /// @return The weight
-  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &measure);
+  static Tv ToWeight(const GoodnessOfFitType &type, const Tv &metric);
 
-  /// @brief Converts a a \ref GoodnessOfFitType weight to measure
+  /// @brief Converts a a \ref GoodnessOfFitType weight to metric
   /// @param type The type
   /// @param weight The weight
-  /// @return The measure
+  /// @return The metric
   static Tv FromWeight(const GoodnessOfFitType &type, const Tv &weight);
 };
 
-/// @brief Types of out-of-sample measures
+/// @brief Types of out-of-sample metrics
 enum class ScoringType {
 
   /// @brief Direction of change (in ordered data such as time-series data)
@@ -233,16 +233,16 @@ public:
   /// @return
   static bool RequiresVariance(const ScoringType &type);
 
-  /// @brief Converts a \ref ScoringRule measure to weight
+  /// @brief Converts a \ref ScoringRule metric to weight
   /// @param type The type
-  /// @param measure The measure
+  /// @param metric The metric
   /// @return The weight
-  static Tv ToWeight(const ScoringType &type, const Tv &measure);
+  static Tv ToWeight(const ScoringType &type, const Tv &metric);
 
-  /// @brief Converts a a \ref ScoringRule weight to measure
+  /// @brief Converts a a \ref ScoringRule weight to metric
   /// @param type The type
   /// @param weight The weight
-  /// @return The measure
+  /// @return The metric
   static Tv FromWeight(const ScoringType &type, const Tv &weight);
 };
 
@@ -330,7 +330,7 @@ struct LDT_EXPORT RocOptions {
   Tv Epsilon = 0;
 
   /// @brief If true, sequences of equally scored instances are
-  /// treated differently and a pessimistic measure is calculated (see Fawcett
+  /// treated differently and a pessimistic metric is calculated (see Fawcett
   /// (2006) An introduction to roc analysis, fig. 6).
   bool Pessimistic = false;
 

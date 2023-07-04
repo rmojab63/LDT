@@ -134,19 +134,19 @@ bool Scoring::RequiresVariance(const ScoringType &type) {
   return true;
 }
 
-Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &measure) {
+Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric) {
   switch (type) {
   case GoodnessOfFitType::kAic:
   case GoodnessOfFitType::kSic:
   case GoodnessOfFitType::kBrier:
-    return std::exp(-0.5 * measure);
+    return std::exp(-0.5 * metric);
     // Note that exp(-0.5 * x) transformation is invariant to translation. so we
     // can use the running algorithm
 
   case GoodnessOfFitType::kAuc:
-    return measure;
+    return metric;
   case GoodnessOfFitType::kFrequencyCost:
-    return 1 - measure;
+    return 1 - metric;
 
   default:
     throw std::logic_error("not implemented goodness-of-fit type to weight");
@@ -169,25 +169,27 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
   }
 }
 
-Tv Scoring::ToWeight(const ScoringType &type, const Tv &measure) {
+Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
   switch (type) {
   case ScoringType::kDirection:
   case ScoringType::kSign:
-    return measure;
+    return metric;
 
   case ScoringType::kMae:
-  case ScoringType::kMape:
   case ScoringType::kRmse:
-  case ScoringType::kRmspe:
   case ScoringType::kBrier:
   case ScoringType::kCrps:
-    return std::exp(-0.5 * measure);
+    return std::exp(-0.5 * metric);
+
+  case ScoringType::kMape:
+  case ScoringType::kRmspe:
+    return std::exp(-0.5 * metric / 100);
 
   case ScoringType::kAuc:
-    return measure;
+    return metric;
 
   case ScoringType::kFrequencyCost:
-    return 1 - measure;
+    return 1 - metric;
 
   default:
     throw std::logic_error(format("The given scoring type (value={}) is "
@@ -203,12 +205,14 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
     return weight;
 
   case ScoringType::kMae:
-  case ScoringType::kMape:
   case ScoringType::kRmse:
-  case ScoringType::kRmspe:
   case ScoringType::kCrps:
   case ScoringType::kBrier:
     return -2 * std::log(weight);
+
+  case ScoringType::kMape:
+  case ScoringType::kRmspe:
+    return -2 * std::log(weight) * 100;
 
   case ScoringType::kAuc:
     return weight;

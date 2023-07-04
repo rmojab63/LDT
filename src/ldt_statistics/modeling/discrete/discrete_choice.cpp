@@ -392,7 +392,7 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
         Hi.Multiply_in(Li * (Li + xb.Data[i]));
         stro.Add_in(Hi);
 
-        // can be more effiecient. You need it just the last time:
+        // can be more efficient. You need it just the last time:
         // if (yi == 1)
         //	resid->Data[i] = yi - c;
         // else
@@ -412,7 +412,10 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
   // calculate variances from Hessian
   hfun(this->Beta, this->BetaVar); // Hessian gets destroyed in optimization
   auto ipiv = std::unique_ptr<int[]>(new int[k]);
+
+  this->condition_number = this->BetaVar.Norm('1'); // condition number
   this->BetaVar.Inv00(ipiv.get(), Hi.Data);
+  this->condition_number *= this->BetaVar.Norm('1');
 
   this->LogL = -this->Optim.FunctionValue;
   calculate_goodness(*this);

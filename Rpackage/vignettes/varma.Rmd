@@ -21,7 +21,8 @@ knitr::opts_chunk$set(
 library(ldt) 
 library(tdata)
 
-set.seed(123)
+seed <- 123
+set.seed(seed)
 ```
 
 
@@ -226,11 +227,11 @@ The following code uses the `search.varma` function to find the true model:
 search_res <- search.varma(sample$y, sample$x, numTargets = 1,
                         ySizes = c(1:3), 
                         maxParams = c(2,1,2,0,0,0),
-                        measureOptions = get.options.measure(typesIn = c("sic")),
+                        metricOptions = get.options.metric(typesIn = c("sic")),
                         searchOptions = get.options.search(printMsg = TRUE, parallel = TRUE))
 ```
 
-The `ySizes = c(1:3)` part assumes that we know the number of relevant dependent variables is less than 3. The `measure_options` part shows that we use SIC measures to evaluate and compare models. Also, `numTargets = 1` shows that we are focusing on the first variable `Y1.` Finding the best model means finding `Y2` and correct lag structure automatically. Here, the value of `maxParams` determines our guess about the lag structure.
+The `ySizes = c(1:3)` part assumes that we know the number of relevant dependent variables is less than 3. The `metric_options` part shows that we use SIC metrics to evaluate and compare models. Also, `numTargets = 1` shows that we are focusing on the first variable `Y1.` Finding the best model means finding `Y2` and correct lag structure automatically. Here, the value of `maxParams` determines our guess about the lag structure.
 
 This code is very time-consuming and is not evaluated here. However, on my system, the elapsed time is 27 minutes (the number of searched models is 21232). You can compare it with similar experiments in [binary regression](bin.html) or [SUR model](sur.html) and see that it is relatively much more time-consuming. Apart from other factors, VARMA models are relatively large (in sense of the number of parameters). Also, in the current implementation, `ldt` uses numerical first and second derivatives in L-BFGS optimization algorithm. Therefore, we really need to reduce the number of potential models.
 
@@ -244,7 +245,7 @@ search_step_res <-
   search.varma.stepwise(y = sample$y, x = sample$x, numTargets = 1,
                         maxParams = c(2,1,2,0,0,0),
                         ySizeSteps = y_size_steps, countSteps = count_steps,
-                        measureOptions = get.options.measure(typesIn = c("aic","sic")),
+                        metricOptions = get.options.metric(typesIn = c("aic","sic")),
                         searchItems = get.items.search(bestK = 10),
                         searchOptions = get.options.search(printMsg = FALSE, parallel = TRUE))
 search_step_res

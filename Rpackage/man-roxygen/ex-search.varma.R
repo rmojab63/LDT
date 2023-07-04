@@ -26,10 +26,10 @@ print(coefs2)
 
 # Alternatively, You can define a search process:
 x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
-measure_options <-
-  get.options.measure(typesIn = c("sic")) # We use SIC for searching
+metric_options <-
+  get.options.metric(typesIn = c("sic")) # We use SIC for searching
 search_res <- search.bin(sample$y, data[, 3:ncol(data)],
-                        xSizes = x_sizes, measureOptions = measure_options)
+                        xSizes = x_sizes, metricOptions = metric_options)
 print(search_res$sic$target1$model$bests$best1$exoIndices) # print best model's explanatory indexes
 
 # Use summary function to estimate the best model:
@@ -50,7 +50,7 @@ search_step_res <- search.bin.stepwise(
   data[, 3:ncol(data)],
   xSizeSteps = x_sizes_steps,
   countSteps = counts_steps,
-  measureOptions = measure_options,
+  metricOptions = metric_options,
   searchItems = search_items
 )
 print(search_step_res$sic$target1$model$bests$best1$exoIndices)

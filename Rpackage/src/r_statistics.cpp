@@ -10,27 +10,26 @@
 using namespace Rcpp;
 using namespace ldt;
 
-// [[Rcpp::export(.GetWeightFromMeasure)]]
-SEXP GetWeightFromMeasure(SEXP value, SEXP measureName) {
+// [[Rcpp::export(.GetWeightFromMetric)]]
+SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
 
   double value0 = as<double>(value);
-  std::string measureName0 = as<std::string>(measureName);
-  boost::algorithm::to_lower(measureName0);
+  std::string metricName0 = as<std::string>(metricName);
+  boost::algorithm::to_lower(metricName0);
 
   double v = NAN;
 
   try {
-    auto type = FromString_GoodnessOfFitType(measureName0.c_str());
+    auto type = FromString_GoodnessOfFitType(metricName0.c_str());
     v = GoodnessOfFit::ToWeight(type, value0);
   } catch (...) {
     try {
-      auto type1 = FromString_ScoringType(measureName0.c_str());
+      auto type1 = FromString_ScoringType(metricName0.c_str());
       v = Scoring::ToWeight(type1, value0);
     } catch (...) {
       throw std::logic_error(
-          std::string(
-              "An error occurred. Probably an invalid 'measureName': ") +
-          measureName0);
+          std::string("An error occurred. Probably an invalid 'metricName': ") +
+          metricName0);
 
       // Rethrow is not working ?!
     }
@@ -38,25 +37,24 @@ SEXP GetWeightFromMeasure(SEXP value, SEXP measureName) {
   return wrap(v);
 }
 
-// [[Rcpp::export(.GetMeasureFromWeight)]]
-SEXP GetMeasureFromWeight(SEXP value, SEXP measureName) {
+// [[Rcpp::export(.GetMetricFromWeight)]]
+SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
   double value0 = as<double>(value);
-  std::string measureName0 = as<std::string>(measureName);
-  boost::algorithm::to_lower(measureName0);
+  std::string metricName0 = as<std::string>(metricName);
+  boost::algorithm::to_lower(metricName0);
 
   double v = NAN;
   try {
-    auto type = FromString_GoodnessOfFitType(measureName0.c_str());
+    auto type = FromString_GoodnessOfFitType(metricName0.c_str());
     v = GoodnessOfFit::FromWeight(type, value0);
   } catch (...) {
     try {
-      auto type1 = FromString_ScoringType(measureName0.c_str());
+      auto type1 = FromString_ScoringType(metricName0.c_str());
       v = Scoring::FromWeight(type1, value0);
     } catch (...) {
       throw std::logic_error(
-          std::string(
-              "An error occurred. Probably an invalid 'measureName': ") +
-          measureName0);
+          std::string("An error occurred. Probably an invalid 'metricName': ") +
+          metricName0);
     }
   }
   return wrap(v);
@@ -141,22 +139,14 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
 
 // [[Rcpp::export(.GetGldFromMoments)]]
 NumericVector GetGldFromMoments(double mean, double variance, double skewness,
-                                double excessKurtosis, int type, SEXP start,
-                                List nelderMeadOptions, bool printMsg) {
-  NumericVector start_ = {0, 0};
-  if (start != R_NilValue) {
-    if (is<NumericVector>(start) == false)
-      throw std::logic_error("'start' must be a 'numeric vector'.");
-    auto start_ = as<NumericVector>(start);
-    if (start_.length() != 2)
-      throw std::logic_error("Invalid length: 'start'.");
-  }
-
+                                double excessKurtosis, int type, double s1,
+                                double s2, List nelderMeadOptions,
+                                bool printMsg) {
   if (printMsg) {
     Rprintf("Moments=%f, %f, %f, %f\n", mean, variance, skewness,
             excessKurtosis);
     Rprintf("Type=%i\n", type); // TODO: convert to string
-    Rprintf("Start (L3, L4)=(%f, %f)\n", start_[0], start_[1]);
+    Rprintf("Start (L3, L4)=(%f, %f)\n", s1, s2);
   }
 
   auto optim = NelderMead(2);
@@ -167,9 +157,8 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
   optim.Tolerance = nelderMeadOptions["tolerance"];
   optim.MaxIteration = nelderMeadOptions["maxIterations"];
 
-  auto ps =
-      DistributionGld::GetFromMoments(mean, variance, skewness, excessKurtosis,
-                                      type, optim, start_[0], start_[1]);
+  auto ps = DistributionGld::GetFromMoments(
+      mean, variance, skewness, excessKurtosis, type, optim, s1, s2);
 
   if (optim.Iter == optim.MaxIteration)
     Rf_warning("Maximum number of iteration reached in GLD estimation.");

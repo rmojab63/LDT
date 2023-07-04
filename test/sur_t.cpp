@@ -286,11 +286,11 @@ TEST(Sur_t, sim_t) {
 
   auto meangamma = model.Model.gamma.Mean();
 
-  auto measures = std::vector<ScoringType>(
+  auto metrics = std::vector<ScoringType>(
       {ScoringType::kRmse, ScoringType::kMae, ScoringType::kRmse});
 
   auto simmodel =
-      SurSimulation(N, m, k, 0.8, 0, measures, true, 10, nullptr, nullptr);
+      SurSimulation(N, m, k, 0.8, 0, metrics, true, 10, nullptr, nullptr);
   auto storage0 = new Tv[simmodel.StorageSize];
   auto work0 = new Tv[simmodel.WorkSize];
   bool cancel = false;
@@ -330,7 +330,7 @@ TEST(Sur_t, search_t) {
 
   auto items = SearchItems();
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
   items.KeepBestCount = 2;
@@ -343,20 +343,19 @@ TEST(Sur_t, search_t) {
   items.LengthExogenouses = k;
   items.ExtremeBoundsMultiplier = 2.0;
 
-  measures.SimFixSize = simfixsize;
+  metrics.SimFixSize = simfixsize;
   searchOptions.Parallel = parallel;
-  measures.Seed = 340;
-  measures.TrainRatio = 0.8;
-  measures.MeasuresIn =
-      std::vector<GoodnessOfFitType>({GoodnessOfFitType::kAic});
-  measures.MeasuresOut =
+  metrics.Seed = 340;
+  metrics.TrainRatio = 0.8;
+  metrics.MetricsIn = std::vector<GoodnessOfFitType>({GoodnessOfFitType::kAic});
+  metrics.MetricsOut =
       std::vector<ScoringType>({ScoringType::kMae, ScoringType::kCrps}); //
 
   auto exosizes = std::vector<Ti>({1, 2, 3});
   auto endoIndexes = std::vector<std::vector<Ti>>({{0}, {0, 1}, {0, 1, 2}});
   auto exogroups = std::vector<std::vector<Ti>>({{3}, {4}, {5}, {6}});
 
-  auto model = SurModelset(searchOptions, items, measures, checks, exosizes,
+  auto model = SurModelset(searchOptions, items, metrics, checks, exosizes,
                            exogroups, 3, data, endoIndexes, sigseaItr, 0.5);
   auto W = new Tv[model.Modelset.WorkSize];
   model.Modelset.Start(W, nullptr);

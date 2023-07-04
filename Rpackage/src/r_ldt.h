@@ -45,12 +45,11 @@ void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
 void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
                SEXP &groups, int variableCount, int adjustPos, bool isX);
 
-void UpdateOptions(bool printMsg, List &searchItems, List &measureOptions,
-                   List &modelCheckItems,
-                   ldt::SearchMeasureOptions &res_measure,
+void UpdateOptions(bool printMsg, List &searchItems, List &metricOptions,
+                   List &modelCheckItems, ldt::SearchMetricOptions &res_metric,
                    ldt::SearchItems &res_items,
                    ldt::SearchModelChecks &res_checks,
-                   std::vector<std::string> &measuresNames, int length1,
+                   std::vector<std::string> &metricsNames, int length1,
                    int exoCount, int numTargets, int numDependents,
                    bool isTimeSeries = false, bool type1NeedsModelEstim = true,
                    const char *length1Informtion = "Coefficients",
@@ -101,20 +100,20 @@ void UpdateSearchOptions(List &searchOptions, ldt::SearchOptions &options,
 
 void UpdateModelCheckItems(bool printMsg, List &checkOptions,
                            ldt::SearchModelChecks &checks,
-                           const ldt::SearchMeasureOptions &measures,
+                           const ldt::SearchMetricOptions &metrics,
                            const ldt::SearchItems &items);
 
-void UpdateMeasureOptions(bool printMsg, List &measureOptions,
-                          ldt::SearchMeasureOptions &measures,
-                          std::vector<std::string> &measureNames,
-                          bool isTimeSeries, bool isDc);
+void UpdatemetricOptions(bool printMsg, List &metricOptions,
+                         ldt::SearchMetricOptions &metrics,
+                         std::vector<std::string> &metricNames,
+                         bool isTimeSeries, bool isDc);
 
 void ReportProgress(bool pringMsg, int reportInterval, ldt::ModelSet &model,
                     bool &estimating, ldt::SearchOptions &options,
                     int allCount);
 
 List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &searchItems,
-                        std::vector<std::string> &measureNames, int length1,
+                        std::vector<std::string> &metricNames, int length1,
                         const char *extra1Label,
                         std::vector<std::string> *extra1Names,
                         int exoIndexesPlus,

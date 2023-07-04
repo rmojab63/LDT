@@ -303,8 +303,8 @@ public:
   /// @brief Gets or sets whether error must be kept
   bool KeepErrors = true;
 
-  /// @brief A pointer to the list of measures given in the constructor
-  const std::vector<ScoringType> *pMeasuresOut = nullptr;
+  /// @brief A pointer to the list of metrics given in the constructor
+  const std::vector<ScoringType> *pMetricsOut = nullptr;
 
   /// @brief List of errors. See \ref KeepErrors
   std::map<std::string, Ti> Errors;
@@ -330,7 +330,7 @@ public:
   /// observations
   /// @param trainFixSize If \p trainRatio is 0, it determines a fixed size for
   /// the training sample
-  /// @param measuresOut List of out-of-sample measures
+  /// @param metricsOut List of out-of-sample metrics
   /// @param isRestricted If true, a restricted model is expected
   /// @param maxSigSearchIter Maximum number of significant search iterations
   /// @param pcaOptionsY If not null, PCA analysis is performed for endogenous
@@ -338,7 +338,7 @@ public:
   /// @param pcaOptionsX If not null, PCA analysis is performed for exogenous
   /// data
   SurSimulation(Ti N, Ti m, Ti k, Tv trainRatio, Ti trainFixSize,
-                const std::vector<ScoringType> &measuresOut, bool isRestricted,
+                const std::vector<ScoringType> &metricsOut, bool isRestricted,
                 Ti maxSigSearchIter, PcaAnalysisOptions *pcaOptionsY,
                 PcaAnalysisOptions *pcaOptionsX);
 
@@ -367,7 +367,7 @@ class LDT_EXPORT SurSearcher : public Searcher {
   Tv SigSearchMaxProb = 0.05;
   Ti SigSearchMaxIter = 0;
 
-  /// @brief It might be different from \ref pMeasures->Seed
+  /// @brief It might be different from \ref pMetrics->Seed
   unsigned int Seed;
 
   Matrix<Ti> EndoIndexes;
@@ -392,7 +392,7 @@ public:
   /// @brief Initializes a new instance of this method
   /// @param searchOptions Passed to the base constructor
   /// @param searchItems Passed to the base constructor
-  /// @param measures Passed to the base constructor
+  /// @param metrics Passed to the base constructor
   /// @param checks Passed to the base constructor
   /// @param sizeG Passed to the base constructor
   /// @param groupIndexMap Passed to the base constructor
@@ -403,7 +403,7 @@ public:
   /// @param sigSearchMaxProb p-value for significant search
   /// @param seed A seed for RNG
   SurSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-              const SearchMeasureOptions &measures,
+              const SearchMetricOptions &metrics,
               const SearchModelChecks &checks, Ti sizeG,
               const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
               Matrix<Tv> &source, std::vector<Ti> &endoIndices,
@@ -425,7 +425,7 @@ public:
   /// @brief Initializes a new instance of this class
   /// @param searchOptions Passed to the searcher
   /// @param searchItems Passed to the searcher
-  /// @param measures Passed to the searcher
+  /// @param metrics Passed to the searcher
   /// @param checks Passed to the searcher
   /// @param exoSizes Determines different sizes for exogenous variables
   /// @param groupIndexMap Groups for exogenous variables
@@ -435,7 +435,7 @@ public:
   /// @param sigSearchMaxIter Maximum iterations for significant search
   /// @param sigSearchMaxProb p-value for significant search
   SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
-              SearchMeasureOptions &measures, SearchModelChecks &checks,
+              SearchMetricOptions &metrics, SearchModelChecks &checks,
               const std::vector<Ti> &exoSizes,
               std::vector<std::vector<Ti>> &groupIndexMap, Ti numFixXPartitions,
               Matrix<Tv> &source, std::vector<std::vector<Ti>> &endoIndices,

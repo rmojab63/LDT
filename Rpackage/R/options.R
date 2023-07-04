@@ -6,7 +6,7 @@
 #' @param lowerThreshold A number representing the lower bound for calculating partial AUC.
 #' @param upperThreshold A number representing the upper bound for calculating partial AUC.
 #' @param epsilon A small number used to ignore small floating point differences when comparing scores.
-#' @param pessimistic If \code{TRUE}, sequences of equally scored instances are treated differently and a pessimistic measure is calculated (see Fawcett (2006) An introduction to ROC analysis, fig. 6).
+#' @param pessimistic If \code{TRUE}, sequences of equally scored instances are treated differently and a pessimistic metric is calculated (see Fawcett (2006) An introduction to ROC analysis, fig. 6).
 #' @param costs The cost of each observation. If \code{NULL}, the cost of all observations will be 1.
 #' @param costMatrix A \code{2x2} cost matrix in which: (1,1) is the cost of TN,
 #' (2,2) is the cost of TP, (1,2) is the cost of FP and (2,1) is the cost of FN. The first
@@ -417,17 +417,17 @@ CheckModelCheckItems <- function(O){
 #'
 #' Use this function to get measuring options in \code{search.?} functions.
 #'
-#' @param typesIn A list of evaluation measures when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{brierIn}, or \code{aucIn}. \code{NULL} means no measure.
-#' @param typesOut A list of evaluation measures in a pseudo out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{rmspe}, \code{mae}, \code{mape}, \code{crps}, \code{frequencyCostOut}, \code{brierOut}, or \code{aucOut}. Null means no measure.
-#' @param simFixSize An integer that determines the number of pseudo out-of-sample simulations. Use zero to disable the simulation.
-#' @param trainFixSize An integer representing the number of data points in the training sample in the pseudo out-of-sample simulation. If zero, \code{trainRatio} will be used.
-#' @param trainRatio A number representing the size of the training sample relative to the available size, in the pseudo out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
+#' @param typesIn A list of evaluation metrics when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{brierIn}, or \code{aucIn}. \code{NULL} means no metric.
+#' @param typesOut A list of evaluation metrics in a out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{rmspe}, \code{mae}, \code{mape}, \code{crps}, \code{frequencyCostOut}, \code{brierOut}, or \code{aucOut}. Null means no metric.
+#' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
+#' @param trainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
+#' @param trainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param seed A seed for the random number generator. Use zero for a random value. It can be negative to get reproducible results between the \code{search.?} function and the \code{estim.?} function.
-#' @param horizons An array of integers representing the prediction horizons to be used in pseudo out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
+#' @param horizons An array of integers representing the prediction horizons to be used in out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
 #' @param weightedEval If \code{TRUE}, weights are used in evaluating discrete-choice models.
 #'
 #' @details
-#' The following list describe the details of calculating the measures:
+#' The following list describe the details of calculating the metrics:
 #' \itemize{
 #' \item **\code{AIC}**: Akaike Information Criterion which is an estimator of the relative quality of statistical model for a given set of data.
 #' Given a statistical model, if \eqn{k} is the number of estimated parameters and \eqn{L} is the maximized value of the likelihood function, then \eqn{AIC = 2k - 2\ln{L}}.
@@ -446,14 +446,14 @@ CheckModelCheckItems <- function(O){
 #' Its values are between 0 and 1. Lower values mean better predictions.
 #' In this package, \eqn{e^{-0.5*Brier}} formula is used to convert it to weight.
 #'
-#' \item **\code{auc}**: Area Under the Receiver Operating Characteristic Curve (AUC-ROC) which is a measure of the performance of a binary classification model.
+#' \item **\code{auc}**: Area Under the Receiver Operating Characteristic Curve (AUC-ROC) which measures the performance of a binary classification model.
 #' In ROC we plot the true positive rate (sensitivity) against the false positive rate (1-specificity) at different classification thresholds. AUC is the area under the resulting curve.
 #' Its value is between 0 and 1.
 #' An AUC of 0 indicates that the model is perfectly incorrect, meaning that it always predicts the opposite of the true class.
 #' An AUC of 0.5 indicates that the model is no better than random chance at distinguishing between the two classes.
 #' An AUC of 1 indicates that the model is able to perfectly distinguish between the two classes.
 #' In general, the higher the AUC-ROC, the better the model is at distinguishing between the two classes.
-#' In this package, \eqn{1-AUC} formula is used to convert it to weight.
+#' In this package, the weight of AUC is its value.
 #'
 #' \item **\code{sign}**: Sign Prediction Accuracy which reports the proportion of predictions that have the same sign as the actual values.
 #' It is calculated as the number of correct sign predictions divided by the total number of predictions.
@@ -464,28 +464,28 @@ CheckModelCheckItems <- function(O){
 #' It is between 0 and 1, with higher values indicating better performance of the model.
 #' Its value is used as the wight of a model.
 #'
-#' \item **\code{rmse}**: Root Mean Squared Error which is a measure of the differences between the predicted values and the actual values.
+#' \item **\code{rmse}**: Root Mean Squared Error which is based on the differences between the predicted values and the actual values.
 #' Its formula is \eqn{\sqrt{\frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i - y_i)^2}} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
 #' Lower values of RMSE indicate better model fit, with an RMSE of 0 indicating a perfect fit.
 #' In this package, \eqn{e^{-0.5*RMSE}} formula is used to convert it to weight.
 #'
-#' \item **\code{mae}**: Mean Absolute Error which is a measure of the differences between the predicted values and the actual values.
+#' \item **\code{mae}**: Mean Absolute Error which is based on the differences between the predicted values and the actual values.
 #' Its formula is \eqn{\frac{1}{n}\sum_{i=1}^{n}|\hat{y}_i - y_i|} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
 #' Lower values of MAE indicate better model fit, with an MAE of 0 indicating a perfect fit.
 #' MAE gives less weight to large errors than RMSE. This means that RMSE will be more sensitive to large errors than MAE.
 #'
 #' \item **\code{mape}**: Mean Absolute Percentage Error which is similar to MAE, but expressed as a percentage of the actual values.
-#' Its formula is \eqn{\frac{1}{n}\sum_{i=1}^{n}|\frac{\hat{y}_i - y_i}{y_i}|} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
+#' Its formula is \eqn{\frac{1}{n}\sum_{i=1}^{n}|\frac{\hat{y}_i - y_i}{y_i}|\times 100} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
 #' MAPE can be used to compare the accuracy of forecasts across different scales, while MAE cannot.
 #' Also note that MAE is always well-defined while MAPE is undefined if actual values are zero or negative.
 #'
 #' \item **\code{rmspe}**: Root Mean Squared Percentage Error which is similar to RMAE, but expressed as a percentage of the actual values.
-#' Its formula is \eqn{\sqrt{\frac{1}{n}\sum_{i=1}^{n}(\frac{\hat{y}_i - y_i}{y_i})^2}} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
+#' Its formula is \eqn{\sqrt{\frac{1}{n}\sum_{i=1}^{n}(\frac{\hat{y}_i - y_i}{y_i})^2}\times 100} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
 #' RMSPE can be used to compare the accuracy of forecasts across different scales, while RMSE cannot.
 #' Also note that RMSE is always well-defined while RMSPE is undefined if actual values are zero or negative.
 #' Unlike MAPE, RMSPE gives more weight to large errors.
 #'
-#' \item **\code{crps}**: Continuous Ranked Probability Score which is a measure of the accuracy of probabilistic forecasts.
+#' \item **\code{crps}**: Continuous Ranked Probability Score which calculates the accuracy of probabilistic forecasts.
 #' It is calculated as the mean squared difference between the predicted CDF and the empirical CDF of the observation.
 #' Its formula is \eqn{\int_{-\infty}^{\infty}(F(y) - \mathbb{1}\{y \geq x\})^2dy} where \eqn{F(y)} is the predicted CDF and \eqn{\mathbb{1}\{y \geq x\}} is the empirical CDF.
 #' Under normality assumption (which is mainly the case in this package), the formula is \eqn{\frac{\sigma}{\sqrt{\pi}}\left(1 - 2\Phi\left(\frac{x - \mu}{\sigma}\right) + 2\frac{x - \mu}{\sigma}\phi\left(\frac{x - \mu}{\sigma}\right)\right)}.
@@ -494,12 +494,12 @@ CheckModelCheckItems <- function(O){
 #'}
 #'
 #' Note that \code{In} at the end of the name shows that the actual values are the observations used in the estimation process.
-#' \code{Out} shows that pseudo out-of-sample actual values is used.
+#' \code{Out} shows that out-of-sample actual values is used.
 #'
 #' @return A list with the given options.
 #'
 #' @export
-get.options.measure <- function(typesIn = character(0), typesOut = character(0),
+get.options.metric <- function(typesIn = character(0), typesOut = character(0),
                                 simFixSize = 10, trainRatio = 0.75,
                                 trainFixSize = 0, seed = 0,
                                 horizons = c(1L), weightedEval = FALSE){
@@ -508,12 +508,12 @@ get.options.measure <- function(typesIn = character(0), typesOut = character(0),
     simFixSize = simFixSize, trainRatio = trainRatio,
     trainFixSize = trainFixSize, seed = seed,
     horizons = horizons, weightedEval = weightedEval)
-  O = CheckMeasureOptions(O)
+  O = CheckmetricOptions(O)
   O
 }
 
 
-CheckMeasureOptions <- function(O){
+CheckmetricOptions <- function(O){
 
   O$typesIn = as.character(O$typesIn)
   O$typesOut = as.character(O$typesOut)
@@ -521,7 +521,7 @@ CheckMeasureOptions <- function(O){
 
 
   if (length(O$typesIn) == 0 && length(O$typesOut) == 0)
-    stop("Invalid Measure option. Both 'typesIn' and 'typesOut' are empty.")
+    stop("Invalid metric option. Both 'typesIn' and 'typesOut' are empty.")
 
   if (length(O$typesOut) > 0) {
     O$horizons = as.integer(O$horizons)
@@ -532,23 +532,23 @@ CheckMeasureOptions <- function(O){
 
     for (h in O$horizons) {
       if (h <= 0)
-        stop("Invalid Measure option. zero or negative value in 'horizons'.")
+        stop("Invalid metric option. zero or negative value in 'horizons'.")
     }
 
     if (O$simFixSize < 0)
-      stop("Invalid Measure option. 'simFixSize' cannot be negative.")
+      stop("Invalid metric option. 'simFixSize' cannot be negative.")
 
     if (O$trainRatio < 0 || O$trainRatio > 1)
-      stop("Invalid Measure option. 'trainRatio' cannot be negative or cannot be larger than 1.")
+      stop("Invalid metric option. 'trainRatio' cannot be negative or cannot be larger than 1.")
 
     if (O$trainFixSize < 0)
-      stop("Invalid Measure option. 'trainFixSize' cannot be negative.")
+      stop("Invalid metric option. 'trainFixSize' cannot be negative.")
 
     # if (O$seed < 0)  It can be negative for similar distribution
     # of the seeds in the searchers
 
     if (O$trainRatio == 0 && O$trainFixSize == 0)
-      stop("Invalid Measure option. Both 'trainRatio' and 'trainFixSize' are zero.")
+      stop("Invalid metric option. Both 'trainRatio' and 'trainFixSize' are zero.")
   }
   O
 }

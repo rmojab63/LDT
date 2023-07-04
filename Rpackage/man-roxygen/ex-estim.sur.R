@@ -7,7 +7,7 @@ fit <- systemfit::systemfit(fmla, data = data.frame(sample$y, sample$x), method 
 #    Use estim.sur function in this package:
 fit2 <- estim.sur(sample$y, sample$x, addIntercept = FALSE)
 coefs <- fit2$estimations$coefs # coefficient matrix
-table <- get.coefs.table(fit2)
+table <- coefs.table(fit2)
 
 
 # Example 2 (simulation, large model with significancy search):
@@ -27,4 +27,4 @@ coefs <- fit2$estimations$coefs # coefficient matrix, probably with lots of zero
 fit3 <- estim.sur(sample$y, data_x, addIntercept = FALSE,
                   pcaOptionsX = get.options.pca(2,4))
 coefs <- fit3$estimations$coefs # has intercept and the first exogenous variable and 4 PCs
-table <- get.coefs.table(fit3, expList = 2) # doesn't display PC coefficients
+table <- coefs.table(fit3, expList = 2) # doesn't display PC coefficients

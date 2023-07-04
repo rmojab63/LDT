@@ -24,13 +24,12 @@ TEST(Searcher_T, indexes1) {
       std::vector<Ti>({4, 5, 6}),
   });
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 =
-      SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 0);
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 0);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 
@@ -72,13 +71,12 @@ TEST(Searcher_T, indexes2) {
       {std::vector<Ti>({1, 2}), std::vector<Ti>({3}),
        std::vector<Ti>({4, 5, 6}), std::vector<Ti>({7, 8})});
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 =
-      SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 0);
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 0);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 
@@ -122,13 +120,13 @@ TEST(Searcher_T, indexes3_skip_target) {
       {std::vector<Ti>({0, 1, 2}), std::vector<Ti>({3}),
        std::vector<Ti>({4, 5, 6}), std::vector<Ti>({7, 8})});
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 = SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 0,
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 0,
                          searchItems.LengthTargets);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 
@@ -182,13 +180,13 @@ TEST(Searcher_T, indexes4_skip_target) {
       {std::vector<Ti>({0}), std::vector<Ti>({1, 2, 3}), std::vector<Ti>({4}),
        std::vector<Ti>({7, 8})});
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 = SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 0,
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 0,
                          searchItems.LengthTargets);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 
@@ -249,13 +247,12 @@ TEST(Searcher_T, indexes_fixed1) {
        std::vector<Ti>({4, 5, 6}), std::vector<Ti>({7, 8})});
 
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 =
-      SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 1);
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 1);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 
@@ -294,13 +291,12 @@ TEST(Searcher_T, indexes_fixed2) {
        std::vector<Ti>({4, 5, 6}), std::vector<Ti>({7, 8})});
 
   auto searchOptions = SearchOptions();
-  auto measures = SearchMeasureOptions();
+  auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
-  auto s1 =
-      SearcherTest(searchOptions, searchItems, measures, checks, 3, gi, 2);
+  auto s1 = SearcherTest(searchOptions, searchItems, metrics, checks, 3, gi, 2);
   auto sers = std::vector<Searcher *>({&s1});
-  auto ms = ModelSet(sers, gi, searchOptions, searchItems, measures, checks);
+  auto ms = ModelSet(sers, gi, searchOptions, searchItems, metrics, checks);
 
   ms.Start(nullptr, nullptr);
 

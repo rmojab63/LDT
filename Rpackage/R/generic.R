@@ -52,7 +52,7 @@ print.ldtsearch <- function(x, ...) {
       }
       cat(" ", t$name, " ", sep = "")
       if (is.null(t$model) || is.null(t$model$bests) || length(t$model$bests) > 0) {
-        cat("(best=", round(s.measure.from.weight(t$model$bests[[1]]$weight, nms[[i]]), 3), ")\n", sep = "")
+        cat("(best=", round(s.metric.from.weight(t$model$bests[[1]]$weight, nms[[i]]), 3), ")\n", sep = "")
       } else {
         cat("(best model is missing)\n", sep = "")
       }
@@ -101,13 +101,13 @@ h.get.estim <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, ...)
   # },error = function(e) e)
 }
 
-getMeasureFrom <- function(model, measureName, tarIndex, method) {
-  rowNames <- rownames(model$measures)
-  ind <- which(rowNames == measureName)
+getMetricFrom <- function(model, metricName, tarIndex, method) {
+  rowNames <- rownames(model$metrics)
+  ind <- which(rowNames == metricName)
   if (length(ind) == 0) {
-    stop(paste0("measure not found (method = sur, measure = ", measureName, ")"))
+    stop(paste0("metric not found (method = sur, metric = ", metricName, ")"))
   }
-  r <- model$measures[ind[[1]], tarIndex]
+  r <- model$metrics[ind[[1]], tarIndex]
   r
 }
 
@@ -154,7 +154,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
   result$method <- attr(object, "method")
   result$SearchPerc <- object$counts$searchedCount / object$counts$expectedCount * 100
   result$FailedPerc <- object$counts$failedCount / object$counts$searchedCount * 100
-  result$MeasureNames <-
+  result$MetricNames <-
     names(object)[2:(length(object) - 1)] # the last element is the inputs
 
   if (result$method == "bin" && object$info$isWeighted && is.null(w))
@@ -162,7 +162,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
   #TODO: check other properties
 
   i <- 0
-  for (mea in result$MeasureNames) {
+  for (mea in result$MetricNames) {
 
     i <- i + 1
     x_mea <- object[[mea]]
@@ -202,10 +202,10 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 } # index of target in endogenous data
-                wd <- s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea)
+                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea)
                 if (abs(wd - b$weight)> test_perc)
                   warning(paste0("Inconsistent weight: target=",targ,
-                               ", measure=",mea,
+                               ", metric=",mea,
                                ", search weight=", b$weight,
                                ", model weight=", wd))
 
@@ -238,10 +238,10 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 }
-                wd <- s.weight.from.measure(getMeasureFrom(su_m, mea, jt, result$method), mea)
+                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea)
                 if (abs(wd - b$weight)> test_perc)
                   warning(paste0("Inconsistent weight: target=",targ,
-                                 ", measure=",mea,
+                                 ", metric=",mea,
                                  ", search weight=", b$weight,
                                  ", model weight=", wd))
 
@@ -287,8 +287,8 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                         which(b$depIndices == j)[[1]]
                       }
                       testthat::expect_equal(
-                        s.weight.from.measure(
-                          getMeasureFrom(su_m, mea, jt, result$method), mea
+                        s.weight.from.metric(
+                          getMetricFrom(su_m, mea, jt, result$method), mea
                         ), b$weight,
                         tolerance = test_perc
                       )
@@ -338,7 +338,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
 #' @param x Output from one of the \code{search.?} functions (see [search.sur], [search.varma], or [search.bin]).
 #' @param types One or more types of information to include in the data frame.
 #' Can be \code{bestweights}, \code{allweights}, \code{inclusion}, \code{type1bests}, \code{cdf}, \code{extremebounds}, and/or \code{mixture}.
-#' @param measures Indices or names of measures to use.
+#' @param metrics Indices or names of metrics to use.
 #' @param targets Indices or names of targets to use.
 #' @param rows Indices or names of rows to use. If the requested object is a matrix
 #' (or an array), determines the rows and cannot be \code{NULL}. For \code{type1bests}, this is the name of the variables.
@@ -346,7 +346,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
 #' \code{type1bests}, this is the name of the fields: \code{weight}, \code{mean}, and/or \code{var}.
 #' @param itemIndices Indices of items such as \code{bests} to use.
 #' @param colNameFun Function to determine column names. Argument is a list of names, i.e., one of the following items: \code{target},
-#' \code{measure}, \code{row}, \code{column}, \code{item}. If \code{NULL}, uses \code{paste} function.
+#' \code{metric}, \code{row}, \code{column}, \code{item}. If \code{NULL}, uses \code{paste} function.
 #' @param rowContent Character string determining type of information in rows of returned
 #' data frame. Some items are not available for some \code{types}.
 #' Use \code{row} for variables in rows of matrices such as \code{inclusion} or
@@ -356,7 +356,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
 #' @param ... Additional arguments
 #'
 #' @details
-#' There are five types of indices in this function: measures,
+#' There are five types of indices in this function: metrics,
 #' targets, bests, type1's items, equations.
 #' Use \code{NULL} to use all available information or specify them.
 #'
@@ -368,10 +368,10 @@ to.data.frame <- function(x, types = c(
   "bestweights", "allweights", "inclusion",
   "type1bests", "cdf", "extremebounds", "mixture"
 ),
-measures = NULL, targets = NULL,
+metrics = NULL, targets = NULL,
 rows = NULL, columns = NULL, itemIndices = NULL,
 colNameFun = NULL,
-rowContent = c("measure", "target", "item", "row", "column"),
+rowContent = c("metric", "target", "item", "row", "column"),
 cdfIndex = 0, ...) {
   if (is.null(x)) {
     stop("argument is null.")
@@ -388,33 +388,33 @@ cdfIndex = 0, ...) {
     )
   }
 
-  c_fmi <- 2 # first measure index
+  c_fmi <- 2 # first metric index
   method <- attr(x, "method")
 
   type1name <- if (method == "sur") "coefs" else stop("Not implemented")
 
-  if (is.vector(measures) == FALSE) measures <- c(measures)
-  if (is.vector(targets) == FALSE) measures <- c(targets)
-  if (is.vector(rows) == FALSE) measures <- c(rows)
-  if (is.vector(columns) == FALSE) measures <- c(columns)
-  if (is.vector(itemIndices) == FALSE) measures <- c(itemIndices)
+  if (is.vector(metrics) == FALSE) metrics <- c(metrics)
+  if (is.vector(targets) == FALSE) metrics <- c(targets)
+  if (is.vector(rows) == FALSE) metrics <- c(rows)
+  if (is.vector(columns) == FALSE) metrics <- c(columns)
+  if (is.vector(itemIndices) == FALSE) metrics <- c(itemIndices)
 
   m_names <- names(x)
   t_names <- sapply(c(1:x$info$numTargets), function(j) x[[c_fmi]][[j]]$name)
   b_names <- paste0("best", itemIndices)
 
   # find indexes
-  if (is.null(measures)) {
-    measures <- c(c_fmi:(length(x) - 1))
+  if (is.null(metrics)) {
+    metrics <- c(c_fmi:(length(x) - 1))
   } else {
-    if (is.numeric(measures)) {
-      measures <- as.integer(measures) + c_fmi - 1
+    if (is.numeric(metrics)) {
+      metrics <- as.integer(metrics) + c_fmi - 1
     } else {
-      measures <- unlist(sapply(measures, function(m) which(m_names == tolower(m))))
+      metrics <- unlist(sapply(metrics, function(m) which(m_names == tolower(m))))
     }
   }
-  if (length(measures) == 0) {
-    stop("no valid 'measure' is found.")
+  if (length(metrics) == 0) {
+    stop("no valid 'metric' is found.")
   }
 
   if (is.null(targets)) {
@@ -435,7 +435,7 @@ cdfIndex = 0, ...) {
     itemIndices <- c(1:x$info$searchItems$bestK)
   }
 
-  m_names <- m_names[measures]
+  m_names <- m_names[metrics]
   t_names <- t_names[targets]
 
   types <- c(types)
@@ -448,7 +448,7 @@ cdfIndex = 0, ...) {
   if (is.vector(rowContent)) {
     rowContent <- rowContent[[1]]
   }
-  rowContent <- match.arg(rowContent, c("measure", "target", "item", "row", "column"))
+  rowContent <- match.arg(rowContent, c("metric", "target", "item", "row", "column"))
 
   if ((rowContent == "item" || rowContent == "column" || rowContent == "row") &&
       length(types) > 1) {
@@ -485,10 +485,10 @@ cdfIndex = 0, ...) {
     }
 
     if (type == "bestweights") {
-      if (rowContent == "measure") {
+      if (rowContent == "metric") {
         ws0 <- as.data.frame(lapply(itemIndices, function(i) {
           sapply(targets, function(j) {
-            sapply(measures, function(m) x[[m]][[j]]$model$bests[[i]]$weight)
+            sapply(metrics, function(m) x[[m]][[j]]$model$bests[[i]]$weight)
           })
         }))
         row.names(ws0) <- m_names
@@ -498,7 +498,7 @@ cdfIndex = 0, ...) {
         ))
       } else if (rowContent == "target") {
         ws0 <- as.data.frame(lapply(itemIndices, function(i) {
-          sapply(measures, function(m) {
+          sapply(metrics, function(m) {
             sapply(targets, function(j) x[[m]][[j]]$model$bests[[i]]$weight)
           })
         }))
@@ -509,14 +509,14 @@ cdfIndex = 0, ...) {
             sapply(m_names, function(m) {
               colNameFun(list(
                 type = stype,
-                measure = m, item = b
+                metric = m, item = b
               ))
             })
           }
         ))
       } else if (rowContent == "item") {
         ws0 <- as.data.frame(lapply(targets, function(j) {
-          sapply(measures, function(m) {
+          sapply(metrics, function(m) {
             sapply(itemIndices, function(i) x[[m]][[j]]$model$bests[[i]]$weight)
           })
         }))
@@ -524,7 +524,7 @@ cdfIndex = 0, ...) {
         colnames(ws0) <- c(sapply(t_names, function(t) {
           sapply(
             m_names,
-            function(m) colNameFun(list(type = stype, measure = m, target = t))
+            function(m) colNameFun(list(type = stype, metric = m, target = t))
           )
         }))
       } else {
@@ -540,17 +540,17 @@ cdfIndex = 0, ...) {
     }
 
     if (type == "allweights") {
-      allcount <- max(as.numeric(sapply(measures, function(m) {
+      allcount <- max(as.numeric(sapply(metrics, function(m) {
         sapply(
           targets,
           function(t) length(x[[m]][[t]]$model$all)
         )
       })))
       if (allcount > 0) {
-        if (rowContent == "measure") {
+        if (rowContent == "metric") {
           ws0 <- as.data.frame(lapply(c(1:allcount), function(i) {
             sapply(targets, function(j) {
-              sapply(measures, function(m) {
+              sapply(metrics, function(m) {
                 tryCatch(x[[m]][[j]]$model$all[[i]]$weight,
                          error = function(e) NA
                 )
@@ -566,7 +566,7 @@ cdfIndex = 0, ...) {
           }))
         } else if (rowContent == "target") {
           ws0 <- as.data.frame(lapply(c(1:allcount), function(i) {
-            sapply(measures, function(m) {
+            sapply(metrics, function(m) {
               sapply(targets, function(j) {
                 tryCatch(x[[m]][[j]]$model$all[[i]]$weight,
                          error = function(e) NA
@@ -578,12 +578,12 @@ cdfIndex = 0, ...) {
           colnames(ws0) <- c(sapply(paste0("model", c(1:allcount)), function(b) {
             sapply(
               m_names,
-              function(m) colNameFun(list(type = stype, measure = m, item = b))
+              function(m) colNameFun(list(type = stype, metric = m, item = b))
             )
           }))
         } else if (rowContent == "item") {
           ws0 <- as.data.frame(lapply(targets, function(j) {
-            sapply(measures, function(m) {
+            sapply(metrics, function(m) {
               sapply(c(1:allcount), function(i) {
                 tryCatch(x[[m]][[j]]$model$all[[i]]$weight,
                          error = function(e) NA
@@ -595,7 +595,7 @@ cdfIndex = 0, ...) {
           colnames(ws0) <- c(sapply(t_names, function(t) {
             sapply(
               m_names,
-              function(m) colNameFun(list(type = stype, measure = m, target = t))
+              function(m) colNameFun(list(type = stype, metric = m, target = t))
             )
           }))
         } else {
@@ -613,7 +613,7 @@ cdfIndex = 0, ...) {
 
     if (type == "type1bests") {
       if (is.null(rows)) { # get unique variable names
-        rows <- unique(c(sapply(measures, function(m) {
+        rows <- unique(c(sapply(metrics, function(m) {
           sapply(
             targets,
             function(t) sapply(x[[m]][[t]]$coefs$bests, function(c) c$name)
@@ -621,7 +621,7 @@ cdfIndex = 0, ...) {
         })))
       } else if (is.numeric(rows)) {
         rows <- tryCatch(
-          sapply(measures, function(m) {
+          sapply(metrics, function(m) {
             sapply(
               targets,
               function(t) sapply(x[[m]][[t]]$coefs$bests, function(c) c$name)
@@ -640,12 +640,12 @@ cdfIndex = 0, ...) {
       }
 
 
-      if (rowContent == "measure") {
+      if (rowContent == "metric") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
           lapply(columns, function(c) {
             lapply(itemIndices, function(b) {
               lapply(targets, function(j) {
-                sapply(measures, function(m) {
+                sapply(metrics, function(m) {
                   cind <- which(r == sapply(
                     x[[m]][[j]][[type1name]]$bests,
                     function(cb) cb$name
@@ -685,7 +685,7 @@ cdfIndex = 0, ...) {
         ws0 <- as.data.frame(lapply(rows, function(r) {
           lapply(columns, function(c) {
             lapply(itemIndices, function(b) {
-              lapply(measures, function(m) {
+              lapply(metrics, function(m) {
                 sapply(targets, function(j) {
                   cind <- which(r == sapply(
                     x[[m]][[j]][[type1name]]$bests,
@@ -712,7 +712,7 @@ cdfIndex = 0, ...) {
                     m_names,
                     function(m) {
                       colNameFun(list(
-                        type = stype, measure = m,
+                        type = stype, metric = m,
                         column = c, row = r, item = b
                       ))
                     }
@@ -725,7 +725,7 @@ cdfIndex = 0, ...) {
       } else if (rowContent == "item") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
           lapply(columns, function(c) {
-            lapply(measures, function(m) {
+            lapply(metrics, function(m) {
               lapply(targets, function(j) {
                 sapply(itemIndices, function(b) {
                   cind <- which(r == sapply(
@@ -754,7 +754,7 @@ cdfIndex = 0, ...) {
                     function(t) {
                       colNameFun(list(
                         type = stype, target = t,
-                        column = c, row = r, measure = m
+                        column = c, row = r, metric = m
                       ))
                     }
                   )
@@ -764,7 +764,7 @@ cdfIndex = 0, ...) {
           )
         }))
       } else if (rowContent == "row") {
-        ws0 <- as.data.frame(lapply(measures, function(m) {
+        ws0 <- as.data.frame(lapply(metrics, function(m) {
           lapply(columns, function(c) {
             lapply(itemIndices, function(b) {
               lapply(targets, function(j) {
@@ -792,7 +792,7 @@ cdfIndex = 0, ...) {
                 function(b) {
                   sapply(
                     t_names,
-                    function(t) colNameFun(list(type = stype, target = t, column = c, measure = m, item = b))
+                    function(t) colNameFun(list(type = stype, target = t, column = c, metric = m, item = b))
                   )
                 }
               )
@@ -801,7 +801,7 @@ cdfIndex = 0, ...) {
         }))
       } else if (rowContent == "column") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
-          lapply(measures, function(m) {
+          lapply(metrics, function(m) {
             lapply(itemIndices, function(b) {
               lapply(targets, function(j) {
                 sapply(columns, function(c) {
@@ -831,7 +831,7 @@ cdfIndex = 0, ...) {
                     function(t) {
                       colNameFun(list(
                         type = stype, target = t,
-                        measure = m, row = r, item = b
+                        metric = m, row = r, item = b
                       ))
                     }
                   )
@@ -869,7 +869,7 @@ cdfIndex = 0, ...) {
 
       if (is.null(rows)) { # get unique row.names
         rows <- unique(c(sapply(
-          measures,
+          metrics,
           function(m) {
             sapply(
               targets,
@@ -880,7 +880,7 @@ cdfIndex = 0, ...) {
       } else if (is.numeric(rows)) {
         rows <- tryCatch(
           sapply(
-            measures,
+            metrics,
             function(m) {
               sapply(
                 targets,
@@ -894,7 +894,7 @@ cdfIndex = 0, ...) {
 
       if (is.null(columns)) { # get unique column.names
         columns <- unique(c(sapply(
-          measures,
+          metrics,
           function(m) {
             sapply(
               targets,
@@ -904,7 +904,7 @@ cdfIndex = 0, ...) {
         )))
       } else if (is.numeric(rows)) {
         columns <- tryCatch(
-          sapply(measures, function(m) {
+          sapply(metrics, function(m) {
             sapply(
               targets,
               function(t) colnames(getMat(m, t))
@@ -915,11 +915,11 @@ cdfIndex = 0, ...) {
       }
 
 
-      if (rowContent == "measure") {
+      if (rowContent == "metric") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
           lapply(columns, function(c) {
             sapply(targets, function(j) {
-              sapply(measures, function(m) getValueInMat(getMat(m, j), r, c))
+              sapply(metrics, function(m) getValueInMat(getMat(m, j), r, c))
             })
           })
         }))
@@ -941,7 +941,7 @@ cdfIndex = 0, ...) {
       } else if (rowContent == "target") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
           lapply(columns, function(c) {
-            sapply(measures, function(m) {
+            sapply(metrics, function(m) {
               sapply(targets, function(j) getValueInMat(getMat(m, j), r, c))
             })
           })
@@ -955,14 +955,14 @@ cdfIndex = 0, ...) {
               function(c) {
                 sapply(
                   m_names,
-                  function(m) colNameFun(list(type = stype, measure = m, column = c, row = r))
+                  function(m) colNameFun(list(type = stype, metric = m, column = c, row = r))
                 )
               }
             )
           }
         ))
       } else if (rowContent == "row") {
-        ws0 <- as.data.frame(lapply(measures, function(m) {
+        ws0 <- as.data.frame(lapply(metrics, function(m) {
           lapply(columns, function(c) {
             sapply(targets, function(j) {
               sapply(rows, function(r) getValueInMat(getMat(m, j), r, c))
@@ -978,7 +978,7 @@ cdfIndex = 0, ...) {
               function(c) {
                 sapply(
                   t_names,
-                  function(t) colNameFun(list(type = stype, target = t, column = c, measure = m))
+                  function(t) colNameFun(list(type = stype, target = t, column = c, metric = m))
                 )
               }
             )
@@ -986,7 +986,7 @@ cdfIndex = 0, ...) {
         ))
       } else if (rowContent == "column") {
         ws0 <- as.data.frame(lapply(rows, function(r) {
-          lapply(measures, function(m) {
+          lapply(metrics, function(m) {
             sapply(targets, function(j) {
               sapply(columns, function(c) getValueInMat(getMat(m, j), r, c))
             })
@@ -1001,7 +1001,7 @@ cdfIndex = 0, ...) {
               function(m) {
                 sapply(
                   t_names,
-                  function(t) colNameFun(list(type = stype, target = t, measure = m, row = r))
+                  function(t) colNameFun(list(type = stype, target = t, metric = m, row = r))
                 )
               }
             )
@@ -1463,7 +1463,7 @@ get_coef_func <- function(tableFun, formatNumFun, formatLatex){
 #' \item An empty character string (i.e., "") for inserting empty line.
 #' \item \code{"sigma2"} for the covariance of regression, if it is available.
 #' \item Name of an element in \code{estimList[[...]]$counts}.
-#' \item An available measure name in the row names of \code{estimList[[...]]$measures}.
+#' \item An available metric name in the row names of \code{estimList[[...]]$metrics}.
 #' }
 #'
 #' Furthermore, second argument in \code{textFun} can be:
@@ -1480,7 +1480,7 @@ get_coef_func <- function(tableFun, formatNumFun, formatLatex){
 #' @examples
 #' # See 'search.?' or 'estim.?' functions for some examples.
 #'
-get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", formatNumFun  = NULL,
+coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", formatNumFun  = NULL,
                             regInfo = NULL, textFun = NULL,
                             textFun_sub = NULL, textFun_max = 20,
                             expList = NA, formatLatex = TRUE,
@@ -1613,14 +1613,14 @@ get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", f
         else if (r == "sigma2")
           v <- formatNumFun(j, e$estimations$sigma[d, d])
         else{
-          # check and see if it is a measure
-          ind <- which(r == rownames(e$measures))
+          # check and see if it is a metric
+          ind <- which(r == rownames(e$metrics))
           if (length(ind) != 0) {
-            v <- formatNumFun(j, e$measures[ind, d])
+            v <- formatNumFun(j, e$metrics[ind, d])
 
             if (r == "f") {
-              ind0 <- which("fProb" == rownames(e$measures))
-              fp <- e$measures[ind0, d]
+              ind0 <- which("fProb" == rownames(e$metrics))
+              fp <- e$metrics[ind0, d]
               if (is.na(fp)) {
                 warning("p-value of 'F' statistics is NA.")
               }
@@ -1630,7 +1630,7 @@ get.coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", f
           }
           else{
 
-            # check and see if it is a count measure
+            # check and see if it is a count metric
             ind <- which(r == names(e$counts))
             if (length(ind) != 0) {
               v <- formatNumFun(j, e$counts[[ind]])

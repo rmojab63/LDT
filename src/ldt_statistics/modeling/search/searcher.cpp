@@ -9,7 +9,7 @@
 using namespace ldt;
 
 Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-                   const SearchMeasureOptions &measures,
+                   const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks, Ti SizeG,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
                    Ti fixFirstGroups, Ti fixFirstItems) {
@@ -21,7 +21,7 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
   pOptions = &searchOptions;
   pItems = &searchItems;
   pChecks = &checks;
-  pMeasures = &measures;
+  pMetrics = &metrics;
 
   this->SizeG = SizeG;
   this->mFixFirstGroups = fixFirstGroups;

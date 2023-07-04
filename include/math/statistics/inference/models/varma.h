@@ -450,16 +450,16 @@ public:
 
   const std::vector<Ti> *pHorizons = nullptr;
 
-  const std::vector<ScoringType> *pMeasures = nullptr;
+  const std::vector<ScoringType> *pMetrics = nullptr;
 
   Varma Model;
   VarmaForecast Forecast;
   VarmaExtended EModel;
 
-  /// @brief at(i)->[j,h] => i-th measure, j-th variable, h-th horizon
+  /// @brief at(i)->[j,h] => i-th metric, j-th variable, h-th horizon
   std::vector<Matrix<Tv>> Results;
 
-  /// @brief Results aggregated by horizon [i,j] => i-th measure, j-th variable
+  /// @brief Results aggregated by horizon [i,j] => i-th metric, j-th variable
   /// (aggregated over horizons). Note that it might be a weighted average due
   /// to different number of evaluations over different horizon. For RMSE, it
   /// is different furthermore, because of its nonlinearity nature.
@@ -469,7 +469,7 @@ public:
 
   bool KeepDetails = false;
 
-  /// @brief The items are: sample end, measure index, horizon, target index,
+  /// @brief The items are: sample end, metric index, horizon, target index,
   /// last value, actual value, forecast, forecast error, std
   std::vector<std::tuple<Ti, Ti, Ti, Ti, Tv, Tv, Tv, Tv, Tv>> Details;
 
@@ -477,7 +477,7 @@ public:
 
   VarmaSimulation(
       const VarmaSizes &sizes, Ti count, const std::vector<Ti> &horizons,
-      const std::vector<ScoringType> &measures,
+      const std::vector<ScoringType> &metrics,
       LimitedMemoryBfgsbOptions *optimOptions = nullptr,
       bool isExtended = false,
       VarmaRestrictionType restriction = VarmaRestrictionType::kMaFinal,
@@ -525,7 +525,7 @@ class LDT_EXPORT VarmaSearcher : public Searcher {
 
 public:
   VarmaSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-                const SearchMeasureOptions &measures,
+                const SearchMetricOptions &metrics,
                 const SearchModelChecks &checks, Ti sizeG,
                 const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
                 DatasetTs<true> &source, const VarmaSizes sizes,
@@ -550,7 +550,7 @@ public:
   VarmaModelset(){};
 
   VarmaModelset(SearchOptions &searchOptions, SearchItems &searchItems,
-                SearchMeasureOptions &measures, SearchModelChecks &checks,
+                SearchMetricOptions &metrics, SearchModelChecks &checks,
                 const std::vector<Ti> &sizes,
                 std::vector<std::vector<Ti>> &groupIndexMap,
                 DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,

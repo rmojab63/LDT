@@ -9,7 +9,7 @@ using namespace ldt;
 SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                  SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
                  SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
-                 List lbfgsOptions, List measureOptions, List modelCheckItems,
+                 List lbfgsOptions, List metricOptions, List modelCheckItems,
                  List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
@@ -90,14 +90,13 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   //   checks.Estimation = true;
   // }
 
-  auto measures = SearchMeasureOptions();
-  auto measuresNames = std::vector<std::string>();
+  auto metrics = SearchMetricOptions();
+  auto metricsNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, measureOptions, modelCheckItems,
-                measures, items, checks, measuresNames, maxHorizon,
-                mx.ColsCount, numTargets, my.ColsCount, true, false, "Horizon",
-                false);
+  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
+                items, checks, metricsNames, maxHorizon, mx.ColsCount,
+                numTargets, my.ColsCount, true, false, "Horizon", false);
 
   std::vector<std::string> type1Names;
   if (items.Length1 > 0) {
@@ -112,7 +111,7 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
 
   // Modelset
   auto model =
-      VarmaModelset(options, items, measures, checks, ySizes_, yPartitions_,
+      VarmaModelset(options, items, metrics, checks, ySizes_, yPartitions_,
                     *dataset0, maxParams_, seasonsCount, xGroups_,
                     simUsePreviousEstim, &optim, olsStdMultiplier, maxHorizon);
 
@@ -144,7 +143,7 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   auto extraNames = std::vector<std::string>(
       {"arP", "arD", "arQ", "maP", "maD", "maQ", "numSeasons"});
 
-  List L = GetModelSetResults(model.Modelset, items, measuresNames,
+  List L = GetModelSetResults(model.Modelset, items, metricsNames,
                               (int)items.Length1, extraLabel, &extraNames,
                               -my.ColsCount + 1, type1Names, colNames,
                               "predictions", "horizon");
@@ -155,7 +154,7 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
       _["olsStdMultiplier"] = wrap(olsStdMultiplier),
       _["simUsePreviousEstim"] = wrap(simUsePreviousEstim),
       _["maxHorizon"] = wrap(checks.Prediction ? maxHorizon : 0),
-      _["lbfgsOptions"] = lbfgsOptions, _["measureOptions"] = measureOptions,
+      _["lbfgsOptions"] = lbfgsOptions, _["metricOptions"] = metricOptions,
       _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
       _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
@@ -276,19 +275,19 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
 
   // Simulation
 
-  std::vector<ScoringType> measures;
-  std::vector<std::string> measureNames;
+  std::vector<ScoringType> metrics;
+  std::vector<std::string> metricNames;
   VarmaSimulation simModel;
   std::unique_ptr<double[]> S0;
   if (simFixSize > 0) {
 
-    measures = std::vector<ScoringType>(
+    metrics = std::vector<ScoringType>(
         {ScoringType::kSign, ScoringType::kDirection, ScoringType::kMae,
          ScoringType::kMape, ScoringType::kRmse, ScoringType::kRmspe,
          ScoringType::kCrps});
-    measureNames = std::vector<std::string>();
-    for (auto &a : measures)
-      measureNames.push_back(ToString(a));
+    metricNames = std::vector<std::string>();
+    for (auto &a : metrics)
+      metricNames.push_back(ToString(a));
 
     // Simulation Horizons
     std::vector<int> simHorizons_;
@@ -314,7 +313,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     }
 
     simModel =
-        VarmaSimulation(sizes, simFixSize, simHorizons_, measures, &optim, true,
+        VarmaSimulation(sizes, simFixSize, simHorizons_, metrics, &optim, true,
                         restriction, true, hasPcaY ? &pcaOptionsY0 : nullptr,
                         hasPcaX ? &pcaOptionsX0 : nullptr);
 
@@ -337,7 +336,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   // Simulation Details
   NumericMatrix simDetails(0, 9);
   colnames(simDetails) = CharacterVector::create(
-      "sampleEnd", "measureIndex", "horizon", "targetIndex", "last", "actual",
+      "sampleEnd", "metricIndex", "horizon", "targetIndex", "last", "actual",
       "forecast", "error", "std");
 
   if (simFixSize > 0) {
@@ -419,24 +418,24 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
   } else
     endoNames_pca = endoNames;
 
-  // Measures
-  int measureCount = 3; // logL, aic, sic
+  // Metrics
+  int metricCount = 3; // logL, aic, sic
   if (simFixSize > 0)
-    measureCount += simModel.ResultAggs.RowsCount;
-  auto measuresResD =
-      std::unique_ptr<double[]>(new double[measureCount * my.ColsCount]);
-  auto measuresRes = ldt::Matrix<double>(measuresResD.get(), measureCount,
-                                         endoNames_pca.size());
-  auto measuresResRowNames = std::vector<std::string>({"logL", "aic", "sic"});
-  measuresRes.SetRow(0, model.Model.Result.LogLikelihood);
-  measuresRes.SetRow(1, model.Model.Result.Aic);
-  measuresRes.SetRow(2, model.Model.Result.Sic);
+    metricCount += simModel.ResultAggs.RowsCount;
+  auto metricsResD =
+      std::unique_ptr<double[]>(new double[metricCount * my.ColsCount]);
+  auto metricsRes =
+      ldt::Matrix<double>(metricsResD.get(), metricCount, endoNames_pca.size());
+  auto metricsResRowNames = std::vector<std::string>({"logL", "aic", "sic"});
+  metricsRes.SetRow(0, model.Model.Result.LogLikelihood);
+  metricsRes.SetRow(1, model.Model.Result.Aic);
+  metricsRes.SetRow(2, model.Model.Result.Sic);
 
   if (simFixSize > 0) {
     int k = 3;
-    for (auto m : measureNames) {
-      measuresResRowNames.push_back(m);
-      measuresRes.SetRowFromRow(k, simModel.ResultAggs, k - 3);
+    for (auto m : metricNames) {
+      metricsResRowNames.push_back(m);
+      metricsRes.SetRowFromRow(k, simModel.ResultAggs, k - 3);
       k++;
     }
   }
@@ -462,8 +461,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
           _["gammaVar"] = as_matrix(model.Model.Result.gammavar),
           _["sigma"] = as_matrix(model.Model.Result.sigma2, &endoNames_pca,
                                  &endoNames_pca)),
-      _["measures"] =
-          as_matrix(measuresRes, &measuresResRowNames, &endoNames_pca),
+      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames_pca),
       _["prediction"] =
           maxHorizon == 0
               ? R_NilValue

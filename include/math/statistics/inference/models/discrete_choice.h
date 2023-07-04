@@ -131,6 +131,10 @@ public:
   /// @brief After \ref Calculate, estimated variance of coefficients (k x k)
   Matrix<Tv> BetaVar;
 
+  /// @brief Condition number which is 1-norm of variance beta multiplied by
+  /// 1-norm of its inverse
+  Tv condition_number = NAN;
+
   // @brief n x 1 (todo)
   // Matrix<Tv>* resid = nullptr;
 
@@ -559,7 +563,7 @@ public:
   /// @brief Initializes a new instance of the class
   /// @param searchOptions It is passed to the base class
   /// @param searchItems It is passed to the base class
-  /// @param measures It is passed to the base class
+  /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
   /// @param SizeG It is passed to the base class
   /// @param groupIndexMap It is passed to the base class
@@ -573,7 +577,7 @@ public:
   /// @param aucOptions Options for calculating AUC
   DiscreteChoiceSearcher(SearchOptions &searchOptions,
                          const SearchItems &searchItems,
-                         const SearchMeasureOptions &measures,
+                         const SearchMetricOptions &metrics,
                          const SearchModelChecks &checks, Ti SizeG,
                          const std::vector<std::vector<Ti>> &groupIndexMap,
                          Ti fixFirstG, const Matrix<Tv> &source, Ti numChoices,
@@ -615,7 +619,7 @@ public:
   /// @brief Initializes the templated class from the types
   static DiscreteChoiceModelsetBase *
   GetFromTypes(bool isBinary, bool hasWeight, SearchOptions &searchOptions,
-               SearchItems &searchItems, SearchMeasureOptions &measures,
+               SearchItems &searchItems, SearchMetricOptions &metrics,
                SearchModelChecks &checks, const std::vector<Ti> &sizes,
                const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
                std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit,
@@ -638,7 +642,7 @@ public:
   /// @brief
   /// @param searchOptions It is passed to the base class
   /// @param searchItems It is passed to the base class
-  /// @param measures It is passed to the base class
+  /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
   /// @param sizes Determines the number of exogenous data in different
   /// searchers
@@ -651,7 +655,7 @@ public:
   /// @param addLogit If true, logit models are included in the model set
   /// @param addProbit If true, probit models are included in the model set
   DiscreteChoiceModelset(SearchOptions &searchOptions, SearchItems &searchItems,
-                         SearchMeasureOptions &measures,
+                         SearchMetricOptions &metrics,
                          SearchModelChecks &checks,
                          const std::vector<Ti> &sizes, const Matrix<Tv> &source,
                          std::vector<Matrix<Tv>> &costMatrixes,

@@ -447,10 +447,7 @@ DistributionGld::GetFromMoments(Tv mean, Tv variance, Tv skewness,
     }
   }
 
-  auto da0 = std::unique_ptr<Tv[]>(new Tv[2]);
-  Tv *da = da0.get();
-  da[0] = startL3;
-  da[1] = startL4;
+  Tv da[2] = {startL3, startL4};
   auto x0 = Matrix<Tv>(da, isSymetric ? 1 : 2);
   auto W = std::unique_ptr<Tv[]>(new Tv[optim.WorkSize]);
   auto S = std::unique_ptr<Tv[]>(new Tv[optim.StorageSize]);
@@ -467,11 +464,6 @@ DistributionGld::GetFromMoments(Tv mean, Tv variance, Tv skewness,
     L1 = mean - (1.0 / L2) * m1;
   else
     L1 = mean - (1.0 / L2) * (m1 - 1 / L3 + 1 / L4);
-
-  if (isSymetric) {
-    lower.Restructure0(2, 1);
-    upper.Restructure0(2, 1);
-  }
 
   return std::tuple<Tv, Tv, Tv, Tv>(L1, L2, L3, L4);
 }

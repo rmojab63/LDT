@@ -7,7 +7,7 @@ using namespace ldt;
 // [[Rcpp::export(.SearchSur)]]
 SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
                int numFixXPartitions, SEXP yGroups, int searchSigMaxIter,
-               double searchSigMaxProb, List measureOptions,
+               double searchSigMaxProb, List metricOptions,
                List modelCheckItems, List searchItems, List searchOptions) {
 
   if (y == R_NilValue)
@@ -80,17 +80,16 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
       Rprintf("    - disabled\n");
   }
 
-  auto measures = SearchMeasureOptions();
-  auto measuresNames = std::vector<std::string>();
+  auto metrics = SearchMetricOptions();
+  auto metricsNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, measureOptions, modelCheckItems,
-                measures, items, checks, measuresNames, mx.ColsCount,
-                mx.ColsCount, numTargets, my.ColsCount, false, true,
-                "Coefficients", false);
+  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
+                items, checks, metricsNames, mx.ColsCount, mx.ColsCount,
+                numTargets, my.ColsCount, false, true, "Coefficients", false);
 
   // Modelset
-  auto model = SurModelset(options, items, measures, checks, xSizes_,
+  auto model = SurModelset(options, items, metrics, checks, xSizes_,
                            xPartitions_, numFixXPartitions, mat, yGroups_,
                            searchSigMaxIter, searchSigMaxProb);
 
@@ -120,7 +119,7 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
 
   auto extraLabel = "";
   auto extraNames = std::vector<std::string>({"extra"});
-  List L = GetModelSetResults(model.Modelset, items, measuresNames, exoCount,
+  List L = GetModelSetResults(model.Modelset, items, metricsNames, exoCount,
                               extraLabel, &extraNames, -exoStart + 1, exoNames,
                               colNames, "coefs", "item");
 
@@ -128,7 +127,7 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["searchSigMaxIter"] = wrap(searchSigMaxIter),
       _["searchSigMaxProb"] = wrap(searchSigMaxProb),
-      _["measureOptions"] = measureOptions,
+      _["metricOptions"] = metricOptions,
       _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
       _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
@@ -310,20 +309,20 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
     }
   }
 
-  auto measures = std::vector<ScoringType>(
-      {// report all measures
+  auto metrics = std::vector<ScoringType>(
+      {// report all metrics
        ScoringType::kMae, ScoringType::kMape, ScoringType::kRmse,
        ScoringType::kRmspe, ScoringType::kCrps, ScoringType::kSign});
-  auto measureNames = std::vector<std::string>();
-  for (auto &a : measures)
-    measureNames.push_back(ToString(a));
+  auto metricNames = std::vector<std::string>();
+  for (auto &a : metrics)
+    metricNames.push_back(ToString(a));
 
   SurSimulation simModel;
   std::unique_ptr<double[]> S0;
   if (simFixSize > 0) {
 
     simModel = SurSimulation(mat.RowsCount, m, k, simTrainRatio,
-                             simTrainFixSize, measures, hasR, searchSigMaxIter,
+                             simTrainFixSize, metrics, hasR, searchSigMaxIter,
                              hasPcaY ? &pcaOptionsY0 : nullptr,
                              hasPcaX ? &pcaOptionsX0 : nullptr);
 
@@ -340,27 +339,27 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
       Rprintf("Simulation Finished.\n");
   }
 
-  // Measures
-  int measureCount = 7; // logL, aic, sic, ...
+  // Metrics
+  int metricCount = 7; // logL, aic, sic, ...
   if (simFixSize > 0)
-    measureCount += simModel.Results.RowsCount;
-  auto measuresResD = std::unique_ptr<double[]>(new double[measureCount * m]);
-  auto measuresRes =
-      ldt::Matrix<double>(measuresResD.get(), measureCount, model.Y.ColsCount);
-  auto measuresResRowNames = std::vector<std::string>(
+    metricCount += simModel.Results.RowsCount;
+  auto metricsResD = std::unique_ptr<double[]>(new double[metricCount * m]);
+  auto metricsRes =
+      ldt::Matrix<double>(metricsResD.get(), metricCount, model.Y.ColsCount);
+  auto metricsResRowNames = std::vector<std::string>(
       {"logL", "aic", "sic", "hqic", "r2", "f", "fProb"});
-  measuresRes.SetRow(0, model.Model.logLikelihood);
-  measuresRes.SetRow(1, model.Model.Aic);
-  measuresRes.SetRow(2, model.Model.Sic);
-  measuresRes.SetRow(3, model.Model.Hqic);
-  measuresRes.SetRow(4, model.Model.r2);
-  measuresRes.SetRow(5, model.Model.f);
-  measuresRes.SetRow(6, model.Model.f_prob);
+  metricsRes.SetRow(0, model.Model.logLikelihood);
+  metricsRes.SetRow(1, model.Model.Aic);
+  metricsRes.SetRow(2, model.Model.Sic);
+  metricsRes.SetRow(3, model.Model.Hqic);
+  metricsRes.SetRow(4, model.Model.r2);
+  metricsRes.SetRow(5, model.Model.f);
+  metricsRes.SetRow(6, model.Model.f_prob);
   if (simFixSize > 0) {
     int k = 7;
-    for (auto m : measureNames) {
-      measuresResRowNames.push_back(m);
-      measuresRes.SetRowFromRow(k, simModel.Results, k - 7);
+    for (auto m : metricNames) {
+      metricsResRowNames.push_back(m);
+      metricsRes.SetRowFromRow(k, simModel.Results, k - 7);
       k++;
     }
   }
@@ -446,8 +445,7 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
               model.Model.pR
                   ? (SEXP)as_matrix(isRestricted, &exoNames_pca, &endoNames_pca)
                   : R_NilValue),
-      _["measures"] =
-          as_matrix(measuresRes, &measuresResRowNames, &endoNames_pca),
+      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames_pca),
       _["projection"] =
           hasNewX == false
               ? R_NilValue

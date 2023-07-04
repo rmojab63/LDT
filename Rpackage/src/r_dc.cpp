@@ -5,7 +5,7 @@ using namespace Rcpp;
 using namespace ldt;
 
 void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
-                     SEXP costMatrices, bool costMatInMeasures) {
+                     SEXP costMatrices, bool costMatInMetrics) {
   if (costMatrices != R_NilValue) {
     // don't use as.list or a vector such as c(c1,c2) will have invalid values
     if (is<List>(costMatrices) == false)
@@ -29,7 +29,7 @@ void GetCostMatrices(bool printMsg, std::vector<ldt::Matrix<double>> &result,
       Rprintf("    %i. Dimension=(%i,%i)\n", i + 1, result.at(i).RowsCount,
               result.at(i).ColsCount);
   }
-  if (costMatInMeasures && result.size() == 0)
+  if (costMatInMetrics && result.size() == 0)
     throw std::logic_error(
         "At least one frequency cost matrix is required for this type "
         "of out-of-sample evaluation.");
@@ -56,7 +56,7 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
 // [[Rcpp::export(.SearchDc)]]
 SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
               SEXP costMatrices, bool searchLogit, bool searchProbit,
-              List optimOptions, List aucOptions, List measureOptions,
+              List optimOptions, List aucOptions, List metricOptions,
               List modelCheckItems, List searchItems, List searchOptions) {
 
   if (y == R_NilValue || x == R_NilValue)
@@ -105,17 +105,17 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   RocOptions aucOptions0;
   UpdateRocOptions(printMsg, aucOptions, aucOptions0, "AUC Options:");
 
-  auto measures = SearchMeasureOptions();
-  auto measuresNames = std::vector<std::string>();
+  auto metrics = SearchMetricOptions();
+  auto metricsNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, measureOptions, modelCheckItems,
-                measures, items, checks, measuresNames, exoCount, exoCount,
-                numTargets, 1, false, true, "Coefficients", true);
+  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
+                items, checks, metricsNames, exoCount, exoCount, numTargets, 1,
+                false, true, "Coefficients", true);
 
   std::vector<ldt::Matrix<double>> costMatrices0;
   GetCostMatrices(printMsg, costMatrices0, costMatrices,
-                  Contains(measures.MeasuresOut, ScoringType::kFrequencyCost));
+                  Contains(metrics.MetricsOut, ScoringType::kFrequencyCost));
 
   // get parameter names
   std::vector<std::string> paramNames;
@@ -133,7 +133,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
                                           : (searchLogit ? "Logit" : "Probit"));
 
   DiscreteChoiceModelsetBase *model = DiscreteChoiceModelsetBase::GetFromTypes(
-      isBinary, hasWeight, options, items, measures, checks, xSizes_, mat,
+      isBinary, hasWeight, options, items, metrics, checks, xSizes_, mat,
       costMatrices0, xPartitions_, searchLogit, searchProbit, newton,
       aucOptions0);
   auto modelr = std::unique_ptr<DiscreteChoiceModelsetBase>(model);
@@ -175,7 +175,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
 
   auto extraLabel = "dist";
   auto extraNames = std::vector<std::string>({"dist"});
-  List L = GetModelSetResults(model->Modelset, items, measuresNames, exoCount,
+  List L = GetModelSetResults(model->Modelset, items, metricsNames, exoCount,
                               extraLabel, &extraNames, 1, paramNames,
                               colNames_w, "coefs", "item");
 
@@ -183,7 +183,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["costMatrices"] = costMatrices, _["searchLogit"] = wrap(searchLogit),
       _["searchProbit"] = wrap(searchProbit), _["optimOptions"] = optimOptions,
-      _["measureOptions"] = measureOptions,
+      _["metricOptions"] = metricOptions,
       _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
       _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
@@ -358,32 +358,32 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
   } else
     exoNames_pca = exoNames;
 
-  // Measures
-  int measureCount = 6; // logL, aic, sic, brierIn aucIn, costIn,
+  // Metrics
+  int metricCount = 6; // logL, aic, sic, brierIn aucIn, costIn,
   if (simFixSize > 0)
-    measureCount += 3; // brierOur aucOut, costOut
+    metricCount += 3; // brierOur aucOut, costOut
   int eqCount = 1;
-  auto measuresResD = std::unique_ptr<double[]>(
-      new double[measureCount * eqCount]); // for 1 equation
-  auto measuresRes =
-      ldt::Matrix<double>(measuresResD.get(), measureCount, eqCount);
-  auto measuresResRowNames = std::vector<std::string>(
+  auto metricsResD = std::unique_ptr<double[]>(
+      new double[metricCount * eqCount]); // for 1 equation
+  auto metricsRes =
+      ldt::Matrix<double>(metricsResD.get(), metricCount, eqCount);
+  auto metricsResRowNames = std::vector<std::string>(
       {"logL", "aic", "sic", "brierIn",
-       "aucIn", // keep names consistent with the measures in the estimation
+       "aucIn", // keep names consistent with the metrics in the estimation
        "frequencyCostIn"});
-  measuresRes.Set0(0, 0, model.Model->LogL);
-  measuresRes.Set0(1, 0, model.Model->Aic);
-  measuresRes.Set0(2, 0, model.Model->Sic);
-  measuresRes.Set0(3, 0, model.BrierScore);
-  measuresRes.Set0(4, 0, model.Auc);
-  measuresRes.Set0(5, 0, model.CostRatioAvg);
+  metricsRes.Set0(0, 0, model.Model->LogL);
+  metricsRes.Set0(1, 0, model.Model->Aic);
+  metricsRes.Set0(2, 0, model.Model->Sic);
+  metricsRes.Set0(3, 0, model.BrierScore);
+  metricsRes.Set0(4, 0, model.Auc);
+  metricsRes.Set0(5, 0, model.CostRatioAvg);
   if (simFixSize > 0) {
-    measuresResRowNames.push_back("brierOut");
-    measuresResRowNames.push_back("aucOut");
-    measuresResRowNames.push_back("frequencyCostOut");
-    measuresRes.Set0(6, 0, simmodel->BrierScore);
-    measuresRes.Set0(7, 0, simmodel->Auc);
-    measuresRes.Set0(8, 0, simmodel->CostRatios.Mean());
+    metricsResRowNames.push_back("brierOut");
+    metricsResRowNames.push_back("aucOut");
+    metricsResRowNames.push_back("frequencyCostOut");
+    metricsRes.Set0(6, 0, simmodel->BrierScore);
+    metricsRes.Set0(7, 0, simmodel->Auc);
+    metricsRes.Set0(8, 0, simmodel->CostRatios.Mean());
   }
 
   List L = List::create(
@@ -401,7 +401,7 @@ SEXP EstimDc(SEXP y, SEXP x, SEXP w, std::string linkFunc, SEXP newX,
               as_matrix(model.Model->BetaProb, &exoNames_pca, &endoNames),
           _["gamma"] = as_matrix(model.Model->Beta),
           _["gammaVar"] = as_matrix(model.Model->BetaVar)),
-      _["measures"] = as_matrix(measuresRes, &measuresResRowNames, &endoNames),
+      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames),
       _["projection"] = hasProjection == false
                             ? R_NilValue
                             : (SEXP)as_matrix(model.PredProbs),

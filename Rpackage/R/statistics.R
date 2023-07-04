@@ -1,53 +1,53 @@
 
 
-#' Convert a Measure to Weight
+#' Convert a Metric to Weight
 #'
-#' This function converts a measure to its weight equivalent.
+#' This function converts a metric to its weight equivalent.
 #'
-#' @param value Numeric value of the measure.
-#' @param measureName Character string specifying the name of the measure.
-#' See [get.options.measure] function for the list of available options.
+#' @param value Numeric value of the metric.
+#' @param metricName Character string specifying the name of the metric.
+#' See [get.options.metric] function for the list of available options.
 #'
 #' @details
-#' Given a collection of models for the data, a measure is not
-#' generally a measure of the relative quality of a model. This function
-#' converts the value of a measure to such a number.
+#' Given a collection of models for the data, a metric is not
+#' generally a metric of the relative quality of a model. This function
+#' converts the value of a metric to such a number.
 #'
 #' These are the details of the transformations:
 #' \itemize{
-#' \item direction, sign, AUC -> weight = measure
-#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 measure)
+#' \item direction, sign, AUC -> weight = metric
+#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 metric)
 #' }
 #'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
-#' @return A numeric value representing the converted measure.
+#' @return A numeric value representing the converted metric.
 #' @export
 #'
 #' @examples
-#' weight <- s.weight.from.measure(-3.4, "sic")
-#' measure <- s.measure.from.weight(weight, "sic")
+#' weight <- s.weight.from.metric(-3.4, "sic")
+#' metric <- s.metric.from.weight(weight, "sic")
 #'
-#' @seealso [s.measure.from.weight]
-s.weight.from.measure <- function(value, measureName)
+#' @seealso [s.metric.from.weight]
+s.weight.from.metric <- function(value, metricName)
 {
   value = as.numeric(value)
-  measureName = as.character(measureName)
-  res <- .GetWeightFromMeasure(value, measureName)
+  metricName = as.character(metricName)
+  res <- .GetWeightFromMetric(value, metricName)
   res
 }
 
 
-#' Convert a Weight to Measure
+#' Convert a Weight to Metric
 #'
-#' This function converts a weight to its measure equivalent.
+#' This function converts a weight to its metric equivalent.
 #'
 #' @param value Numeric value of the weight.
-#' @param measureName Character string specifying the name of the measure.
-#' See \code{\link{get.options.measure}} function for the list of available options.
+#' @param metricName Character string specifying the name of the metric.
+#' See \code{\link{get.options.metric}} function for the list of available options.
 #'
 #' @details
-#' See [s.weight.from.measure] for a discussion.
+#' See [s.weight.from.metric] for a discussion.
 #'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
@@ -55,16 +55,16 @@ s.weight.from.measure <- function(value, measureName)
 #' @export
 #'
 #' @examples
-#' weight <- s.weight.from.measure(-3.4, "sic")
-#' measure <- s.measure.from.weight(weight, "sic")
+#' weight <- s.weight.from.metric(-3.4, "sic")
+#' metric <- s.metric.from.weight(weight, "sic")
 #'
-#' @seealso [s.weight.from.measure]
-s.measure.from.weight <- function(value, measureName)
+#' @seealso [s.weight.from.metric]
+s.metric.from.weight <- function(value, metricName)
 {
   value = as.numeric(value)
-  measureName = as.character(measureName)
+  metricName = as.character(metricName)
 
-  res <- .GetMeasureFromWeight(value, measureName)
+  res <- .GetMetricFromWeight(value, metricName)
   res
 }
 
@@ -95,7 +95,7 @@ s.measure.from.weight <- function(value, measureName)
 #' scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
 #' res1 <- s.roc(y,scores, printMsg = FALSE)
 #' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
-#' costMatrix = matrix(c(0.02,-1,-3,3),2,2)
+#' costMatrix <- matrix(c(0.02,-1,-3,3),2,2)
 #' opt <- get.options.roc(costs = costs, costMatrix = costMatrix)
 #' res2 <- s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
 s.roc <- function(y, scores, weights = NULL,
@@ -155,10 +155,10 @@ s.roc <- function(y, scores, weights = NULL,
 #'
 #' @export
 #' @examples
-#' res = s.gld.from.moments(0,1,0,0, start = c(0,0), type = 4)
+#' res <- s.gld.from.moments(0,1,0,0, start = c(0,0), type = 4)
 #' probs <- seq(0.1,0.9,0.1)
-#' x = s.gld.quantile(probs, res[1],res[2],res[3],res[4])
-#' y = s.gld.density.quantile(probs, res[1],res[2],res[3],res[4])
+#' x <- s.gld.quantile(probs, res[1],res[2],res[3],res[4])
+#' y <- s.gld.density.quantile(probs, res[1],res[2],res[3],res[4])
 #' plot(x,y)
 #' lines(x,y)
 #'
@@ -173,6 +173,7 @@ s.gld.from.moments <- function(mean = 0, variance = 1,
   variance <- as.numeric(variance)
   skewness <- as.numeric(skewness)
   excessKurtosis <- as.numeric(excessKurtosis)
+  type <- as.integer(type)
   if (is.null(start))
     start <- c(0,0)
   start <- as.numeric(start)
@@ -180,11 +181,13 @@ s.gld.from.moments <- function(mean = 0, variance = 1,
     stop("start must be a numeric vector of size 2.")
   if (is.null(nelderMeadOptions))
     nelderMeadOptions <- get.options.neldermead()
+  else
+    nelderMeadOptions <- as.list(nelderMeadOptions)
   CheckNelderMeadOptions(nelderMeadOptions)
   printMsg <- as.logical(printMsg)
 
-  res <- .GetGldFromMoments(mean , variance, skewness, excessKurtosis,
-                            type, start, nelderMeadOptions, printMsg)
+  res <- .GetGldFromMoments(mean, variance, skewness, excessKurtosis,
+                            type, start[[1]], start[[2]], nelderMeadOptions, printMsg)
   res
 }
 
@@ -239,8 +242,8 @@ s.gld.quantile <- function(probs, p1, p2, p3, p4)
 #' # In this example we use this function and plot the density function for
 #' # standard normal distribution:
 #' probs <- seq(0.1,0.9,0.1)
-#' x = s.gld.quantile(probs, 0,1,0,0)
-#' y = s.gld.density.quantile(probs, 0,1,0,0)
+#' x <- s.gld.quantile(probs, 0,1,0,0)
+#' y <- s.gld.density.quantile(probs, 0,1,0,0)
 #' plot(x,y)
 #' lines(x,y)
 #' @seealso [s.gld.quantile]

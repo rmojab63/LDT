@@ -69,25 +69,17 @@ static Tv F(Tv r2, Ti N, Ti m, Ti qstar, Tv &pvalue) {
 
 static double logL(Matrix<Tv> &resid_var_copy, Ti N, Ti m) {
   // see Greene p. 348
-  auto W = Matrix<Tv>(new double[m * m], m, m);
+  auto Md = std::unique_ptr<Tv[]>(new Tv[m * m]);
+  auto W = Matrix<Tv>(Md.get(), m, m);
   resid_var_copy.CopyTo00(W);
-  Tv resid_var_det = W.Det_pd0();
-  resid_var_copy.CopyTo00(W);
-  W.Multiply_in((Tv)N);
-  // resid.Dot_AtA(W);
+  Tv resid_var_det = W.Det_pd0(); // |W|
 
   if (std::isnan(resid_var_det))
     throw std::logic_error("Determinant of residual variance is NAN");
 
-  auto SW = Matrix<Tv>(new double[m * m], m, m);
-  resid_var_copy.Inv0();
-  resid_var_copy.Dot(W, SW);
+  auto ll =
+      (Tv)-0.5 * N * (m * c_ln_2Pi + std::log(resid_var_det)) - (Tv)0.5 * m * N;
 
-  auto ll = (Tv)-0.5 * N * (m * c_ln_2Pi + std::log(resid_var_det)) -
-            (Tv)0.5 * SW.Trace();
-
-  delete[] W.Data;
-  delete[] SW.Data;
   return ll;
   /*
   Tv _n_2 = -(N / (Tv)2);
@@ -251,15 +243,14 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
   auto V_o_xRtz = Matrix<Tv>(&work[q], qStar, (Ti)1);
   q += qStar;
 
-  resid_var.Inv0();
-  x.Dot_AtA(xtx); // kxk
-  resid_var.Kron(xtx, V_o_xtx);
-  pR->TrDot(V_o_xtx, RV_o_xtx);
-  RV_o_xtx.Dot(*pR, gamma_var);
+  resid_var.Inv0();             // S^-1
+  x.Dot_AtA(xtx);               // X'X: kxk
+  resid_var.Kron(xtx, V_o_xtx); // S^-1 o X'X
+  pR->TrDot(V_o_xtx, RV_o_xtx); // R'[S^-1 o X'X]
+  RV_o_xtx.Dot(*pR, gamma_var); // R'[S^-1 o X'X]R
 
   condition_number = RV_o_xtx.Norm('1');
-  auto info =
-      gamma_var.Inv0(); //                      [R'(V^{-1} o pX'pX)R]^{-1}
+  auto info = gamma_var.Inv0(); // [R'[S^-1 o X'X]R]^{-1}
   if (info != 0) {
     throw std::logic_error("matrix singularity");
     return;
@@ -273,8 +264,8 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
   //     of course the estimator of resid_var can be different. It can be
   //     Identity, a diagonal Matrix, ...
 
-  resid_var.Kron(x, V_o_x);
-  V_o_x.Dot(*pR, V_o_xR);
+  resid_var.Kron(x, V_o_x); // S^-1 o x
+  V_o_x.Dot(*pR, V_o_xR);   // [S^-1 o x]R
   if (pr) {
     throw std::logic_error("not implemented (with r restriction)");
     // this is wrong. Kronecker is with I
@@ -283,22 +274,22 @@ void Sur::estim_r(Ti N, Ti m, Tv *work) {
     y.Subtract0(I_o_xr, z);     // subtract0 for vec(y) ??? see 'else'
     V_o_xR.TrDot0(z, V_o_xRtz); // dot0 for vec(y) ??? see 'else'
   } else {
-    y.Restructure0(Nm, 1); // to vec(y)
-    V_o_xR.TrDot(y, V_o_xRtz);
+    y.Restructure0(Nm, 1);     // to vec(y)
+    V_o_xR.TrDot(y, V_o_xRtz); // R'[S^-1 o x']vec(y)
     y.Restructure0(N, m);
   }
 
   gamma.Restructure0(qStar, (Ti)1);
-  gamma_var.Dot(V_o_xRtz, gamma);
+  gamma_var.Dot(V_o_xRtz, gamma); // [R'[S^-1 o X'X]R]^{-1} R'[S^-1 o x']vec(y)
 
   // convert gamma to beta
-  pR->Dot0(gamma, beta);
+  pR->Dot0(gamma, beta); // B = R[R'[S^-1 o X'X]R]^{-1} R'[S^-1 o x']vec(y)
   if (pr) {
     beta.Add_in0(*pr);
   }
 
   // same as before:
-  x.Dot(beta, yhat);
+  x.Dot(beta, yhat); // Y^ = x B
   y.Subtract(yhat, resid);
   resid.Dot_AtA(resid_var);
   resid_var.Divide_in((

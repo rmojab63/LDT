@@ -30,7 +30,7 @@ RES = search.sur(x[,c(1,2)], x[,3:7], 2, yGroups = list(c(1L,2L)), xSizes = c(1L
                                              all = TRUE, bestK = 3,inclusion = TRUE,
                                              extremeMultiplier = 2,
                                              mixture4 = TRUE),
-                measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                    seed = 0))
 
 test_that("to.data.frame works", {

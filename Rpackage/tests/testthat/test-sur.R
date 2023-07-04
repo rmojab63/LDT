@@ -252,7 +252,7 @@ test_that("search.sur works for insample", {
   res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
                   searchOptions = get.options.search( printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
   res1 = estim.sur(y[,res$aic$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$aic$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
@@ -260,13 +260,13 @@ test_that("search.sur works for insample", {
                   Exo[,res$sic$target2$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
 
-  expect_equal(exp(-0.5 * res1$measures[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
-  expect_equal(exp(-0.5 * res2$measures[3,1]), res$sic$target2$model$bests$best1$weight, tolerance = 1e-10)
+  expect_equal(exp(-0.5 * res1$metrics[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
+  expect_equal(exp(-0.5 * res2$metrics[3,1]), res$sic$target2$model$bests$best1$weight, tolerance = 1e-10)
 
   for (m in res$aic$target1$model$all){
     M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-    expect_equal(exp(-0.5 * M$measures[2,1]), m$weight, tolerance = 1e-10)
+    expect_equal(exp(-0.5 * M$metrics[2,1]), m$weight, tolerance = 1e-10)
   }
 
   # change Indexes
@@ -275,7 +275,7 @@ test_that("search.sur works for insample", {
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
                    searchOptions = get.options.search( printMsg = printMsg),
                    searchItems = get.items.search(all = TRUE, bestK = 2),
-                   measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
 })
@@ -289,7 +289,7 @@ test_that("search.sur works with fixed exogenous variables", {
                   numFixXPartitions = 3,
                   searchOptions = get.options.search( printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
 
   for (m in res$aic$target1$model$all){
     expect_equal(c(1,2,3),m$exoIndices[1:3])
@@ -305,7 +305,7 @@ test_that("search.sur works for insample when changing indexes", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(parallel = F, printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 0),
-                  measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
   # change Indexes
@@ -314,7 +314,7 @@ test_that("search.sur works for insample when changing indexes", {
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
                    searchOptions = get.options.search(parallel = F, printMsg = printMsg),
                    searchItems = get.items.search(all = TRUE, bestK = 0),
-                   measureOptions = get.options.measure(c("aic", "sic"), character(0)))
+                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
   allWeights3 = sort(sapply(res3$aic$target2$model$all, function(x){x$weight}))
 
   expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
@@ -329,20 +329,20 @@ test_that("search.sur works for out-of-sample", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search( printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))  # negative seed for equal seed in the searchers
   res1 = estim.sur(y[,res$rmse$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$rmse$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 4, simTrainRatio = 0.75, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
 
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]),
-              as.numeric(s.measure.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
+  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="rmse"),1]),
+              as.numeric(s.metric.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
 
   for (m in res$crps$target1$model$all){
     M = estim.sur(y[,m$depIndices,drop=FALSE], x = Exo[,m$exoIndices,drop=FALSE],
                  simFixSize = 4, simSeed = 340, addIntercept = FALSE, printMsg = printMsg)
-    expect_equal(as.numeric(M$measures[which(rownames(res1$measures)=="crps"),1]),
-                 as.numeric(s.measure.from.weight(m$weight, "crps")), tolerance = 1e-10)
+    expect_equal(as.numeric(M$metrics[which(rownames(res1$metrics)=="crps"),1]),
+                 as.numeric(s.metric.from.weight(m$weight, "crps")), tolerance = 1e-10)
   }
 
   # change Indexes
@@ -351,7 +351,7 @@ test_that("search.sur works for out-of-sample", {
   res3 = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                    searchOptions = get.options.search( printMsg = printMsg),
                    searchItems = get.items.search(all = TRUE, bestK = 2),
-                   measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
@@ -365,7 +365,7 @@ test_that("search.sur works for out-of-sample when changing indexes", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search( printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
@@ -375,7 +375,7 @@ test_that("search.sur works for out-of-sample when changing indexes", {
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
                    searchOptions = get.options.search( printMsg = printMsg),
                    searchItems = get.items.search(all = TRUE, bestK = 2),
-                   measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   allWeights3 = sort(sapply(res3$crps$target2$model$all, function(x){x$weight}))
 
@@ -390,14 +390,14 @@ test_that("search.sur works when parallel", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights0 = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
@@ -413,30 +413,30 @@ test_that("search.sur works for fixed training sample", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                  measureOptions = get.options.measure(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
+                  metricOptions = get.options.metric(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
   res1 = estim.sur(as.matrix(y[,res$mae$target1$model$bests$best1$depIndices]),
                   as.matrix(Exo[,res$mae$target1$model$bests$best1$exoIndices]),
                   simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
                   printMsg = printMsg)
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="mae"),1]),
-               as.numeric(s.measure.from.weight(res$mae$target1$model$bests$best1$weight, "mae")), tolerance = 1e-10)
+  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="mae"),1]),
+               as.numeric(s.metric.from.weight(res$mae$target1$model$bests$best1$weight, "mae")), tolerance = 1e-10)
 
   res1 = estim.sur(as.matrix(y[,res$crps$target1$model$bests$best1$depIndices]),
                    as.matrix(Exo[,res$crps$target1$model$bests$best1$exoIndices]),
                    simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
                    printMsg = printMsg)
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="crps"),1]),
-               as.numeric(s.measure.from.weight(res$crps$target1$model$bests$best1$weight, "crps")), tolerance = 1e-10)
+  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="crps"),1]),
+               as.numeric(s.metric.from.weight(res$crps$target1$model$bests$best1$weight, "crps")), tolerance = 1e-10)
 
 
   res1 = estim.sur(as.matrix(y[,res$rmse$target1$model$bests$best1$depIndices]),
                    as.matrix(Exo[,res$rmse$target1$model$bests$best1$exoIndices]),
                    simFixSize = 4, simTrainRatio = 0.75, simTrainFixSize = 12, simSeed = 340, addIntercept = FALSE,
                    printMsg = printMsg)
-  expect_equal(as.numeric(res1$measures[which(rownames(res1$measures)=="rmse"),1]),
-               as.numeric(s.measure.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
+  expect_equal(as.numeric(res1$metrics[which(rownames(res1$metrics)=="rmse"),1]),
+               as.numeric(s.metric.from.weight(res$rmse$target1$model$bests$best1$weight, "rmse")), tolerance = 1e-10)
 
 })
 
@@ -449,15 +449,15 @@ test_that("search.sur works with restricted aic", {
                   searchOptions = get.options.search(printMsg = printMsg),
                   modelCheckItems = get.items.modelcheck(maxAic = 10.3),
                   searchItems = get.items.search(all = TRUE, bestK = 0),
-                  measureOptions = get.options.measure(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
   alls = list()
   for (m in res$crps$target1$model$all){
     M = estim.sur(as.matrix(y[,m$depIndices]), x = as.matrix(Exo[,m$exoIndices]),
                  simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-    alls = append(alls, M$measures[2,1])
-    expect_true(as.numeric(M$measures[2,1]) <= 10.3)
+    alls = append(alls, M$metrics[2,1])
+    expect_true(as.numeric(M$metrics[2,1]) <= 10.3)
   }
 })
 
@@ -469,7 +469,7 @@ test_that("search.sur works with inclusion weights", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
                   searchItems = get.items.search(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
-                  measureOptions = get.options.measure(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
@@ -497,7 +497,7 @@ test_that("search.sur works with coefficients (bests)", {
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
                   searchOptions = get.options.search(printMsg = printMsg),
                   searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
-                  measureOptions = get.options.measure(c("sic", "aic"),c("rmse", "sign")))
+                  metricOptions = get.options.metric(c("sic", "aic"),c("rmse", "sign")))
   best_coef2 = NULL
   w=-Inf
   for (m in res$aic$target1$model$all){
@@ -516,7 +516,7 @@ test_that("search.sur works with coefficients (bests)", {
   M = estim.sur(as.matrix(y[,res$aic$target1$coefs$bests$item3$best1$depIndices]),
                x = as.matrix(Exo[,res$aic$target1$coefs$bests$item3$best1$exoIndices]),
                simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
-  expect_equal(exp(-0.5 * M$measures[2,1]), res$aic$target1$coefs$bests$item3$best1$weight, tolerance = 1e-10)
+  expect_equal(exp(-0.5 * M$metrics[2,1]), res$aic$target1$coefs$bests$item3$best1$weight, tolerance = 1e-10)
   expect_equal(res$aic$target1$coefs$bests$item3$best1$mean, M$estimations$gamma[1], tolerance = 1e-10)
   expect_equal(res$aic$target1$coefs$bests$item3$best1$var, M$estimations$gammaVar[1,1], tolerance = 1e-10)
 
@@ -532,7 +532,7 @@ test_that("search.sur works with coefficients (cdfs)", {
                   searchItems = get.items.search(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                cdfs = c(0,1,0)),
-                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   sum = 0
   c = 0
@@ -565,7 +565,7 @@ test_that("search.sur works with coefficients (extreme bounds)", {
                   searchItems = get.items.search(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 2),
-                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   mn = Inf
   mx = -Inf
@@ -597,7 +597,7 @@ test_that("search.sur works with coefficients (mixture)", {
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 0,
                                                mixture4 = TRUE),
-                  measureOptions = get.options.measure(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   coefs = c()
   vars = c()
@@ -634,7 +634,7 @@ test_that("SUR summary works", {
   res = search.sur(y, Exo, 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)), xSizes = c(1L,2L,3L),
                   searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
                                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 ),
-                  measureOptions = get.options.measure(c("sic", "aic"), c("rmse", "sign"), seed = -400),
+                  metricOptions = get.options.metric(c("sic", "aic"), c("rmse", "sign"), seed = -400),
                   searchOptions = get.options.search(TRUE, printMsg = printMsg))
 
   su =summary(res, y, Exo, addModelAll = TRUE, addItem1 = TRUE, test = TRUE)
@@ -649,23 +649,23 @@ test_that("SUR SplitSearch works (no subsetting)", {
   Exo=x[,4:7]
 
 
-  # also don't test with out-of-sample measures. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  # also don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
 
   yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L))
   numTargets = 2
   searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  measureOptions = get.options.measure(c("sic", "aic"), c("crps"), seed = -400)
+  metricOptions = get.options.metric(c("sic", "aic"), c("crps"), seed = -400)
   searchOptions = get.options.search(FALSE, printMsg = printMsg)
 
   split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  yGroups = yGroups,
-                      searchItems = searchItems, measureOptions = measureOptions,
+                      searchItems = searchItems, metricOptions = metricOptions,
                       searchOptions = searchOptions, savePre = NULL)
 
   whole = search.sur(y, Exo, xSizes = c(1L,2L,3L),
                     numTargets = numTargets,  yGroups = yGroups,
-                    searchItems = searchItems, measureOptions = measureOptions,
+                    searchItems = searchItems, metricOptions = metricOptions,
                     searchOptions = searchOptions)
 
   # CHECK ALL
