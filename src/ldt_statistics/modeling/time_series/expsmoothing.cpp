@@ -1576,9 +1576,9 @@ void forecastSim(Ti h, ExpSmoothingResultTv *estim, Matrix<Tv> *forecast,
   auto seasons = &WORK[h]; // seasonsCount
 
   std::normal_distribution<Tv> dist(0, std::sqrt(estim->sigma2));
-  auto mvs = std::vector<RunningWeightedVariance *>();
+  auto mvs = std::vector<RunningMoments<2, true, true, Tv> *>();
   for (t = 0; t < h; t++)
-    mvs.push_back(new RunningWeightedVariance());
+    mvs.push_back(new RunningMoments<2, true, true, Tv>());
 
   counter = 0;
   while (counter < count) {

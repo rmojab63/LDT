@@ -82,10 +82,7 @@ file(GLOB SOURCES
  
  src/ldt_statistics/statistics/statistics.cpp 
  src/ldt_statistics/statistics/descriptive.cpp
-
- src/ldt_statistics/running/weighted4.cpp
- src/ldt_statistics/running/weighted_mean.cpp
- src/ldt_statistics/running/weighted_variance.cpp
+ 
 
  src/ldt_math/optimization/lmbfgsb.cpp
  src/ldt_math/optimization/nelder_mead.cpp

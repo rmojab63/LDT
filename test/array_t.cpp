@@ -59,10 +59,30 @@ TEST(Array_t, partition) {
   ASSERT_EQ(std::vector<Tv>({6, 7}), partitions.at(3));
 }
 
-TEST(Array_t, stat_mean) {
+TEST(Array_t, stat_moments) {
 
-  Tv data[] = {NAN, 13, 14, NAN, NAN, NAN};
-  Tv value;
-  Array<Tv>::Mean<true>(data, 6, value);
-  ASSERT_NEAR(value, (13 + 14) / 2.0, 1e-16);
+  // Unweighted (population)
+  const double arr[] = {1, 2, 5, 5, 10};
+  auto v = Array<Tv>::Mean<false, false>(arr, 5, nullptr);
+  ASSERT_NEAR(4.6, v, 1e-6);
+  v = Array<Tv>::Variance<false, false>(arr, 5, nullptr);
+  ASSERT_NEAR(9.84, v, 1e-5);
+  v = Array<Tv>::Skewness<false, false>(arr, 5, nullptr);
+  ASSERT_NEAR(0.60492, v, 1e-5);
+  v = Array<Tv>::Kurtosis<false, false>(arr, 5, nullptr);
+  ASSERT_NEAR(-0.802201, v, 1e-5);
+
+  // Weighted (population)
+  const double arr1[] = {1, 2, 5, 10};
+  const double weig[] = {1, 1, 2, 1};
+  v = Array<Tv>::Mean<true, false>(arr1, 4, weig);
+  ASSERT_NEAR(4.6, v, 1e-6);
+  v = Array<Tv>::Variance<true, false>(arr1, 4, weig);
+  ASSERT_NEAR(9.84, v, 1e-6);
+  v = Array<Tv>::Skewness<true, false>(arr1, 4, weig);
+  ASSERT_NEAR(0.60492, v, 1e-3);
+  v = Array<Tv>::Kurtosis<true, false>(arr1, 4, weig);
+  ASSERT_NEAR(-0.802201, v, 1e-3);
+
+  // NAN
 }

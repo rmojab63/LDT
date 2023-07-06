@@ -160,8 +160,7 @@ TEST(Variable_t, con_daily_weekly) {
 
   std::function<double(const std::vector<double> &)> func =
       [](const std::vector<double> &v) {
-        Tv m;
-        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        Tv m = Array<Tv>::Mean<false, true>(&v[0], v.size(), nullptr);
         return m;
       };
   Variable<Tv> w;
@@ -187,8 +186,7 @@ TEST(Variable_t, con_daily_monthly) {
 
   std::function<double(const std::vector<double> &)> func =
       [](const std::vector<double> &v) {
-        Tv m;
-        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        Tv m = Array<Tv>::Mean<false, true>(&v[0], v.size(), nullptr);
         return m;
       };
 
@@ -211,8 +209,7 @@ TEST(Variable_t, con_daily_5xyear) {
 
   std::function<double(const std::vector<double> &)> func =
       [](const std::vector<double> &v) {
-        Tv m;
-        Array<Tv>::Mean<true>(&v[0], v.size(), m);
+        Tv m = Array<Tv>::Mean<false, true>(&v[0], v.size(), nullptr);
         return m;
       };
 

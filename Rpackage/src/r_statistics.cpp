@@ -216,7 +216,7 @@ List CombineByMoments4(SEXP mix1, SEXP mix2)
     throw std::logic_error("'mix2' must be a 'List'.");
   List mix2_ = as<List>(mix2);
 
-  auto r = RunningWeighted4();
+  auto r = RunningMoments<4, true, true, Tv>();
   r.PushNewDistribution(mix1_["mean"], mix1_["variance"], mix1_["skewness"],
                         mix1_["kurtosis"], mix1_["sumWeights"], mix1_["count"]);
   r.PushNewDistribution(mix2_["mean"], mix2_["variance"], mix2_["skewness"],

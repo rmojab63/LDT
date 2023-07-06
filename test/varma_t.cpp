@@ -1335,7 +1335,7 @@ TEST(Varma_T, var_search) {
   auto list1 = std::vector<SearcherSummary *>();
   auto list2 = std::vector<SearcherSummary *>();
   modelset.Modelset.CombineInfo(result, list0, list1, list2);
-  auto mixture = RunningWeighted4();
+  auto mixture = RunningMoments<4, true, true, Tv>();
   modelset.Modelset.CombineMixture(0, 0, 1, list1, mixture);
 
   delete[] W;
