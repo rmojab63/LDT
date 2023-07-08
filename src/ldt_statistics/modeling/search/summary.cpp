@@ -160,7 +160,7 @@ SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
         {std::numeric_limits<Tv>::max(), std::numeric_limits<Tv>::min()});
   if (pItems->KeepInclusionWeights) {
     Ti max_inc = pItems->LengthDependents + pItems->LengthExogenouses;
-    InclusionsInfo = std::vector<RunningMoments<1, true, true, Tv>>(max_inc);
+    InclusionsInfo = std::vector<RunningMoments<1, true, false, Tv>>(max_inc);
   }
   if (pItems->CdfsAt.size() > 0)
     Cdfs =

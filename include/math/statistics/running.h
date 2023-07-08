@@ -14,6 +14,10 @@ private:
   Tw w = 0; //, delta = 0, R = 0, t1 = 0, t2 = 0, temp = 0;
 
 public:
+  /// @brief Determines the number of pushes. It is not related to the
+  /// statistical part, just the operational part.
+  Ti Count = 0;
+
   /// @brief Sum of the weights
   Tw SumWeights = 0;
 
@@ -22,6 +26,7 @@ public:
 
   /// @brief Resets the calculations
   void Reset() {
+    Count = 0;
     SumWeights = 0;
     mMean = 0;
     mM2 = 0;
@@ -71,12 +76,19 @@ public:
   /// @param weight The weight of the observation
   void PushNew(const Tw &value, const Tw &weight) {
 
-    if constexpr (isWeighted == false) {
-      weight = 1;
+    if constexpr (skipNAN) {
+      if (std::isnan(value))
+        return;
     }
 
-    Array<Tw>::template update_single_pass<isWeighted, skipNAN, moments>(
-        value, weight, SumWeights, mMean, mM2, mM3, mM4);
+    Count++;
+    Tw ww = weight;
+    if constexpr (isWeighted == false) {
+      ww = 1;
+    }
+
+    Array<Tw>::template update_single_pass<isWeighted, moments>(
+        value, ww, SumWeights, mMean, mM2, mM3, mM4);
   }
 
   /// @brief Combines another set of moments with current set
@@ -100,9 +112,34 @@ public:
       }
     }
 
+    Tw mean = 0, m2 = 0, m3 = 0, m4 = 0, sw = 0;
     Array<Tw>::template update_single_pass_combine<moments>(
         other.SumWeights, other.mMean, other.mM2, other.mM3, other.mM4,
-        SumWeights, mMean, mM2, mM3, mM4, SumWeights, mMean, mM2, mM3, mM4);
+        SumWeights, mMean, mM2, mM3, mM4, sw, mean, m2, m3, m4);
+
+    if constexpr (skipNAN) {
+      if (std::isnan(mean))
+        return;
+      if constexpr (moments >= 2) {
+        if (std::isnan(m2))
+          return;
+      }
+      if constexpr (moments >= 3) {
+        if (std::isnan(m3))
+          return;
+      }
+      if constexpr (moments == 4) {
+        if (std::isnan(m4))
+          return;
+      }
+    }
+
+    mMean = mean;
+    mM2 = m2;
+    mM3 = m3;
+    mM4 = m4;
+    SumWeights = sw;
+    Count += other.Count;
   }
 
   /// @brief Combines current moments with another set of moments
@@ -112,8 +149,10 @@ public:
   /// @param kurt kurtosis of the second set (population formula). It should not
   /// be excess kurtosis.
   /// @param weight Relative weight of the second set.
+  /// @param count An operational value to update the value of \par Count
+  /// in the class.
   void Combine(const Tw &mean, const Tw &var, const Tw &skew, const Tw &kurt,
-               const Tw &weight) {
+               const Tw &weight, Ti count = 1) {
 
     if constexpr (skipNAN) { // don't let other destroy any moments
       if (std::isnan(mean))
@@ -147,9 +186,35 @@ public:
       }
     }
 
+    Tw mean_ = 0, m2_ = 0, m3_ = 0, m4_ = 0, sw_ = 0;
     Array<Tw>::template update_single_pass_combine<moments>(
-        weight, mean, m2, m3, m4, SumWeights, mMean, mM2, mM3, mM4, SumWeights,
-        mMean, mM2, mM3, mM4);
+        weight, mean, m2, m3, m4, SumWeights, mMean, mM2, mM3, mM4, sw_, mean_,
+        m2_, m3_, m4_);
+
+    if constexpr (skipNAN) {
+      if (std::isnan(mean_))
+        return;
+      if constexpr (moments >= 2) {
+        if (std::isnan(m2_))
+          return;
+      }
+      if constexpr (moments >= 3) {
+        if (std::isnan(m3_))
+          return;
+      }
+      if constexpr (moments == 4) {
+        if (std::isnan(m4_))
+          return;
+      }
+    }
+
+    mMean = mean_;
+    mM2 = m2_;
+    mM3 = m3_;
+    mM4 = m4_;
+    SumWeights = sw_;
+
+    Count += count;
   }
 };
 

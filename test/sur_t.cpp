@@ -335,6 +335,7 @@ TEST(Sur_t, search_t) {
 
   items.KeepBestCount = 2;
   items.KeepAll = false;
+  items.KeepInclusionWeights = true;
   items.LengthTargets = 2;
 
   items.KeepModelEvaluations = true;
@@ -368,6 +369,9 @@ TEST(Sur_t, search_t) {
 
   auto res = std::vector<EstimationKeep *>();
   model.Modelset.CombineAll(0, 0, 0, list1, res);
+
+  auto incs = RunningMoments<1, true, false, Tv>();
+  model.Modelset.CombineInclusionWeights(0, 0, 2, list1, incs);
 
   delete[] W;
 }

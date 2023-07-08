@@ -288,7 +288,7 @@ public:
 
   /// @brief If requested in the options, it has the information about the
   /// inclusion weights of dependent and exogenous variables
-  std::vector<RunningMoments<1, true, true, Tv>> InclusionsInfo;
+  std::vector<RunningMoments<1, true, false, Tv>> InclusionsInfo;
 
   /// @brief Pointer to the given \ref SearchItems in the constructor
   const SearchItems *pItems = nullptr;
@@ -572,7 +572,7 @@ public:
   /// @param result A place to save the result
   void CombineInclusionWeights(Ti index1, Ti index2, Ti index3,
                                const std::vector<SearcherSummary *> &summaries,
-                               RunningMoments<1, true, true, Tv> &result);
+                               RunningMoments<1, true, false, Tv> &result);
 
   /// @brief Combines CDF at a specific point for a specific item
   /// @param index1 Metric index of the item

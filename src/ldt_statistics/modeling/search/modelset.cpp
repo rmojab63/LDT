@@ -203,7 +203,7 @@ void ModelSet::CombineBests(Ti index1, Ti index2, Ti index3,
 void ModelSet::CombineInclusionWeights(
     Ti index1, Ti index2, Ti index3,
     const std::vector<SearcherSummary *> &summaries,
-    RunningMoments<1, true, true, Tv> &result) {
+    RunningMoments<1, true, false, Tv> &result) {
   if (summaries.size() == 0)
     throw std::logic_error("List of search summaries is empty!");
 

@@ -342,7 +342,8 @@ public:
 
     mean = (sumW_1 * mean_1 + sumW_2 * mean_2) / temp;
 
-    if constexpr (moments == 4) {
+    if constexpr (moments == 4) { // Pebay (2008). Formulas for Robust, One-Pass
+                                  // Parallel..., Eq. 1.6
       M4 = M4_1 + M4_2 +
            delta2 * delta2 * sumW_1 * sumW_2 *
                (sumW_1 * sumW_1 - sumW_1 * sumW_2 + sumW_2 * sumW_2) /
@@ -352,7 +353,8 @@ public:
            4 * delta * (sumW_1 * M3_2 - sumW_2 * M3_1) / temp;
     }
 
-    if constexpr (moments >= 3) {
+    if constexpr (moments >= 3) { // Pebay (2008). Formulas for Robust, One-Pass
+                                  // Parallel..., Eq. 1.5
       M3 =
           M3_1 + M3_2 +
           delta * delta2 * sumW_1 * sumW_2 * (sumW_1 - sumW_2) / (temp * temp) +
@@ -360,20 +362,15 @@ public:
     }
 
     if constexpr (moments >= 2) {
-      M2 = M2_1 + M2_2 + delta2 * sumW_1 * sumW_2 / temp;
+      M2 = M2_1 + M2_2 + delta2 * sumW_1 * sumW_2 / temp; // Eq. 1.4
     }
 
     sumW = temp;
   }
 
-  template <bool isWeighted, bool skipNAN, Ti moments>
+  template <bool isWeighted, Ti moments>
   inline static void update_single_pass(const Tw &x, const Tw &w, Tw &sumW,
                                         Tw &mean, Tw &M2, Tw &M3, Tw &M4) {
-
-    if constexpr (skipNAN) {
-      if (std::isnan(x))
-        return;
-    }
 
     Tw ww = w;
     if constexpr (isWeighted == false) {
@@ -445,12 +442,18 @@ public:
     Tw sumW = 0, m2 = 0, m3 = 0, m4 = 0, w = 1;
     mean = 0;
     for (Ti i = 0; i < length; i++) {
+
+      if constexpr (skipNAN) {
+        if (std::isnan(data[i]))
+          continue;
+      }
+
       if constexpr (isWeighted) {
-        update_single_pass<isWeighted, skipNAN, moments>(
-            data[i], weights[i], sumW, mean, m2, m3, m4);
+        update_single_pass<isWeighted, moments>(data[i], weights[i], sumW, mean,
+                                                m2, m3, m4);
       } else if constexpr (true) {
-        update_single_pass<isWeighted, skipNAN, moments>(data[i], w, sumW, mean,
-                                                         m2, m3, m4);
+        update_single_pass<isWeighted, moments>(data[i], w, sumW, mean, m2, m3,
+                                                m4);
       }
     }
 
