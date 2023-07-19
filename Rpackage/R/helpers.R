@@ -137,7 +137,7 @@ combineSearch <- function(list, type1Name = "coefs") {
       added <- FALSE
       for (f0 in result$counts$failedDetails){
         j <- j + 1
-        if (f$message == f0$message){
+        if (identical(f$message, f0$message)){
           added <- TRUE
           result$counts$failedDetails[[j]]$count = f0$count + f$count
           break
@@ -239,7 +239,7 @@ combineSearch <- function(list, type1Name = "coefs") {
             for (item0 in tar0[[type1Name]]$bests) {
               item0 <- item0[lengths(item0) != 0]
               o <- o + 1
-              if (item1$name == item0$name) {
+              if (identical(item1$name, item0$name)) {
                 found <- TRUE
                 # combine, sort by weights and select a subset
                 b_count <- length(item0)
@@ -290,7 +290,9 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   # dots <- list(...)
   # if (dots$searchItems)
   if (length(sizes) != length(counts)) {
-    stop("Invalid number of elements in 'counts'.")
+    stop(paste0("Invalid number of elements in 'counts' (sizes=",
+                paste0(sizes, collapse=", "), "; counts=",
+                paste0(counts, collapse = ", ") ,")"))
   }
 
   if (is.null(colnames(data))) {
@@ -407,16 +409,21 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
     if (printMsg)
       cat("\n=================\n")
 
-    if (estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount) {
+    lastStep = i == length(sizes)
+    allFailed = estims[[i]]$counts$searchedCount == estims[[i]]$counts$failedCount
+    if (lastStep == FALSE && allFailed) {
       if (printMsg){
          print("......Failures.......")
          print(estims[[i]]$counts$failedDetails)
       }
       stop("all estimations failed")
+
+      #TODO: an argument for moving to the next step without reducing the size.
     }
 
     if (is.null(savePre) == FALSE) {
       saveRDS(list(estim = estims[[i]], data = data_i), paste0(savePre, i, ".RData"))
+      print(paste0("Data saved:", getwd(), savePre, i, ".RData"))
     }
 
     if (printMsg) {

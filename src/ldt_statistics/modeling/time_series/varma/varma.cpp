@@ -191,6 +191,10 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
   auto f = Sizes.NumParamsEq;
   auto T = Sizes.T - sampleEnd;
 
+  if (T < 1 || g < 1 || q < 1)
+    throw std::logic_error(format(
+        "Invalid data dimension in VARMA (T={0}, g={1}, q={2}).", T, g, q));
+
   if (R)
     q = R->ColsCount;
 
@@ -503,19 +507,20 @@ void SetDetails(Varma &varma, const Matrix<Tv> *R) {
     varma.Result.gamma.CopyTo00(varma.Result.coef);
     varma.Result.gammavar.GetDiag(varma.Result.coefstd);
   }
-  varma.Result.coefstd.Apply_in([](Tv d) -> Tv { return std::sqrt(d); });
+  std::function<Tv(Tv)> f = [](Tv d) -> Tv { return std::sqrt(d); };
+  varma.Result.coefstd.Apply_in(f);
 
   // t, prob
   auto Tg = static_cast<Tv>(
       varma.Result.y.length()); // if adjusted, (varma.Result.y.RowsCount -
                                 // f) is degrees of freedom
   auto tdist = Distribution<DistributionType::kT>(Tg);
-  varma.Result.coef.Apply0(
-      varma.Result.coefstd, [](Tv c, Tv s) -> Tv { return c / s; },
-      varma.Result.coeft);
-  varma.Result.coeft.Apply0(
-      [&](Tv t) -> Tv { return 2 * (1 - tdist.GetCdf(std::abs(t))); },
-      varma.Result.coefprob);
+  std::function<Tv(Tv, Tv)> g = [](Tv c, Tv s) -> Tv { return c / s; };
+  varma.Result.coef.Apply0(varma.Result.coefstd, g, varma.Result.coeft);
+  std::function<Tv(Tv)> h = [&](Tv t) -> Tv {
+    return 2 * (1 - tdist.GetCdf(std::abs(t)));
+  };
+  varma.Result.coeft.Apply0(h, varma.Result.coefprob);
 }
 
 void CalculateGoodness(Varma &varma, Ti T, Ti g, Ti f, Tv max_vf) {

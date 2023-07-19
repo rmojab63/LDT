@@ -1143,6 +1143,31 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
       auto eval = FromString_ScoringType(a.c_str());
       metrics.MetricsOut.push_back(eval);
     }
+
+    // transform
+    auto transformR = metricOptions["transform"];
+
+    if (transformR == R_NilValue){
+      // do nothing
+    }
+    else if (is<Function>(transformR)){
+
+      auto F = as<Function>(transformR);
+      metrics.TransformForMetrics = [&F](double& x) { x = as<double>(F(wrap(x))); };
+
+
+    }else if (TYPEOF(transformR) == STRSXP){
+
+      auto funcType = FromString_FunctionType(as<const char*>(transformR));
+      if (funcType != FunctionType::kExp)
+        throw std::logic_error("Currently exponential transformation is available.");
+      metrics.TransformForMetrics = [](double& x) { x = std::exp(x); };
+
+    }
+    else{
+      throw std::logic_error("Invalid 'transform'. It should be a character or a function.");
+    }
+
   }
 
   metrics.SimFixSize = as<int>(metricOptions["simFixSize"]);

@@ -121,18 +121,17 @@ void Sur::calculate_details(Ti N, Ti m, Tv *work, bool just_probs,
   } else
     gamma_var.GetDiag0(e_beta_std);
 
-  e_beta_std.Apply_in([](Tv x) -> double { return std::sqrt(x); });
-
-  beta.Apply(
-      e_beta_std, [](Tv x, Tv y) -> double { return x / y; },
-      e_beta_t); // will generate NAN if std=0 (e.g. restricted)
+  std::function<Tv(Tv)> FF = [](Tv x) -> Tv { return std::sqrt(x); };
+  e_beta_std.Apply_in(FF);
+  std::function<Tv(Tv, Tv)> h = [](Tv x, Tv y) -> Tv { return x / y; };
+  beta.Apply(e_beta_std, h,
+             e_beta_t); // will generate NAN if std=0 (e.g. restricted)
 
   auto dis = Distribution<DistributionType::kT>((Tv)(N)); // or (N-k0)
-  e_beta_t.Apply(
-      [&dis](Tv x) -> double {
-        return std::isnan(x) ? NAN : 2 * (1.0 - dis.GetCdf(std::abs(x)));
-      },
-      e_beta_prob);
+  std::function<Tv(Tv)> g = [&dis](Tv x) -> Tv {
+    return std::isnan(x) ? NAN : 2 * (1.0 - dis.GetCdf(std::abs(x)));
+  };
+  e_beta_t.Apply(g, e_beta_prob);
 
   if (just_probs)
     return;
@@ -352,6 +351,11 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   Ti N = y.RowsCount;
   Ti m = y.ColsCount;
   Ti k = x.ColsCount;
+
+  if (N < 1 || m < 1 || k < 1)
+    throw std::logic_error(format(
+        "Invalid data dimension in SUR (N={0}, m={1}, k={2}).", N, m, k));
+
   Ti km = k * m;
 
   // check size
@@ -404,11 +408,11 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
     if (mSigSearchMaxIter == 0) {
       // Matrix<Tv>::Diagonal(resid_var); //first, use identity as the
       // covariance Matrix
-      estim_un(N, m, work, false); // I think we get a consistent estimator even
-                                   // if we do not use the restrictions
+      estim_un(N, m, work, false); // I think we get a consistent estimator
+                                   // even if we do not use the restrictions
       estim_r(N, m,
-              work); // update by new variance Matrix. I think iterated version
-                     // does not have any statistical justification
+              work); // update by new variance Matrix. I think iterated
+                     // version does not have any statistical justification
     } else
       estim_search(N, m, work, sigSearchMaxProb);
   } else

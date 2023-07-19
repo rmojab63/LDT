@@ -236,6 +236,8 @@ template <typename Tw>
 void Matrix<Tw>::Dot_AAt0(Matrix<Tw> &storage, bool setLower, Tw alpha,
                           Tw beta) const {
 
+  // A:MxN => C=AA':MxM
+
   const Tw *A = Data;
   Tw *C = storage.Data;
 

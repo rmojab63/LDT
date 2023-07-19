@@ -7,3 +7,7 @@
 
 .vs/*
 Rpackage_F/.vscode/settings.json
+
+# exclude intended data from the following rules:
+*.RData
+*.RDS

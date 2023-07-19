@@ -52,6 +52,13 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
   IsExtended = isExtended;
   auto horizonMax = horizons.at(horizons.size() - 1);
 
+  mDoForecastVar = false;
+  for (auto &s : metrics)
+    if (Scoring::RequiresVariance(s)) {
+      mDoForecastVar = true;
+      break;
+    }
+
   StorageSize = (Ti)(metrics.size() * horizons.size() *
                      sizes.EqsCount); // for each metric and horizon and
                                       // variable, there is a value
@@ -70,8 +77,8 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
     WorkSize +=
         Model.Result.StorageSize; // TODO: it can be more efficient. we
                                   // need a partition of these observations
-    Forecast = VarmaForecast(Model.Sizes, horizonMax, true,
-                             false); // TODO: determine coefficients variance
+    Forecast = VarmaForecast(Model.Sizes, horizonMax, mDoForecastVar,
+                             false); // TODO: coefficients variance
     WorkSize += Forecast.StorageSize +
                 std::max(Model.Result.WorkSize, Forecast.WorkSize);
   }
@@ -80,12 +87,96 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
   WorkSize += 5 * (sizes.EqsCount * (Ti)horizons.size()) + sizes.EqsCount;
 }
 
-void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
-                                bool &cancel, Matrix<Tv> *exo,
-                                const Matrix<Tv> *R, const Matrix<Tv> *r,
-                                bool usePreviousEstim, Tv maxCondNum,
-                                Tv stdMultipler, bool coefUncer,
-                                Ti maxInvalidSim) {
+void GetScore(const ScoringType &type, Matrix<Tv> &result,
+              const Matrix<Tv> &act, const Matrix<Tv> &forc,
+              const Matrix<Tv> &err, const Matrix<Tv> &std,
+              const Matrix<Tv> &last_m) {
+  Ti i, j;
+  switch (type) {
+  case ScoringType::kDirection:
+    Tv d, f, a, l;
+    for (i = 0; i < act.RowsCount; i++) {
+      for (j = 0; j < act.ColsCount; j++) {
+        d = 0;
+        f = forc.Get0(i, j);
+        a = act.Get0(i, j);
+        l = last_m.Data[i];
+
+        if (std::isnan(f))
+          d = NAN;
+        else if (a > l) {
+          if (f > l)
+            d = 1;
+        } else if (a < l) {
+          if (f < l)
+            d = 1;
+        } else if (a == l) {
+          if (f == l)
+            d = 1;
+        }
+        result.Set0(i, j, d);
+      }
+    }
+    break;
+
+  case ScoringType::kSign: {
+    std::function<Tv(Tv, Tv)> g = [](Tv a, Tv f) -> Tv {
+      if (std::isnan(f))
+        return NAN;
+      else if (a == 0 || f == 0)
+        return 0.5; // award of 0 is 0.5
+      else if ((a > 0 && f < 0) || (a < 0 && f > 0))
+        return 0.0;
+      return 1.0;
+    };
+    act.Apply0(forc, g, result);
+  } break;
+
+  case ScoringType::kMae: {
+    std::function<Tv(Tv)> q = [](Tv x) -> Tv { return std::abs(x); };
+    err.Apply0(q, result);
+  } break;
+  case ScoringType::kMape: {
+    for (i = 0; i < act.length(); i++) {
+      if (act.Data[i] == 0)
+        result.Data[i] = NAN; //??
+      else
+        result.Data[i] = std::abs(err.Data[i]) / std::abs(act.Data[i]);
+    }
+  } break;
+
+  case ScoringType::kRmse: {
+    std::function<Tv(Tv)> k = [](Tv x) -> Tv { return x * x; };
+    err.Apply0(k,
+               result); // note that a sqrt is required for aggregating
+  } break;
+  case ScoringType::kRmspe: {
+    for (i = 0; i < act.length(); i++) {
+      if (act.Data[i] == 0)
+        result.Data[i] = NAN; //??
+      else
+        result.Data[i] =
+            err.Data[i] * err.Data[i] / (act.Data[i] * act.Data[i]);
+    }
+  } break;
+
+  case ScoringType::kCrps: {
+    std::function<Tv(Tv, Tv)> v = [](Tv e, Tv s) -> Tv {
+      return Scoring::GetScoreCrpsNormal(e, 0, s);
+    };
+    err.Apply0(std, v, result);
+  } break;
+
+  default:
+    throw std::logic_error("not implemented");
+  }
+}
+
+void VarmaSimulation::Calculate(
+    Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel, Matrix<Tv> *exo,
+    const Matrix<Tv> *R, const Matrix<Tv> *r, bool usePreviousEstim,
+    Tv maxCondNum, Tv stdMultipler, bool coefUncer, Ti maxInvalidSim,
+    const std::function<void(Tv &)> *transformForMetrics) {
 
   if (cancel)
     return;
@@ -119,6 +210,10 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
 
   if (cancel)
     return;
+
+  std::function<void(Tv &)> tfm;
+  if (transformForMetrics)
+    tfm = *transformForMetrics;
 
   // set storage
   Ti pos = 0;
@@ -236,9 +331,33 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
       }
       k++;
     }
-    if (forecast.Variance.Data)
-      std.Apply_in([](Tv x) -> Tv { return std::sqrt(x); });
+
+    // Convert to STD
+    if (mDoForecastVar) { // if you are going to check NAN, you should consider
+                          // the effective horizon
+      for (int i = 0; i < co; i++)
+        std.Data[i] = std::sqrt(std.Data[i]);
+    }
+
+    if (transformForMetrics) {
+
+      for (int i = 0; i < yy; i++)
+        tfm(last.Data[i]);
+
+      for (int i = 0; i < co; i++) {
+        tfm(act.Data[i]);
+        tfm(forc.Data[i]);
+      }
+
+      if (mDoForecastVar) { // transform STDs for CRPS too
+        for (int i = 0; i < co; i++) {
+          tfm(std.Data[i]);
+        }
+      }
+    }
+
     act.Subtract0(forc, err);
+
     if (cancel)
       return;
 
@@ -256,7 +375,7 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
     for (auto &eval : metrics) {
       if (cancel)
         return;
-      Scoring::GetScore(eval, temp, act, forc, err, std, last);
+      GetScore(eval, temp, act, forc, err, std, last);
 
       // summation for calculating mean
       auto me = Results.at(c);
@@ -325,15 +444,20 @@ void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
   }
 }
 
-void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
-                                 Tv maxCondNum, Tv stdMultipler, bool coefUncer,
-                                 bool usePreviousEstim) {
+void VarmaSimulation::CalculateE(
+    Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum, Tv stdMultipler,
+    bool coefUncer, bool usePreviousEstim,
+    const std::function<void(Tv &)> *transformForMetrics) {
   auto horizons = *pHorizons;
   auto metrics = *pMetrics;
   auto sizes = *pSizes;
   Ti hh = (Ti)horizons.size();
   Ti hMin = horizons.at(0);
   Ti hMax = horizons.at(hh - 1);
+
+  std::function<void(Tv &)> tfm;
+  if (transformForMetrics)
+    tfm = *transformForMetrics;
 
   // we should get t:
   auto D = DatasetTs<false>(data.RowsCount, data.ColsCount, true, false);
@@ -470,7 +594,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
           act.Set0(b, k, data.Get0(actIndex + h, b));
 
         forc.SetColumnFromColumn0(k, forecast.Forecast, forIndex + h);
-        if (forecast.Variance.Data)
+        if (mDoForecastVar)
           std.SetColumnFromColumn0(k, forecast.Variance, forIndex + h);
       } else {
         act.SetColumn0(k, NAN);
@@ -479,8 +603,30 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
       }
       k++;
     }
-    if (forecast.Variance.Data)
-      std.Apply_in([](Tv x) -> Tv { return std::sqrt(x); });
+
+    // Convert to STD
+    if (mDoForecastVar) {
+      for (int i = 0; i < co; i++)
+        std.Data[i] = std::sqrt(std.Data[i]);
+    }
+
+    if (transformForMetrics) {
+
+      for (int i = 0; i < yy; i++)
+        tfm(last.Data[i]);
+
+      for (int i = 0; i < co; i++) {
+        tfm(act.Data[i]);
+        tfm(forc.Data[i]);
+      }
+
+      if (mDoForecastVar) { // transform STDs for CRPS too
+        for (int i = 0; i < co; i++) {
+          tfm(std.Data[i]);
+        }
+      }
+    }
+
     act.Subtract0(forc, err);
 
     /*if (keepDetails) {
@@ -495,7 +641,7 @@ void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
 
     Ti c = 0;
     for (auto &eval : metrics) {
-      Scoring::GetScore(eval, temp, act, forc, err, std, last);
+      GetScore(eval, temp, act, forc, err, std, last);
 
       // summation for calculating mean
       auto me = Results.at(c);

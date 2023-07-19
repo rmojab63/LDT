@@ -250,8 +250,13 @@ GetEstim_sur <- function(searchRes, endoIndices,
 #' @seealso [search.sur], [estim.sur]
 search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1), c(2)),
                                 countSteps = c(NA, 10),
-                        savePre = NULL, ...) {
-  Search_s("sur", x, xSizeSteps, countSteps, savePre, y = y, ...)
+                                savePre = NULL, ...) {
+
+  if (is.null(savePre) == FALSE && (is.character(savePre) == FALSE || length(savePre) > 1))
+    stop("'savePre' must be a character string.")
+
+  Search_s("sur", data = x, sizes = xSizeSteps, counts = countSteps,
+          savePre = savePre, y = y, ...)
 }
 
 

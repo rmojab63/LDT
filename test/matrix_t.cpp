@@ -147,12 +147,14 @@ public:
 
     Tw data[] = {1, 2, 3, 4, 5, 6};
     auto mat = Matrix<Tw>(data, (Ti)2, (Ti)3);
-    mat.Apply_in([](Tw x) -> Tw { return x * x; });
+    std::function<Tw(Tw)> f = [](Tw x) -> Tw { return x * x; };
+    mat.Apply_in(f);
 
     ASSERT_EQ(mat.Get(1, 1), (Tw)16);
     Tw W[6];
     auto mat2 = Matrix<Tw>(W, (Ti)2, (Ti)3);
-    mat.Apply([](Tw x) -> Tw { return (Tw)sqrt(x); }, mat2);
+    std::function<Tw(Tw)> g = [](Tw x) -> Tw { return (Tw)sqrt(x); };
+    mat.Apply(g, mat2);
     ASSERT_EQ(mat2.Get((Ti)1, (Ti)2), (Tw)6);
 
     // copy
@@ -694,22 +696,24 @@ public:
   }
 
   template <class Tw> static void dot_AA0() {
-    Tw s[] = {1, 2, 3, 4, 5, 6};
-    auto mat = Matrix<Tw>(s, (Ti)2, (Ti)3);
+    Tw s[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    auto mat = Matrix<Tw>(s, (Ti)2, (Ti)6);
 
     // AA'
 
     auto storage1 = Matrix<Tw>(new Tw[4], (Ti)2, (Ti)2);
     mat.Dot_AAt(storage1);
-    Tw r1[] = {35, 44, 44, 56};
+    Tw r1[] = {286, 322, 322, 364};
     ASSERT_EQ(storage1.Equals(Matrix<Tw>(r1, (Ti)2, (Ti)2)), true);
 
     // A'A
 
-    auto storage2 = Matrix<Tw>(new Tw[9], (Ti)3, (Ti)3);
+    auto storage2 = Matrix<Tw>(new Tw[36], (Ti)6, (Ti)6);
     mat.Dot_AtA(storage2);
-    Tw r2[] = {5, 11, 17, 11, 25, 39, 17, 39, 61};
-    ASSERT_EQ(storage2.Equals(Matrix<Tw>(r2, (Ti)3, (Ti)3)), true);
+    Tw r2[] = {5,  11, 17,  23,  29,  35,  11, 25, 39,  53,  67,  81,
+               17, 39, 61,  83,  105, 127, 23, 53, 83,  113, 143, 173,
+               29, 67, 105, 143, 181, 219, 35, 81, 127, 173, 219, 265};
+    ASSERT_EQ(storage2.Equals(Matrix<Tw>(r2, (Ti)6, (Ti)6)), true);
   }
 
   template <class Tw> static void Inv0() {

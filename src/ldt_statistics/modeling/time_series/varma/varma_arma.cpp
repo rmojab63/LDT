@@ -69,12 +69,13 @@ void VarmaArma::Calculate(const Matrix<Tv> &Pi, Tv *storage, Tv *work) {
 
   Matrix<Tv>::Diagonal(*Ar.Coefficients.at(0));
   if (sizes.ArMax != 0) {
+    std::function<Tv(Tv)> f = [](Tv d) -> Tv { return -d; };
     Ti i = 0;
     for (Ti k = 1; k <= sizes.ArMax; k++) {
       if (std::find(sizes.ArLags.begin(), sizes.ArLags.end(), k) !=
           sizes.ArLags.end()) {
         Pi.GetSub0(0, i, m, m, *Ar.Coefficients.at(k), 0, 0);
-        Ar.Coefficients.at(k)->Apply_in([](Tv d) -> Tv { return -d; });
+        Ar.Coefficients.at(k)->Apply_in(f);
         i += m;
       } else
         Ar.Coefficients.at(k)->SetValue(0);

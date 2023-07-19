@@ -114,7 +114,9 @@
         "xlocbuf": "cpp",
         "xlocmes": "cpp",
         "xlocmon": "cpp",
-        "xloctime": "cpp"
+        "xloctime": "cpp",
+        "ranges": "cpp",
+        "span": "cpp"
     },
     "spellright.language": [
         "en"
@@ -124,5 +126,6 @@
         "latex",
         "plaintext",
         "cpp"
-    ]
+    ],
+    "r.lsp.promptToInstall": false
 }

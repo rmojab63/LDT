@@ -451,7 +451,7 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
               ? R_NilValue
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Projections.Means),
-                    _["vars"] = as_matrix(model.Projections.Variances)),
+                    _["vars"] = model.Projections.mDoVariance ? (SEXP)as_matrix(model.Projections.Variances) : (SEXP)R_NilValue),
       _["simulation"] =
           simFixSize == 0 ? R_NilValue
                           : (SEXP)List::create(

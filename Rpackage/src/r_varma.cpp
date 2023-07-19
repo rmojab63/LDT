@@ -367,7 +367,7 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
     for (const auto &[k, v] : simModel.Errors) {
       h++;
       fcount += v;
-      simFails[h] = List::create(_["message"] = wrap(k), _["count"] = wrap(v));
+      simFails[h-1] = List::create(_["message"] = wrap(k), _["count"] = wrap(v));
     }
     if (fcount > 0) {
       if (printMsg)
@@ -468,8 +468,8 @@ SEXP EstimVarma(SEXP y, SEXP x, SEXP params, int seasonsCount,
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Forecasts.Forecast,
                                            &endoNames_pca, nullptr),
-                    _["vars"] = as_matrix(model.Forecasts.Variance,
-                                          &endoNames_pca, nullptr),
+                    _["vars"] = model.Forecasts.mDoVariance ? (SEXP)as_matrix(model.Forecasts.Variance,
+                                          &endoNames_pca, nullptr) : R_NilValue,
                     _["startIndex"] = wrap(model.Forecasts.StartIndex + 1)),
       _["simulation"] = simFixSize == 0
                             ? R_NilValue

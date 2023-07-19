@@ -949,13 +949,14 @@ template <typename Tw> void Matrix<Tw>::SetValueOffDiag(Tw offdiag) {
         Set0(i, j, offdiag);
 }
 
-template <typename Tw> void Matrix<Tw>::Apply_in(std::function<Tw(Tw)> func) {
+template <typename Tw> void Matrix<Tw>::Apply_in(std::function<Tw(Tw)> &func) {
   for (Ti i = 0; i < length(); i++)
     Data[i] = func(Data[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func) {
+void Matrix<Tw>::Apply_in(const Matrix<Tw> &B,
+                          std::function<Tw(Tw, Tw)> &func) {
   if (B.length() != length())
     throw std::invalid_argument("B");
   for (Ti i = 0; i < length(); i++)
@@ -963,7 +964,7 @@ void Matrix<Tw>::Apply_in(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func) {
 }
 
 template <typename Tw>
-void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> func) {
+void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> &func) {
   auto d = &Data[i];
   Ti p;
   for (Ti j = 0; j < ColsCount; j++) {
@@ -973,27 +974,28 @@ void Matrix<Tw>::ApplyRow_in(Ti i, std::function<Tw(Tw)> func) {
 }
 
 template <typename Tw>
-void Matrix<Tw>::ApplyColumn_in(Ti j, std::function<Tw(Tw)> func) {
+void Matrix<Tw>::ApplyColumn_in(Ti j, std::function<Tw(Tw)> &func) {
   auto d = &Data[RowsCount * j];
   for (Ti i = 0; i < RowsCount; i++)
     d[i] = func(d[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const {
+void Matrix<Tw>::Apply(std::function<Tw(Tw)> &func, Matrix<Tw> &storage) const {
   if (storage.length() != length())
     throw std::invalid_argument("storage");
   Apply0(func, storage);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply0(std::function<Tw(Tw)> func, Matrix<Tw> &storage) const {
+void Matrix<Tw>::Apply0(std::function<Tw(Tw)> &func,
+                        Matrix<Tw> &storage) const {
   for (Ti i = 0; i < length(); i++)
     storage.Data[i] = func(Data[i]);
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+void Matrix<Tw>::Apply(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
                        Matrix<Tw> &storage) const {
   if (storage.length() != length())
     throw std::invalid_argument("storage");
@@ -1003,7 +1005,7 @@ void Matrix<Tw>::Apply(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
 }
 
 template <typename Tw>
-void Matrix<Tw>::Apply0(Matrix<Tw> &B, std::function<Tw(Tw, Tw)> func,
+void Matrix<Tw>::Apply0(const Matrix<Tw> &B, std::function<Tw(Tw, Tw)> &func,
                         Matrix<Tw> &storage) const {
   for (Ti i = 0; i < length(); i++)
     storage.Data[i] = func(Data[i], B.Data[i]);

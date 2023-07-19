@@ -107,9 +107,11 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
     Stds.Data[i] *= r;
 
   // cumulative
-  Stds.Apply([](Tv x) -> Tv { return x * x; }, Stds2Ratios);
+  std::function<Tv(Tv)> f = [](Tv x) -> Tv { return x * x; };
+  Stds.Apply(f, Stds2Ratios);
   auto varsum = Stds2Ratios.Sum();
-  Stds2Ratios.Apply_in([&varsum](Tv x) -> Tv { return x / varsum; });
+  std::function<Tv(Tv)> g = [&varsum](Tv x) -> Tv { return x / varsum; };
+  Stds2Ratios.Apply_in(g);
 
   // Calculate PCs
   if (mDoPcs) {

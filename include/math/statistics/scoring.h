@@ -214,19 +214,6 @@ public:
   /// @return CRPS value
   static Tv GetScoreCrpsLogNormal(Tv y, Tv meanLog, Tv stdLog);
 
-  /// @brief Gets a score given a type
-  /// @param type The scoring type
-  /// @param result A place to keep the results
-  /// @param act Actual values
-  /// @param means Predictions or projections
-  /// @param err Errors
-  /// @param std Standard errors of the predictions/projections
-  /// @param last_m Last values in an ordered data for calculating the
-  /// directions
-  static void GetScore(ScoringType type, Matrix<Tv> &result, Matrix<Tv> &act,
-                       Matrix<Tv> &means, Matrix<Tv> &err, Matrix<Tv> &std,
-                       Matrix<Tv> &last_m);
-
   /// @brief Gets whether calculating a scoring rule requires variance of a
   /// distribution
   /// @param type Type of the scoring rules

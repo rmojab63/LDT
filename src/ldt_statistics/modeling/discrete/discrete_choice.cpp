@@ -127,15 +127,17 @@ int get_constIndex(const Matrix<Tv> &x) {
 template <DiscreteChoiceModelType modelType, DiscreteChoiceDistType distType>
 void setestimdetails(DiscreteChoice<modelType, distType> &model) {
   model.BetaVar.GetDiag(model.BetaStd);
-  model.BetaStd.Apply_in([](Tv d) -> Tv { return std::sqrt(d); });
+  std::function<Tv(Tv)> f = [](Tv d) -> Tv { return std::sqrt(d); };
+  model.BetaStd.Apply_in(f);
 
   // z, prob
-  model.Beta.Apply0(
-      model.BetaStd, [](Tv c, Tv s) -> Tv { return c / s; }, model.BetaZ);
+  std::function<Tv(Tv, Tv)> h = [](Tv c, Tv s) -> Tv { return c / s; };
+  model.Beta.Apply0(model.BetaStd, h, model.BetaZ);
   auto zdist = Distribution<DistributionType::kNormal>((Tv)0, (Tv)1);
-  model.BetaZ.Apply0(
-      [&](Tv t) -> Tv { return (Tv)2 * ((Tv)1 - zdist.GetCdf(std::abs(t))); },
-      model.BetaProb);
+  std::function<Tv(Tv)> g = [&](Tv t) -> Tv {
+    return (Tv)2 * ((Tv)1 - zdist.GetCdf(std::abs(t)));
+  };
+  model.BetaZ.Apply0(g, model.BetaProb);
   // z? see [section 21.4.3]
 }
 
@@ -261,6 +263,10 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
   this->NumObs = n;
   Ti k = x.ColsCount;
   // Ti k0 = k; // no cutoff
+
+  if (n < 1 || k < 1)
+    throw std::logic_error(
+        format("Invalid data dimension in binary (n={0}, k={1}).", n, k));
 
   if (w) {
     for (Ti i = 0; i < n; i++) {
@@ -602,6 +608,10 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
   this->NumObs = n;
   auto k0 = x.ColsCount;
   Ti k = k0 + this->NumCutoff - 1;
+
+  if (n < 1 || k < 1)
+    throw std::logic_error(
+        format("Invalid data dimension in ordered (n={0}, k={1}).", n, k));
 
   // count and check variance of y
   if (w)

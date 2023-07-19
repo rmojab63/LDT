@@ -123,7 +123,10 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
         this->pOptions->RequestCancel, this->pMetrics->SimFixSize, Seed,
         SigSearchMaxProb,
         this->pChecks->mCheckCN ? this->pChecks->MaxConditionNumber : INFINITY,
-        this->pMetrics->SimFixSize - this->pChecks->MinOutSim);
+        this->pMetrics->SimFixSize - this->pChecks->MinOutSim,
+        this->pMetrics->TransformForMetrics
+            ? &(this->pMetrics->TransformForMetrics)
+            : nullptr);
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)TargetsPositions.size(); t++) {

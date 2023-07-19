@@ -15,12 +15,14 @@ using namespace ldt;
 TEST(Functionx_T, simple) {
   std::function<Tv(const Matrix<Tv> &)> f = [](const Matrix<Tv> &x) -> Tv {
     auto storage = Matrix<Tv>(new std::vector<Tv>(x.length()), x.length());
-    x.Apply([](Tv a) -> Tv { return (a - 1) * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return (a - 1) * (a - 1); };
+    x.Apply(f, storage);
     return storage.Sum();
   };
   std::function<void(Matrix<Tv> &, Matrix<Tv> &)> g =
       [](Matrix<Tv> &x, Matrix<Tv> &storage) -> void {
-    x.Apply([](Tv a) -> Tv { return 2 * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return 2 * (a - 1); };
+    x.Apply(f, storage);
   };
 
   Ti m = 3;
@@ -74,7 +76,8 @@ TEST(Functionx_T, rosenbrock_der) {
 TEST(Functionx_T, simple_hes) {
   std::function<Tv(const Matrix<Tv> &)> f = [](const Matrix<Tv> &x) -> Tv {
     auto storage = Matrix<Tv>(new std::vector<Tv>(x.length()), x.length());
-    x.Apply([](Tv a) -> Tv { return (a - 1) * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return (a - 1) * (a - 1); };
+    x.Apply(f, storage);
     return storage.Sum();
   };
 

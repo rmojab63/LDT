@@ -17,12 +17,14 @@ using namespace ldt;
 TEST(LMBFGSB_T, simple) {
   std::function<Tv(const Matrix<Tv> &)> f = [](const Matrix<Tv> &x) -> Tv {
     auto storage = Matrix<Tv>(new std::vector<Tv>(x.length()), x.length());
-    x.Apply([](Tv a) -> Tv { return (a - 1) * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return (a - 1) * (a - 1); };
+    x.Apply(f, storage);
     return storage.Sum();
   };
   std::function<void(const Matrix<Tv> &, Matrix<Tv> &)> g =
       [](const Matrix<Tv> &x, Matrix<Tv> &storage) -> void {
-    x.Apply([](Tv a) -> Tv { return 2 * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return 2 * (a - 1); };
+    x.Apply(f, storage);
   };
 
   Ti m = 3;
@@ -157,12 +159,14 @@ x1 = x.Data[1]; storage.Data[0] = -2 * (1 - x0) - 400 * x0 * (x1 - x0 * x0);
 TEST(Newton_T, simple) {
   std::function<Tv(const Matrix<Tv> &)> f = [](const Matrix<Tv> &x) -> Tv {
     auto storage = Matrix<Tv>(new std::vector<Tv>(x.length()), x.length());
-    x.Apply([](Tv a) -> Tv { return (a - 1) * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return (a - 1) * (a - 1); };
+    x.Apply(f, storage);
     return storage.Sum();
   };
   std::function<void(const Matrix<Tv> &, Matrix<Tv> &)> g =
       [](const Matrix<Tv> &x, Matrix<Tv> &storage) -> void {
-    x.Apply([](Tv a) -> Tv { return 2 * (a - 1); }, storage);
+    std::function<Tv(Tv)> f = [](Tv a) -> Tv { return 2 * (a - 1); };
+    x.Apply(f, storage);
   };
   std::function<void(const Matrix<Tv> &, Matrix<Tv> &)> h =
       [](const Matrix<Tv> &x, Matrix<Tv> &storage) -> void {
