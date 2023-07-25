@@ -43,6 +43,9 @@ enum class FunctionType {
 
   /// @brief Identity function
   kId,
+  kPow2,
+  kPow3,
+  kPow4,
   kExp,
   kLog,
   kLog10,
@@ -66,6 +69,12 @@ inline const char *ToString(FunctionType type) {
   switch (type) {
   case FunctionType::kId:
     return "Identity";
+  case FunctionType::kPow2:
+    return "Power2";
+  case FunctionType::kPow3:
+    return "Power3";
+  case FunctionType::kPow4:
+    return "Power4";
   case FunctionType::kExp:
     return "Exponential";
   case FunctionType::kLog:
@@ -107,6 +116,12 @@ inline FunctionType FromString_FunctionType(const char *name) {
 
   if (std::strcmp(name, "id") == 0) {
     return FunctionType::kId;
+  } else if (std::strcmp(name, "pow2") == 0) {
+    return FunctionType::kPow2;
+  } else if (std::strcmp(name, "pow3") == 0) {
+    return FunctionType::kPow3;
+  } else if (std::strcmp(name, "pow4") == 0) {
+    return FunctionType::kPow4;
   } else if (std::strcmp(name, "exp") == 0) {
     return FunctionType::kExp;
   } else if (std::strcmp(name, "log") == 0) {
@@ -140,7 +155,7 @@ inline FunctionType FromString_FunctionType(const char *name) {
   } else if (std::strcmp(name, "floor") == 0) {
     return FunctionType::kFloor;
   } else {
-    throw std::logic_error("Invalid enum name: 'FunctionType'.");
+    throw LdtException(ErrorType::kLogic, "array.h", "invalid function type");
   }
 }
 
@@ -240,7 +255,7 @@ inline DescriptiveType FromString_DescriptiveType(const char *v) {
   else if (StartsWith("firs", v))
     return DescriptiveType::kFirst;
 
-  throw std::logic_error("Invalid enum name: 'DescriptiveType'.");
+  throw LdtException(ErrorType::kLogic, "array.h", "invalid descriptive type");
 }
 
 /// @brief A class for static array operations, that are for example needed both
@@ -292,6 +307,12 @@ public:
   template <FunctionType T> void Function(Tw &x) {
     if constexpr (T == FunctionType::kId) {
       // x = x;
+    } else if constexpr (T == FunctionType::kPow2) {
+      x = std::pow(x, 2);
+    } else if constexpr (T == FunctionType::kPow3) {
+      x = std::pow(x, 3);
+    } else if constexpr (T == FunctionType::kPow4) {
+      x = std::pow(x, 4);
     } else if constexpr (T == FunctionType::kExp) {
       x = std::exp(x);
     } else if constexpr (T == FunctionType::kLog) {
@@ -336,6 +357,12 @@ public:
     for (Ti i = 0; i < length; i++) {
       if constexpr (T == FunctionType::kId) {
         // data[i] = data[i];
+      } else if constexpr (T == FunctionType::kPow2) {
+        data[i] = std::pow(data[i], 2);
+      } else if constexpr (T == FunctionType::kPow3) {
+        data[i] = std::pow(data[i], 3);
+      } else if constexpr (T == FunctionType::kPow4) {
+        data[i] = std::pow(data[i], 4);
       } else if constexpr (T == FunctionType::kExp) {
         data[i] = std::exp(data[i]);
       } else if constexpr (T == FunctionType::kLog) {
@@ -424,8 +451,8 @@ public:
     } break;
 
     default:
-      throw std::logic_error(
-          "Invalid or not-implemented type of descriptive statistics.");
+      throw LdtException(ErrorType::kLogic, "array.h",
+                     "invalid or not-implemented descriptive statistics");
     }
   }
 
@@ -631,7 +658,8 @@ public:
 
     if constexpr (isWeighted) {
       if (!weights)
-        throw std::logic_error("Weights are missing!");
+        throw LdtException(ErrorType::kLogic, "array.h, moments",
+                       "weights are missing");
     }
 
     Tw sumW = 0, m2 = 0, m3 = 0, m4 = 0, w = 1;

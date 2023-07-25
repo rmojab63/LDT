@@ -62,7 +62,8 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
   Tv sum = 0;
   switch (e) {
   case ldt::ScoringType::kDirection:
-    throw std::logic_error("not implemented (direction)");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "not implemented (direction)");
   case ldt::ScoringType::kSign:
     for (Ti i = 0; i < length; i++)
       sum += actuals[i] * means[i] > 0 ? 1 : 0;
@@ -88,7 +89,8 @@ Tv sumScores(const ScoringType &e, const Ti &length, const Tv *actuals,
       sum += Scoring::GetScoreCrpsNormal(errors[i], 0, stds[i]);
     break;
   default:
-    throw std::logic_error("not implemented (averaging scores)");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "not implemented (averaging scores)");
   }
 
   return sum;
@@ -101,7 +103,8 @@ void SurSimulation::Calculate(
   if (cancel)
     return;
   if (maxIteration <= 0)
-    throw std::logic_error("Number of iterations must be positive.");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "number of iterations must be positive.");
 
   std::function<void(Tv &)> tfm;
   if (transformForMetrics)
@@ -151,7 +154,8 @@ void SurSimulation::Calculate(
       Model.Calculate(Split.Sample0, m, model_storage, model_work, R,
                       sigSearchMaxProb, &newX, nullptr);
       if (Model.Model.condition_number > maxCondNum)
-        throw std::logic_error("Model check failed: Maximum CN");
+        throw LdtException(ErrorType::kLogic, "sur-simulation",
+                           "model check failed: Maximum CN");
     } catch (std::exception &ex) {
       AddError(ex.what());
       continue;
@@ -203,7 +207,8 @@ void SurSimulation::Calculate(
     ValidIters++;
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
-      throw std::logic_error("Model check failed: Minimum Valid Simulations");
+      throw LdtException(ErrorType::kLogic, "sur-simulation",
+                         "model check failed: Minimum Valid Simulations");
 
     i = -1;
     for (auto &e : *pMetricsOut) {
@@ -225,7 +230,8 @@ void SurSimulation::Calculate(
     return;
 
   if (invalidCounts > maxInvalidSim)
-    throw std::logic_error("Model check failed: Minimum Valid Simulations");
+    throw LdtException(ErrorType::kLogic, "sur-simulation",
+                       "model check failed: Minimum Valid Simulations");
 
   Results.Divide_in((Tv)ValidCounts);
 

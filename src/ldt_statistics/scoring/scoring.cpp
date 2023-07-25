@@ -64,7 +64,8 @@ Tv GoodnessOfFit::ToWeight(const GoodnessOfFitType &type, const Tv &metric) {
     return 1 - metric;
 
   default:
-    throw std::logic_error("not implemented goodness-of-fit type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented goodness-of-fit type to weight");
   }
 }
 
@@ -80,7 +81,8 @@ Tv GoodnessOfFit::FromWeight(const GoodnessOfFitType &type, const Tv &weight) {
     return 1 - weight;
 
   default:
-    throw std::logic_error("not implemented goodness-of-fit type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented goodness-of-fit type to weight");
   }
 }
 
@@ -107,9 +109,10 @@ Tv Scoring::ToWeight(const ScoringType &type, const Tv &metric) {
     return 1 - metric;
 
   default:
-    throw std::logic_error(format("The given scoring type (value={}) is "
-                                  "whether invalid or not implemented.",
-                                  (int)type));
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       format("given scoring type (value={}) is "
+                              "whether invalid or not implemented.",
+                              (int)type));
   }
 }
 
@@ -136,6 +139,7 @@ Tv Scoring::FromWeight(const ScoringType &type, const Tv &weight) {
     return 1 - weight;
 
   default:
-    throw std::logic_error("not implemented scoring type to weight");
+    throw LdtException(ErrorType::kLogic, "scoring",
+                       "not implemented scoring type to weight");
   }
 }

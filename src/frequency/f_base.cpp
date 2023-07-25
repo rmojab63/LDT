@@ -13,9 +13,11 @@ void Frequency::CheckClassEquality(Frequency const &first,
   if (first.mClass != second.mClass ||
       AreEqual_i(first.ToClassString().c_str(),
                  second.ToClassString().c_str()) == false)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "freq-base",
         std::string("Class of the two frequencies are not the same: ") +
-        first.ToClassString() + std::string(" != ") + second.ToClassString());
+            first.ToClassString() + std::string(" != ") +
+            second.ToClassString());
 }
 
 bool Frequency::IsEqualTo(Frequency const &other) {
@@ -91,7 +93,8 @@ FrequencyClass Frequency::GetClass(const std::string &classStr) {
   else if (StartsWith("Ld", classStr.c_str())) // Ld...
     return FrequencyClass::kListDate;
 
-  throw std::logic_error("not implemented or invalid class string");
+  throw LdtException(ErrorType::kLogic, "freq-base",
+                 "not implemented or invalid class string");
 }
 
 std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
@@ -149,7 +152,8 @@ std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
   }
 
   default:
-    throw std::logic_error("not implemented frequency class in 'Parse'");
+    throw LdtException(ErrorType::kLogic, "freq-base",
+                   "not implemented frequency class in 'Parse'");
   }
 }
 
@@ -216,7 +220,7 @@ void Frequency::Examples(std::vector<std::unique_ptr<Frequency>> &values,
           boost::gregorian::date(2005, 5, 25), &listItemsDate)));
 }
 
-//#pragma region DayOfWeekRange
+// #pragma region DayOfWeekRange
 
 DayOfWeekRange::DayOfWeekRange(DayOfWeek start, DayOfWeek end) {
   mStart = start;
@@ -316,8 +320,9 @@ DayOfWeekRange DayOfWeekRange::Parse(std::string str) {
     auto e = FromString_DayOfWeek(parts.at(1).c_str());
     return DayOfWeekRange(s, e);
   } catch (...) {
-    throw std::logic_error("Invalid day of week range.");
+    throw LdtException(ErrorType::kLogic, "freq-base",
+                   "invalid day of week range.");
   }
 }
 
-//#pragma endregion
+// #pragma endregion

@@ -44,7 +44,8 @@ IndexRange Array<Tw>::GetRange(const Tw *data, const Ti &length) {
     return IndexRange(start, end);
 
   } else if constexpr (true) {
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "array",
         "invalid operation.Type has no NA defined."); // there is no NAN
   }
 }
@@ -78,7 +79,8 @@ IndexRange Array<Tw>::GetRange(const Tw *data, const Ti &length,
     return IndexRange(start, end);
 
   } else if constexpr (true) {
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "array",
         "invalid operation.Type has no NA defined."); // there is no NAN
   }
 }
@@ -119,7 +121,8 @@ IndexRange Array<Tw>::Interpolate(Tw *data, const Ti &length, Ti &count) {
     }
     return range;
   } else if constexpr (true)
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "array",
+                   "invalid operation"); // there is no NAN
 }
 
 template <typename Tw>

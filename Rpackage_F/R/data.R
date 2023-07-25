@@ -70,7 +70,7 @@ data.wdi.agg <- function(dirPath, minYear = 1960, maxYear = 2020, aggregateFun =
   lastInd <- maxYear - startYear + indData
 
   if (firstInd < indData || lastInd < indData) {
-    stop(paste0("Invalid date. data starts at ", startYear))
+    stop(paste0("invalid date. data starts at ", startYear))
   }
 
   #print("reading CSV file. This might be time-consuming ...")
@@ -140,7 +140,7 @@ has_all <- function(keywords, text) {
   if (length(text) == 0)
     return(FALSE)
   if (length(keywords) == 0)
-    stop(paste0("Invalid keywords. It is empty. text='", text,"'"))
+    stop(paste0("invalid keywords. It is empty. text='", text,"'"))
   for (key in keywords){
     if (length(key) == 0)
       next()

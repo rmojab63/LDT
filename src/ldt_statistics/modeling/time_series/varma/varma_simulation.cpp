@@ -43,11 +43,13 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
   mCount = count;
   auto count0 = mCount;
   if (count == 0 || count0 >= sizes.T)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "varma-simulation",
         std::string(
-            "Invalid number of simulations. It is zero or larger than the "
+            "invalid number of simulations. It is zero or larger than the "
             "number of observations.") +
-        std::to_string(count0) + std::string("...") + std::to_string(sizes.T));
+            std::to_string(count0) + std::string("...") +
+            std::to_string(sizes.T));
 
   IsExtended = isExtended;
   auto horizonMax = horizons.at(horizons.size() - 1);
@@ -168,7 +170,8 @@ void GetScore(const ScoringType &type, Matrix<Tv> &result,
   } break;
 
   default:
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "not implemented");
   }
 }
 
@@ -196,17 +199,19 @@ void VarmaSimulation::Calculate(
   auto tempm = VarmaSimulation(sizes, mCount, horizons, metrics,
                                &Model.Result.Optim.Options);
   if (WorkSize < tempm.WorkSize || StorageSize < tempm.StorageSize)
-    throw std::logic_error("inconsistent arguments in VARMA simulation");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "inconsistent arguments in VARMA simulation");
   tempm = VarmaSimulation();
 
   auto count = mCount;
 
   if (T - count <= 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "varma-simulation",
         "invalid number of simulations. It is larger than available data");
   if (count == 0)
-    throw std::logic_error(
-        "invalid number of simulations. It is zero of negative");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "invalid number of simulations. It is zero of negative");
 
   if (cancel)
     return;
@@ -305,7 +310,8 @@ void VarmaSimulation::Calculate(
     }
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
-      throw std::logic_error("Model check failed: Minimum Valid Simulations");
+      throw LdtException(ErrorType::kLogic, "varma-simulation",
+                         "model check failed: Minimum Valid Simulations");
 
     auto forecast = *forecast0;
 
@@ -400,7 +406,8 @@ void VarmaSimulation::Calculate(
   }
 
   if (counter == 0 || invalidCounts > maxInvalidSim)
-    throw std::logic_error("Model check failed: Minimum Valid Simulations");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "model check failed: Minimum Valid Simulations");
 
   if (cancel)
     return;
@@ -464,9 +471,11 @@ void VarmaSimulation::CalculateE(
   D.Data(data);
   D.Update(nullptr, work);
   if (D.HasMissingData)
-    throw std::logic_error("Missing data is found in VARMA data.");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "missing data is found in VARMA data.");
   if (D.Start > D.End)
-    throw std::logic_error("Data is not valid.");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "data is not valid.");
 
   auto T = D.End - D.Start + 1;
   Ti mm = (Ti)metrics.size();
@@ -478,17 +487,19 @@ void VarmaSimulation::CalculateE(
                                EModel.mRestriction, EModel.mCheckNan,
                                EModel.pPcaOptionsY, EModel.pPcaOptionsX);
   if (WorkSize < tempm.WorkSize || StorageSize < tempm.StorageSize)
-    throw std::logic_error("inconsistent arguments in VARMA simulation");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "inconsistent arguments in VARMA simulation");
   tempm = VarmaSimulation();
 
   auto count = mCount;
 
   if (T - count <= 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "varma-simulation",
         "invalid number of simulations. It is larger than available data");
   if (count == 0)
-    throw std::logic_error(
-        "invalid number of simulations. It is zero of negative");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "invalid number of simulations. It is zero of negative");
 
   // set storage
   Ti pos = 0;

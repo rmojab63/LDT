@@ -15,14 +15,16 @@ FrequencyDayBased::FrequencyDayBased(FrequencyWeekBased &day, Ti partitionCount,
   mPosition = position;
 
   if (mPartitionCount <= 0)
-    throw std::logic_error(
-        "Invalid argument: Number of partitions must be positive.");
+    throw LdtException(
+        ErrorType::kLogic, "freq-daybased",
+        "invalid argument: Number of partitions must be positive.");
   if (mPosition <= 0)
-    throw std::logic_error(
-        "Invalid argument: Current position must be positive.");
+    throw LdtException(ErrorType::kLogic, "freq-daybased",
+                       "invalid argument: Current position must be positive.");
   if (mPosition > mPartitionCount)
-    throw std::logic_error(
-        "Invalid argument: Current position must be equal or less than the "
+    throw LdtException(
+        ErrorType::kLogic, "freq-daybased",
+        "invalid argument: Current position must be equal or less than the "
         "number of partitions.");
 
   if (partitionCount == 24)
@@ -149,9 +151,17 @@ void FrequencyDayBased::Parse0(const std::string &str,
     else if (fClass == FrequencyClass::kXTimesADay)
       result.mPartitionCount = std::stoi(parts2.at(0).substr(2), nullptr, 10);
     else
-      throw std::logic_error("Invalid class for a day-based frequency");
+      throw LdtException(ErrorType::kLogic, "freq-daybased",
+                         "invalid class for a day-based frequency");
   } catch (...) {
-    Rethrow("Parsing day-based frequency failed. Invalid format.");
+
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      throw LdtException(ErrorType::kLogic, "freq-daybased",
+                         "Parsing day-based frequency failed. Invalid format.",
+                         &e);
+    }
   }
 }
 
@@ -164,7 +174,8 @@ std::string FrequencyDayBased::ToString() const {
   case FrequencyClass::kXTimesADay:
     return mDay.ToString() + std::string(":") + std::to_string(mPosition);
   default:
-    throw std::logic_error("invalid class type");
+    throw LdtException(ErrorType::kLogic, "freq-daybased",
+                       "invalid class type");
   }
 }
 
@@ -181,6 +192,7 @@ std::string FrequencyDayBased::ToClassString(bool details) const {
            std::string("|") + mDay.ToClassString();
   }
   default:
-    throw std::logic_error("invalid class type");
+    throw LdtException(ErrorType::kLogic, "freq-daybased",
+                       "invalid class type");
   }
 }

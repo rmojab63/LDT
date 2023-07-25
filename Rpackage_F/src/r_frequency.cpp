@@ -3,8 +3,6 @@
 using namespace Rcpp;
 using namespace ldt;
 
-
-
 // [[Rcpp::export(.F_cross_section)]]
 SEXP F_CrossSection(int position) {
   List F = List::create(_["class"] = (int)FrequencyClass::kCrossSection,
@@ -209,7 +207,8 @@ std::unique_ptr<FrequencyWeekBased> GetFreqFromSEXP_week(List f) {
         range, true);
   }
   default:
-    throw std::logic_error("use this class for week-based frequency");
+    throw LdtException(ErrorType::kLogic, "R-frequency",
+                   "use this class for week-based frequency");
   }
 }
 
@@ -283,7 +282,8 @@ GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
   }
 
   default:
-    throw std::logic_error("not implemeted for this type of frequency");
+    throw LdtException(ErrorType::kLogic, "R-frequency",
+                   "not implemeted for this type of frequency");
   }
 }
 
@@ -316,7 +316,6 @@ List ToString_F0(SEXP value) {
   return I;
 }
 
-
 SEXP To_SEXP_week(FrequencyClass fClass, Frequency *F) {
 
   auto f = dynamic_cast<FrequencyWeekBased const &>(*F);
@@ -341,13 +340,13 @@ SEXP To_SEXP_week(FrequencyClass fClass, Frequency *F) {
   }
 
   default:
-    throw std::logic_error(
-        "Invalid frequency class. week-based frequency is expected");
+    throw LdtException(ErrorType::kLogic, "R-frequency",
+                   "invalid frequency class. week-based frequency is expected");
   }
 }
 
-SEXP To_SEXP(Frequency* F, std::vector<std::string> &listItems,
-             std::vector<boost::gregorian::date> &listItemsDate){
+SEXP To_SEXP(Frequency *F, std::vector<std::string> &listItems,
+             std::vector<boost::gregorian::date> &listItemsDate) {
   FrequencyClass fClass = F->mClass;
 
   switch (fClass) {
@@ -417,9 +416,9 @@ SEXP To_SEXP(Frequency* F, std::vector<std::string> &listItems,
   }
 
   case FrequencyClass::kListDate: {
-    if (listItems.size() == 0){
-    for (auto &d : listItemsDate)
-      listItems.push_back(boost::gregorian::to_iso_string(d));
+    if (listItems.size() == 0) {
+      for (auto &d : listItemsDate)
+        listItems.push_back(boost::gregorian::to_iso_string(d));
     }
     auto f = dynamic_cast<FrequencyList<boost::gregorian::date> const &>(*F);
     auto dd = F_ListDate(listItems, boost::gregorian::to_iso_string(f.mValue));
@@ -427,12 +426,10 @@ SEXP To_SEXP(Frequency* F, std::vector<std::string> &listItems,
   }
 
   default:
-    throw std::logic_error("not implemeted for this type of frequency");
+    throw LdtException(ErrorType::kLogic, "R-frequency",
+                   "not implemeted for this type of frequency");
   }
 }
-
-
-
 
 // [[Rcpp::export(.Parse_F)]]
 SEXP Parse_F(std::string str, std::string classStr) {
@@ -442,14 +439,13 @@ SEXP Parse_F(std::string str, std::string classStr) {
 
   std::vector<std::string> listItems;
   std::vector<boost::gregorian::date> listItemsDate;
-  if (F.get()->mClass == FrequencyClass::kListString){
+  if (F.get()->mClass == FrequencyClass::kListString) {
 
     auto f0 = FrequencyList<std::string>("", nullptr);
     FrequencyList<std::string>::Parse0(str, classStr, fClass, f0, &listItems);
     return To_SEXP(&f0, listItems, listItemsDate);
 
-  }
-  else if (F.get()->mClass == FrequencyClass::kListDate){
+  } else if (F.get()->mClass == FrequencyClass::kListDate) {
 
     auto f0 = FrequencyList<boost::gregorian::date>(boost::gregorian::date(),
                                                     nullptr);
@@ -457,8 +453,7 @@ SEXP Parse_F(std::string str, std::string classStr) {
                                                   &listItemsDate);
     return To_SEXP(&f0, listItems, listItemsDate);
 
-  }
-  else{
+  } else {
     return To_SEXP(F.get(), listItems, listItemsDate);
   }
 }
@@ -514,8 +509,7 @@ int F_GetClass(std::string name) {
 }
 
 // [[Rcpp::export(.F_Next)]]
-SEXP F_Next(SEXP freq, int steps)
-{
+SEXP F_Next(SEXP freq, int steps) {
   std::vector<std::string> listItems;
   std::vector<boost::gregorian::date> listItemsDate;
   auto F = GetFreqFromSEXP(freq, listItems, listItemsDate);
@@ -527,8 +521,7 @@ SEXP F_Next(SEXP freq, int steps)
 }
 
 // [[Rcpp::export(.F_Minus)]]
-int F_Minus(SEXP freq1, SEXP freq2)
-{
+int F_Minus(SEXP freq1, SEXP freq2) {
   std::vector<std::string> listItems1;
   std::vector<boost::gregorian::date> listItemsDate1;
   auto F1 = GetFreqFromSEXP(freq1, listItems1, listItemsDate1);
@@ -540,5 +533,3 @@ int F_Minus(SEXP freq1, SEXP freq2)
   auto f2 = F2.get();
   return f1->Minus(*f2);
 }
-
-

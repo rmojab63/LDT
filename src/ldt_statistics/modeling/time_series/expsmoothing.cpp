@@ -15,7 +15,8 @@ using namespace ldt;
 
 template <ExpSmoothingType type> int expsmoothing<type>::check_getexpclass() {
   if (_additive_season != Null && _seasonCount == 0)
-    throw std::logic_error("zero number of seasons in a seasonal model");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                       "zero number of seasons in a seasonal model");
 
   if constexpr (type == ExpSmoothingType::aaa) {
     return 1;
@@ -78,7 +79,7 @@ template <ExpSmoothingType type> int expsmoothing<type>::check_getexpclass() {
   } else if constexpr (type == ExpSmoothingType::mnn) {
     return 2;
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing", "not implemented");
   }
 }
 
@@ -193,7 +194,7 @@ expsmoothing<type>::expsmoothing(unsigned short seasonCount) {
   } else if constexpr (type == ExpSmoothingType::mnn) {
     _additive_error = false;
   } else if constexpr (true) {
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing", "not implemented");
   }
 
   _seasonCount = _additive_season != Null ? seasonCount : 0;
@@ -274,7 +275,7 @@ expsmoothing_base *expsmoothing_base::get_model(ExpSmoothingType type,
   case ldt::ExpSmoothingType::mm_dm:
     return new expsmoothing<ExpSmoothingType::mm_dm>(seasonCount);
   default:
-    throw std::logic_error("not implemented");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing", "not implemented");
   }
 }
 
@@ -834,7 +835,8 @@ void initializestates(Matrix<Tv> *data, ExpSmoothingResultTv *storage, Tv *WORK,
                       bool3 additiveTrend, bool3 additiveSeason,
                       unsigned short seasonCount, Ti countUse) {
   if (countUse >= data->length())
-    throw std::logic_error("initialization size is larger than the array size");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                       "initialization size is larger than the array size");
 
   // parameters
   if (std::isnan(storage->alpha))
@@ -1012,19 +1014,22 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
                                   Ti &initialUpdateLength, bool keepAll) {
 
   if (data->length() <= 0)
-    throw std::logic_error("invalid length");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing", "invalid length");
 
   if (_additive_error == false)
     for (Ti i = 0; i < data->length(); i++)
       if (data->Data[i] <= 0)
-        throw std::logic_error(
+        throw LdtException(
+            ErrorType::kLogic, "exp-smoothing",
             "Negative data for a model with multiplicative error");
 
   if (_seasonCount != 0) {
     if (!initials->init_seasons)
-      throw std::logic_error("seasons are not initialized");
+      throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                         "seasons are not initialized");
     else if (initials->init_seasons->length() != _seasonCount)
-      throw std::logic_error("Inconsistent number of seasons");
+      throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                         "Inconsistent number of seasons");
   }
 
   auto T = data->length();
@@ -1041,7 +1046,8 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
     initializestates(data, initials, W, _additive_trend, _additive_season,
                      _seasonCount, initialUpdateLength);
   } catch (...) {
-    throw std::logic_error("Initialization failed");
+    throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                       "Initialization failed");
   }
 
   Ti q = 0;
@@ -1328,7 +1334,8 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
         if (keep)
           keepStates(t, res, level, trend, seasons, _seasonCount, e);
       } else if constexpr (true) {
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                           "not implemented");
       }
     }
 
@@ -1749,7 +1756,8 @@ void forecastSim(Ti h, ExpSmoothingResultTv *estim, Matrix<Tv> *forecast,
         rec_MNN(true, y, estim->alpha, level, e, mu);
         mvs[t]->PushNew(y, 1);
       } else if constexpr (true) {
-        throw std::logic_error("not implemented");
+        throw LdtException(ErrorType::kLogic, "exp-smoothing",
+                           "not implemented");
       }
     }
   }
@@ -1860,8 +1868,9 @@ void expsmoothing<type>::forecast(Ti horizon, ExpSmoothingResultTv *estim,
   q = 0;
   if (forceSimV || _class > 2) {
     if (std::isnan(estim->sigma2))
-      throw std::logic_error(
-          "In forecasting with the exponential model, variance of residual "
+      throw LdtException(
+          ErrorType::kLogic, "exp-smoothing",
+          "in forecasting with the exponential model, variance of residual "
           "is not a number. One possibility is that 'mu' becomes very large "
           "(infinity( while updating a multiplicative error model");
 
@@ -2000,7 +2009,8 @@ void expsmoothing<type>::calculatemeasure(
   if (maxSampleEnd == 0)
     maxSampleEnd = static_cast<Ti>(std::floor(T * outOfSamplePercentage / 100));
   if (T - maxSampleEnd <= 0 || maxSampleEnd == 0)
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "exp-smoothing",
         "invalid number of simulations.It is larger than the available data, "
         "zero or negative");
 

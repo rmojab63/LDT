@@ -76,10 +76,10 @@ print.ldtv <- function(x, ...) {
     stop("argument is null.")
   }
   if (any(class(x) == "ldtv") == FALSE) {
-    stop("Invalid class")
+    stop("invalid class")
   }
   if (any(class(x$startFrequency) == "ldtf") == FALSE) {
-    stop("Invalid frequency class")
+    stop("invalid frequency class")
   }
 
   n <- length(x$fields)
@@ -144,10 +144,10 @@ row.names.ldtv <- function(x){
     stop("argument is null.")
   }
   if (any(class(x) == "ldtv") == FALSE) {
-    stop("Invalid class")
+    stop("invalid class")
   }
   if (any(class(x$startFrequency) == "ldtf") == FALSE) {
-    stop("Invalid frequency class")
+    stop("invalid frequency class")
   }
   res <- get.seq(x$startFrequency, length(x$data))
   res
@@ -177,7 +177,7 @@ as.data.frame.ldtv <- function(x, ...) {
     stop("argument is null.")
   }
   if (any(class(x) == "ldtv") == FALSE) {
-    stop("Invalid class.")
+    stop("invalid class.")
   }
   if (is.null(x$data)) {
     stop("variable's data array is null.")
@@ -227,9 +227,9 @@ bind.variables <- function(varList, interpolate = FALSE,
   numExo = as.integer(numExo)
   horizon = as.integer(horizon)
   if (numExo < 0)
-    stop("Invalid 'numExo'. It cannot be negative.")
+    stop("invalid 'numExo'. It cannot be negative.")
   if (horizon < 0)
-    stop("Invalid 'horizon'. It cannot be negative.")
+    stop("invalid 'horizon'. It cannot be negative.")
   varList = as.list(varList)
 
   res <- .BindVariables(varList, interpolate, adjustLeadLags, numExo, horizon)

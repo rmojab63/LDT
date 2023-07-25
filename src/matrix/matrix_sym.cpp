@@ -69,7 +69,8 @@ Tw MatrixSym<has_diag, Tw>::Get0(Ti i, Ti j) const {
       return Data[i * RowsCount + j - i * (i + 1) / 2];
   else if constexpr (has_diag == false) {
     if (i == j)
-      throw std::logic_error("invalid operation: diagonal is not stored");
+      throw LdtException(ErrorType::kLogic, "matrix-sym",
+                     "invalid operation: diagonal is not stored");
     if (i > j)
       return Data[j * RowsCount + i - (j + 1) * (j + 2) / 2];
     else
@@ -93,7 +94,8 @@ void MatrixSym<has_diag, Tw>::Set0(Ti i, Ti j, Tw value) {
       Data[i * RowsCount + j - i * (i + 1) / 2] = value;
   else if constexpr (has_diag == false) {
     if (i == j)
-      throw std::logic_error("invalid operation: diagonal is not stored");
+      throw LdtException(ErrorType::kLogic, "matrix-sym",
+                     "invalid operation: diagonal is not stored");
     if (i > j)
       Data[j * RowsCount + i - (j + 1) * (j + 2) / 2] = value;
     else

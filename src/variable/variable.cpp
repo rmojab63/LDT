@@ -126,7 +126,8 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
     auto parts = std::vector<std::string>();
     Split(str, "\t", parts);
     if (parts.size() < 5)
-      throw std::logic_error("At least 4 tab-separated items is expected.");
+      throw LdtException(ErrorType::kLogic, "variable",
+                         "at least 4 tab-separated items is expected.");
 
     result.Name = parts.at(0);
 
@@ -157,8 +158,9 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
       } else if constexpr (std::is_same<Tw, long long>()) {
         result.Data.push_back(std::stoll(d));
       } else if constexpr (true) {
-        throw std::logic_error(
-            "Conversion of the variable's data-type is not implemented.");
+        throw LdtException(
+            ErrorType::kLogic, "variable",
+            "conversion of the variable's data-type is not implemented.");
       }
     }
 
@@ -167,13 +169,20 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
     for (Ti i = 4; i < (Ti)parts.size(); i++) {
       auto j = parts.at(i).find(std::string(";"));
       if (j < 0)
-        throw std::logic_error("Invalid field: Key-Value separator is missing");
+        throw LdtException(ErrorType::kLogic, "variable",
+                           "invalid field: Key-Value separator is missing");
       result.Fields.insert(
           {parts.at(i).substr(0, j), parts.at(i).substr(j + 1)});
     }
 
   } catch (...) {
-    Rethrow("Invalid format in parsing 'Variable'.");
+
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception &e) {
+      throw LdtException(ErrorType::kLogic, "variable",
+                         "invalid format in parsing 'Variable'.", &e);
+    }
   }
 }
 
@@ -206,7 +215,8 @@ template <typename Tw> IndexRange Variable<Tw>::Interpolate(Ti &count) {
     return range;
 
   } else if constexpr (true)
-    throw std::logic_error("invalid operation"); // there is no NAN
+    throw LdtException(ErrorType::kLogic, "variable",
+                       "invalid operation"); // there is no NAN
 }
 
 template <typename Tw>
@@ -269,9 +279,10 @@ void Variable<Tw>::ConvertTo_Daily(
     result.Fields.insert(std::pair("conversion", "from date-list"));
 
   } else
-    throw std::logic_error("Direct conversion from current type of frequency "
-                           "to 'Daily' frequency is not "
-                           "supported (or not implemented).");
+    throw LdtException(ErrorType::kLogic, "variable",
+                       "direct conversion from current type of frequency "
+                       "to 'Daily' frequency is not "
+                       "supported (or not implemented).");
 }
 
 template <typename Tw>
@@ -283,7 +294,8 @@ void Variable<Tw>::ConvertTo_MultiDaily(
   if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
 
     if (!aggregateFunc)
-      throw std::logic_error("Aggregate function is missing.");
+      throw LdtException(ErrorType::kLogic, "variable",
+                         "aggregate function is missing.");
     auto aggF = *aggregateFunc;
 
     std::vector<std::vector<Tv>> partitions;
@@ -302,10 +314,10 @@ void Variable<Tw>::ConvertTo_MultiDaily(
         std::move(FrequencyWeekBased::MultiDaily(start.mDay, k));
 
   } else {
-    throw std::logic_error(
-        "Direct conversion from current type of frequency to "
-        "'Multi-Day' frequency is not "
-        "supported (or not implemented).");
+    throw LdtException(ErrorType::kLogic, "variable",
+                       "direct conversion from current type of frequency to "
+                       "'Multi-Day' frequency is not "
+                       "supported (or not implemented).");
   }
 }
 
@@ -317,7 +329,8 @@ void Variable<Tw>::ConvertTo_Weekly(
   if (StartFrequency.get()->mClass == FrequencyClass::kDaily) {
 
     if (!aggregateFunc)
-      throw std::logic_error("Aggregate function is missing.");
+      throw LdtException(ErrorType::kLogic, "variable",
+                         "aggregate function is missing.");
     auto aggF = *aggregateFunc;
 
     auto start =
@@ -353,10 +366,10 @@ void Variable<Tw>::ConvertTo_Weekly(
         std::move(FrequencyWeekBased::Weekly(start.mDay - dd));
 
   } else {
-    throw std::logic_error(
-        "Direct conversion from current type of frequency to "
-        "'Weekly' frequency is not "
-        "supported (or not implemented).");
+    throw LdtException(ErrorType::kLogic, "variable",
+                       "direct conversion from current type of frequency to "
+                       "'Weekly' frequency is not "
+                       "supported (or not implemented).");
   }
 }
 
@@ -382,7 +395,8 @@ void Variable<Tw>::ConvertTo_XxYear(
         dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
 
     if (!aggregateFunc)
-      throw std::logic_error("Aggregate function is missing.");
+      throw LdtException(ErrorType::kLogic, "variable",
+                         "aggregate function is missing.");
     auto aggF = *aggregateFunc;
 
     result.Data.clear();
@@ -411,10 +425,10 @@ void Variable<Tw>::ConvertTo_XxYear(
         start.mDay.year(), x, get_part(start.mDay, x)));
 
   } else {
-    throw std::logic_error(
-        "Direct conversion from current type of frequency to "
-        "'x times a year' frequency is not "
-        "supported (or not implemented).");
+    throw LdtException(ErrorType::kLogic, "variable",
+                       "direct conversion from current type of frequency to "
+                       "'x times a year' frequency is not "
+                       "supported (or not implemented).");
   }
 }
 

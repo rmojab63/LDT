@@ -37,14 +37,15 @@ void UpdateVariableFromSEXP(
     variable.StartFrequency =
         GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate);
   } catch (...) {
-    throw std::logic_error("Invalid 'startFrequency'.");
+    throw LdtException(ErrorType::kLogic, "R-variable",
+                       "invalid 'startFrequency'.");
   }
 
   try {
     variable.Data = as<std::vector<double>>(w["data"]);
   } catch (...) {
-    throw std::logic_error(
-        "Invalid 'data'. It should be a vector of numerics.");
+    throw LdtException(ErrorType::kLogic, "R-variable",
+                       "invalid 'data'. It should be a vector of numerics.");
   }
 
   try {
@@ -53,14 +54,16 @@ void UpdateVariableFromSEXP(
       for (int j = 0; j < F.length(); j++) {
         CharacterVector Fj = as<CharacterVector>(F[j]);
         if (Fj.length() < 2)
-          throw std::logic_error("Expected a 'key' and a 'value'.");
+          throw LdtException(ErrorType::kLogic, "R-variable",
+                             "Expected a 'key' and a 'value'.");
         variable.Fields.insert(
             {as<std::string>(Fj[0]), as<std::string>(Fj[1])});
       }
     }
   } catch (...) {
-    throw std::logic_error(
-        "Invalid fields. It should be a 'List' of 'CharacterVector's. The "
+    throw LdtException(
+        ErrorType::kLogic, "R-variable",
+        "invalid fields. It should be a 'List' of 'CharacterVector's. The "
         "vector must have 'Key-Value' pairs.");
   }
 }
@@ -80,14 +83,17 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   auto vars = as<List>(varList);
   int n = vars.length();
   if (n == 0)
-    throw std::logic_error("Empty list of variables.");
+    throw LdtException(ErrorType::kLogic, "R-variable",
+                       "empty list of variables");
 
   int numEndo = n - numExo;
   if (numExo < 0 || numEndo < 0)
-    throw std::logic_error(
-        "Invalid number of exogenous/exogenous variables (check 'numExo').");
+    throw LdtException(
+        ErrorType::kLogic, "R-variable",
+        "invalid number of exogenous/exogenous variables (check 'numExo').");
   if (numExo > 0 && horizon < 0)
-    throw std::logic_error("Invalid out-of-sample size (check 'horizon').");
+    throw LdtException(ErrorType::kLogic, "R-variable",
+                       "invalid out-of-sample size (check 'horizon').");
 
   auto info = IntegerMatrix(n, 5);
   colnames(info) =
@@ -102,7 +108,8 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   try {
     for (int i = 0; i < n; i++) {
       if (is<List>(vars[i]) == false)
-        throw std::logic_error("Invalid variable type.");
+        throw LdtException(ErrorType::kLogic, "R-variable",
+                           "invalid variable type.");
       UpdateVariableFromSEXP(as<List>(vars[i]), list.at(i), listItems.at(i),
                              listItemsDate.at(i));
       list.at(i).Trim();
@@ -115,7 +122,8 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
       info(i, 3) = count;
     }
   } catch (...) {
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "R-variable",
         "Creating a variable failed. Make sure all items of the list are "
         "'ldtv' objects.");
   }
@@ -187,14 +195,12 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   }
   rownames(res) = wrap(rns);
 
-
   std::vector<std::string> listItems0;
   std::vector<boost::gregorian::date> listItemsDate0;
 
-  res.attr("ldtf") =  To_SEXP(vs.StartFrequency.get(), listItems0, listItemsDate0);
+  res.attr("ldtf") =
+      To_SEXP(vs.StartFrequency.get(), listItems0, listItemsDate0);
 
-  auto L =
-      List::create(_["data"] = res,
-                   _["info"] = info);
+  auto L = List::create(_["data"] = res, _["info"] = info);
   return L;
 }

@@ -15,7 +15,8 @@ TimeSeriesFilters::TimeSeriesFilters(const Matrix<Tv> *source, bool byrow,
   auto indexes = MatrixIndexes(source, byrow, true, false);
 
   if (indexes.getAnyHasMissing() || indexes.getAnyIsInvalid())
-    throw std::logic_error("missing data or invalid row/column is found.");
+    throw LdtException(ErrorType::kLogic, "ts-filter",
+                   "missing data or invalid row/column is found.");
 
   auto rq = _byrow ? _source->ColsCount : source->RowsCount;
   if (checkNAN) {
@@ -43,7 +44,7 @@ TimeSeriesFilters::TimeSeriesFilters(const Matrix<Tv> *source, bool byrow,
     Data = (Matrix<Tv> *)source;
 }
 
-//#pragma region HP
+// #pragma region HP
 
 void TimeSeriesFilters::calculate_hp_size(Ti &workSize, Ti &storageRow,
                                           Ti &storageCol) {
@@ -113,9 +114,9 @@ void TimeSeriesFilters::calculate_hp(Tv lambda, Matrix<Tv> *storage_filt,
   delete mat;
 }
 
-//#pragma endregion
+// #pragma endregion
 
-//#pragma region BK
+// #pragma region BK
 
 void TimeSeriesFilters::calculate_bk_size(Ti &storageRow, Ti &storageCol) {
   Ti T = _ranges->Count();
@@ -133,7 +134,8 @@ void TimeSeriesFilters::calculate_bk(Tv minf, Tv maxf, Ti k,
   Tv res, a, b;
   Ti i, j, p, q;
 
-  throw std::logic_error(
+  throw LdtException(
+      ErrorType::kLogic, "ts-filter",
       "not implemented"); // the indexation seems to be wrong. 'p' parameter in
                           // the loop below exceeds its valid values
 
@@ -182,4 +184,4 @@ void TimeSeriesFilters::calculate_bk(Tv minf, Tv maxf, Ti k,
   delete[] WORK;
 }
 
-//#pragma endregion
+// #pragma endregion

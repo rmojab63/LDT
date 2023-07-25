@@ -99,7 +99,7 @@ LDT_C_EXPORT double LDT_GetScoreCrpsLogNormal(double y, double meanLog,
 
 LDT_C_EXPORT void LDT_Forecast(double *data, int dataRows, int dataCols,
                                int exoStart, int horizon, bool &cancel) {
-  throw std::logic_error("Not implemented");
+  throw ldt::LdtException(ldt::ErrorType::kLogic, "api", "not implemented");
 
   /*
     auto source = Matrix<Tv>(data, dataRows, dataCols);

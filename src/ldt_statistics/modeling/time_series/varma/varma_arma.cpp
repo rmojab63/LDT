@@ -59,7 +59,7 @@ void VarmaArma::Calculate(const Matrix<Tv> &Pi, Tv *storage, Tv *work) {
 
   auto sizes = *pSizes;
   if (Pi.ColsCount != sizes.NumParamsEq)
-    throw std::logic_error("inconsistent size");
+    throw LdtException(ErrorType::kLogic, "varma-arma", "inconsistent size");
   Ti m = sizes.EqsCount;
   // Ti mm = m * m;
   Ti p = 0, q = 0;

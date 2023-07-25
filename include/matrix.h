@@ -365,7 +365,7 @@ public:
   template <typename t_value1>
   static void Convert(std::vector<t_value1> &data, Matrix<Tw> &storage) {
     if (storage.length() != data->size())
-      throw std::logic_error("wrong size: storage");
+      throw LdtException(ErrorType::kLogic, "matrix.h", "invalid storage size");
     Ti i = 0;
     for (auto &d : *data) {
       storage.Data[i] = static_cast<Tw>(d);
@@ -378,7 +378,7 @@ public:
   /// @param storage a vector with equal size to save the results
   template <typename t_value1> void Convert(std::vector<t_value1> &storage) {
     if (storage.size() != length())
-      throw std::logic_error("wrong size: storage");
+      throw LdtException(ErrorType::kLogic, "matrix.h", "invalid storage size");
     for (Ti i = 0; i < length(); i++) {
       storage.at(i) = static_cast<Tw>(Data[i]);
     }

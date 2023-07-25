@@ -65,11 +65,12 @@ Ti Histogram::Compute(bool forsize, Matrix<Tv> *data, Matrix<Tv> *storageAxis,
   auto values = *data;
   Ti L = values.length();
   if (L == 0)
-    throw std::logic_error("invalid length"); // no data
+    throw LdtException(ErrorType::kLogic, "histogram", "invalid length"); // no data
 
   if (forsize) {
     if (max <= min)
-      throw std::logic_error("Invalid min/max for histogram");
+      throw LdtException(ErrorType::kLogic, "histogram",
+                     "invalid min/max for histogram");
 
     std::sort(values.Data, values.Data + L); // sort
 
@@ -82,7 +83,8 @@ Ti Histogram::Compute(bool forsize, Matrix<Tv> *data, Matrix<Tv> *storageAxis,
       auto max0 = st.QuantileSorted(1.0);
 
       if (std::isinf(min0) || std::isinf(max0))
-        throw std::logic_error("Data contains 'infinity'"); // inf found
+        throw LdtException(ErrorType::kLogic, "histogram",
+                       "Data contains 'infinity'"); // inf found
 
       auto iqr = q3 - q1;
 
@@ -96,7 +98,8 @@ Ti Histogram::Compute(bool forsize, Matrix<Tv> *data, Matrix<Tv> *storageAxis,
         max = std::min(max0, q3 + iqr * iqrMultiply);
 
       if (std::isnan(min) || std::isnan(max))
-        throw std::logic_error("Data is 'NAN' or contains 'NaN'"); // nan found
+        throw LdtException(ErrorType::kLogic, "histogram",
+                       "Data is 'NAN' or contains 'NaN'"); // nan found
 
       if (std::isnan(step)) {
         if (bincount == 0)
@@ -127,15 +130,18 @@ Ti Histogram::Compute(bool forsize, Matrix<Tv> *data, Matrix<Tv> *storageAxis,
 
     if (std::isnan(step)) {
       if (bincount == 0)
-        throw std::logic_error("bincount is zero for histogram");
+        throw LdtException(ErrorType::kLogic, "histogram",
+                       "bincount is zero for histogram");
       step = (max - min) / bincount;
     } else if (step == 0.0)
-      throw std::logic_error("Step is zero for histogram");
+      throw LdtException(ErrorType::kLogic, "histogram",
+                     "Step is zero for histogram");
     else
       bincount = storageAxis->length() - 1;
 
     if (bincount == 0)
-      throw std::logic_error("bincount is zero for histogram");
+      throw LdtException(ErrorType::kLogic, "histogram",
+                     "bincount is zero for histogram");
 
     for (Ti i = 0; i < bincount; i++) {      // axis size is bincount+1
       storageAxis->Data[i] = min + i * step; // don't increment
@@ -160,7 +166,7 @@ Ti Histogram::ComputeV(Matrix<Tv> *data, Matrix<Tv> *storageAxis,
   auto values = *data;
   Ti L = values.length();
   if (L == 0)
-    throw std::logic_error("invalid length");
+    throw LdtException(ErrorType::kLogic, "histogram", "invalid length");
 
   std::sort(values.Data, values.Data + L); // sort
   fill(data, storageAxis, storageCount);

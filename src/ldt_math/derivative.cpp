@@ -51,9 +51,10 @@ void Derivative::CalculateFirst(const std::function<Tv(const Matrix<Tv> &)> &f,
 
   Ti n = x.length();
   if (n > mN)
-    throw std::logic_error("invalid size in 'first derivative'.");
+    throw LdtException(ErrorType::kLogic, "derivative",
+                   "invalid size in 'first derivative'.");
   if (mDoFirstDerivative == false)
-    throw std::logic_error("invalid request");
+    throw LdtException(ErrorType::kLogic, "derivative", "invalid request");
 
   Result1.SetData(0, storage);
   Result1.Restructure(n, 1);
@@ -157,9 +158,10 @@ void Derivative::CalculateSecond(const std::function<Tv(const Matrix<Tv> &)> &f,
   Ti n = x.length();
 
   if (n > mN)
-    throw std::logic_error("invalid size in 'second derivative'.");
+    throw LdtException(ErrorType::kLogic, "derivative",
+                   "invalid size in 'second derivative'.");
   if (mDoSecondDerivative == false)
-    throw std::logic_error("invalid request");
+    throw LdtException(ErrorType::kLogic, "derivative", "invalid request");
 
   Result2.SetData(0, storage);
   Result2.Restructure(n, n); // in case n is smaller

@@ -122,7 +122,7 @@ f.quarterly <- function(year, quarter){
   year = as.integer(year)
   quarter = as.integer(quarter)
   if (quarter < 1 || quarter > 4)
-    stop("Invalid 'quarter'. It should be between 1 and 4.")
+    stop("invalid 'quarter'. It should be between 1 and 4.")
   res <- .F_quarterly(year, quarter)
   res
 }
@@ -176,7 +176,7 @@ f.monthly <- function(year, month){
   year = as.integer(year)
   month = as.integer(month)
   if (month < 1 || month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
+    stop("invalid 'month'. It should be between 1 and 12.")
   res <- .F_monthly(year, month)
   res
 }
@@ -228,7 +228,7 @@ f.multi.yearly <- function(year, z){
   year = as.integer(year)
   z = as.integer(z)
   if (z <= 0)
-    stop("Invalid 'z'. It should be a positive number.")
+    stop("invalid 'z'. It should be a positive number.")
   res <- .F_multi_yearly(year, z)
   res
 }
@@ -287,9 +287,9 @@ f.x.times.a.year <- function(year, x, position){
   position = as.integer(position)
 
   if (x <= 0)
-    stop("Invalid 'x'. It should be a positive number.")
+    stop("invalid 'x'. It should be a positive number.")
   if (position <= 0 || position > x)
-    stop("Invalid 'position'. It should be a positive number and less than the value of 'x'.")
+    stop("invalid 'position'. It should be a positive number and less than the value of 'x'.")
 
   res <- .F_x_times_a_year(year, x, position)
   res
@@ -352,11 +352,11 @@ f.x.times.z.years <- function(year, x, z, position){
   position = as.integer(position)
 
   if (z <= 0)
-    stop("Invalid 'z'. It should be a positive number.")
+    stop("invalid 'z'. It should be a positive number.")
   if (x <= 0)
-    stop("Invalid 'x'. It should be a positive number.")
+    stop("invalid 'x'. It should be a positive number.")
   if (position <= 0 || position > x)
-    stop("Invalid 'position'. It should be a positive number and less than the value of 'x'.")
+    stop("invalid 'position'. It should be a positive number and less than the value of 'x'.")
 
   res <- .F_x_times_z_years(year, x, z, position)
   res
@@ -367,7 +367,7 @@ f.x.times.z.years <- function(year, x, z, position){
 get_date <- function(date){
   res <- list()
   if (is.null(date))
-    stop("Invalid 'date'. It is null.")
+    stop("invalid 'date'. It is null.")
 
   if (is.list(date)){
     if (is.null(date$year) || is.null(date$month) || is.null(date$day))
@@ -376,7 +376,7 @@ get_date <- function(date){
   }
   else if (is.numeric(date) || is.integer(date)){
     if (length(date) != 3)
-      stop("Invalid 'date' array. Its length must be 3.")
+      stop("invalid 'date' array. Its length must be 3.")
     res <- list(year=as.integer(date[[1]]),
                 month = as.integer(date[[2]]),
                 day=as.integer(date[[3]]))
@@ -389,11 +389,11 @@ get_date <- function(date){
   }
 
   if (res$year < 1400)
-    stop("Invalid 'year'. It should be larger than 1400.")
+    stop("invalid 'year'. It should be larger than 1400.")
   if (res$month <= 0 || res$month > 12)
-    stop("Invalid 'month'. It should be between 1 and 12.")
+    stop("invalid 'month'. It should be between 1 and 12.")
   if (res$day <= 0 || res$day > 31)
-    stop("Invalid 'day'.")
+    stop("invalid 'day'.")
 
   res
 }
@@ -510,7 +510,7 @@ f.multi.weekly <- function(date, k){
 
 
   if (k <= 0)
-    stop("Invalid 'k'. It must be a positive integer.")
+    stop("invalid 'k'. It must be a positive integer.")
 
   res <- .F_multi_weekly(date$year, date$month, date$day, k)
   res
@@ -616,7 +616,7 @@ f.multi.daily <- function(date, k){
 
 
   if (k <= 0)
-    stop("Invalid 'k'. It must be a positive integer.")
+    stop("invalid 'k'. It must be a positive integer.")
 
   res <- .F_multi_daily(date$year, date$month, date$day, k)
   res
@@ -691,9 +691,9 @@ f.daily.in.week <- function(date, weekStart = "mon",
 
   valids <- c("sun", "mon", "tue", "wed", "thu", "fri", "sat")
   if (any(weekStart == valids) == FALSE)
-    stop(paste0("Invalid 'weekStart'. It should be one of ", paste(dQuote(valids), collapse = ", "),"."))
+    stop(paste0("invalid 'weekStart'. It should be one of ", paste(dQuote(valids), collapse = ", "),"."))
   if (any(weekEnd == valids) == FALSE)
-    stop(paste0("Invalid 'weekEnd'. It should be one of ", paste(dQuote(valids), collapse = ", "),"."))
+    stop(paste0("invalid 'weekEnd'. It should be one of ", paste(dQuote(valids), collapse = ", "),"."))
 
 
   res <- .F_daily_in_week(date$year, date$month, date$day, weekStart,
@@ -861,7 +861,7 @@ f.hourly <- function(day, hour){
   hour = as.integer(hour)
 
   if (hour < 1 || hour > 24)
-    stop("Invalid 'hour'. It should be between 1 and 24.")
+    stop("invalid 'hour'. It should be between 1 and 24.")
 
   res <- .F_hourly(day, hour)
   res
@@ -910,7 +910,7 @@ f.minutely <- function(day, minute){
   minute = as.integer(minute)
 
   if (minute < 1 || minute > 1440)
-    stop("Invalid 'minute'. It should be between 1 and 1440.")
+    stop("invalid 'minute'. It should be between 1 and 1440.")
 
   res <- .F_minutely(day, minute)
   res
@@ -962,7 +962,7 @@ f.secondly <- function(day, second){
   second = as.integer(second)
 
   if (second < 1 || second > 86400)
-    stop("Invalid 'minute'. It should be between 1 and 86400.")
+    stop("invalid 'minute'. It should be between 1 and 86400.")
 
   res <- .F_secondly(day, second)
   res
@@ -1016,9 +1016,9 @@ f.x.times.a.day <- function(day, x, position){
   position = as.integer(position)
 
   if (x <= 0)
-    stop("Invalid 'x'. It should be a positive number.")
+    stop("invalid 'x'. It should be a positive number.")
   if (position <= 0 || position > x)
-    stop("Invalid 'position'. It should be a positive number and less than the value of 'x'.")
+    stop("invalid 'position'. It should be a positive number and less than the value of 'x'.")
 
 
   res <- .F_x_times_a_day(day, x, position)

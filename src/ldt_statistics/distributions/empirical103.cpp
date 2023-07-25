@@ -123,7 +123,8 @@ void DistributionEmpirical103::Combine(
     weight = 1.0 / dists.size();
 
   if (dists.size() == 0)
-    throw std::logic_error("Empty list of distributions!");
+    throw LdtException(ErrorType::kLogic, "empirical103",
+                   "Empty list of distributions!");
   else if (dists.size() == 1) {
     for (Ti i = 0; i < 103; i++)
       result[i] = dists.at(0).Quantiles[i];

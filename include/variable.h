@@ -107,7 +107,8 @@ public:
           dynamic_cast<FrequencyWeekBased const &>(*StartFrequency.get());
 
       if (!aggregateFunc)
-        throw std::logic_error("Aggregate function is missing.");
+        throw LdtException(ErrorType::kLogic, "variable.h",
+                       "aggregate function is missing");
       auto aggF = *aggregateFunc;
 
       result.Data.clear();
@@ -141,10 +142,10 @@ public:
             start.mDay.year(), x, get_part_month_based<x>(start.mDay)));
       }
     } else {
-      throw std::logic_error(
-          "Direct conversion from current type of frequency to "
-          "'x times a year' frequency is not "
-          "supported (or not implemented).");
+      throw LdtException(ErrorType::kLogic, "variable.h",
+                     "direct conversion from current type of frequency to "
+                     "'x times a year' frequency is not "
+                     "supported (or not implemented).");
     }
   }
 
@@ -174,8 +175,9 @@ private:
           return 2 * (month - 1) + (day > 15 ? 2 : 1);
         }
       } else if constexpr (true) {
-        throw std::logic_error("It is not implemented for this type of "
-                               "partition. Use the non-templated method.");
+        throw LdtException(ErrorType::kLogic, "variable.h",
+                       "it is not implemented for this type of "
+                       "partition. Use the non-templated method");
       }
     }
   }

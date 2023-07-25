@@ -55,12 +55,12 @@ convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 
   k = as.integer(k)
   if (k<=0)
-    stop("Invalid 'k'. It must be positive.")
+    stop("invalid 'k'. It must be positive.")
 
   fromEnd = as.logical(fromEnd)
 
   if (is.function(aggregateFun) == FALSE && is.character(aggregateFun) == FALSE)
-    stop("Invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
+    stop("invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
 
   res = .ConvertTo_MultiDaily(variable,k,aggregateFun,fromEnd)
   res
@@ -89,7 +89,7 @@ convert.to.multidaily <- function(variable, k, aggregateFun, fromEnd = TRUE){
 convert.to.weekly <- function(variable, weekStart, aggregateFun){
   weekStart = as.character(weekStart)
   if (is.function(aggregateFun) == FALSE && is.character(aggregateFun) == FALSE)
-    stop("Invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
+    stop("invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
 
   res = .ConvertTo_Weekly(variable,weekStart,aggregateFun)
   res
@@ -119,9 +119,9 @@ convert.to.weekly <- function(variable, weekStart, aggregateFun){
 convert.to.XxYear <- function(variable, x, aggregateFun){
   x = as.integer(x)
   if (x < 0)
-    stop("Invalid 'x'. It should be a positive integer.")
+    stop("invalid 'x'. It should be a positive integer.")
   if (is.function(aggregateFun) == FALSE && is.character(aggregateFun) == FALSE)
-    stop("Invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
+    stop("invalid 'aggregateFun'. It must be an R function or a string that represents a valid aggregator.");
 
   res = .ConvertTo_XxYear(variable,aggregateFun,x)
   res

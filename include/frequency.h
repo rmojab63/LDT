@@ -111,7 +111,8 @@ inline const char *ToString(const FrequencyClass &value) {
     return "List (Date)";
 
   default:
-    throw std::logic_error("Invalid type: FrequencyClass");
+    throw LdtException(ErrorType::kLogic, "frequency.h",
+                   "invalid or not implemented frequency class");
   };
 }
 
@@ -156,7 +157,8 @@ inline FrequencyClass FromString_FrequencyClass(const char *v) {
   else if (StartsWith("yea", v) || StartsWith("anu", v))
     return FrequencyClass::kYearly;
 
-  throw std::logic_error("Invalid enum name: 'FrequencyClass'.");
+  throw LdtException(ErrorType::kLogic, "frequency.h",
+                 "invalid or not implemented frequency class");
 }
 
 /// @brief Represents a day of week
@@ -191,7 +193,7 @@ inline const char *ToString(DayOfWeek value, bool abb = true) {
   case DayOfWeek::kSat:
     return abb ? "sat" : "Saturday";
   default:
-    throw std::logic_error("Invalid day of week");
+    throw LdtException(ErrorType::kRuntime, "frequency.h", "invalid day of week");
   }
 }
 
@@ -214,7 +216,7 @@ inline DayOfWeek FromString_DayOfWeek(const char *str) {
   if (StartsWith("sat", str))
     return DayOfWeek::kSat;
 
-  throw std::logic_error("Invalid day of week string");
+  throw LdtException(ErrorType::kLogic, "frequency.h", "invalid day of week");
 }
 
 /// @brief Represents a day of week range

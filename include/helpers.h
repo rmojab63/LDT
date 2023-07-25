@@ -113,15 +113,6 @@ Tw Math_BinomialCoefficient(unsigned int x, unsigned int y) {
 
 // #pragma endregion
 
-// #pragma region Exception
-
-/// @brief A centralized method for rethrowing a exception with details
-/// @param msg A header message
-/// @param logic true for 'logic_error_, false for 'runtime_error'.
-LDT_EXPORT void Rethrow(const char *msg, bool logic = true);
-
-// #pragma endregion
-
 // #pragma region Other
 
 /// @brief Sorts an array and keeps the sorting indices  (for a description,
@@ -327,5 +318,67 @@ std::string format(const std::string &fmt, Args... args) {
   oss << fmt.substr(pos);
   return oss.str();
 }
+
+namespace ldt {
+
+/// @brief Enum representing different types of errors.
+enum class ErrorType {
+
+  /// @brief Represents a logic error that occurs due to errors in the program's
+  /// internal logic.
+  kLogic,
+
+  /// @brief Represents an invalid argument error that occurs when a unction is
+  /// called with invalid arguments.
+  kArgument,
+
+  /// @brief Represents an out of range error that occurs when arguments are
+  /// outside the valid range.
+  kOutOfRange,
+
+  /// @brief Represents a runtime error that occurs due to events beyond the
+  /// scope of the program and can only be caught at runtime.
+  kRuntime,
+
+  /// @brief Represents a bad allocation error that occurs when a memory
+  /// allocation fails.
+  kBadAllocation
+};
+
+class LDT_EXPORT LdtException : public std::exception {
+  std::string msg;
+
+public:
+  /// @brief Throws a formatted exception based on the given error type,
+  /// function name, and message.
+  /// @param errorType The type of error to throw
+  /// @param locationId A name that identifies the location of the error. Try to
+  /// use "filename" or "filename, name of function".
+  /// @param message The message to include in the exception. Don't add dot at
+  /// the end.
+  /// @param exception The exception to include in the formatted message (if not
+  /// empty). Use it with "try{}catch (const std::exception& e){}". In order to
+  /// rethrow an exception caught by a catch block with an ellipsis, you can add
+  /// a new try-catch block within in, use
+  /// "std::rethrow_exception(std::current_exception());" and catch the
+  /// exception.
+  LdtException(const ErrorType &errorType, const std::string &locationId,
+               const std::string &message,
+               const std::exception *innerException = nullptr) {
+    if (!innerException)
+      msg = format("ldt::{} -> {}.",
+                   locationId.empty() ? "unknown location" : locationId,
+                   message.empty() ? "unknown error" : message);
+    else
+      msg = format("ldt::{} -> {} [{}].",
+                   locationId.empty() ? "unknown location" : locationId,
+                   message.empty() ? "unknown error" : message,
+                   innerException->what());
+  }
+
+  virtual const char *what() const noexcept override { return msg.c_str(); }
+};
+
+} // namespace ldt
 
 // #pragma endregion

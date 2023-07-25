@@ -69,7 +69,8 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
       TargetsPositions.push_back(a);
   }
   if (TargetsPositions.size() == 0)
-    throw std::logic_error("A searcher with no target is not valid.");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "a searcher with no target is not valid.");
 
   auto numMeas =
       this->pMetrics->MetricsOut.size() + this->pMetrics->MetricsIn.size();
@@ -198,7 +199,8 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
     }
   }
   if (allNan) {
-    throw std::logic_error(
+    throw LdtException(
+        ErrorType::kLogic, "sur-modelset",
         "All weights are NaN"); // +
                                 // Sur::ModelToString(DModel.Sizes).c_str();
                                 // // weights are all nan
@@ -228,36 +230,41 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
   // check searchItems.Length1 with the number of exogenous variables ?!
   if (searchItems.Length1 != 0 &&
       searchItems.Length1 != searchItems.LengthExogenouses)
-    throw std::logic_error("Inconsistent number of exogenous variables");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "inconsistent number of exogenous variables");
   if (searchItems.Length1 != 0 && checks.Estimation == false)
-    throw std::logic_error(
-        "Parameters are needed. Set 'checks.Estimation = true'.");
+    throw LdtException(
+        ErrorType::kLogic, "sur-modelset",
+        "parameters are needed. Set 'checks.Estimation = true'.");
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
     for (auto &a : b) {
       if (a < searchItems.LengthDependents ||
           a >= searchItems.LengthDependents + searchItems.LengthExogenouses)
-        throw std::logic_error(
-            "Invalid exogenous group element (it is larger than the number "
+        throw LdtException(
+            ErrorType::kLogic, "sur-modelset",
+            "invalid exogenous group element (it is larger than the number "
             "of available variables).");
       if (a < 0)
-        throw std::logic_error(
-            "Invalid exogenous group element (it is negative).");
+        throw LdtException(ErrorType::kLogic, "sur-modelset",
+                           "invalid exogenous group element (it is negative).");
     }
   }
 
   unsigned int co = 0;
   for (auto const &s : exoSizes) {
     if (s <= 0)
-      throw std::logic_error(
-          "Invalid exogenous size (zero or negative). Make sure array is "
+      throw LdtException(
+          ErrorType::kLogic, "sur-modelset",
+          "invalid exogenous size (zero or negative). Make sure array is "
           "initialized properly.");
     if (numFixXPartitions > s)
       continue;
     for (auto &e : endoIndexes) {
       if (e.size() == 0)
-        throw std::logic_error("Invalid endogenous indexes. It is empty.");
+        throw LdtException(ErrorType::kLogic, "sur-modelset",
+                           "invalid endogenous indexes. It is empty.");
 
       if (e.at(0) > searchItems.LengthTargets)
         continue; // no target here

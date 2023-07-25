@@ -11,7 +11,7 @@ print.ldtf <- function(x, ...) {
     stop("argument is null.")
   }
   if (any(class(x) == "ldtf") == FALSE) {
-    stop("Invalid class")
+    stop("invalid class")
   }
   s <- .ToString_F0(x)
 
@@ -130,7 +130,7 @@ as.frequency <-function(str, classId){
 get.seq <- function(from, to, by = 1){
   by = as.integer(by)
   if (by == 0)
-    stop("Invalid 'by' value. It cannot be zero." )
+    stop("invalid 'by' value. It cannot be zero." )
 
   res <- .Sequence_F(from, to, by)
   res
@@ -165,11 +165,11 @@ get.seq0 <- function(start, length, by = 1){
 
   length = as.integer(length)
   if (length < 0)
-    stop("Invalid 'length' value. It cannot be negative." )
+    stop("invalid 'length' value. It cannot be negative." )
 
   by = as.integer(by)
   if (by == 0)
-    stop("Invalid 'by' value. It cannot be zero." )
+    stop("invalid 'by' value. It cannot be zero." )
 
   res <- .Sequence_F0(start, length, by)
   res

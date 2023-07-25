@@ -65,9 +65,9 @@ inline GoodnessOfFitType FromString_GoodnessOfFitType(const char *v) {
   else if (StartsWith("bri", v))
     return GoodnessOfFitType::kBrier;
 
-  throw std::logic_error(
-      std::string("Invalid enum name: 'GoodnessOfFit Type'. value=") +
-      std::string(v));
+  throw LdtException(
+      ErrorType::kLogic, "scoring.h",
+      format("invalid or not implemented goodness of fit (name={})", v));
 }
 
 /// @brief A helper class for \ref GoodnessOfFitType related methods
@@ -189,9 +189,8 @@ inline ScoringType FromString_ScoringType(const char *v) {
   else if (StartsWith("bri", v))
     return ScoringType::kBrier;
 
-  throw std::logic_error(
-      std::string("Invalid enum name: 'Scoring Type'. value=") +
-      std::string(v));
+  throw LdtException(ErrorType::kLogic, "scoring.h",
+                     format("invalid or not implemented scoring (name={})", v));
 }
 
 /// @brief A helper class for \ref GoodnessOfFitType related methods
