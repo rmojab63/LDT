@@ -26,7 +26,7 @@ FrequencyWeekBased::FrequencyWeekBased(boost::gregorian::date day, bool isWeek,
     throw LdtException(
         ErrorType::kLogic, "freq-weekbased",
         "invalid argument: 'range' should be null for a daily or weekly "
-        "frequencies.");
+        "frequencies");
 
   if (range) {
     if (mRange.IsOutsideRange((DayOfWeek)(Ti)day.day_of_week(), forward,
@@ -154,7 +154,7 @@ Ti FrequencyWeekBased::Minus(Frequency const &other) {
   case FrequencyClass::kMultiDaily: {
     if (mMulti != second.mMulti)
       throw LdtException(ErrorType::kLogic, "freq-weekbased",
-                         "Minus failed. Frequencies are not consistent.");
+                         "minus failed. Frequencies are not consistent");
 
     return ((mDay - second.mDay).days() / mMulti);
   }

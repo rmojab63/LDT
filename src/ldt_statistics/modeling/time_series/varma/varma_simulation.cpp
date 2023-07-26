@@ -206,12 +206,11 @@ void VarmaSimulation::Calculate(
   auto count = mCount;
 
   if (T - count <= 0)
-    throw LdtException(
-        ErrorType::kLogic, "varma-simulation",
-        "invalid number of simulations. It is larger than available data");
+    throw LdtException(ErrorType::kLogic, "varma-simulation",
+                       "number of simulations is larger than available data");
   if (count == 0)
     throw LdtException(ErrorType::kLogic, "varma-simulation",
-                       "invalid number of simulations. It is zero of negative");
+                       "number of simulations is zero of negative");
 
   if (cancel)
     return;
@@ -311,7 +310,7 @@ void VarmaSimulation::Calculate(
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
       throw LdtException(ErrorType::kLogic, "varma-simulation",
-                         "model check failed: Minimum Valid Simulations");
+                         "model check: minimum valid simulations");
 
     auto forecast = *forecast0;
 
@@ -407,7 +406,7 @@ void VarmaSimulation::Calculate(
 
   if (counter == 0 || invalidCounts > maxInvalidSim)
     throw LdtException(ErrorType::kLogic, "varma-simulation",
-                       "model check failed: Minimum Valid Simulations");
+                       "model check: minimum valid simulations");
 
   if (cancel)
     return;
@@ -472,10 +471,10 @@ void VarmaSimulation::CalculateE(
   D.Update(nullptr, work);
   if (D.HasMissingData)
     throw LdtException(ErrorType::kLogic, "varma-simulation",
-                       "missing data is found in VARMA data.");
+                       "missing data is found in VARMA data");
   if (D.Start > D.End)
     throw LdtException(ErrorType::kLogic, "varma-simulation",
-                       "data is not valid.");
+                       "data is not valid");
 
   auto T = D.End - D.Start + 1;
   Ti mm = (Ti)metrics.size();

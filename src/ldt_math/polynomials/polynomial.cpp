@@ -64,7 +64,7 @@ void PolynomialMultiply<Tw>::Calculate(const Polynomial<Tw> &a,
   auto temp = PolynomialMultiply<Tw>(a_n, b_n, maxLength);
   if (temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "poly",
-                       "Inconsistent arguments (in polynomial multiply)");
+                       "inconsistent arguments (in polynomial multiply)");
   Ti length = temp.StorageSize;
 
   Result.Data(0, storage, length);
@@ -98,7 +98,8 @@ void PolynomialPower<Tw>::Calculate(const Polynomial<Tw> &a, Ti power,
   Ti a_n = a.GetDegree();
   auto temp = PolynomialPower<Tw>(power, a_n, maxLength);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
-    throw("Inconsistent arguments (in polynomial power)");
+    throw LdtException(ErrorType::kLogic, "poly",
+                       "inconsistent arguments (in polynomial power)");
   Ti length = temp.StorageSize;
   Result.Data(0, storage, length);
 

@@ -19,7 +19,7 @@ FrequencyList<T>::FrequencyList(T value, std::vector<T> *items) {
   else if constexpr (true)
     throw LdtException(ErrorType::kLogic, "freq-list",
                        "Error in initializing a list frequency: only "
-                       "'string' and 'date' is implemented.");
+                       "'string' and 'date' is implemented");
   mValue = value;
   pItems = items;
 }

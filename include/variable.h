@@ -108,7 +108,7 @@ public:
 
       if (!aggregateFunc)
         throw LdtException(ErrorType::kLogic, "variable.h",
-                       "aggregate function is missing");
+                           "aggregate function is missing");
       auto aggF = *aggregateFunc;
 
       result.Data.clear();
@@ -143,9 +143,9 @@ public:
       }
     } else {
       throw LdtException(ErrorType::kLogic, "variable.h",
-                     "direct conversion from current type of frequency to "
-                     "'x times a year' frequency is not "
-                     "supported (or not implemented).");
+                         "direct conversion from current type of frequency to "
+                         "'x times a year' frequency is not "
+                         "supported (or not implemented)");
     }
   }
 
@@ -176,8 +176,8 @@ private:
         }
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "variable.h",
-                       "it is not implemented for this type of "
-                       "partition. Use the non-templated method");
+                           "it is not implemented for this type of "
+                           "partition. Use the non-templated method");
       }
     }
   }

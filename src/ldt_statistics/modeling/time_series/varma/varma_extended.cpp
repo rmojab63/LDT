@@ -52,10 +52,9 @@ VarmaExtended::VarmaExtended(
 
   if (mHasPcaX) {
     if (Sizes.ExoCount == 0)
-      throw LdtException(
-          ErrorType::kLogic, "varma-extended",
-          "invalid operation. PCA for X is given but there is no exogenous "
-          "variable.");
+      throw LdtException(ErrorType::kLogic, "varma-extended",
+                         "PCA for X is given but there is no exogenous "
+                         "variable");
     pcaOptionsX->CheckValidity();
     pPcaOptionsX = pcaOptionsX;
     PcaX = PcaAnalysis(Sizes.ObsCount, Sizes.ExoCount, fHorizon, true, true,
@@ -98,14 +97,14 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
   if (horizon > mHorizon)
     throw LdtException(
         ErrorType::kLogic, "varma-extended",
-        "reserved maximum number of horizon is lower that the given horizon.");
+        "reserved maximum number of horizon is lower that the given horizon");
 
   auto temp = VarmaExtended(Sizes, mRestriction, mCheckNan, mDoDetails,
                             mCalcVariance, horizon, pPcaOptionsY, pPcaOptionsX,
                             &Model.Result.Optim.Options);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "varma-extended",
-                       "inconsistent arguments (in VarmaExtended).");
+                       "inconsistent arguments (in VarmaExtended)");
 
   Ti p = 0;
 
@@ -115,10 +114,10 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
   Data.Update(nullptr, storage);
   if (Data.HasMissingData)
     throw LdtException(ErrorType::kLogic, "varma-extended",
-                       "missing data is found in VARMA data.");
+                       "missing data is found in VARMA data");
   if (Data.Start > Data.End)
     throw LdtException(ErrorType::kLogic, "varma-extended",
-                       "data is not valid.");
+                       "data is not valid");
 
   auto estimStorage =
       &storage[p]; // let it be here, so that you do not override gamma when
@@ -146,7 +145,7 @@ void VarmaExtended::Calculate(Matrix<Tv> &data, Tv *storage, Tv *work,
       if (data.RowsCount <= Data.End + horizon - sampleEnd)
         throw LdtException(
             ErrorType::kLogic, "varma-extended",
-            "not enough exogenous data point exists in the given horizon.");
+            "not enough exogenous data point exists in the given horizon");
       useExoForecast.SetData(&storage[p], horizon, X.ColsCount);
       p += horizon * X.ColsCount;
       useExoForecast.SetSub(0, 0, data, Data.End + 1 - sampleEnd,

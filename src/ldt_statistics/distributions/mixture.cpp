@@ -43,10 +43,10 @@ DistributionMixture::DistributionMixture(
   for (auto &w : weights)
     if (w <= 0.0)
       throw LdtException(ErrorType::kLogic, "mixture",
-                         "Zero/negative weight in mixture distribution");
+                         "zero/negative weight in mixture distribution");
   if (weights.size() == 0)
     throw LdtException(ErrorType::kLogic, "mixture",
-                       "zero number of distributions.");
+                       "zero number of distributions");
 
   pWeights = &weights;
   pDistributions = &dists;
@@ -276,10 +276,10 @@ void DistributionMixture::GetPmfSupport(Tv *x, Tv *Value, bool log, Ti length,
                                         Tv max) {
   if (length <= 0)
     throw LdtException(ErrorType::kLogic, "mixture",
-                       "invalid length for support of distribution.");
+                       "invalid length for support of distribution");
   if (pType != DistributionMixtureType::kDiscrete)
     throw LdtException(ErrorType::kLogic, "mixture",
-                       "Use it when all distributions are discrete.");
+                       "use it when all distributions are discrete");
 
   // TODO: check increment
 

@@ -122,7 +122,7 @@ f.quarterly <- function(year, quarter){
   year = as.integer(year)
   quarter = as.integer(quarter)
   if (quarter < 1 || quarter > 4)
-    stop("invalid 'quarter'. It should be between 1 and 4.")
+    stop("'quarter' should be between 1 and 4.")
   res <- .F_quarterly(year, quarter)
   res
 }

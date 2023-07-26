@@ -41,11 +41,11 @@ void NelderMead::Minimize(
   for (int i = 0; i < n; i++) {
     if (std::isnan(start.Data[i]))
       throw LdtException(ErrorType::kLogic, "nelder-mead",
-                     "A starting value is NAN.");
+                         "a starting value is NAN");
     if (lower && upper && lower->Data[i] > upper->Data[i])
       throw LdtException(
           ErrorType::kLogic, "nelder-mead",
-          "Lower bound must be equal or smaller than the upper bound.");
+          "lower bound must be equal or smaller than the upper bound");
     if (lower && start.Data[i] < lower->Data[i]) {
       start.Data[i] = lower->Data[i];
     }

@@ -53,7 +53,7 @@ void MatrixSym<has_diag, Tw>::SetData(Tw defaultvalue, Tw *data, Ti newRows) {
 template <bool has_diag, typename Tw>
 Tw MatrixSym<has_diag, Tw>::Get(Ti i, Ti j) const {
   if (i >= RowsCount || j >= RowsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   return Get0(i, j);
 }
 
@@ -70,7 +70,7 @@ Tw MatrixSym<has_diag, Tw>::Get0(Ti i, Ti j) const {
   else if constexpr (has_diag == false) {
     if (i == j)
       throw LdtException(ErrorType::kLogic, "matrix-sym",
-                     "invalid operation: diagonal is not stored");
+                         "invalid operation: diagonal is not stored");
     if (i > j)
       return Data[j * RowsCount + i - (j + 1) * (j + 2) / 2];
     else
@@ -81,7 +81,7 @@ Tw MatrixSym<has_diag, Tw>::Get0(Ti i, Ti j) const {
 template <bool has_diag, typename Tw>
 void MatrixSym<has_diag, Tw>::Set(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= RowsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception.");
+    throw std::out_of_range("index out-of-range exception");
   Set0(i, j, value);
 }
 
@@ -95,7 +95,7 @@ void MatrixSym<has_diag, Tw>::Set0(Ti i, Ti j, Tw value) {
   else if constexpr (has_diag == false) {
     if (i == j)
       throw LdtException(ErrorType::kLogic, "matrix-sym",
-                     "invalid operation: diagonal is not stored");
+                         "invalid operation: diagonal is not stored");
     if (i > j)
       Data[j * RowsCount + i - (j + 1) * (j + 2) / 2] = value;
     else

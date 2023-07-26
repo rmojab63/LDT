@@ -16,7 +16,7 @@ TimeSeriesFilters::TimeSeriesFilters(const Matrix<Tv> *source, bool byrow,
 
   if (indexes.getAnyHasMissing() || indexes.getAnyIsInvalid())
     throw LdtException(ErrorType::kLogic, "ts-filter",
-                   "missing data or invalid row/column is found.");
+                       "missing data or invalid row/column is found");
 
   auto rq = _byrow ? _source->ColsCount : source->RowsCount;
   if (checkNAN) {

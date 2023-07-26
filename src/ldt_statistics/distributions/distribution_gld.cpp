@@ -11,7 +11,7 @@ using namespace ldt;
 DistributionGld::DistributionGld(Tv d1, Tv d2, Tv d3, Tv d4) {
   if (d2 <= 0)
     throw LdtException(ErrorType::kLogic, "gld",
-                   "scale parameter must be positive.");
+                       "scale parameter must be positive");
 
   mParam1 = d1;
   mParam2 = d2;

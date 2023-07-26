@@ -778,7 +778,7 @@ Ti Matrix<Tw>::SVD0(Tw *Data, const Ti M, const Ti N, Tw *WORK, Ti lwork,
             WORK, &lwork, &info);
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "matrix-la",
-                       "not implemented (svd type).");
+                       "not implemented (svd type)");
   }
 
   return info;

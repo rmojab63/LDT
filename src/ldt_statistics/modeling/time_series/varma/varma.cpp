@@ -290,7 +290,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         Result.cn *= sxx.Norm('1');
         if (Result.cn > maxCondNum)
           throw LdtException(ErrorType::kLogic, "varma",
-                             "model check failed: Maximum CN");
+                             "model check: maximum cn");
 
         Result.Xt.Dot0(sxx, sxxx);
         Result.y.Dot0(sxxx, Result.gamma);
@@ -339,7 +339,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
           Result.cn *= sxx.Norm('1');
           if (Result.cn > maxCondNum)
             throw LdtException(ErrorType::kLogic, "varma",
-                               "model check failed: Maximum CN");
+                               "model check: maximum cn");
 
           Result.Xt.Dot0(sxx, sxxx);
           Result.y.Dot0(sxxx, Result.gamma);
@@ -370,7 +370,7 @@ void Varma::EstimateOls(const Matrix<Tv> &data, const Matrix<Tv> *exoData,
         Result.cn *= Result.gammavar.Norm('1'); // TODO: is it valid?!
         if (Result.cn > maxCondNum)
           throw LdtException(ErrorType::kLogic, "varma",
-                             "model check failed: Maximum CN");
+                             "model check: maximum cn");
 
         // TODO: variance of gamma is RsxxoIR and it might be wrong.
         // check it

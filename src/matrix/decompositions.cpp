@@ -12,7 +12,7 @@ template <typename Tw>
 MatrixSvd<Tw>::MatrixSvd(Ti rows, Ti cols, char jobU, char jobVT) {
   if (cols <= 0 || rows <= 0)
     throw LdtException(ErrorType::kLogic, "matrix-decomposition",
-                   "invalid size in 'svd'.");
+                       "invalid size in 'svd'");
   mJobU = jobU;
   mJobVT = jobVT;
   auto mn = std::min(rows, cols);
@@ -40,7 +40,7 @@ void MatrixSvd<Tw>::Calculate(const Matrix<Tw> &mat, Tw *storage, Tw *work) {
   auto temp = MatrixSvd(mat.RowsCount, mat.ColsCount, mJobU, mJobVT);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
     throw LdtException(ErrorType::kLogic, "matrix-decomposition",
-                   "inconsistent arguments in 'MatrixSvd'.");
+                       "inconsistent arguments in 'MatrixSvd'");
   Calculate0(mat, storage, work);
 }
 

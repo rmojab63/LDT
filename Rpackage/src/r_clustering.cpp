@@ -39,8 +39,8 @@ List ClusterH(NumericVector distances, std::string linkage) {
   int numVariables = std::floor(n);
   if (std::abs(n - numVariables) > 1e-16 || numVariables <= 1)
     throw LdtException(ErrorType::kLogic, "R-clustering",
-                   "invalid distance vector. It should be the lower "
-                   "triangle of a symmetric matrix.");
+                       "distance vector should be the lower "
+                       "triangle of a symmetric matrix");
 
   boost::algorithm::to_lower(linkage);
   HClusterLinkage linkage0 = FromString_HClusterLinkage(linkage.c_str());
@@ -72,7 +72,7 @@ List ClusterHGroup(NumericMatrix data, int nGroups = 2, double threshold = 0,
 
   if (threshold < 0)
     throw LdtException(ErrorType::kLogic, "R-clustering",
-                   "invalid threshold. It cannot be negative.");
+                       "threshold cannot be negative");
 
   boost::algorithm::to_lower(distance);
   boost::algorithm::to_lower(linkage);
@@ -95,7 +95,7 @@ List ClusterHGroup(NumericMatrix data, int nGroups = 2, double threshold = 0,
   if (group.get()->NaNDistanceFound)
     Rf_warning(
         "NA distance found and converted to zero. If you are using a "
-        "correlation based distance, make sure variables are not constant.");
+        "correlation based distance, make sure variables are not constant");
 
   auto groups = std::vector<IntegerVector>();
 

@@ -57,7 +57,7 @@ void DataSplitDiscrete::Calculate(const Matrix<Tv> &data, Tv *storage,
     if (Counts.at(i) == 0)
       throw LdtException(
           ErrorType::kLogic, "datasplit",
-          "At least one group is empty (in discrete choice sampling)");
+          "at least one group is empty (in discrete choice sampling)");
 
   for (i = 0; i < mNumChoices; i++) {
     j = Counts.at(i);
@@ -92,13 +92,15 @@ void DataSplitDiscrete::Shuffle(const Matrix<Tv> &data, Ti *workI,
     if (b == mNumChoices - 1) {
       Mi0 = N0 - sumM; // fill it
       if (Mi0 <= 0)
-        throw LdtException(ErrorType::kLogic, "datasplit",
-                       "invalid group length. All contain just 1 obs. Mi0=" +
-                           std::to_string(Mi0));
+        throw LdtException(
+            ErrorType::kLogic, "datasplit",
+            "invalid group length. All contain just 1 obs. Mi0=" +
+                std::to_string(Mi0));
       if (Mi0 > Mi)
-        throw LdtException(ErrorType::kLogic, "datasplit",
-                       "invalid training percentage"); // percentage is too high
-                                                       // (or maybe too low?!)
+        throw LdtException(
+            ErrorType::kLogic, "datasplit",
+            "invalid training percentage"); // percentage is too high
+                                            // (or maybe too low?!)
     } else {
       Mi0 = static_cast<Ti>(std::round(mTrainRatio * Mi));
       if (Mi0 >= Mi)
@@ -151,10 +153,9 @@ void DataSplit::Calculate(const Matrix<Tv> &data, Tv *storage, Tv trainRatio,
   Ti N1 = rows - N0;
 
   if (N0 <= 0 || N0 >= rows)
-    throw LdtException(
-        ErrorType::kLogic, "datasplit",
-        "invalid training sample size. It is too low/high with respect to "
-        "the available observations.");
+    throw LdtException(ErrorType::kLogic, "datasplit",
+                       "training sample size is too low/high with respect to "
+                       "the available observations");
 
   Sample0.SetData(storage, N0, cols);
   Sample1.SetData(&storage[N0 * cols], N1, cols);

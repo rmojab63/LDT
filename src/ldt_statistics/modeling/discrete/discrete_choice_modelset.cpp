@@ -156,14 +156,12 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
 
     if (this->pChecks) {
       if (this->pChecks->MinObsCount > 0 && this->pChecks->MinObsCount > count)
-        throw LdtException(
-            ErrorType::kLogic, "dc-modelset",
-            "model check failed: Minimum number of observations");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: minimum no. obs");
       if (this->pChecks->MinDof > 0 &&
           this->pChecks->MinDof > count - numExo - this->mNumChoices - 2)
-        throw LdtException(
-            ErrorType::kLogic, "dc-modelset",
-            "model check failed: Minimum number of degrees of freedom");
+        throw LdtException(ErrorType::kLogic, "dc-modelset",
+                           "model check: minimum dof");
     }
 
     if (this->pOptions->RequestCancel)
@@ -179,14 +177,14 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
       if (pChecks->mCheckCN_all &&
           this->DModel.condition_number > pChecks->MaxConditionNumber)
         throw LdtException(ErrorType::kLogic, "dc-modelset",
-                           "model check failed: Maximum CN");
+                           "model check: maximum cn");
 
       if (this->pChecks->MaxAic < this->DModel.Aic)
         throw LdtException(ErrorType::kLogic, "dc-modelset",
-                           "model check failed: Maximum Aic");
+                           "model check: maximum aic");
       if (this->pChecks->MaxSic < this->DModel.Sic)
         throw LdtException(ErrorType::kLogic, "dc-modelset",
-                           "model check failed: Maximum Sic");
+                           "model check: maximum sic");
       // if (pChecks->MinR2 > Model.r2)
       //	throw LdtException(ErrorType::kLogic, "dc-modelset", "model
       // check failed: Maximum R2");
@@ -411,7 +409,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
       1) // =1, means the model has just one intercept. Let estimation process
          // throw error (if any)
     throw LdtException(ErrorType::kLogic, "dc-modelset",
-                       "invalid number of exogenous variables.");
+                       "invalid number of exogenous variables");
 
   metrics.Update(true, false);
   checks.Update(metrics);
@@ -426,11 +424,10 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
           (searchItems.LengthExogenouses + this->mNumChoices - 2))
     throw LdtException(
         ErrorType::kLogic, "dc-modelset",
-        "Inconsistent number of exogenous variables and thresholds.");
+        "inconsistent number of exogenous variables and thresholds");
   if (searchItems.Length1 != 0 && checks.Estimation == false)
-    throw LdtException(
-        ErrorType::kLogic, "dc-modelset",
-        "Parameters are needed. Set 'checks.Estimation = true'.");
+    throw LdtException(ErrorType::kLogic, "dc-modelset",
+                       "parameters are needed. Set 'checks.Estimation = true'");
 
   this->pItems = &searchItems;
 
@@ -444,12 +441,12 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
         false) // third column must be intercept. ignore NANs, because I will
                // deal with them later
       throw LdtException(ErrorType::kLogic, "dc-modelset",
-                         "Third column of data is not intercept.");
+                         "third column of data is not intercept");
   } else if constexpr (true) {
     if (source.EqualsValueColumn(1, 1, 0, false, true) ==
         false) // in non-weighted case, second column must be intercept
       throw LdtException(ErrorType::kLogic, "dc-modelset",
-                         "Second column of data is not intercept.");
+                         "second column of data is not intercept");
   }
 
   // check group indexes and create sizes array
@@ -459,10 +456,10 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
         throw LdtException(
             ErrorType::kLogic, "dc-modelset",
             "invalid exogenous group element (it is larger than the number "
-            "of available variables).");
+            "of available variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "dc-modelset",
-                           "invalid exogenous group element (it is negative).");
+                           "invalid exogenous group element (it is negative)");
     }
   }
 
@@ -492,7 +489,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
       throw LdtException(
           ErrorType::kLogic, "dc-modelset",
           "invalid model size (zero or negative). Make sure array is "
-          "initialized properly.");
+          "initialized properly");
     co++;
     auto seed = metrics.Seed == (unsigned int)0
                     ? 0

@@ -38,7 +38,7 @@ DiscreteChoiceExtended::DiscreteChoiceExtended(
     if (final_x_count >= numExo)
       throw LdtException(ErrorType::kLogic, "dc-extended",
                          "invalid PCA options. The requested number of PCs "
-                         "is larger than the number of variables.");
+                         "is larger than the number of variables");
     StorageSize += Pca.StorageSize;
     WorkSize = std::max(WorkSize, Pca.WorkSize);
 
@@ -123,7 +123,7 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
       if (xForecast->ColsCount != X.ColsCount)
         throw LdtException(
             ErrorType::kLogic, "dc-extended",
-            "Data and forecast data has different number of columns.");
+            "data and forecast data has different number of columns");
       useForecast.SetData(&storage[p], numForecast, X.ColsCount);
       p += useForecast.length();
       useForecast.CopyFrom00(*xForecast);
@@ -184,7 +184,7 @@ void DiscreteChoiceExtended::Calculate(const Matrix<Tv> &data, Tv *storage,
       }
     } else {
       throw LdtException(ErrorType::kLogic, "dc-extended",
-                         "Not implemented discrete choice model type");
+                         "not implemented discrete choice model type");
     }
     auto auc = auc0.get();
     auc->Calculate(Y, Projections, mHasWeight && mWeightedEval ? &W : nullptr,

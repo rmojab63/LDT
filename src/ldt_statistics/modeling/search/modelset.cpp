@@ -76,7 +76,7 @@ void ModelSet::Start(Tv *work, Ti *workI) {
     }
 #else
     throw LdtException(ErrorType::kLogic, "sur-modelset",
-                       "Parallel execution is not supported.");
+                       "parallel execution is not supported");
 #endif
 
     /*std::for_each(std::execution::par, pSearchers->begin(), pSearchers->end(),

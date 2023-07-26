@@ -25,11 +25,11 @@ DiscreteChoiceSim<hasWeight, modelType, distType>::DiscreteChoiceSim(
   else if (numChoices > 2 && modelType == DiscreteChoiceModelType::kBinary)
     throw LdtException(
         ErrorType::kLogic, "dc-sim",
-        "Don't use binary Model when number of choices is larger than 2");
+        "don't use binary Model when number of choices is larger than 2");
 
   if (costMatrixCount == 0 && doFrequencyTable == false && doAuc == false)
     throw LdtException(ErrorType::kLogic, "dc-sim",
-                       "No goal is set in discrete choice simulation.");
+                       "no goal is set in discrete choice simulation");
 
   mTrainRatio = trainPercentage;
   mTrainFixSize = trainFixSize;
@@ -108,7 +108,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
         temp.StorageSize > this->StorageSize)
       throw LdtException(
           ErrorType::kLogic, "dc-sim",
-          "inconsistent arguments in discrete choice simulation.");
+          "inconsistent arguments in discrete choice simulation");
   }
 
   Ti N0 = rows - this->N1;
@@ -134,7 +134,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
 
   if (modelType != DiscreteChoiceModelType::kBinary) {
     throw LdtException(ErrorType::kLogic, "dc-sim",
-                       "not implemented discrete choice model type.");
+                       "not implemented discrete choice model type");
     // TODO: implement it
   }
 
@@ -145,7 +145,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
 
     if (modelType != DiscreteChoiceModelType::kBinary) {
       throw LdtException(ErrorType::kLogic, "dc-sim",
-                         "not implemented discrete choice model type.");
+                         "not implemented discrete choice model type");
     }
     if (aucOptions.Costs.Data) {
       auc0 = std::unique_ptr<RocBase>(new ROC<true, true>(this->N1));
@@ -314,7 +314,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
       throw LdtException(ErrorType::kLogic, "dc-sim",
-                         "model check failed: Minimum Valid Simulations");
+                         "model check: minimum valid simulations");
 
     this->ValidSimulationCount++;
   }
@@ -328,7 +328,7 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
 
   if (invalidCounts > maxInvalidSim)
     throw LdtException(ErrorType::kLogic, "dc-sim",
-                       "model check failed: Minimum Valid Simulations");
+                       "model check: minimum valid simulations");
 
   for (i = 0; i < costCount; i++)
     this->CostRatios.Data[i] /= overall_count.Data[i];

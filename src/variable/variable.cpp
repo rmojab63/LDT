@@ -127,7 +127,7 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
     Split(str, "\t", parts);
     if (parts.size() < 5)
       throw LdtException(ErrorType::kLogic, "variable",
-                         "at least 4 tab-separated items is expected.");
+                         "at least 4 tab-separated items is expected");
 
     result.Name = parts.at(0);
 
@@ -160,7 +160,7 @@ void Variable<Tw>::Parse(const std::string &str, Variable<Tw> &result,
       } else if constexpr (true) {
         throw LdtException(
             ErrorType::kLogic, "variable",
-            "conversion of the variable's data-type is not implemented.");
+            "conversion of the variable's data-type is not implemented");
       }
     }
 
@@ -282,7 +282,7 @@ void Variable<Tw>::ConvertTo_Daily(
     throw LdtException(ErrorType::kLogic, "variable",
                        "direct conversion from current type of frequency "
                        "to 'Daily' frequency is not "
-                       "supported (or not implemented).");
+                       "supported (or not implemented)");
 }
 
 template <typename Tw>
@@ -295,7 +295,7 @@ void Variable<Tw>::ConvertTo_MultiDaily(
 
     if (!aggregateFunc)
       throw LdtException(ErrorType::kLogic, "variable",
-                         "aggregate function is missing.");
+                         "aggregate function is missing");
     auto aggF = *aggregateFunc;
 
     std::vector<std::vector<Tv>> partitions;
@@ -317,7 +317,7 @@ void Variable<Tw>::ConvertTo_MultiDaily(
     throw LdtException(ErrorType::kLogic, "variable",
                        "direct conversion from current type of frequency to "
                        "'Multi-Day' frequency is not "
-                       "supported (or not implemented).");
+                       "supported (or not implemented)");
   }
 }
 
@@ -330,7 +330,7 @@ void Variable<Tw>::ConvertTo_Weekly(
 
     if (!aggregateFunc)
       throw LdtException(ErrorType::kLogic, "variable",
-                         "aggregate function is missing.");
+                         "aggregate function is missing");
     auto aggF = *aggregateFunc;
 
     auto start =
@@ -369,7 +369,7 @@ void Variable<Tw>::ConvertTo_Weekly(
     throw LdtException(ErrorType::kLogic, "variable",
                        "direct conversion from current type of frequency to "
                        "'Weekly' frequency is not "
-                       "supported (or not implemented).");
+                       "supported (or not implemented)");
   }
 }
 
@@ -396,7 +396,7 @@ void Variable<Tw>::ConvertTo_XxYear(
 
     if (!aggregateFunc)
       throw LdtException(ErrorType::kLogic, "variable",
-                         "aggregate function is missing.");
+                         "aggregate function is missing");
     auto aggF = *aggregateFunc;
 
     result.Data.clear();
@@ -428,7 +428,7 @@ void Variable<Tw>::ConvertTo_XxYear(
     throw LdtException(ErrorType::kLogic, "variable",
                        "direct conversion from current type of frequency to "
                        "'x times a year' frequency is not "
-                       "supported (or not implemented).");
+                       "supported (or not implemented)");
   }
 }
 

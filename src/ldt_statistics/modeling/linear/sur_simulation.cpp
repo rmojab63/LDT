@@ -104,7 +104,7 @@ void SurSimulation::Calculate(
     return;
   if (maxIteration <= 0)
     throw LdtException(ErrorType::kLogic, "sur-simulation",
-                       "number of iterations must be positive.");
+                       "number of iterations must be positive");
 
   std::function<void(Tv &)> tfm;
   if (transformForMetrics)
@@ -155,7 +155,7 @@ void SurSimulation::Calculate(
                       sigSearchMaxProb, &newX, nullptr);
       if (Model.Model.condition_number > maxCondNum)
         throw LdtException(ErrorType::kLogic, "sur-simulation",
-                           "model check failed: Maximum CN");
+                           "model check: maximum cn");
     } catch (std::exception &ex) {
       AddError(ex.what());
       continue;
@@ -172,7 +172,7 @@ void SurSimulation::Calculate(
       bool cont = false;
       for (int i = 0; i < len; i++) {
         if (std::isnan(Model.Projections.Variances.Data[i])) {
-          AddError("NAN in variance.");
+          AddError("NAN in variance");
           cont = true;
           break;
         }
@@ -199,7 +199,7 @@ void SurSimulation::Calculate(
     newY.Subtract(Model.Projections.Means, errors);
 
     if (errors.Any(NAN)) {
-      AddError("NAN in errors.");
+      AddError("NAN in errors");
       continue;
     }
 
@@ -208,7 +208,7 @@ void SurSimulation::Calculate(
     invalidCounts--;
     if (invalidCounts > maxInvalidSim)
       throw LdtException(ErrorType::kLogic, "sur-simulation",
-                         "model check failed: Minimum Valid Simulations");
+                         "model check: minimum valid simulations");
 
     i = -1;
     for (auto &e : *pMetricsOut) {
@@ -231,7 +231,7 @@ void SurSimulation::Calculate(
 
   if (invalidCounts > maxInvalidSim)
     throw LdtException(ErrorType::kLogic, "sur-simulation",
-                       "model check failed: Minimum Valid Simulations");
+                       "model check: minimum valid simulations");
 
   Results.Divide_in((Tv)ValidCounts);
 

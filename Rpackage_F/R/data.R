@@ -70,7 +70,7 @@ data.wdi.agg <- function(dirPath, minYear = 1960, maxYear = 2020, aggregateFun =
   lastInd <- maxYear - startYear + indData
 
   if (firstInd < indData || lastInd < indData) {
-    stop(paste0("invalid date. data starts at ", startYear))
+    stop(paste0("invalid date. 'data' starts at ", startYear))
   }
 
   #print("reading CSV file. This might be time-consuming ...")

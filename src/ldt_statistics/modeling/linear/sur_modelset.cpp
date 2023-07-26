@@ -70,7 +70,7 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
   }
   if (TargetsPositions.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
-                       "a searcher with no target is not valid.");
+                       "a searcher with no target is not valid");
 
   auto numMeas =
       this->pMetrics->MetricsOut.size() + this->pMetrics->MetricsIn.size();
@@ -201,7 +201,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
   if (allNan) {
     throw LdtException(
         ErrorType::kLogic, "sur-modelset",
-        "All weights are NaN"); // +
+        "all weights are NaN"); // +
                                 // Sur::ModelToString(DModel.Sizes).c_str();
                                 // // weights are all nan
   }
@@ -233,9 +233,8 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "inconsistent number of exogenous variables");
   if (searchItems.Length1 != 0 && checks.Estimation == false)
-    throw LdtException(
-        ErrorType::kLogic, "sur-modelset",
-        "parameters are needed. Set 'checks.Estimation = true'.");
+    throw LdtException(ErrorType::kLogic, "sur-modelset",
+                       "parameters are needed. Set 'checks.Estimation = true'");
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
@@ -245,10 +244,10 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
         throw LdtException(
             ErrorType::kLogic, "sur-modelset",
             "invalid exogenous group element (it is larger than the number "
-            "of available variables).");
+            "of available variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "sur-modelset",
-                           "invalid exogenous group element (it is negative).");
+                           "invalid exogenous group element (it is negative)");
     }
   }
 
@@ -258,13 +257,13 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
       throw LdtException(
           ErrorType::kLogic, "sur-modelset",
           "invalid exogenous size (zero or negative). Make sure array is "
-          "initialized properly.");
+          "initialized properly");
     if (numFixXPartitions > s)
       continue;
     for (auto &e : endoIndexes) {
       if (e.size() == 0)
         throw LdtException(ErrorType::kLogic, "sur-modelset",
-                           "invalid endogenous indexes. It is empty.");
+                           "empty endogenous indexes");
 
       if (e.at(0) > searchItems.LengthTargets)
         continue; // no target here

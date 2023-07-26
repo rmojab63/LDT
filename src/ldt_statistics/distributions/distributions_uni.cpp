@@ -78,7 +78,7 @@ DistributionBase::GetDistributionFromType(DistributionType type, Tv d1, Tv d2,
     break;
   default:
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
   }
   return d;
 }
@@ -88,68 +88,75 @@ Distribution<type>::Distribution(Tv param1, Tv param2, Tv param3, Tv param4) {
   if constexpr (type == DistributionType::kNormal) {
     if (param2 < 0)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "negative standard-deviation");
+                         "negative standard-deviation");
   } else if constexpr (type == DistributionType::kLogNormal) {
     if (param2 < 0)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero/negative standard-deviation");
+                         "zero/negative standard-deviation");
   } else if constexpr (type == DistributionType::kT ||
                        type == DistributionType::kChi2) {
     if (param1 <= 0)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero/negative degrees of freedom");
+                         "zero/negative degrees of freedom");
   } else if constexpr (type == DistributionType::kUniformCon) {
     if (param1 > param2)
-      throw LdtException(ErrorType::kLogic, "distributions", "larger lower bound");
+      throw LdtException(ErrorType::kLogic, "distributions",
+                         "larger lower bound");
   } else if constexpr (type == DistributionType::kExponential) {
     if (param1 <= 0)
-      throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero or negative parameter (rate, shape, scale, etc.)");
+      throw LdtException(
+          ErrorType::kLogic, "distributions",
+          "zero or negative parameter (rate, shape, scale, etc.)");
   } else if constexpr (type == DistributionType::kF) {
     if (param1 <= 0 || param2 <= 0)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero/negative degrees of freedom");
+                         "zero/negative degrees of freedom");
   } else if constexpr (type == DistributionType::kGamma) {
     if (param1 <= 0 || param2 <= 0)
-      throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero or negative parameter (rate, shape, scale, etc.)");
+      throw LdtException(
+          ErrorType::kLogic, "distributions",
+          "zero or negative parameter (rate, shape, scale, etc.)");
   } else if constexpr (type == DistributionType::kBeta) {
     if (param1 <= 0 || param2 <= 0)
-      throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero or negative parameter (rate, shape, scale, etc.)");
+      throw LdtException(
+          ErrorType::kLogic, "distributions",
+          "zero or negative parameter (rate, shape, scale, etc.)");
   } else if constexpr (type == DistributionType::kGldFkml) {
     if (param2 <= 0)
-      throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero or negative parameter (rate, shape, scale, etc.)");
+      throw LdtException(
+          ErrorType::kLogic, "distributions",
+          "zero or negative parameter (rate, shape, scale, etc.)");
     // if (param3<=-1 || param4<=-1)
     //	throw LdtException(ErrorType::kLogic, "distributions", "shape1 && shape2
-    //must be larger than -1.");
+    // must be larger than -1");
     //  Staden, p. 96: r-th order moment only exist if both parameters are
     //  larger than >-1/r . So, this restriction means that the distribution has
     //  a mean, both other moments might not be available
 
   } else if constexpr (type == DistributionType::kUniformDis) {
     if (param1 > param2)
-      throw LdtException(ErrorType::kLogic, "distributions", "larger lower bound");
+      throw LdtException(ErrorType::kLogic, "distributions",
+                         "larger lower bound");
   } else if constexpr (type == DistributionType::kPoisson) {
     if (param1 < 0)
-      throw LdtException(ErrorType::kLogic, "distributions",
-                     "zero or negative parameter (rate, shape, scale, etc.)");
+      throw LdtException(
+          ErrorType::kLogic, "distributions",
+          "zero or negative parameter (rate, shape, scale, etc.)");
   } else if constexpr (type == DistributionType::kGeometric ||
                        type == DistributionType::kBernoulli) {
     if (param1 < 0 || param1 > 1)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "invalid probability (outside zero-one interval)");
+                         "invalid probability (outside zero-one interval)");
   } else if constexpr (type == DistributionType::kBinomial) {
     if (param1 < 0.0 || param1 > 1.0)
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "invalid probability (outside zero-one interval)");
+                         "invalid probability (outside zero-one interval)");
     if (param2 < 0) // param2 is the number of trials in kBinomial
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "negative parameter (number of trials, etc.)");
+                         "negative parameter (number of trials, etc.)");
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 
@@ -186,7 +193,7 @@ Tv DistributionBase::GetProperty(DistributionProperty propType) {
     return GetMode();
   default:
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
   }
 }
 
@@ -249,7 +256,7 @@ template <DistributionType type> Tv Distribution<type>::GetMinimum() {
     return 0;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -305,7 +312,7 @@ template <DistributionType type> Tv Distribution<type>::GetMaximum() {
     return mParam2;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -324,7 +331,7 @@ template <DistributionType type> Tv Distribution<type>::GetMean() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
   } else if constexpr (type == DistributionType::kChi2) {
@@ -340,7 +347,7 @@ template <DistributionType type> Tv Distribution<type>::GetMean() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     return mParam1 * mParam2;
@@ -352,7 +359,7 @@ template <DistributionType type> Tv Distribution<type>::GetMean() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
     // van staden, p. 96
@@ -373,7 +380,7 @@ template <DistributionType type> Tv Distribution<type>::GetMean() {
     return mParam1 * mParam2;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -403,7 +410,7 @@ template <DistributionType type> Tv Distribution<type>::GetVariance() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kChi2) {
     return (Tv)2 * mParam1;
@@ -420,7 +427,7 @@ template <DistributionType type> Tv Distribution<type>::GetVariance() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     return mParam1 * mParam2 * mParam2;
@@ -433,7 +440,7 @@ template <DistributionType type> Tv Distribution<type>::GetVariance() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
     // van staden, p. 96
@@ -453,7 +460,7 @@ template <DistributionType type> Tv Distribution<type>::GetVariance() {
     return mParam1 * (1 - mParam1) * mParam2;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -482,7 +489,7 @@ template <DistributionType type> Tv Distribution<type>::GetSkewness() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
   } else if constexpr (type == DistributionType::kChi2) {
@@ -500,7 +507,7 @@ template <DistributionType type> Tv Distribution<type>::GetSkewness() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     return (Tv)2 / std::sqrt(mParam1);
@@ -513,7 +520,7 @@ template <DistributionType type> Tv Distribution<type>::GetSkewness() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
     // van staden, p. 96
@@ -536,7 +543,7 @@ template <DistributionType type> Tv Distribution<type>::GetSkewness() {
            std::sqrt(mParam2 * mParam1 * (1 - mParam1));
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -566,7 +573,7 @@ template <DistributionType type> Tv Distribution<type>::GetKurtosis() {
           return std::numeric_limits<Tv>::quiet_NaN();
         } else if constexpr (true) {
           throw LdtException(ErrorType::kLogic, "distributions",
-                         "type requires NaN but it is missing");
+                             "type requires NaN but it is missing");
         }
       }
     }
@@ -588,7 +595,7 @@ template <DistributionType type> Tv Distribution<type>::GetKurtosis() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     return (Tv)6 / mParam1;
@@ -603,7 +610,7 @@ template <DistributionType type> Tv Distribution<type>::GetKurtosis() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     } // my guess, van Staden restriction: 0.25
     // van staden, p. 96
@@ -632,7 +639,7 @@ template <DistributionType type> Tv Distribution<type>::GetKurtosis() {
     return (1 - 6 * pq) / (mParam2 * pq);
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -655,21 +662,21 @@ template <DistributionType type> Tv Distribution<type>::GetMedian() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     if constexpr (std::numeric_limits<Tv>::has_quiet_NaN) {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kBeta) {
     if constexpr (std::numeric_limits<Tv>::has_quiet_NaN) {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kUniformDis) {
     return (mParam1 + mParam2) / (Tv)2;
@@ -702,7 +709,7 @@ template <DistributionType type> Tv Distribution<type>::GetMedian() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   }
 }
@@ -727,7 +734,7 @@ template <DistributionType type> Tv Distribution<type>::GetMode() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kGamma) {
     if (mParam1 >= (Tv)1) {
@@ -737,7 +744,7 @@ template <DistributionType type> Tv Distribution<type>::GetMode() {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     }
   } else if constexpr (type == DistributionType::kBeta) {
@@ -755,7 +762,7 @@ template <DistributionType type> Tv Distribution<type>::GetMode() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   } else if constexpr (type == DistributionType::kPoisson) {
     return std::floor(mParam1); // has another mode too
@@ -772,7 +779,7 @@ template <DistributionType type> Tv Distribution<type>::GetMode() {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   }
 }
@@ -788,7 +795,7 @@ Ti Distribution<type>::GetPmfSupportIncrement() {
     return 1;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -798,7 +805,7 @@ Ti Distribution<type>::GetPmfSupportSize(Tv min, Tv max) {
 
   if (std::isnan(min) || std::isnan(max))
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "Data is 'NAN' or contains 'NaN'");
+                       "data is 'NAN' or contains 'NaN'");
 
   if constexpr (type == DistributionType::kUniformDis) {
     max = std::fmin(mParam2, max);
@@ -817,7 +824,7 @@ Ti Distribution<type>::GetPmfSupportSize(Tv min, Tv max) {
     return static_cast<Ti>(max - min) + 1;
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -827,7 +834,7 @@ void Distribution<type>::GetPmfSupport(Tv *x, Tv *Value, bool log, Ti length,
                                        bool for_continuous_plot, Tv min) {
   if (length <= 0)
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "invalid length for support of distribution.");
+                       "invalid length for support of distribution");
 
   if constexpr (type == DistributionType::kUniformDis ||
                 type == DistributionType::kPoisson ||
@@ -904,7 +911,7 @@ template <DistributionType type> Tv Distribution<type>::GetPdfOrPmf(Tv x) {
     return d * std::pow(x, mParam1 - 1) * std::pow(1 - x, mParam2 - 1);
   } else if constexpr (type == DistributionType::kGldFkml) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   } else if constexpr (type == DistributionType::kUniformDis) {
     return x >= mParam1 && x <= mParam2 ? 1 / (mParam2 - mParam1 + 1) : 0;
@@ -924,7 +931,7 @@ template <DistributionType type> Tv Distribution<type>::GetPdfOrPmf(Tv x) {
            std::pow(mParam1, x) * std::pow(1 - mParam1, mParam2 - x);
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -1014,7 +1021,7 @@ template <DistributionType type> Tv Distribution<type>::GetPdfOrPmfLog(Tv x) {
         return std::numeric_limits<Tv>::quiet_NaN();
       } else if constexpr (true) {
         throw LdtException(ErrorType::kLogic, "distributions",
-                       "type requires NaN but it is missing");
+                           "type requires NaN but it is missing");
       }
     } // TODO: a logarithm version of binomial_coefficient ?!
     return std::log(Math_BinomialCoefficient<Tv>((unsigned int)mParam2,
@@ -1076,7 +1083,7 @@ template <DistributionType type> Tv Distribution<type>::GetCdf(Tv x) {
                       d1 * xx / (d1 * xx + d2)); // todo: simplify
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -1168,7 +1175,7 @@ template <DistributionType type> Tv Distribution<type>::GetQuantile(Tv p) {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
 
   } else if constexpr (true) {
@@ -1176,7 +1183,7 @@ template <DistributionType type> Tv Distribution<type>::GetQuantile(Tv p) {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else if constexpr (true) {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   }
 }
@@ -1192,7 +1199,7 @@ Tv Distribution<type>::GetDensityQuantile(Tv p) {
       return std::numeric_limits<Tv>::quiet_NaN();
     } else {
       throw LdtException(ErrorType::kLogic, "distributions",
-                     "type requires NaN but it is missing");
+                         "type requires NaN but it is missing");
     }
   }
 }
@@ -1311,7 +1318,7 @@ void Distribution<type>::GetSample(Tv *storage, Ti length, unsigned int seed) {
       storage[i] = Dst(eng);
   } else if constexpr (type == DistributionType::kBeta) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (Beta)");
+                       "not implemented (Beta)");
     // std::_Beta_distribution<Tv> Dst(mParam1, mParam2);
     // for (i = 0; i < length; i++)
     //	storage[i] = Dst(eng);
@@ -1322,7 +1329,7 @@ void Distribution<type>::GetSample(Tv *storage, Ti length, unsigned int seed) {
                                                 mParam3, mParam4);
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }
@@ -1382,7 +1389,7 @@ Tv Distribution<type>::GetSample1(std::mt19937 &eng) {
     return Dst(eng);
   } else if constexpr (type == DistributionType::kBeta) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (Beta)");
+                       "not implemented (Beta)");
     // std::Beta_distribution Dst(mParam1, mParam2);
     // return Dst(eng);
   } else if constexpr (type == DistributionType::kGldFkml) {
@@ -1390,7 +1397,7 @@ Tv Distribution<type>::GetSample1(std::mt19937 &eng) {
     return Dst(eng);
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "distributions",
-                   "not implemented (distribution type).");
+                       "not implemented (distribution type)");
     ;
   }
 }

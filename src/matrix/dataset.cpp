@@ -67,7 +67,7 @@ template <bool byRow, typename Tw>
 DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
   if (cols <= 0 || rows <= 0)
     throw LdtException(ErrorType::kLogic, "dataset",
-                       "invalid size in 'datasetT'.");
+                       "invalid size in 'datasetT'");
   mHasNaN = hasNan;
   mSelect = select;
 
@@ -76,7 +76,7 @@ DatasetTs<byRow, Tw>::DatasetTs(Ti rows, Ti cols, bool hasNan, bool select) {
   if (hasNan) {
     if constexpr (std::numeric_limits<Tw>::has_quiet_NaN == false) {
       throw LdtException(ErrorType::kLogic, "dataset",
-                         "invalid type. Cannot check NAN.");
+                         "invalid type. Cannot check NAN");
     }
   }
 }
@@ -112,7 +112,7 @@ void DatasetTs<byRow, Tw>::Data(Matrix<Tw> &data) {
     for (auto &r : Ranges)
       if (r.IsNotValid())
         throw LdtException(ErrorType::kLogic, "dataset",
-                           "data is not valid. Check missing data points.");
+                           "data is not valid. Check missing data points");
   }
 }
 
@@ -196,7 +196,7 @@ MatrixStandardized<Tw>::MatrixStandardized(Ti rows, Ti cols, bool removeZeroVar,
                                            bool center, bool scale) {
   if (cols <= 0 || rows <= 0)
     throw LdtException(ErrorType::kLogic, "dataset",
-                       "invalid size in 'MatrixStandardized'.");
+                       "invalid size in 'MatrixStandardized'");
   if (scale == false)
     removeZeroVar = false;
 

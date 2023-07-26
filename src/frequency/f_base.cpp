@@ -94,7 +94,7 @@ FrequencyClass Frequency::GetClass(const std::string &classStr) {
     return FrequencyClass::kListDate;
 
   throw LdtException(ErrorType::kLogic, "freq-base",
-                 "not implemented or invalid class string");
+                     "not implemented or invalid class string");
 }
 
 std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
@@ -153,7 +153,7 @@ std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
 
   default:
     throw LdtException(ErrorType::kLogic, "freq-base",
-                   "not implemented frequency class in 'Parse'");
+                       "not implemented frequency class in 'Parse'");
   }
 }
 
@@ -321,7 +321,7 @@ DayOfWeekRange DayOfWeekRange::Parse(std::string str) {
     return DayOfWeekRange(s, e);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "freq-base",
-                   "invalid day of week range.");
+                       "invalid day of week range");
   }
 }
 

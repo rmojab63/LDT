@@ -227,9 +227,9 @@ bind.variables <- function(varList, interpolate = FALSE,
   numExo = as.integer(numExo)
   horizon = as.integer(horizon)
   if (numExo < 0)
-    stop("invalid 'numExo'. It cannot be negative.")
+    stop("'numExo' cannot be negative.")
   if (horizon < 0)
-    stop("invalid 'horizon'. It cannot be negative.")
+    stop("'horizon' cannot be negative.")
   varList = as.list(varList)
 
   res <- .BindVariables(varList, interpolate, adjustLeadLags, numExo, horizon)

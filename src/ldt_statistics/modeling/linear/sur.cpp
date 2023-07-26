@@ -366,13 +366,13 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
   auto temp = Sur(N, m, k, mIsRestricted, mDoDetails, mSigSearchMaxIter);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "sur",
-                       "inconsistent size (SUR estimation).");
+                       "inconsistent size (SUR estimation)");
 
   if (mSigSearchMaxIter != 0 &&
       (!R || R->RowsCount != km || R->ColsCount != km))
     throw LdtException(ErrorType::kLogic, "sur",
                        "'R' should be a 'km x km' Matrix, when you want a "
-                       "significant search.");
+                       "significant search");
   else if (R && (R->RowsCount != km || R->ColsCount > km))
     throw LdtException(ErrorType::kLogic, "sur", "restrictions are not valid");
 
@@ -385,7 +385,7 @@ void Sur::Calculate(const Matrix<Tv> &y, const Matrix<Tv> &x, Tv *storage,
         ErrorType::kLogic, "sur",
         "'max_sig_search_prob' must not be zero because "
         "'max_sig_search_iter' is not zero. If you don't want a significance "
-        "search, don't set its iteration.");
+        "search, don't set its iteration");
 
   Ti p = 0;
 

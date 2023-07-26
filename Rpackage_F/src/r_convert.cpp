@@ -34,9 +34,8 @@ List ConvertTo_Daily(SEXP w, SEXP aggregateFun) {
     v.ConvertTo_Daily(nv, &func);
 
   } else {
-    throw LdtException(
-        ErrorType::kLogic, "R-freq-convert",
-        "invalid 'aggregateFun'. It should be a character or a function.");
+    throw LdtException(ErrorType::kLogic, "R-freq-convert",
+                       "'aggregateFun' should be a character or a function");
   }
 
   return GetVariableForR(nv);
@@ -74,7 +73,7 @@ List ConvertTo_MultiDaily(SEXP w, int k, SEXP aggregateFun, bool fromEnd) {
   } else {
     throw LdtException(
         ErrorType::kLogic, "R-freq-convert",
-        "invalid 'aggregateFun'. It should be a character or a function.");
+        "invalid 'aggregateFun'. It should be a character or a function");
   }
 
   return GetVariableForR(nv);
@@ -114,7 +113,7 @@ List ConvertTo_Weekly(SEXP w, const char *weekStart, SEXP aggregateFun) {
   } else {
     throw LdtException(
         ErrorType::kLogic, "R-freq-convert",
-        "invalid 'aggregateFun'. It should be a character or a function.");
+        "invalid 'aggregateFun'. It should be a character or a function");
   }
   return GetVariableForR(nv);
 }
@@ -200,7 +199,7 @@ List ConvertTo_XxYear(SEXP w, SEXP aggregateFun, int x) {
   } else {
     throw LdtException(
         ErrorType::kLogic, "R-freq-convert",
-        "invalid 'aggregateFun'. It should be a character or a function.");
+        "invalid 'aggregateFun'. It should be a character or a function");
   }
   return GetVariableForR(nv);
 }

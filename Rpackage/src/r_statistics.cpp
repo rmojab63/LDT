@@ -64,10 +64,10 @@ SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
 List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   if (y == R_NilValue || is<NumericVector>(y) == FALSE)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "'y' should be a numeric vector.");
+                       "'y' should be a numeric vector");
   if (scores == R_NilValue || is<NumericVector>(scores) == FALSE)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "'scores' should be a numeric vector.");
+                       "'scores' should be a numeric vector");
   NumericVector y0 = as<NumericVector>(y);
   auto N = y0.length();
   if (printMsg)
@@ -76,7 +76,7 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "Unequal number of observations in 'y' and 'scores'.");
+                       "unequal number of observations in 'y' and 'scores'");
 
   auto my = ldt::Matrix<double>(&y0[0], N, 1);
   auto mscores = ldt::Matrix<double>(&scores0[0], N, 1);
@@ -87,11 +87,11 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   if (hasWeight) {
     if (is<NumericVector>(weights) == FALSE)
       throw LdtException(ErrorType::kLogic, "R-statistics",
-                     "'weights' should be a numeric vector.");
+                         "'weights' should be a numeric vector");
     weights0 = as<NumericVector>(weights);
     if (hasWeight && N != weights0.length())
       throw LdtException(ErrorType::kLogic, "R-statistics",
-                     "Unequal number of observations in 'y' and 'weights'.");
+                         "unequal number of observations in 'y' and 'weights'");
     mweights.SetData(&weights0[0]);
   }
   if (printMsg)
@@ -100,11 +100,11 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
   auto min_y = min(y0);
   if (min_y != 0)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "invalid 'y' vector. Minimum must be 0.");
+                       "minimum in 'y' vector must be 0");
   auto max_y = max(y0);
   if (max_y != 1)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "invalid 'y' vector. Maximum must be 1.");
+                       "maximum in 'y' vector must be 1");
 
   ldt::RocOptions options_;
   UpdateRocOptions(printMsg, options, options_, "Options: ");
@@ -166,7 +166,7 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
       mean, variance, skewness, excessKurtosis, type, optim, s1, s2);
 
   if (optim.Iter == optim.MaxIteration)
-    Rf_warning("Maximum number of iteration reached in GLD estimation.");
+    Rf_warning("Maximum number of iteration reached in GLD estimation");
 
   if (printMsg) {
     Rprintf("....\n");
@@ -188,7 +188,7 @@ NumericVector GldQuantile(SEXP data, double L1, double L2, double L3,
                           double L4) {
   if (is<NumericVector>(data) == false)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "'data' must be a 'numeric vector'.");
+                       "'data' must be a 'numeric vector'");
   NumericVector data0 = as<NumericVector>(data);
   NumericVector result(data0.length());
   for (int i = 0; i < data0.length(); i++)
@@ -201,7 +201,7 @@ NumericVector GldDensityQuantile(SEXP data, double L1, double L2, double L3,
                                  double L4) {
   if (is<NumericVector>(data) == false)
     throw LdtException(ErrorType::kLogic, "R-statistics",
-                   "'data' must be a 'numeric vector'.");
+                       "'data' must be a 'numeric vector'");
   NumericVector data0 = as<NumericVector>(data);
 
   NumericVector result(data0.length());
@@ -235,7 +235,7 @@ List GetPca(NumericMatrix x, bool center, bool scale, SEXP newX) {
   if (hasNewX) {
     if (is<NumericMatrix>(newX) == false)
       throw LdtException(ErrorType::kLogic, "R-statistics",
-                     "'newX' must be a 'numeric matrix'.");
+                         "'newX' must be a 'numeric matrix'");
     NumericMatrix newX_ = as<NumericMatrix>(newX);
     mnewX.SetData(&newX_[0], newX_.nrow(), newX_.ncol());
   }

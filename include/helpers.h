@@ -289,7 +289,7 @@ void formatHelper(std::ostringstream &oss, const std::string &fmt,
                   std::size_t &pos, T arg) {
   std::size_t next = fmt.find("{}", pos);
   if (next == std::string::npos) {
-    throw std::runtime_error("Too many arguments provided to format");
+    throw std::runtime_error("too many arguments provided to format");
   }
   oss << fmt.substr(pos, next - pos) << arg;
   pos = next + 2;
@@ -300,7 +300,7 @@ void formatHelper(std::ostringstream &oss, const std::string &fmt,
                   std::size_t &pos, T arg, Args... args) {
   std::size_t next = fmt.find("{}", pos);
   if (next == std::string::npos) {
-    throw std::runtime_error("Too many arguments provided to format");
+    throw std::runtime_error("too many arguments provided to format");
   }
   oss << fmt.substr(pos, next - pos) << arg;
   pos = next + 2;
@@ -313,7 +313,7 @@ std::string format(const std::string &fmt, Args... args) {
   std::size_t pos = 0;
   formatHelper(oss, fmt, pos, args...);
   if (fmt.find("{}", pos) != std::string::npos) {
-    throw std::runtime_error("Too few arguments provided to format");
+    throw std::runtime_error("too few arguments provided to format");
   }
   oss << fmt.substr(pos);
   return oss.str();
@@ -366,11 +366,11 @@ public:
                const std::string &message,
                const std::exception *innerException = nullptr) {
     if (!innerException)
-      msg = format("ldt::{} -> {}.",
+      msg = format("ldt::{}->{}",
                    locationId.empty() ? "unknown location" : locationId,
                    message.empty() ? "unknown error" : message);
     else
-      msg = format("ldt::{} -> {} [{}].",
+      msg = format("ldt::{}->{} [{}]",
                    locationId.empty() ? "unknown location" : locationId,
                    message.empty() ? "unknown error" : message,
                    innerException->what());

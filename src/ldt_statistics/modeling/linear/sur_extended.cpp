@@ -71,7 +71,7 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   Ti k = data.ColsCount - m;
   if (k < 0)
     throw LdtException(ErrorType::kLogic, "sur-extended",
-                       "invalid number of equations in SUR extended.");
+                       "invalid number of equations in SUR extended");
 
   Ti numProjections = newX ? newX->RowsCount : 0;
 
@@ -81,7 +81,7 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
                   Projections.mDoVariance, pPcaOptionsY, pPcaOptionsX);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "sur-extended",
-                       "inconsistent arguments (in SurExtended).");
+                       "inconsistent arguments (in SurExtended)");
 
   Ti p = 0;
 
@@ -101,11 +101,10 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   if (checks) {
     if (checks->MinObsCount > 0 && checks->MinObsCount > count)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "model check failed: Minimum number of observations");
+                         "model check: minimum no. obs");
     if (checks->MinDof > 0 && checks->MinDof > count - k)
-      throw LdtException(
-          ErrorType::kLogic, "sur-extended",
-          "model check failed: Minimum number of degrees of freedom");
+      throw LdtException(ErrorType::kLogic, "sur-extended",
+                         "model check: minimum dof");
   }
 
   // create matrixes but note that we might update them by PCA
@@ -133,7 +132,7 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
   } else if (numProjections > 0) {
     if (newX->ColsCount != k)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "invalid number of variables in new exogenous data.");
+                         "invalid number of variables in new exogenous data");
     useNewX.SetData(newX->Data, numProjections, k);
   }
 
@@ -142,7 +141,7 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
       throw LdtException(
           ErrorType::kLogic, "sur-extended",
           "Restriction matrix cannot be null when significance search is "
-          "enabled.");
+          "enabled");
     auto km0 = Y.ColsCount * X.ColsCount;
     R->Restructure0(km0, km0);
   }
@@ -157,16 +156,16 @@ void SurExtended::Calculate(const Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
     if (checks->mCheckCN_all &&
         Model.condition_number > checks->MaxConditionNumber)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "model check failed: Maximum CN");
+                         "model check: maximum cn");
     if (checks->MaxAic < Model.Aic)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "model check failed: Maximum Aic");
+                         "model check: maximum aic");
     if (checks->MaxSic < Model.Sic)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "model check failed: Maximum Sic");
+                         "model check: maximum sic");
     if (checks->MinR2 > Model.r2)
       throw LdtException(ErrorType::kLogic, "sur-extended",
-                         "model check failed: Maximum R2");
+                         "model check: maximum R2");
   }
 
   // predict

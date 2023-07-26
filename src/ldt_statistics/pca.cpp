@@ -57,7 +57,7 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
     numForecast = Xforecast->RowsCount;
     if (Xforecast->ColsCount != cols)
       throw LdtException(ErrorType::kLogic, "pca",
-                         "invalid 'Xforecast'. Different number of columns.");
+                         "invalid 'Xforecast'. Different number of columns");
   }
 
   bool removeZeroVar = false;
@@ -72,7 +72,7 @@ void PcaAnalysis::Calculate(const Matrix<Tv> &mat, Tv *work, Tv *storage,
                           center, scale);
   if (temp.WorkSize > WorkSize || temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "pca",
-                       "Inconsistent size in 'PcaAnalysis'.");
+                       "Inconsistent size in 'PcaAnalysis'");
 
   Ti q = 0;
   Ti p = 0;
@@ -165,13 +165,13 @@ void PcaAnalysisOptions::CalculateForModel(PcaAnalysis &model, Matrix<Tv> &data,
   if (xForecast && xForecast->ColsCount != numExo)
     throw LdtException(
         ErrorType::kLogic, "pca",
-        "inconsistent number of variables in X and Forecast in PCA for a "
-        "Model.");
+        "inconsistent number of variables in X and forecast in PCA for a "
+        "model");
 
   if (IgnoreFirstCount >= numExo)
     throw LdtException(ErrorType::kLogic, "pca",
                        "invalid 'IgnoreFirstCount' in PCA options. It is "
-                       ">= number of exogenous variables.");
+                       ">= number of exogenous variables");
   auto start = IgnoreFirstCount;
   auto pcaMat = Matrix<Tv>(&data.Data[start * data.RowsCount], data.RowsCount,
                            numExo - IgnoreFirstCount);
@@ -183,7 +183,7 @@ void PcaAnalysisOptions::CalculateForModel(PcaAnalysis &model, Matrix<Tv> &data,
 
   if (throwIfConstant && model.DataS.RemovedZeroVar.size() > 0)
     throw LdtException(ErrorType::kLogic, "pca",
-                       "constant variable is found in PCA analysis.");
+                       "constant variable is found in PCA analysis");
 
   // copy required number of columns to the useMat
   auto cutoff_col = this->GetFinalCount(model);
@@ -210,7 +210,7 @@ void PcaAnalysisOptions::CheckValidity() {
 
   if (IgnoreFirstCount < 0)
     throw LdtException(ErrorType::kLogic, "pca",
-                       "invalid number of variables to ignore in PCA options.");
+                       "invalid number of variables to ignore in PCA options");
 
   if (ExactCount > 0) {
     // everthing is OK
@@ -223,7 +223,7 @@ void PcaAnalysisOptions::CheckValidity() {
         throw LdtException(
             ErrorType::kLogic, "pca",
             "components are selected by the give cutoff rate, but it is "
-            "restricted to 0 (param-name='CutoffCountMax').");
+            "restricted to 0 (param-name='CutoffCountMax')");
     }
   }
 }

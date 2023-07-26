@@ -16,7 +16,7 @@ void SearchItems::Update(const SearchMetricOptions metrics, Ti targetCount,
   LengthEvals = (Ti)(metrics.MetricsIn.size() + metrics.MetricsOut.size());
   if (targetCount <= 0)
     throw LdtException(ErrorType::kLogic, "searcher-summary",
-                       "number of targets must be positive.");
+                       "number of targets must be positive");
   LengthTargets = targetCount;
 }
 
@@ -32,12 +32,12 @@ void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   if (hasOut == false && MetricsOut.size() > 0)
     throw LdtException(ErrorType::kLogic, "searcher-summary",
                        "out-of-sample metrics is given, but the number of "
-                       "simulations is zero.");
+                       "simulations is zero");
   if (hasOut && MetricsOut.size() == 0)
     throw LdtException(
         ErrorType::kLogic, "searcher-summary",
         "number of simulations is positive but out-of-sample metrics "
-        "are missing.");
+        "are missing");
 
   if (TrainFixSize > 0)
     TrainRatio = 0;                   // ignore it
@@ -45,14 +45,14 @@ void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
                                       // determined by simulation size
       && TrainFixSize == 0 && TrainRatio == 0)
     throw LdtException(ErrorType::kLogic, "searcher-summary",
-                       "training sample is empty.");
+                       "training sample is empty");
 
   if (isTimeSeries) {
     if ((Horizons.size() == 0 && MetricsOut.size() > 0) ||
         (Horizons.size() > 0 && MetricsOut.size() == 0))
       throw LdtException(
           ErrorType::kLogic, "searcher-summary",
-          "invalid number of horizons (or out-of-sample metrics) is found.");
+          "invalid number of horizons (or out-of-sample metrics) is found");
   }
 
   // indexes
@@ -91,7 +91,7 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
     throw LdtException(
         ErrorType::kLogic, "searcher-summary",
         "minimum number of simulations cannot be larger than the number of "
-        "simulations.");
+        "simulations");
 
   auto checkN = MinObsCount > 0;
   auto checkDof = MinDof > 0;

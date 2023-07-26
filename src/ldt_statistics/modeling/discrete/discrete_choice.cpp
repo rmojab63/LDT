@@ -21,7 +21,7 @@ DiscreteChoice<modelType, distType>::DiscreteChoice(Ti numObs, Ti numExo,
   else if (numChoices > 2 && modelType == DiscreteChoiceModelType::kBinary)
     throw LdtException(
         ErrorType::kLogic, "discrete-choice",
-        "Don't use binary model when number of choices is larger than 2");
+        "don't use binary model when number of choices is larger than 2");
 
   this->mDoDetails = doDetails;
   Ti k = numExo + numChoices -
@@ -82,7 +82,7 @@ void DiscreteChoice<modelType, distType>::Calculate(
                                                   this->mDoDetails);
   if (temp.WorkSize > this->WorkSize || temp.StorageSize > this->StorageSize)
     throw LdtException(ErrorType::kLogic, "discrete-choice",
-                       "inconsistent arguments in discrete choice.");
+                       "inconsistent arguments in discrete choice");
 
   // set storage
   Ti k = numExo + this->NumCutoff - 1;
@@ -417,7 +417,7 @@ void DiscreteChoice<modelType, distType>::EstimateBinary(const Matrix<Tv> &y,
 
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "discrete-choice",
-                       "not implemented (discrete choice distribution type).");
+                       "not implemented (discrete choice distribution type)");
     ;
   }
 
@@ -509,7 +509,7 @@ void DiscreteChoice<modelType, distType>::EstimatePriorOrdered(
     }
   } else
     throw LdtException(ErrorType::kLogic, "discrete-choice",
-                       "not implemented (discrete choice distribution type).");
+                       "not implemented (discrete choice distribution type)");
 
   // estimate OLS
   if (w) { // multiply rows by sqrt(weight)
@@ -1039,7 +1039,7 @@ void DiscreteChoice<modelType, distType>::EstimateOrdered(const Matrix<Tv> &y,
 
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "discrete-choice",
-                       "not implemented (discrete choice distribution type).");
+                       "not implemented (discrete choice distribution type)");
   }
 
   this->Optim.Minimize2(fun, gfun, hfun, this->Beta, vg.Data,
@@ -1097,9 +1097,8 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         result.Set0(i, 0, (Tv)1 - c);
       }
     } else if constexpr (true) {
-      throw LdtException(
-          ErrorType::kLogic, "discrete-choice",
-          "not implemented (discrete choice distribution type).");
+      throw LdtException(ErrorType::kLogic, "discrete-choice",
+                         "not implemented (discrete choice distribution type)");
     }
   } else if constexpr (modelType == DiscreteChoiceModelType::kOrdered) {
     Ti j;
@@ -1148,13 +1147,12 @@ void DiscreteChoice<modelType, distType>::GetProbabilities(const Matrix<Tv> &x,
         }
       }
     } else if constexpr (true) {
-      throw LdtException(
-          ErrorType::kLogic, "discrete-choice",
-          "not implemented (discrete choice distribution type).");
+      throw LdtException(ErrorType::kLogic, "discrete-choice",
+                         "not implemented (discrete choice distribution type)");
     }
   } else if constexpr (true) {
     throw LdtException(ErrorType::kLogic, "discrete-choice",
-                       "not implemented (discrete choice model type).");
+                       "not implemented (discrete choice model type)");
   }
 }
 

@@ -1021,7 +1021,7 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
       if (data->Data[i] <= 0)
         throw LdtException(
             ErrorType::kLogic, "exp-smoothing",
-            "Negative data for a model with multiplicative error");
+            "negative data for a model with multiplicative error");
 
   if (_seasonCount != 0) {
     if (!initials->init_seasons)
@@ -1029,7 +1029,7 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
                          "seasons are not initialized");
     else if (initials->init_seasons->length() != _seasonCount)
       throw LdtException(ErrorType::kLogic, "exp-smoothing",
-                         "Inconsistent number of seasons");
+                         "inconsistent number of seasons");
   }
 
   auto T = data->length();
@@ -1047,7 +1047,7 @@ void expsmoothing<type>::estimate(Matrix<Tv> *data, ExpSmoothingResultTv *res,
                      _seasonCount, initialUpdateLength);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "exp-smoothing",
-                       "Initialization failed");
+                       "initialization failed");
   }
 
   Ti q = 0;

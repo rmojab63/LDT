@@ -86,7 +86,7 @@ wolfe_weak(const std::function<Tv(const Matrix<Tv> &)> &F,
 
   if (Iteration == maxIterations && std::isinf(beta))
     throw LdtException(ErrorType::kLogic, "newton",
-                   "Line search failed. f(x+td)->-inf");
+                       "line search failed. f(x+td)->-inf");
 }
 
 void Newton::minimize(
@@ -124,7 +124,7 @@ void Newton::minimize(
       gnorm = norm2(Gradient);
       if (std::isnan(gnorm) || std::isinf(gnorm))
         throw LdtException(ErrorType::kLogic, "newton",
-                       "NAN or INf in Gradient/Value of function");
+                           "NAN or INF in gradient/value of function");
       if (gnorm < TolGradient)
         break;
     }

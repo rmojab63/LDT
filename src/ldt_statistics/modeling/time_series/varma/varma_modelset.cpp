@@ -64,7 +64,7 @@ VarmaSearcher::VarmaSearcher(
     if (metrics.MetricsOut.size() == 0)
       throw LdtException(
           ErrorType::kLogic, "varma-modelset",
-          "simulation is requested by there is no evaluation metric.");
+          "simulation is requested by there is no evaluation metric");
     Model = VarmaSimulation(Sizes, metrics.SimFixSize, metrics.Horizons,
                             metrics.MetricsOut,
                             optimOptions); // no PCA in search
@@ -171,14 +171,12 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     if (this->pChecks) {
       if (this->pChecks->MinObsCount > 0 && this->pChecks->MinObsCount > ycount)
-        throw LdtException(
-            ErrorType::kLogic, "varma-modelset",
-            "model check failed: Minimum number of observations");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "model check: minimum no. obs");
       if (this->pChecks->MinDof > 0 &&
           this->pChecks->MinDof > ycount - X.RowsCount)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
-                           "model check failed: Minimum number of degrees of "
-                           "freedom");
+                           "model check: minimum dof");
     }
 
     if (this->pOptions->RequestCancel)
@@ -194,10 +192,10 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     if (this->pChecks) {
       if (this->pChecks->MaxAic < DModel.Result.Aic)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
-                           "model check failed: Maximum Aic");
+                           "model check: maximum aic");
       if (this->pChecks->MaxSic < DModel.Result.Sic)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
-                           "model check failed: Maximum Sic");
+                           "model check: maximum sic");
       // if (pChecks->MinR2 > DModel.Result.R2)
       //	throw LdtException(ErrorType::kLogic, "varma-modelset", "model
       // check failed: Maximum R2");
@@ -239,12 +237,12 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
                 FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) <
                     pForLowerBounds->Get0(i, j))
               throw LdtException(ErrorType::kLogic, "varma-modelset",
-                                 "model check failed: Prediction Lower Bound");
+                                 "model check: prediction lower bound");
             if (pForUpperBounds &&
                 FModel.Forecast.Get0(i, h + FModel.StartIndex - 1) >
                     pForUpperBounds->Get0(i, j))
               throw LdtException(ErrorType::kLogic, "varma-modelset",
-                                 "model check failed: Prediction Upper Bound");
+                                 "model check: prediction upper bound");
           }
         }
       }
@@ -283,7 +281,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     if (Model.ValidCounts == 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
-                         "number of valid simulations is 0.");
+                         "number of valid simulations is 0");
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)targetPositions.size(); t++) {
@@ -352,7 +350,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
           if (t + Model.Forecast.StartIndex >= FModel.Forecast.ColsCount)
             throw LdtException(ErrorType::kLogic, "varma-modelset",
-                               "not enough number of forecasts.");
+                               "not enough number of forecasts");
 
           auto ek = new EstimationKeep(
               weight, &ExoIndexes, &Params, &this->CurrentIndices,
@@ -406,7 +404,7 @@ VarmaModelset::VarmaModelset(
     throw LdtException(
         ErrorType::kLogic, "varma-modelset",
         "'Length1' is the forecast horizon. Set 'checks.Prediction=true' when "
-        "it is positive.");
+        "it is positive");
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
@@ -415,10 +413,10 @@ VarmaModelset::VarmaModelset(
         throw LdtException(
             ErrorType::kLogic, "varma-modelset",
             "invalid endogenous group element (it is larger than the number "
-            "of available endogenous variables).");
+            "of available endogenous variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
-                           "invalid exogenous group element (it is negative).");
+                           "invalid exogenous group element (it is negative)");
     }
   }
 
@@ -447,7 +445,7 @@ VarmaModelset::VarmaModelset(
     if (hasBounds && checks.Prediction == false)
       throw LdtException(
           ErrorType::kLogic, "varma-modelset",
-          "forecast bounds are given but 'forecast check' is false.");
+          "forecast bounds are given but 'forecast check' is false");
     if (checks.PredictionBoundMultiplier < 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
                          "invalid forecast bound multiplier");
@@ -480,7 +478,7 @@ VarmaModelset::VarmaModelset(
       throw LdtException(
           ErrorType::kLogic, "varma-modelset",
           "invalid model size (zero or negative). Make sure array is "
-          "initialized properly.");
+          "initialized properly");
 
     for (auto p = 0; p <= varmaMaxParameters6.at(0); p++) {
       for (auto d = 0; d <= varmaMaxParameters6.at(1); d++) {

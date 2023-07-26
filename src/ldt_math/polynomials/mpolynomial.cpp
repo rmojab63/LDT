@@ -80,7 +80,7 @@ void PolynomialMMultiply::Calculate(const PolynomialM &a, const PolynomialM &b,
   auto temp = PolynomialMMultiply(size, degree1, degree2, maxLength);
   if (temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "mpoly",
-                       "inconsistent arguments (in polynomialM multiply).");
+                       "inconsistent arguments (in polynomialM multiply)");
   auto length = std::min(degree1 + degree2 + 1, maxLength);
 
   Result.Data(length - 1, size, storage);
@@ -109,7 +109,7 @@ void PolynomialMMultiply::Calculate(const PolynomialM &a,
   auto temp = PolynomialMMultiply(size, degree1, degree2, maxLength);
   if (temp.StorageSize > StorageSize)
     throw LdtException(ErrorType::kLogic, "mpoly",
-                       "inconsistent arguments (in polynomialM multiply).");
+                       "inconsistent arguments (in polynomialM multiply)");
   auto length = std::min(degree1 + degree2 + 1, maxLength);
 
   Result.Data(length - 1, size, storage);
@@ -145,7 +145,7 @@ void PolynomialMInvert::Calculate(const PolynomialM &a, Tv *storage, Tv *work,
   auto temp = PolynomialMInvert(size, degree, maxLength);
   if (temp.StorageSize > StorageSize || temp.WorkSize > WorkSize)
     throw LdtException(ErrorType::kLogic, "mpoly",
-                       "inconsistent arguments (in polynomialM invert).");
+                       "inconsistent arguments (in polynomialM invert)");
 
   Result.Data(maxLength - 1, size, storage);
 

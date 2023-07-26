@@ -130,7 +130,7 @@ as.frequency <-function(str, classId){
 get.seq <- function(from, to, by = 1){
   by = as.integer(by)
   if (by == 0)
-    stop("invalid 'by' value. It cannot be zero." )
+    stop("'by' cannot be zero." )
 
   res <- .Sequence_F(from, to, by)
   res

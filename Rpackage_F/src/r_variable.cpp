@@ -38,14 +38,14 @@ void UpdateVariableFromSEXP(
         GetFreqFromSEXP(w["startFrequency"], listItems, listItemsDate);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-variable",
-                       "invalid 'startFrequency'.");
+                       "invalid 'startFrequency'");
   }
 
   try {
     variable.Data = as<std::vector<double>>(w["data"]);
   } catch (...) {
     throw LdtException(ErrorType::kLogic, "R-variable",
-                       "invalid 'data'. It should be a vector of numerics.");
+                       "data' should be a vector of numeric values");
   }
 
   try {
@@ -55,7 +55,7 @@ void UpdateVariableFromSEXP(
         CharacterVector Fj = as<CharacterVector>(F[j]);
         if (Fj.length() < 2)
           throw LdtException(ErrorType::kLogic, "R-variable",
-                             "Expected a 'key' and a 'value'.");
+                             "expected a 'key' and a 'value'");
         variable.Fields.insert(
             {as<std::string>(Fj[0]), as<std::string>(Fj[1])});
       }
@@ -64,7 +64,7 @@ void UpdateVariableFromSEXP(
     throw LdtException(
         ErrorType::kLogic, "R-variable",
         "invalid fields. It should be a 'List' of 'CharacterVector's. The "
-        "vector must have 'Key-Value' pairs.");
+        "vector must have 'Key-Value' pairs");
   }
 }
 
@@ -90,10 +90,10 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
   if (numExo < 0 || numEndo < 0)
     throw LdtException(
         ErrorType::kLogic, "R-variable",
-        "invalid number of exogenous/exogenous variables (check 'numExo').");
+        "invalid number of exogenous/exogenous variables (check 'numExo')");
   if (numExo > 0 && horizon < 0)
     throw LdtException(ErrorType::kLogic, "R-variable",
-                       "invalid out-of-sample size (check 'horizon').");
+                       "invalid out-of-sample size (check 'horizon')");
 
   auto info = IntegerMatrix(n, 5);
   colnames(info) =
@@ -109,7 +109,7 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
     for (int i = 0; i < n; i++) {
       if (is<List>(vars[i]) == false)
         throw LdtException(ErrorType::kLogic, "R-variable",
-                           "invalid variable type.");
+                           "invalid variable type");
       UpdateVariableFromSEXP(as<List>(vars[i]), list.at(i), listItems.at(i),
                              listItemsDate.at(i));
       list.at(i).Trim();
@@ -125,7 +125,7 @@ List BindVariables(SEXP varList, bool interpolate, bool adjustLeadLags,
     throw LdtException(
         ErrorType::kLogic, "R-variable",
         "Creating a variable failed. Make sure all items of the list are "
-        "'ldtv' objects.");
+        "'ldtv' objects");
   }
   auto vs = Variables<double>(list0);
 

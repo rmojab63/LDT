@@ -16,17 +16,15 @@ FrequencyYearBased::FrequencyYearBased(Ti year, Ti partitionCount, Ti position,
   mPosition = position;
 
   if (mPartitionCount <= 0)
-    throw LdtException(
-        ErrorType::kLogic, "freq-yearbased",
-        "invalid argument: Number of partitions must be positive.");
+    throw LdtException(ErrorType::kLogic, "freq-yearbased",
+                       "number of partitions must be positive");
   if (mPosition <= 0)
     throw LdtException(ErrorType::kLogic, "freq-yearbased",
-                       "invalid argument: Current position must be positive.");
+                       "current position must be positive");
   if (mPosition > mPartitionCount)
-    throw LdtException(
-        ErrorType::kLogic, "freq-yearbased",
-        "invalid argument: Current position must be equal or less than the "
-        "number of partitions.");
+    throw LdtException(ErrorType::kLogic, "freq-yearbased",
+                       "current position must be equal or less than the "
+                       "number of partitions");
 
   if (yearMulti == 1) {
     if (partitionCount == 1)

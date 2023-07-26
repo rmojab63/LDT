@@ -9,7 +9,7 @@ Variables<Tw>::Variables(const std::vector<Variable<Tw> *> vars) {
 
   if (vars.size() == 0)
     throw LdtException(ErrorType::kLogic, "variables",
-                       "no variable is available.");
+                       "no variable is available");
 
   StartFrequency = vars.at(0)->StartFrequency.get()->Clone();
   auto maxEnds = vars.at(0)->GetEndFrequency();
@@ -27,7 +27,7 @@ Variables<Tw>::Variables(const std::vector<Variable<Tw> *> vars) {
         std::rethrow_exception(std::current_exception());
       } catch (const std::exception &e) {
         throw LdtException(ErrorType::kLogic, "variables",
-                           "mixed frequency is not supported in 'Variables'.",
+                           "mixed frequency is not supported in 'Variables'",
                            &e);
       }
     }
@@ -36,7 +36,7 @@ Variables<Tw>::Variables(const std::vector<Variable<Tw> *> vars) {
   NumObs = maxEnds.get()->Minus(*StartFrequency.get());
   if (NumObs == 0)
     throw LdtException(ErrorType::kLogic, "variables",
-                       "no observation is available.");
+                       "no observation is available");
 
   Data.resize(NumObs * vars.size());
   Ti i = 0;
