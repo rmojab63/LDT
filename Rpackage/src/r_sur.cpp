@@ -287,7 +287,7 @@ SEXP EstimSur(SEXP y, SEXP x, bool addIntercept, int searchSigMaxIter,
         Rprintf(ToString(funcType));
 
       if (funcType == FunctionType::kId) { // for tests
-        transform = [](double &x) { x = x; };
+        transform = [](double &x) { };
       } else if (funcType == FunctionType::kExp) {
         transform = [](double &x) { x = std::exp(x); };
       } else if (funcType == FunctionType::kPow2) {

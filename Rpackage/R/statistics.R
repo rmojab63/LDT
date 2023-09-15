@@ -7,6 +7,7 @@
 #' @param value Numeric value of the metric.
 #' @param metricName Character string specifying the name of the metric.
 #' See [get.options.metric] function for the list of available options.
+#' @param minValue A minimum value to be used for metrics with exponential weight formula.
 #'
 #' @details
 #' Given a collection of models for the data, a metric is not
@@ -16,7 +17,7 @@
 #' These are the details of the transformations:
 #' \itemize{
 #' \item direction, sign, AUC -> weight = metric
-#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 metric)
+#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 (metric - minimum value))
 #' }
 #'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
@@ -29,11 +30,12 @@
 #' metric <- s.metric.from.weight(weight, "sic")
 #'
 #' @seealso [s.metric.from.weight]
-s.weight.from.metric <- function(value, metricName)
+s.weight.from.metric <- function(value, metricName, minValue = 0)
 {
   value = as.numeric(value)
+  minValue = as.numeric(minValue)
   metricName = as.character(metricName)
-  res <- .GetWeightFromMetric(value, metricName)
+  res <- .GetWeightFromMetric(value, metricName, minValue)
   res
 }
 
@@ -45,6 +47,7 @@ s.weight.from.metric <- function(value, metricName)
 #' @param value Numeric value of the weight.
 #' @param metricName Character string specifying the name of the metric.
 #' See \code{\link{get.options.metric}} function for the list of available options.
+#' @param minValue A minimum value used in exponential weight formula.
 #'
 #' @details
 #' See [s.weight.from.metric] for a discussion.
@@ -59,12 +62,13 @@ s.weight.from.metric <- function(value, metricName)
 #' metric <- s.metric.from.weight(weight, "sic")
 #'
 #' @seealso [s.weight.from.metric]
-s.metric.from.weight <- function(value, metricName)
+s.metric.from.weight <- function(value, metricName, minValue = 0)
 {
   value = as.numeric(value)
+  minValue = as.numeric(minValue)
   metricName = as.character(metricName)
 
-  res <- .GetMetricFromWeight(value, metricName)
+  res <- .GetMetricFromWeight(value, metricName, minValue)
   res
 }
 

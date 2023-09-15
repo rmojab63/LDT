@@ -80,7 +80,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
   auto numMeas = (Ti)this->pMetrics->MetricsOut.size() +
                  (Ti)this->pMetrics->MetricsIn.size();
   Weights = Matrix<Tv>(numMeas, 1);
-  this->WorkSize += numMeas; // weights matrix
+  Metrics = Matrix<Tv>(numMeas, 1);
+  this->WorkSize += numMeas * 2; // weights & metric matrices
 
   if (metrics.mIndexOfCostMatrixIn != -1 || metrics.mIndexOfAucIn != -1 ||
       metrics.mIndexOfBrierIn != -1) {
@@ -130,6 +131,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   Ti s = 0;
   Weights.SetData(NAN, &work[s]);
   s += Weights.RowsCount;
+  Metrics.SetData(NAN, &work[s]);
+  s += Metrics.RowsCount;
 
   Data.Calculate(*pSource, &Indexes, &work[s]);
   s += Data.StorageSize;
@@ -207,14 +210,18 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   // collect metrics:
 
   if (this->pChecks->Estimation) {
-    if (metrics.mIndexOfAic != -1)
-      Weights.Set0(
-          metrics.mIndexOfAic, 0,
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Aic));
-    if (metrics.mIndexOfSic != -1)
-      Weights.Set0(
-          metrics.mIndexOfSic, 0,
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Sic));
+    if (metrics.mIndexOfAic != -1) {
+      Weights.Set0(metrics.mIndexOfAic, 0,
+                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Aic,
+                                           metrics.minAic.at(0)));
+      Metrics.Set0(metrics.mIndexOfAic, 0, DModel.Aic);
+    }
+    if (metrics.mIndexOfSic != -1) {
+      Weights.Set0(metrics.mIndexOfSic, 0,
+                   GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Sic,
+                                           metrics.minSic.at(0)));
+      Metrics.Set0(metrics.mIndexOfSic, 0, DModel.Sic);
+    }
 
     if (metrics.mIndexOfCostMatrixIn != -1 || metrics.mIndexOfAucIn != -1 ||
         metrics.mIndexOfBrierIn != -1) {
@@ -238,7 +245,9 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
         }
         brier /= sum;
         Weights.Set0(metrics.mIndexOfBrierIn, 0,
-                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kBrier, brier));
+                     GoodnessOfFit::ToWeight(GoodnessOfFitType::kBrier, brier,
+                                             metrics.minBrierIn.at(0)));
+        Metrics.Set0(metrics.mIndexOfBrierIn, 0, brier);
       }
 
       if (metrics.mIndexOfCostMatrixIn != -1) {
@@ -252,6 +261,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
         Weights.Set0(metrics.mIndexOfCostMatrixIn, 0,
                      GoodnessOfFit::ToWeight(GoodnessOfFitType::kFrequencyCost,
                                              CostIn.get()->AverageRatio));
+        Metrics.Set0(metrics.mIndexOfCostMatrixIn, 0,
+                     CostIn.get()->AverageRatio);
       }
       if (metrics.mIndexOfAucIn != -1) {
 
@@ -265,23 +276,31 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
         Weights.Set0(metrics.mIndexOfAucIn, 0,
                      GoodnessOfFit::ToWeight(GoodnessOfFitType::kAuc,
                                              AucIn.get()->Result));
+        Metrics.Set0(metrics.mIndexOfAucIn, 0, AucIn.get()->Result);
       }
     }
   }
 
   if (metrics.SimFixSize > 0) {
     Ti cc = (Ti)metrics.MetricsIn.size();
-    if (metrics.mIndexOfCostMatrixOut != -1)
+    if (metrics.mIndexOfCostMatrixOut != -1) {
+      auto mmdt = Model.CostRatios.Mean();
       Weights.Set0(cc + metrics.mIndexOfCostMatrixOut, 0,
-                   Scoring::ToWeight(ScoringType::kFrequencyCost,
-                                     Model.CostRatios.Mean()));
-    if (metrics.mIndexOfAucOut != -1)
+                   Scoring::ToWeight(ScoringType::kFrequencyCost, mmdt));
+      Metrics.Set0(cc + metrics.mIndexOfCostMatrixOut, 0, mmdt);
+    }
+    if (metrics.mIndexOfAucOut != -1) {
       Weights.Set0(cc + metrics.mIndexOfAucOut, 0,
                    Scoring::ToWeight(ScoringType::kAuc, Model.Auc));
+      Metrics.Set0(cc + metrics.mIndexOfAucOut, 0, Model.Auc);
+    }
 
-    if (metrics.mIndexOfBrierOut != -1)
+    if (metrics.mIndexOfBrierOut != -1) {
       Weights.Set0(cc + metrics.mIndexOfBrierOut, 0,
-                   Scoring::ToWeight(ScoringType::kBrier, Model.BrierScore));
+                   Scoring::ToWeight(ScoringType::kBrier, Model.BrierScore,
+                                     metrics.minBrierOut.at(0)));
+      Metrics.Set0(cc + metrics.mIndexOfBrierOut, 0, metrics.minBrierOut.at(0));
+    }
   }
 
   if (this->pOptions->RequestCancel)
@@ -290,10 +309,11 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   // keep information:
 
   bool allNan = true;
-  Tv weight;
+  Tv weight, metric;
   for (Ti i = 0; i < Weights.RowsCount; i++) { // evaluation index
     weight = Weights.Data[i];
-    if (std::isnan(weight))
+    metric = Metrics.Data[i];
+    if (std::isnan(metric))
       continue;
     allNan = false;
 
@@ -304,15 +324,16 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
 
     if (this->pItems->KeepModelEvaluations) // Add Model evaluation
     {
-      auto ek = new EstimationKeep(weight, &this->CurrentIndices, &extra);
+      auto ek =
+          new EstimationKeep(metric, weight, &this->CurrentIndices, &extra);
       this->Push0(*ek, i, 0, &ExoIndexes);
     }
 
     if (this->pItems->Length1 > 0) { // Add intercept, coefficients, thresholds
       for (Ti t = 0; t < this->SizeG + 1 + this->mNumChoices - 2; t++) {
-        auto ek =
-            new EstimationKeep(weight, &this->CurrentIndices, &extra, nullptr,
-                               DModel.Beta.Data[t], DModel.BetaVar.Get0(t, t));
+        auto ek = new EstimationKeep(metric, weight, &this->CurrentIndices,
+                                     &extra, nullptr, DModel.Beta.Data[t],
+                                     DModel.BetaVar.Get0(t, t));
         if (t == 0) // intercept
           this->Push1(*ek, i, 0, 0);
         else if (t <= this->SizeG) // beta parameter
@@ -327,7 +348,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
   }
 
   if (allNan)
-    throw LdtException(ErrorType::kLogic, "dc-modelset", "all weights are NaN");
+    throw LdtException(ErrorType::kLogic, "dc-modelset", "all metrics are NaN");
 
   return "";
 }

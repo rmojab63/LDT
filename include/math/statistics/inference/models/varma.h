@@ -459,9 +459,6 @@ public:
   VarmaForecast Forecast;
   VarmaExtended EModel;
 
-  /// @brief at(i)->[j,h] => i-th metric, j-th variable, h-th horizon
-  std::vector<Matrix<Tv>> Results;
-
   /// @brief Results aggregated by horizon [i,j] => i-th metric, j-th variable
   /// (aggregated over horizons). Note that it might be a weighted average due
   /// to different number of evaluations over different horizon. For RMSE, it

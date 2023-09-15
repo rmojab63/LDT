@@ -8,25 +8,6 @@
 
 using namespace ldt;
 
-/*
-
-
-VarmaSimulationDetail::VarmaSimulationDetail() {
-        Actuals = new Matrix<Tv>();
-        Forecasts = new Matrix<Tv>();
-        ForecastsStd = new Matrix<Tv>();
-        IsValid = false;
-        SampleEnds = -1;
-}
-
-
-VarmaSimulationDetail::~VarmaSimulationDetail() {
-        delete Actuals;
-        delete Forecasts;
-        delete ForecastsStd;
-}
-*/
-
 // #pragma region Simulation
 
 VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
@@ -61,11 +42,7 @@ VarmaSimulation::VarmaSimulation(const VarmaSizes &sizes, Ti count,
       break;
     }
 
-  StorageSize = (Ti)(metrics.size() * horizons.size() *
-                     sizes.EqsCount); // for each metric and horizon and
-                                      // variable, there is a value
-  Results = std::vector<Matrix<Tv>>(metrics.size());
-  StorageSize += (Ti)metrics.size() * sizes.EqsCount;
+  StorageSize = (Ti)metrics.size() * sizes.EqsCount; // for ResultAggs
   WorkSize = 0;
   // calculate work size
   if (IsExtended) {
@@ -140,10 +117,10 @@ void GetScore(const ScoringType &type, Matrix<Tv> &result,
   } break;
   case ScoringType::kMape: {
     for (i = 0; i < act.length(); i++) {
-      if (act.Data[i] == 0)
+      if (act.Data[i] <= 0)
         result.Data[i] = NAN; //??
       else
-        result.Data[i] = std::abs(err.Data[i]) / std::abs(act.Data[i]);
+        result.Data[i] = std::abs(err.Data[i]) / act.Data[i];
     }
   } break;
 
@@ -154,7 +131,7 @@ void GetScore(const ScoringType &type, Matrix<Tv> &result,
   } break;
   case ScoringType::kRmspe: {
     for (i = 0; i < act.length(); i++) {
-      if (act.Data[i] == 0)
+      if (act.Data[i] <= 0)
         result.Data[i] = NAN; //??
       else
         result.Data[i] =
@@ -221,10 +198,6 @@ void VarmaSimulation::Calculate(
 
   // set storage
   Ti pos = 0;
-  for (int i = 0; i < mm; i++) {
-    Results.at(i).SetData(0, &storage[pos], yy, hh);
-    pos += yy * hh; // horizons are in columns
-  }
   ResultAggs.SetData(0, &storage[pos], mm, yy);
   pos += mm * yy;
 
@@ -264,8 +237,6 @@ void VarmaSimulation::Calculate(
   Ti actIndex;
   Ti effectiveH;
   bool success = false;
-  Ti row = 0;
-  auto counters = std::vector<Ti>(horizons.size());
   Ti counter = 0;
   for (Ti se = count; se > 0; se--) {
     if (cancel)
@@ -304,7 +275,6 @@ void VarmaSimulation::Calculate(
         return;
 
     } catch (...) {
-      row++;
       continue; // will be invalid
     }
     invalidCounts--;
@@ -323,7 +293,6 @@ void VarmaSimulation::Calculate(
         if (cancel)
           return;
         counter++;
-        counters[k]++;
         act.SetColumnFromColumn0(k, data, actIndex + h);
 
         forc.SetColumnFromColumn0(k, forecast.Forecast, forIndex + h);
@@ -366,13 +335,6 @@ void VarmaSimulation::Calculate(
     if (cancel)
       return;
 
-    /*if (keepDetails) {
-        details->sampleEnd = se;
-        details->isValid = true;
-        act.CopyTo00(details->actual);
-        forc.CopyTo00(details->forecast);
-        std.CopyTo00(details->stdforecast);
-    }*/
     success = true;
     ValidCounts++;
 
@@ -383,56 +345,22 @@ void VarmaSimulation::Calculate(
       GetScore(eval, temp, act, forc, err, std, last);
 
       // summation for calculating mean
-      auto me = Results.at(c);
       k = 0;
       for (auto &h : horizons) {
         if (h > effectiveH)
           continue;
         for (Ti i = 0; i < temp.RowsCount; i++) {
-          me.Set0(i, k, me.Get0(i, k) + temp.Get0(i, k));
           ResultAggs.Set0(c, i, ResultAggs.Get0(c, i) + temp.Get0(i, k));
         }
         k++;
       }
-
-      // if (keepDetails) {
-      //     temp.CopyTo(details->metrics.at(c));
-      // }
       c++;
     }
-
-    row++;
   }
 
   if (counter == 0 || invalidCounts > maxInvalidSim)
     throw LdtException(ErrorType::kLogic, "varma-simulation",
                        "model check: minimum valid simulations");
-
-  if (cancel)
-    return;
-
-  // average:
-  for (Ti j = 0; j < hh; j++) {
-    auto o = (Tv)1 / (Tv)counters[j];
-    for (Ti i = 0; i < mm; i++) {
-      auto m = &Results.at(i);
-      if (metrics.at(i) == ScoringType::kRmse ||
-          metrics.at(i) == ScoringType::kRmspe) {
-        for (k = 0; k < m->RowsCount; k++)
-          m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
-      } else {
-        for (k = 0; k < m->RowsCount; k++)
-          m->Set0(k, j, m->Get0(k, j) * o);
-      }
-
-      // convert to percentage
-      if (metrics.at(i) == ScoringType::kMape ||
-          metrics.at(i) == ScoringType::kRmspe) {
-        for (k = 0; k < m->RowsCount; k++)
-          m->Set0(k, j, m->Get0(k, j) * 100);
-      }
-    }
-  }
 
   if (cancel)
     return;
@@ -446,6 +374,11 @@ void VarmaSimulation::Calculate(
     } else {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, ResultAggs.Get0(i, k) / (Tv)counter);
+    }
+    if (metrics.at(i) == ScoringType::kRmspe ||
+        metrics.at(i) == ScoringType::kMape) {
+      for (k = 0; k < yy; k++)
+        ResultAggs.Set0(i, k, ResultAggs.Get0(i, k) * 100);
     }
   }
 }
@@ -502,10 +435,6 @@ void VarmaSimulation::CalculateE(
 
   // set storage
   Ti pos = 0;
-  for (int i = 0; i < mm; i++) {
-    Results.at(i).SetData(0, &storage[pos], yy, hh);
-    pos += yy * hh; // horizons are in columns
-  }
   ResultAggs.SetData(0, &storage[pos], mm, yy);
   pos += mm * yy;
 
@@ -542,8 +471,6 @@ void VarmaSimulation::CalculateE(
   Ti actIndex;
   Ti effectiveH;
   bool success = false;
-  Ti row = 0;
-  auto counters = std::vector<Ti>(horizons.size());
   Ti counter = 0;
   for (Ti se = count; se > 0; se--) {
     useCurrentEstims = usePreviousEstim && success;
@@ -573,19 +500,15 @@ void VarmaSimulation::CalculateE(
       forecast0 = &EModel.Forecasts;
     } catch (std::exception &ex) {
       AddError(ex.what());
-      row++;
       continue;
     } catch (std::string &ex) {
       AddError(ex.c_str());
-      row++;
       continue;
     } catch (const char *ex) {
       AddError(ex);
-      row++;
       continue;
     } catch (...) {
       AddError("unknown error!");
-      row++;
       continue;
     }
     auto forecast = *forecast0;
@@ -599,7 +522,6 @@ void VarmaSimulation::CalculateE(
     {
       if (h <= effectiveH) {
         counter++;
-        counters[k]++;
         for (Ti b = 0; b < sizes.EqsCount; b++) // copy just the endogenous part
           act.Set0(b, k, data.Get0(actIndex + h, b));
 
@@ -639,13 +561,6 @@ void VarmaSimulation::CalculateE(
 
     act.Subtract0(forc, err);
 
-    /*if (keepDetails) {
-        details->sampleEnd = se;
-        details->isValid = true;
-        act.CopyTo00(details->actual);
-        forc.CopyTo00(details->forecast);
-        std.CopyTo00(details->stdforecast);
-    }*/
     success = true;
     ValidCounts++;
 
@@ -654,7 +569,6 @@ void VarmaSimulation::CalculateE(
       GetScore(eval, temp, act, forc, err, std, last);
 
       // summation for calculating mean
-      auto me = Results.at(c);
       k = 0;
       for (auto &h : horizons) {
         if (h > effectiveH)
@@ -666,38 +580,15 @@ void VarmaSimulation::CalculateE(
                 err.Get0(vi, k), std.Get0(vi, k)));
         }
         for (Ti i = 0; i < temp.RowsCount; i++) {
-          me.Set0(i, k, me.Get0(i, k) + temp.Get0(i, k));
           ResultAggs.Set0(c, i, ResultAggs.Get0(c, i) + temp.Get0(i, k));
         }
         k++;
       }
-
-      // if (keepDetails) {
-      //     temp.CopyTo(details->metrics.at(c));
-      // }
       c++;
     }
-
-    row++;
   }
 
-  // average:
-  for (Ti j = 0; j < hh; j++) {
-    auto o = (Tv)1 / (Tv)counters[j];
-    for (Ti i = 0; i < mm; i++) {
-      auto m = &Results.at(i);
-      if (metrics.at(i) == ScoringType::kRmse ||
-          metrics.at(i) == ScoringType::kRmspe) {
-        for (k = 0; k < m->RowsCount; k++)
-          m->Set0(k, j, std::sqrt(m->Get0(k, j) * o));
-      } else {
-        for (k = 0; k < m->RowsCount; k++)
-          m->Set0(k, j, m->Get0(k, j) * o);
-      }
-    }
-  }
-
-  // average (aggregate ove horizons)
+  // average (aggregate over horizons)
   for (Ti i = 0; i < mm; i++) {
     if (metrics.at(i) == ScoringType::kRmse ||
         metrics.at(i) == ScoringType::kRmspe) {
@@ -706,6 +597,11 @@ void VarmaSimulation::CalculateE(
     } else {
       for (k = 0; k < yy; k++)
         ResultAggs.Set0(i, k, ResultAggs.Get0(i, k) / (Tv)counter);
+    }
+    if (metrics.at(i) == ScoringType::kRmspe ||
+        metrics.at(i) == ScoringType::kMape) {
+      for (k = 0; k < yy; k++)
+        ResultAggs.Set0(i, k, ResultAggs.Get0(i, k) * 100);
     }
   }
 }

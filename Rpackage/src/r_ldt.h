@@ -106,7 +106,7 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
 void UpdatemetricOptions(bool printMsg, List &metricOptions,
                          ldt::SearchMetricOptions &metrics,
                          std::vector<std::string> &metricNames,
-                         bool isTimeSeries, bool isDc);
+                         bool isTimeSeries, bool isDc, int numTargets);
 
 void ReportProgress(bool pringMsg, int reportInterval, ldt::ModelSet &model,
                     bool &estimating, ldt::SearchOptions &options,

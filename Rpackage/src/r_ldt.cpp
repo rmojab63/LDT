@@ -376,7 +376,7 @@ void UpdateOptions(bool printMsg, List &searchItems, List &metricOptions,
   }
 
   UpdatemetricOptions(printMsg, metricOptions, res_metric, metricsNames,
-                      isTimeSeries, isDc);
+                      isTimeSeries, isDc, numTargets);
 
   UpdateSearchItems(printMsg, searchItems, res_items, length1, 0,
                     length1Informtion, nullptr, type1NeedsModelEstim, false);
@@ -613,6 +613,7 @@ static void add_CoefInfo(List &L, std::vector<EstimationKeep *> &list,
     }
 
     List L_j = List::create(
+        _["metric"] = b->Metric,
         _["weight"] = b->Weight,
         _["depIndices"] = b->Dependents.Data ? (SEXP)deps : R_NilValue,
         _["exoIndices"] = b->Exogenouses.Data ? (SEXP)exos : R_NilValue,
@@ -621,8 +622,8 @@ static void add_CoefInfo(List &L, std::vector<EstimationKeep *> &list,
         _[extra1Label] =
             b->Extra.Data ? (SEXP)as_ivector(b->Extra) : R_NilValue);
 
-    if (L_j[5] != R_NilValue)
-      ((IntegerVector)L_j[5]).names() = wrap(*extra1Names);
+    if (L_j[6] != R_NilValue)
+      ((IntegerVector)L_j[6]).names() = wrap(*extra1Names);
 
     L[j + startIndex] = L_j;
   }
@@ -1136,10 +1137,26 @@ void UpdateModelCheckItems(bool printMsg, List &checkOptions,
   }
 }
 
+
+static std::vector<double> helper_convertMinMetrics(NumericVector lst, int k) {
+
+  std::vector<double> vec(k);
+  if (lst.size() == 1) {
+    std::fill(vec.begin(), vec.end(), lst[0]);
+  } else if (lst.size() == k) {
+    for (int i = 0; i < k; i++) {
+      vec[i] = lst[i];
+    }
+  } else {
+    throw std::logic_error("Invalid length for a member of 'minMetrics'.");
+  }
+  return vec;
+}
+
 void UpdatemetricOptions(bool printMsg, List &metricOptions,
                          SearchMetricOptions &metrics,
                          std::vector<std::string> &metricNames,
-                         bool isTimeSeries, bool isDc) {
+                         bool isTimeSeries, bool isDc, int numTargets) {
 
   bool isOutOfSampleRandom = isTimeSeries == false;
   // bool supportsSimRatio = isTimeSeries;
@@ -1188,6 +1205,19 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
     metrics.TrainFixSize = as<int>(metricOptions["trainFixSize"]);
     metrics.TrainRatio = as<double>(metricOptions["trainRatio"]);
   }
+
+  // set minimum value for metrics with AIC weight formula
+  auto minMetrics = as<List>(metricOptions["minMetrics"]);
+
+  metrics.minAic = helper_convertMinMetrics(minMetrics["aic"], numTargets);
+  metrics.minSic = helper_convertMinMetrics(minMetrics["sic"], numTargets);
+  metrics.minBrierIn = helper_convertMinMetrics(minMetrics["brierIn"], numTargets);
+  metrics.minBrierOut = helper_convertMinMetrics(minMetrics["brierOut"], numTargets);
+  metrics.minRmse = helper_convertMinMetrics( minMetrics["rmse"], numTargets);
+  metrics.minMae = helper_convertMinMetrics(minMetrics["mae"], numTargets);
+  metrics.minRmspe = helper_convertMinMetrics(minMetrics["rmspe"], numTargets);
+  metrics.minMape = helper_convertMinMetrics(minMetrics["mape"], numTargets);
+  metrics.minCrps = helper_convertMinMetrics(minMetrics["crps"], numTargets);
 
   metrics.Update(isOutOfSampleRandom,
                  isTimeSeries); // update after filling metric vectors
@@ -1284,7 +1314,7 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
         Rprintf(ToString(funcType));
 
       if (funcType == FunctionType::kId) { // for tests
-        metrics.TransformForMetrics = [](double &x) { x = x; };
+        metrics.TransformForMetrics = [](double &x) { };
       } else if (funcType == FunctionType::kExp) {
         metrics.TransformForMetrics = [](double &x) { x = std::exp(x); };
       } else if (funcType == FunctionType::kPow2) {
@@ -1298,6 +1328,7 @@ void UpdatemetricOptions(bool printMsg, List &metricOptions,
           ErrorType::kLogic, "R-ldt",
           "invalid 'transform'. It can be null, string or function");
     }
+
     if (printMsg)
       Rprintf("\n");
   }

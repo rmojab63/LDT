@@ -322,13 +322,13 @@ void DiscreteChoiceSim<hasWeight, modelType, distType>::Calculate(
   if (cancel)
     return;
 
-  if (this->ValidSimulationCount == 0)
-    throw LdtException(ErrorType::kLogic, "dc-sim",
-                       "no valid simulation is available");
-
   if (invalidCounts > maxInvalidSim)
     throw LdtException(ErrorType::kLogic, "dc-sim",
                        "model check: minimum valid simulations");
+
+  if (this->ValidSimulationCount == 0)
+    throw LdtException(ErrorType::kLogic, "dc-sim",
+                       "no valid simulation is available");
 
   for (i = 0; i < costCount; i++)
     this->CostRatios.Data[i] /= overall_count.Data[i];

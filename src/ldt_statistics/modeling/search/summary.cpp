@@ -55,6 +55,14 @@ void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
           "invalid number of horizons (or out-of-sample metrics) is found");
   }
 
+  EvalIsPosOrientation.clear();
+  for (auto m : MetricsIn) {
+    EvalIsPosOrientation.push_back(GoodnessOfFit::IsPositiveOriented(m));
+  }
+  for (auto m : MetricsOut) {
+    EvalIsPosOrientation.push_back(Scoring::IsPositiveOriented(m));
+  }
+
   // indexes
   mIndexOfAic = IndexOf(MetricsIn, GoodnessOfFitType::kAic);
   mIndexOfSic = IndexOf(MetricsIn, GoodnessOfFitType::kSic);
@@ -115,12 +123,14 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
 
 // #pragma region EstimationKeep
 
-EstimationKeep::EstimationKeep(Tv weight, const Matrix<Ti> *exogenouses,
+EstimationKeep::EstimationKeep(Tv metric, Tv weight,
+                               const Matrix<Ti> *exogenouses,
                                const Matrix<Ti> *extra,
                                const Matrix<Ti> *dependents, Tv mean,
                                Tv variance) {
   Mean = mean;
   Variance = variance;
+  Metric = metric;
   Weight = weight;
 
   if (dependents) {
@@ -155,7 +165,9 @@ EstimationKeep::~EstimationKeep() {
 // #pragma region SearcherSummary
 
 SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
-                                 const SearchItems *option) {
+                                 const SearchItems *option,
+                                 bool isPositiveOriented)
+    : Bests(EstimationKeepComp(isPositiveOriented)) {
   this->Index1 = Index1;
   this->Index2 = Index2;
   this->Index3 = Index3;
@@ -186,23 +198,13 @@ SearcherSummary::~SearcherSummary() {
 void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
                            Matrix<Ti> *overrideInclusioExo) {
   if (pItems->KeepBestCount != 0) {
-    for (Ti i = 0; i < (Ti)pItems->KeepBestCount; i++) {
-      if (i >= (Ti)Bests.size())
-        Bests.push_back(&coef);
-      else if (coef.Weight > Bests.at(i)->Weight)
-        Bests.insert(Bests.begin() + i, &coef);
-      else
-        continue;
-
-      if ((Ti)Bests.size() > pItems->KeepBestCount) {
-        if (isModel == false ||
-            pItems->KeepAll == false) { // All handles delete
-          auto last = Bests.back();
-          delete last;
-        }
-        Bests.pop_back();
-      }
-      break;
+    Bests.insert(&coef);
+    if (Bests.size() > pItems->KeepBestCount) {
+      auto it = std::prev(Bests.end());
+      if (isModel == false || pItems->KeepAll == false) {
+        delete *it;
+      } // otherwise, All handles delete
+      Bests.erase(it);
     }
   }
 

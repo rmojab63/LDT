@@ -134,10 +134,8 @@ void Newton::minimize(
     d.Multiply_in(-1.0);
     info = Hessian.SolvePos0(d, false);
     if (info != 0)
-      throw LdtException(
-          ErrorType::kLogic, "newton",
-          "Could not solve for the direction vector. It might be because "
-          "Hessian is not positive definite");
+      throw LdtException(ErrorType::kLogic, "newton",
+                         "solving for direction failed");
 
     if (UseLineSearch) {
       steplength = 1.0;

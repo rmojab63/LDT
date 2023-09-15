@@ -95,7 +95,8 @@ VarmaSearcher::VarmaSearcher(
 
   auto numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
                       this->pMetrics->MetricsIn.size());
-  this->WorkSize += numMeas * this->pItems->LengthTargets; // weights matrix
+  this->WorkSize +=
+      2 * (numMeas * this->pItems->LengthTargets); // weights & metrics matrices
 }
 
 VarmaSearcher::~VarmaSearcher() {
@@ -114,7 +115,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
   bool hasExo;
   auto metrics = *this->pMetrics;
   std::vector<Ti> targetPositions;
-  Matrix<Tv> weights;
+  Matrix<Tv> weights, metricvals;
   Ti numMeas;
   Ti s = 0;
   Ti i, j, t;
@@ -129,8 +130,12 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
   numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
                  this->pMetrics->MetricsIn.size());
+
   weights = Matrix<Tv>(NAN, &work[s], numMeas, (Ti)targetPositions.size());
   s += numMeas * this->pItems->LengthTargets;
+  metricvals = Matrix<Tv>(NAN, &work[s], numMeas, (Ti)targetPositions.size());
+  s += numMeas * this->pItems->LengthTargets;
+
   Source.Update(&Indexes, nullptr); // update indexes
 
   if (this->pOptions->RequestCancel)
@@ -158,7 +163,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
   auto R = Restriction.R;
   // auto r = Restriction.r;
-  Tv weight;
+  Tv weight, metric;
 
   auto S_e = &work[s];
   s += DModel.Result.StorageSize;
@@ -249,16 +254,20 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     }
 
     if (metrics.mIndexOfAic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Result.Aic);
-      for (t = 0; t < (Ti)targetPositions.size(); t++)
+      weight = GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic,
+                                       DModel.Result.Aic, metrics.minAic.at(0));
+      for (t = 0; t < (Ti)targetPositions.size(); t++) {
         weights.Set0(metrics.mIndexOfAic, t, weight);
+        metricvals.Set0(metrics.mIndexOfAic, t, DModel.Result.Aic);
+      }
     }
     if (metrics.mIndexOfSic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Result.Sic);
-      for (t = 0; t < (Ti)targetPositions.size(); t++)
+      weight = GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic,
+                                       DModel.Result.Sic, metrics.minSic.at(0));
+      for (t = 0; t < (Ti)targetPositions.size(); t++) {
         weights.Set0(metrics.mIndexOfSic, t, weight);
+        metricvals.Set0(metrics.mIndexOfSic, t, DModel.Result.Sic);
+      }
     }
   }
 
@@ -285,44 +294,61 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)targetPositions.size(); t++) {
-      if (metrics.mIndexOfSign >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfSign, t,
-            Scoring::ToWeight(ScoringType::kSign,
-                              Model.ResultAggs.Get0(metrics.mIndexOfSign, t)));
-      if (metrics.mIndexOfDirection >= 0)
+
+      if (metrics.mIndexOfSign >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfSign, t);
+        weights.Set0(j + metrics.mIndexOfSign, t,
+                     Scoring::ToWeight(ScoringType::kSign, mval));
+        metricvals.Set0(j + metrics.mIndexOfSign, t, mval);
+      }
+
+      if (metrics.mIndexOfDirection >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfDirection, t);
         weights.Set0(j + metrics.mIndexOfDirection, t,
-                     Scoring::ToWeight(
-                         ScoringType::kDirection,
-                         Model.ResultAggs.Get0(metrics.mIndexOfDirection, t)));
-      if (metrics.mIndexOfMae >= 0)
+                     Scoring::ToWeight(ScoringType::kDirection, mval));
+        metricvals.Set0(j + metrics.mIndexOfDirection, t, mval);
+      }
+
+      if (metrics.mIndexOfMae >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfMae, t);
         weights.Set0(
             j + metrics.mIndexOfMae, t,
-            Scoring::ToWeight(ScoringType::kMae,
-                              Model.ResultAggs.Get0(metrics.mIndexOfMae, t)));
-      if (metrics.mIndexOfMaeSc >= 0)
+            Scoring::ToWeight(ScoringType::kMae, mval, metrics.minMae.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfMae, t, mval);
+      }
+
+      if (metrics.mIndexOfMaeSc >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfMaeSc, t);
         weights.Set0(
             j + metrics.mIndexOfMaeSc, t,
-            Scoring::ToWeight(ScoringType::kMape,
-                              Model.ResultAggs.Get0(metrics.mIndexOfMaeSc, t)));
-      if (metrics.mIndexOfRmse >= 0)
+            Scoring::ToWeight(ScoringType::kMape, mval, metrics.minMape.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfMaeSc, t, mval);
+      }
+
+      if (metrics.mIndexOfRmse >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfRmse, t);
         weights.Set0(
             j + metrics.mIndexOfRmse, t,
-            Scoring::ToWeight(ScoringType::kRmse,
-                              Model.ResultAggs.Get0(metrics.mIndexOfRmse, t)));
-      if (metrics.mIndexOfRmseSc >= 0)
+            Scoring::ToWeight(ScoringType::kRmse, mval, metrics.minRmse.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfRmse, t, mval);
+      }
+      if (metrics.mIndexOfRmseSc >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfRmseSc, t);
         weights.Set0(j + metrics.mIndexOfRmseSc, t,
-                     Scoring::ToWeight(
-                         ScoringType::kRmspe,
-                         Model.ResultAggs.Get0(metrics.mIndexOfRmseSc, t)));
-      if (metrics.mIndexOfCrps >= 0)
+                     Scoring::ToWeight(ScoringType::kRmspe, mval,
+                                       metrics.minRmspe.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfRmseSc, t, mval);
+      }
+
+      if (metrics.mIndexOfCrps >= 0) {
+        auto mval = Model.ResultAggs.Get0(metrics.mIndexOfCrps, t);
         weights.Set0(
             j + metrics.mIndexOfCrps, t,
-            Scoring::ToWeight(ScoringType::kCrps,
-                              Model.ResultAggs.Get0(metrics.mIndexOfCrps, t)));
+            Scoring::ToWeight(ScoringType::kCrps, mval, metrics.minCrps.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfCrps, t, mval);
+      }
     }
   }
-
   if (this->pOptions->RequestCancel)
     return "";
 
@@ -331,14 +357,15 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     for (j = 0; j < weights.ColsCount;
          j++) { // target index (use TargetsPositions to interpret)
       weight = weights.Get0(i, j);
-      if (std::isnan(weight))
+      metric = metricvals.Get0(i, j);
+      if (std::isnan(metric))
         continue;
 
       allNan = false;
 
       if (this->pItems->KeepModelEvaluations) // Add Model evaluation
       {
-        auto ek = new EstimationKeep(weight, &ExoIndexes, &Params,
+        auto ek = new EstimationKeep(metric, weight, &ExoIndexes, &Params,
                                      &this->CurrentIndices);
         this->Push0(*ek, i, targetPositions.at(j));
       }
@@ -353,7 +380,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
                                "not enough number of forecasts");
 
           auto ek = new EstimationKeep(
-              weight, &ExoIndexes, &Params, &this->CurrentIndices,
+              metric, weight, &ExoIndexes, &Params, &this->CurrentIndices,
               FModel.Forecast.Get0(j, t + Model.Forecast.StartIndex),
               FModel.Variance.Get0(j, t + Model.Forecast.StartIndex));
           this->Push1(*ek, i, targetPositions.at(j), t);
@@ -373,7 +400,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     auto sgm = Matrix<Tv>(sg.get(), Y.RowsCount, 1);
     Y.Transpose();
     Y.ColumnsMeans(sgm, false);
-    throw std::string("All weights are NaN: ") + Varma::ModelToString(Sizes);
+    throw std::string("All metrics are NaN: ") + Varma::ModelToString(Sizes);
     // VectorToCsv(this->CurrentIndicesV) + std::string(" ; ") +
     // VectorToCsv(sgm.Data, Y.ColsCount);  // weights are all nan
   }
@@ -401,19 +428,19 @@ VarmaModelset::VarmaModelset(
 
   // searchItems.Length1 is the forecast horizon in 'metrics.Type1'
   if (searchItems.Length1 > 0 && checks.Prediction == false)
-    throw LdtException(
-        ErrorType::kLogic, "varma-modelset",
-        "'Length1' is the forecast horizon. Set 'checks.Prediction=true' when "
-        "it is positive");
+    throw LdtException(ErrorType::kLogic, "varma-modelset",
+                       "'Length1' is the forecast horizon. Set "
+                       "'checks.Prediction=true' when "
+                       "it is positive");
 
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
     for (auto &a : b) {
       if (a > searchItems.LengthDependents)
-        throw LdtException(
-            ErrorType::kLogic, "varma-modelset",
-            "invalid endogenous group element (it is larger than the number "
-            "of available endogenous variables)");
+        throw LdtException(ErrorType::kLogic, "varma-modelset",
+                           "invalid endogenous group element (it is larger "
+                           "than the number "
+                           "of available endogenous variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
                            "invalid exogenous group element (it is negative)");
@@ -437,8 +464,8 @@ VarmaModelset::VarmaModelset(
     ExoIndexes.resize(1); // add empty for loop
 
   auto T = source.Ranges.at(0).EndIndex +
-           1; // The first target determines the number of observations (this
-              // is required for out-of-sample exogenous data)
+           1; // The first target determines the number of observations
+              // (this is required for out-of-sample exogenous data)
 
   bool hasBounds = checks.PredictionBoundMultiplier > 0;
   if (metrics.MetricsOut.size() != 0) {

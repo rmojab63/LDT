@@ -43,7 +43,8 @@ print.ldtsearch <- function(x, ...) {
     if (i == 1 || i > length(x) - 1 || is.null(m)) {
       next()
     }
-    cat(i - 1, ". ", nms[[i]], ":\n", sep = "")
+    met <- nms[[i]]
+    cat(i - 1, ". ", met, ":\n", sep = "")
     j <- 0
     for (t in m) {
       j <- j + 1
@@ -52,7 +53,7 @@ print.ldtsearch <- function(x, ...) {
       }
       cat(" ", t$name, " ", sep = "")
       if (is.null(t$model) || is.null(t$model$bests) || length(t$model$bests) > 0) {
-        cat("(best=", round(s.metric.from.weight(t$model$bests[[1]]$weight, nms[[i]]), 3), ")\n", sep = "")
+        cat("(best=", round(t$model$bests[[1]]$metric, 3), ")\n", sep = "")
       } else {
         cat("(best model is missing)\n", sep = "")
       }

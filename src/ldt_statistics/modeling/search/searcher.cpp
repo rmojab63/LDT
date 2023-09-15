@@ -49,6 +49,10 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
   if (searchItems.LengthEvals == 0 || searchItems.LengthTargets == 0)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "no evaluation or target is given");
+  if (searchItems.LengthEvals != metrics.EvalIsPosOrientation.size())
+    throw LdtException(ErrorType::kLogic, "searcher",
+                       "metric orientations are not provided.");
+
   if (searchItems.KeepModelEvaluations == false && searchItems.Length1 == 0 &&
       searchItems.Length2 == 0)
     throw LdtException(
@@ -71,7 +75,8 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
 
     for (int k = 0; k < searchItems.LengthTargets; k++) { // targets
 
-      Summaries0.at(i).at(k) = SearcherSummary(i, k, 0, pItems);
+      Summaries0.at(i).at(k) =
+          SearcherSummary(i, k, 0, pItems, metrics.EvalIsPosOrientation.at(i));
 
       Summaries1.at(i).at(k) =
           std::vector<SearcherSummary>(searchItems.Length1);
@@ -79,10 +84,12 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
           std::vector<SearcherSummary>(searchItems.Length2);
 
       for (int j = 0; j < searchItems.Length1; j++)
-        Summaries1.at(i).at(k).at(j) = SearcherSummary(i, k, j, pItems);
+        Summaries1.at(i).at(k).at(j) = SearcherSummary(
+            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
 
       for (int j = 0; j < searchItems.Length2; j++)
-        Summaries2.at(i).at(k).at(j) = SearcherSummary(i, k, j, pItems);
+        Summaries2.at(i).at(k).at(j) = SearcherSummary(
+            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
     }
   }
 }

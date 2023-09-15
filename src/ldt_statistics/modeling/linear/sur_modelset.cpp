@@ -74,7 +74,8 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
 
   auto numMeas =
       this->pMetrics->MetricsOut.size() + this->pMetrics->MetricsIn.size();
-  this->WorkSize += (Ti)(numMeas * TargetsPositions.size()); // weights matrix
+  this->WorkSize +=
+      2 * (Ti)(numMeas * TargetsPositions.size()); // weights & metrics matrices
 }
 
 std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
@@ -87,13 +88,18 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
   Ti s = 0;
   auto numMeas = (Ti)(this->pMetrics->MetricsOut.size() +
                       this->pMetrics->MetricsIn.size());
+
   auto weights =
       Matrix<Tv>(NAN, &work[s], numMeas, (Ti)TargetsPositions.size());
   s += (Ti)(numMeas * TargetsPositions.size());
+  auto metricvals =
+      Matrix<Tv>(NAN, &work[s], numMeas, (Ti)TargetsPositions.size());
+  s += (Ti)(numMeas * TargetsPositions.size());
+
   Data.Calculate(*pSource, &Indexes, &work[s]);
   s += Data.StorageSize;
 
-  Tv weight;
+  Tv weight, metric;
   if (this->pChecks->Estimation) { // estimate with all data
     DModel.Calculate(Data.Result, EndoIndexes.RowsCount, &work[s],
                      &work[s + DModel.StorageSize],
@@ -103,16 +109,20 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
     // N, Dof, Cn, Aic, Sic, R2   -> are all checked in calculate
 
     if (metrics.mIndexOfAic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic, DModel.Model.Aic);
-      for (t = 0; t < (Ti)TargetsPositions.size(); t++)
+      weight = GoodnessOfFit::ToWeight(GoodnessOfFitType::kAic,
+                                       DModel.Model.Aic, metrics.minAic.at(0));
+      for (t = 0; t < (Ti)TargetsPositions.size(); t++) {
         weights.Set0(metrics.mIndexOfAic, t, weight);
+        metricvals.Set0(metrics.mIndexOfAic, t, DModel.Model.Aic);
+      }
     }
     if (metrics.mIndexOfSic >= 0) {
-      weight =
-          GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic, DModel.Model.Sic);
-      for (t = 0; t < (Ti)TargetsPositions.size(); t++)
+      weight = GoodnessOfFit::ToWeight(GoodnessOfFitType::kSic,
+                                       DModel.Model.Sic, metrics.minSic.at(0));
+      for (t = 0; t < (Ti)TargetsPositions.size(); t++) {
         weights.Set0(metrics.mIndexOfSic, t, weight);
+        metricvals.Set0(metrics.mIndexOfSic, t, DModel.Model.Sic);
+      }
     }
   }
 
@@ -131,36 +141,48 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)TargetsPositions.size(); t++) {
-      if (metrics.mIndexOfSign >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfSign, t,
-            Scoring::ToWeight(ScoringType::kSign,
-                              Model.Results.Get0(metrics.mIndexOfSign, t)));
-      if (metrics.mIndexOfMae >= 0)
+      if (metrics.mIndexOfSign >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfSign, t);
+        weights.Set0(j + metrics.mIndexOfSign, t,
+                     Scoring::ToWeight(ScoringType::kSign, mval));
+        metricvals.Set0(j + metrics.mIndexOfSign, t, mval);
+      }
+      if (metrics.mIndexOfMae >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfMae, t);
         weights.Set0(
             j + metrics.mIndexOfMae, t,
-            Scoring::ToWeight(ScoringType::kMae,
-                              Model.Results.Get0(metrics.mIndexOfMae, t)));
-      if (metrics.mIndexOfMaeSc >= 0)
+            Scoring::ToWeight(ScoringType::kMae, mval, metrics.minMae.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfMae, t, mval);
+      }
+      if (metrics.mIndexOfMaeSc >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfMaeSc, t);
         weights.Set0(
+
             j + metrics.mIndexOfMaeSc, t,
-            Scoring::ToWeight(ScoringType::kMape,
-                              Model.Results.Get0(metrics.mIndexOfMaeSc, t)));
-      if (metrics.mIndexOfRmse >= 0)
+            Scoring::ToWeight(ScoringType::kMape, mval, metrics.minMape.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfMaeSc, t, mval);
+      }
+      if (metrics.mIndexOfRmse >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfRmse, t);
         weights.Set0(
             j + metrics.mIndexOfRmse, t,
-            Scoring::ToWeight(ScoringType::kRmse,
-                              Model.Results.Get0(metrics.mIndexOfRmse, t)));
-      if (metrics.mIndexOfRmseSc >= 0)
-        weights.Set0(
-            j + metrics.mIndexOfRmseSc, t,
-            Scoring::ToWeight(ScoringType::kRmspe,
-                              Model.Results.Get0(metrics.mIndexOfRmseSc, t)));
-      if (metrics.mIndexOfCrps >= 0)
+            Scoring::ToWeight(ScoringType::kRmse, mval, metrics.minRmse.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfRmse, t, mval);
+      }
+      if (metrics.mIndexOfRmseSc >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfRmseSc, t);
+        weights.Set0(j + metrics.mIndexOfRmseSc, t,
+                     Scoring::ToWeight(ScoringType::kRmspe, mval,
+                                       metrics.minRmspe.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfRmseSc, t, mval);
+      }
+      if (metrics.mIndexOfCrps >= 0) {
+        auto mval = Model.Results.Get0(metrics.mIndexOfCrps, t);
         weights.Set0(
             j + metrics.mIndexOfCrps, t,
-            Scoring::ToWeight(ScoringType::kCrps,
-                              Model.Results.Get0(metrics.mIndexOfCrps, t)));
+            Scoring::ToWeight(ScoringType::kCrps, mval, metrics.minCrps.at(t)));
+        metricvals.Set0(j + metrics.mIndexOfCrps, t, mval);
+      }
     }
   }
 
@@ -169,7 +191,8 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
     for (j = 0; j < weights.ColsCount;
          j++) { // target index (use TargetsPositions to interpret)
       weight = weights.Get0(i, j);
-      if (std::isnan(weight))
+      metric = metricvals.Get0(i, j);
+      if (std::isnan(metric))
         continue;
 
       // TODO: add significant search information
@@ -177,15 +200,15 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
 
       if (this->pItems->KeepModelEvaluations) // Add Model evaluation
       {
-        auto ek = new EstimationKeep(weight, &this->CurrentIndices, nullptr,
-                                     &EndoIndexes);
+        auto ek = new EstimationKeep(metric, weight, &this->CurrentIndices,
+                                     nullptr, &EndoIndexes);
         this->Push0(*ek, i, TargetsPositions.at(j));
       }
 
       if (this->pItems->Length1 > 0) { // Add coefficients
         for (t = 0; t < this->SizeG; t++) {
           auto ek = new EstimationKeep(
-              weight, &this->CurrentIndices, nullptr, &EndoIndexes,
+              metric, weight, &this->CurrentIndices, nullptr, &EndoIndexes,
               DModel.Model.beta.Get0(t, j),
               std::pow(DModel.Model.e_beta_std.Get0(t, j), 2));
           this->Push1(*ek, i, TargetsPositions.at(j),
@@ -201,7 +224,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
   if (allNan) {
     throw LdtException(
         ErrorType::kLogic, "sur-modelset",
-        "all weights are NaN"); // +
+        "all metrics are NaN"); // +
                                 // Sur::ModelToString(DModel.Sizes).c_str();
                                 // // weights are all nan
   }

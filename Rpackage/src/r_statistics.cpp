@@ -11,9 +11,10 @@ using namespace Rcpp;
 using namespace ldt;
 
 // [[Rcpp::export(.GetWeightFromMetric)]]
-SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
+SEXP GetWeightFromMetric(SEXP value, SEXP metricName, SEXP minValue) {
 
   double value0 = as<double>(value);
+  double minValue0 = as<double>(minValue);
   std::string metricName0 = as<std::string>(metricName);
   boost::algorithm::to_lower(metricName0);
 
@@ -21,11 +22,11 @@ SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
 
   try {
     auto type = FromString_GoodnessOfFitType(metricName0.c_str());
-    v = GoodnessOfFit::ToWeight(type, value0);
+    v = GoodnessOfFit::ToWeight(type, value0, minValue0);
   } catch (...) {
     try {
       auto type1 = FromString_ScoringType(metricName0.c_str());
-      v = Scoring::ToWeight(type1, value0);
+      v = Scoring::ToWeight(type1, value0, minValue0);
     } catch (...) {
       throw LdtException(
           ErrorType::kLogic, "R-statistics",
@@ -37,19 +38,20 @@ SEXP GetWeightFromMetric(SEXP value, SEXP metricName) {
 }
 
 // [[Rcpp::export(.GetMetricFromWeight)]]
-SEXP GetMetricFromWeight(SEXP value, SEXP metricName) {
+SEXP GetMetricFromWeight(SEXP value, SEXP metricName, SEXP minValue) {
   double value0 = as<double>(value);
+  double minValue0 = as<double>(minValue);
   std::string metricName0 = as<std::string>(metricName);
   boost::algorithm::to_lower(metricName0);
 
   double v = NAN;
   try {
     auto type = FromString_GoodnessOfFitType(metricName0.c_str());
-    v = GoodnessOfFit::FromWeight(type, value0);
+    v = GoodnessOfFit::FromWeight(type, value0, minValue0);
   } catch (...) {
     try {
       auto type1 = FromString_ScoringType(metricName0.c_str());
-      v = Scoring::FromWeight(type1, value0);
+      v = Scoring::FromWeight(type1, value0, minValue0);
     } catch (...) {
       throw LdtException(
           ErrorType::kLogic, "R-statistics",

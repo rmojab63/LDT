@@ -426,6 +426,9 @@ CheckModelCheckItems <- function(O){
 #' @param horizons An array of integers representing the prediction horizons to be used in out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
 #' @param weightedEval If \code{TRUE}, weights are used in evaluating discrete-choice models.
 #' @param transform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
+#' @param minMetrics a list of minimum values for adjusting the weights when applying the AIC weight formula.
+#' It can contain the following members: \code{aic}, \code{sic}, \code{brierIn}, \code{rmse}, \code{rmspe}, \code{mae}, \code{mape}, \code{crps}, \code{brierOut}.
+#' Members can be numeric vectors for specifying a value for each target variable. See details.
 #'
 #' @details
 #' The following list describe the details of calculating the metrics:
@@ -434,6 +437,8 @@ CheckModelCheckItems <- function(O){
 #' Given a statistical model, if \eqn{k} is the number of estimated parameters and \eqn{L} is the maximized value of the likelihood function, then \eqn{AIC = 2k - 2\ln{L}}.
 #' Smaller value for AIC means higher quality of the model.
 #' We can convert AIC to model weight by calculating relative likelihood which is \eqn{rL = e^{0.5(AIC - min_{aic})}} where \eqn{min_{aic}} is minimum AIC value among all the candidate models. Model weight is \eqn{\frac{rL}{\sum rL}}. Since \eqn{exp(-0.5 * x)} transformation is invariant to translation, we can ignore the \eqn{min_{aic}} part.
+#' However,using \code{exp(-0.5 * AIC)} may lead to numerical inconsistencies when the AIC is relatively small.
+#' To avoid this, you can use this \code{minMetrics} argument, and the calculations will be based on the \code{exp(-0.5 * (AIC - minMetric$aic))} formula. This choice does not influence the final results, provided there are no numerical inconsistencies.
 #'
 #' \item **\code{SIC}**: Schwarz Information Criterion which is similar to AIC.
 #' The penalty term is larger in BIC than in AIC for sample sizes greater than 7. This means that BIC tends to favor simpler models than AIC.
@@ -494,8 +499,9 @@ CheckModelCheckItems <- function(O){
 #'
 #'}
 #'
-#' Note that \code{In} at the end of the name shows that the actual values are the observations used in the estimation process.
-#' \code{Out} shows that out-of-sample actual values is used.
+#' Note that the suffix In in the name indicates that the actual values are the observations utilized
+#' in the estimation process. Conversely, the suffix Out signifies that out-of-sample actual
+#' values are used.
 #'
 #' @return A list with the given options.
 #'
@@ -504,13 +510,15 @@ get.options.metric <- function(typesIn = character(0), typesOut = character(0),
                                simFixSize = 10, trainRatio = 0.75,
                                trainFixSize = 0, seed = 0,
                                horizons = c(1L), weightedEval = FALSE,
-                               transform = NULL){
+                               transform = NULL,
+                               minMetrics = list(aic = 0)){
   O = list(
     typesIn = typesIn, typesOut = typesOut,
     simFixSize = simFixSize, trainRatio = trainRatio,
     trainFixSize = trainFixSize, seed = seed,
     horizons = horizons, weightedEval = weightedEval,
-    transform = transform)
+    transform = transform,
+    minMetrics = minMetrics)
   O = CheckmetricOptions(O)
   O
 }
@@ -556,5 +564,19 @@ CheckmetricOptions <- function(O){
     if (O$trainRatio == 0 && O$trainFixSize == 0)
       stop("Invalid metric option. Both 'trainRatio' and 'trainFixSize' are zero.")
   }
+
+  # initialize adjustments:
+  if (is.null(O$minMetrics))
+    O$minMetrics = list()
+  ls <- c("aic", "sic", "rmse", "mae", "rmspe", "mape", "brierIn", "brierOut", "crps")
+  for (m in ls) {
+    if (!m %in% names(O$minMetrics)) {
+      O$minMetrics[[m]] <- 0
+    }
+    else{
+      O$minMetrics[[m]] <- as.numeric(O$minMetrics[[m]])
+    }
+  }
+
   O
 }

@@ -252,7 +252,7 @@ test_that("Discrete choice search (avgCost,all) works", {
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2), xSizes = c(1L,2L),
                               searchItems = get.items.search(bestK = 0, all = TRUE))
   for (a in res$frequencyCostOut$target1$model$all)
-    expect_equal(0.5,a[[1]], tolerance = 1e-16) #because of the structure of cost tables
+    expect_equal(0.5,a$weight, tolerance = 1e-16) #because of the structure of cost tables
 
   alli = lapply(res$frequencyCostOut$target1$model$all, function(x) x$exoIndices)
   expect_equal(8,length(alli))
@@ -336,7 +336,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
     resB = estim.bin(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, linkFunc = "logit",
                           costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                           simTrainRatio = tratio, printMsg = printMsg)
-    expect_equal(a[[1]], 1 - resB$simulation$costRatios[[1]]) # note that in search, it is 1-cost score
+    expect_equal(a$weight, 1 - resB$simulation$costRatios[[1]]) # note that in search, it is 1-cost score
     j=j+1
     if (j==4)
       break # I think no more test is needed

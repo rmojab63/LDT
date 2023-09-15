@@ -5,6 +5,7 @@
 #include "running.h"
 #include "scoring.h"
 #include <map>
+#include <set>
 #include <string>
 
 namespace ldt {
@@ -27,6 +28,9 @@ struct EstimationKeep {
   /// @brief Estimated variance
   Tv Variance = NAN;
 
+  /// @brief Metric in the estimation
+  Tv Metric = NAN;
+
   /// @brief Weight in the estimation
   Tv Weight = NAN;
 
@@ -40,18 +44,28 @@ struct EstimationKeep {
   Matrix<Ti> Extra;
 
   /// @brief Initializes a new instance of this class
+  /// @param metric Metric in this estimation
   /// @param weight Weight in this estimation
   /// @param exogenouses Exogenous indices.
   /// @param extra Any extra information transformed into integers
   /// @param dependents Dependent indices
   /// @param mean Estimated mean
   /// @param variance Estimated variance
-  EstimationKeep(Tv weight, const Matrix<Ti> *exogenouses,
+  EstimationKeep(Tv metric, Tv weight, const Matrix<Ti> *exogenouses,
                  const Matrix<Ti> *extra = nullptr,
                  const Matrix<Ti> *dependents = nullptr, Tv mean = NAN,
                  Tv variance = NAN);
 
   ~EstimationKeep();
+};
+
+struct EstimationKeepComp {
+  bool positiveOriented;
+  EstimationKeepComp(bool posOri = true) : positiveOriented(posOri) {}
+  bool operator()(const EstimationKeep *lhs, const EstimationKeep *rhs) const {
+    return positiveOriented ? lhs->Metric > rhs->Metric
+                            : lhs->Metric < rhs->Metric;
+  }
 };
 
 /// @brief Search options
@@ -72,6 +86,9 @@ struct LDT_EXPORT SearchMetricOptions {
 
   /// @brief List of out-of-sample metrics
   std::vector<ScoringType> MetricsOut;
+
+  /// @brief determines the orientation of the metrics
+  std::vector<bool> EvalIsPosOrientation;
 
   /// @brief A fixed size for the training sample
   Ti TrainFixSize = 0;
@@ -113,6 +130,12 @@ struct LDT_EXPORT SearchMetricOptions {
 
   /// @brief After \ref Update, determines the type of the measuring
   bool mIsTimeSeries = false, mIsOutOfSampleRandom = false;
+
+  /// @brief minimum value for metrics to be used in AIC weight
+  /// formula: exp(-0.5*(metric-minMetric)). Size of vectors must equal the
+  /// number of target variables.
+  std::vector<double> minAic, minSic, minRmse, minMae, minCrps, minBrierIn,
+      minBrierOut, minRmspe, minMape;
 
   /// @brief After \ref Update, it is the index of the metric in \ref
   /// MetricsIn or \ref MetricsOut. If negative, it is not found
@@ -272,7 +295,7 @@ public:
 
   /// @brief If requested in the options, it contains the information about the
   /// first K best models
-  std::vector<EstimationKeep *> Bests;
+  std::multiset<EstimationKeep *, EstimationKeepComp> Bests;
 
   /// @brief If requested in the options, it contains the information about all
   /// models
@@ -304,8 +327,10 @@ public:
   /// @param Index2 Index to the second dimension which is the target index
   /// @param Index3 Index to the third dimension which is (e.g.) the forecast
   /// horizon, index of a coefficient, etc.
-  /// @param options \ref SearchItems in the current state of the project
-  SearcherSummary(Ti Index1, Ti Index2, Ti Index3, const SearchItems *options);
+  /// @param options \ref SearchItems in the current state of the project.
+  /// @param isPositiveOriented determines the comparison in \ref Bests
+  SearcherSummary(Ti Index1, Ti Index2, Ti Index3, const SearchItems *options,
+                  bool isPositiveOriented);
   ~SearcherSummary();
 
   /// @brief Inserts a new estimation to the storage
