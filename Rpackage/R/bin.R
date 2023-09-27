@@ -154,16 +154,21 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
 #' \item{info}{Some other general information.}
 #'
 #' @details
+#' As documented in chapter 12 in \insertCite{greene2010modeling;textual}{ldt}, binary regression is a statistical technique used to estimate the probability of one of two possible outcomes for a variable such as \eqn{y}, i.e., \eqn{p=P(y=1)} and \eqn{q=P(y=0)}. The most commonly used binary regression models are the logit and probit models. In general, a binary regression model can be written as \eqn{f(p) = z'\gamma+v}, where the first element in \eqn{\gamma} is the intercept and \eqn{f(p)} is a link function. For logit and probit models we have \eqn{f(p) = \ln{\frac{p}{1-p}}} and \eqn{f(p) = \Phi^{-1}(p)} respectively, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
 #'
-#' Binary regression is a statistical technique used to estimate the probability of one of two possible outcomes, represented by a binary dependent variable that takes on two values, such as 0 and 1.
-#' This is achieved by modeling the relationship between one or more independent variables and the binary dependent variable.
-#' The most commonly used binary regression models are the logit model, also known as logistic regression, and the probit model, also known as probit regression.
-#' In general, a binary regression model can be written as \eqn{f(p) = \beta_0 + \beta_1x_1 + \ldots + \beta_kx_k}, where \eqn{p} is the probability that \eqn{y} is 1 and \eqn{f} is the link function.
-#' For logistic regression, the logit function is used as the link function: \eqn{f(p) = \ln{\frac{p}{1-p}}}.
-#' For probit regression, the probit function is used as the link function: \eqn{f(p) = \Phi^{-1}(p)}, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
-#' The parameters of the binary regression model are estimated using maximum likelihood estimation.
+#' Given an independent sample of length \eqn{N}, the parameters of the binary regression model are estimated using maximum likelihood estimation. Assuming that some observations are more reliable or informative than others and \eqn{w_i} for \eqn{i=1,\ldots,N} reflects this fact, the likelihood function is given by:
+#'
+#' \deqn{
+#' L(\gamma) = \prod_{i=1}^N (p_i)^{w_i y_i} (1-p_i)^{w_i (1-y_i)},
+#' }
+#'
+#' where \eqn{p_i=\frac{\exp{\gamma z_i}}{1+\exp{\gamma z_i}}} for logit model and \eqn{p_i=\Phi(\gamma z_i)} for probit model. \code{ldt} uses feasible GLS to calculate the initial value of the coefficients and a weighted least squares estimator to calculate the initial variance matrix of the error terms (see page 781 in \insertCite{greene2020econometric;textual}{ldt}). The condition number of the estimation is calculated by multiplying 1-norm of the observed information matrix at the maximum likelihood estimator and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, if \eqn{x} is a new observations for the explanatory variables, the predicted probability of the positive class is estimated by \eqn{p_i=\frac{\exp{\gamma x}}{1+\exp{\gamma x}}} for logit model and \eqn{p_i=\Phi(\gamma x)} for probit model.
 #'
 #' Note that the focus in \code{ldt} is model uncertainty and the main purpose of exporting this method is to show the inner calculations of the search process in [search.bin] function.
+#'
+#' @references
+#'   \insertAllCited{}
+#' @importFrom Rdpack reprompt
 #'
 #' @export
 #' @example man-roxygen/ex-estim.bin.R

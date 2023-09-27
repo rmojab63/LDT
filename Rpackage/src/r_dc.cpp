@@ -187,7 +187,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   auto extraNames = std::vector<std::string>({"dist"});
   List L = GetModelSetResults(model->Modelset, items, metricsNames, exoCount,
                               extraLabel, &extraNames, 1, paramNames,
-                              colNames_w, "coefs", "item");
+                              colNames_w, "coefs", "item", printMsg);
 
   L["info"] = List::create(
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),

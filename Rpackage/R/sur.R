@@ -132,16 +132,34 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' Seemingly Unrelated Regression (SUR) is a type of statistical model that includes multiple regression equations.
-#' The general form of an SUR model with m equations can be written as: \eqn{y_i=X_i\beta_i+\epsilon_i}, where $i=1\ldots m$ determines the index of the equation.
-#' In this model, each equation may have different sets of independent variables and it is assumed that the disturbances between the equations are correlated.
-#' The OLS estimator is a consistent estimator for this model, but it is not generally asymptotically efficient (except when disturbances are uncorrelated between equations or each equation contains exactly the same set of regressors).
-#' The OLS variance matrix is used to calculate the Feasible Generalized Least Squares (FGLS) estimator, which is both consistent and asymptotically efficient (under regularity conditions).
+#' As described in section 10.2 in \insertCite{greene2020econometric;textual}{ldt}, this type of statistical model consists of multiple regression equations, where each equation may have a different set of independent variables and the disturbances between the equations are assumed to be correlated. The general form with \eqn{m} equations can be written as \eqn{y_i=z_i'\gamma_i+v_i} and \eqn{E(v_i v_j)=\sigma_{ij}^2} for \eqn{i=1,\ldots m}. Assuming that a sample of \eqn{N} independent observations is available, we can stack the observations and use the following system for estimation:
+#' \deqn{
+#' Y = X B + V, \quad \operatorname{vec}B = R\gamma,
+#' }
 #'
-#' In the current implementation, this function focuses on zero restrictions and/or significance search.
-#' Therefore, there is a common \code{x} argument for all equations.
-#' In fact, the main purpose of exporting this method is to show the inner calculations of the search process in [search.sur] function.
+#' where the columns of \eqn{Y:N \times m} contain the dependent variables for each equation and the columns of \eqn{X: N\times k} contain the explanatory variables, with \eqn{k} being the number of unique explanatory variables in all equations. Note that $X$ combines the \eqn{z_i} variables, and the restrictions imposed by \eqn{R:mk\times q} and \eqn{\gamma:q\times 1} determine a set of zero constraints on \eqn{B: k \times m}, resulting in a system of equations with different sets of independent variables.
+#'
+#' Imposing restrictions on the model using the \eqn{R} matrix is not user-friendly, but it is suitable for use in this package, as users are not expected to specify such restrictions, but only to provide a list of potential regressors. Note that in this package, most procedures, including significance search, are supposed to be automated.
+#'
+#' The unrestricted estimators (i.e., \eqn{\hat{B}=(X'X)^{-1}X'Y}, and \eqn{\hat{\Sigma}=(\hat{V}'\hat{V})/N} where \eqn{\hat{V}=Y-X\hat{B}}) are used to initialize the feasible GLS estimators:
+#'
+#' \deqn{
+#'     \tilde{B} = RW^{-1}R'[\hat{V}-1 \otimes x']\operatorname{vec}Y, \quad \tilde{\Sigma}=(\tilde{V}'\tilde{V})/N,
+#' }
+#' where \eqn{W = R'[\hat{V}^{-1} \otimes X'X]R} and \eqn{\tilde{V}=Y-X\tilde{B}}. The properties of these estimators are discussed in proposition 5.3 in \insertCite{lutkepohl2005new;textual}{ldt}. See also section 10.2 in \insertCite{greene2020econometric;textual}{ldt}. The maximum likelihood value is calculated by \eqn{-\frac{N}{2}(m(\ln 2\pi+1)+\ln|\tilde{\Sigma}|)}. The condition number is calculated by multiplying 1-norm of $W$ and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given an out-of-sample observation such as \eqn{x:k\times 1}, the prediction is \eqn{y^f = \tilde{B}'x}, and its variance is estimated by the following formula:
+#'
+#' \deqn{
+#'      \operatorname{var}y^f = \tilde{V} + (x' \otimes I_m)R W^{-1}R'(x \otimes I_m).
+#' }
+#'
+#'
 #' Note that the focus in \code{ldt} is model uncertainty and for more sophisticated implementations of the FGLS estimator, you may consider using other packages such as \code{systemfit}.
+#'
+#' Finally, note that the main purpose of exporting this method is to show the inner calculations of the search process in [search.sur] function.
+#'
+#' @references
+#'   \insertAllCited{}
+#' @importFrom Rdpack reprompt
 #'
 #' @export
 #' @example man-roxygen/ex-estim.sur.R

@@ -453,34 +453,6 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   return(result)
 }
 
-is.empty <- function(arg) {
-  if (is.null(arg) || is.na(arg)) {
-    return(TRUE)
-  }
-  if (is.list(arg)) {
-    if (length(arg) == 0) {
-      return(TRUE)
-    }
-  } else if (is.character(arg)) {
-    if (arg == "") {
-      return(TRUE)
-    }
-    return(FALSE)
-  } else {
-    stop("invalid type")
-  }
-}
-
-list.has.array <- function(List, arr) {
-  for (a in List) {
-    if (length(a) == length(arr)) {
-      if (all(a == arr)) {
-        return(TRUE)
-      }
-    }
-  }
-  return(FALSE)
-}
 
 if.not.null <- function(arg, default = NULL) {
   if (is.null(arg)) {

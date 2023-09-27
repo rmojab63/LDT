@@ -13,12 +13,7 @@
 #' Given a collection of models for the data, a metric is not
 #' generally a metric of the relative quality of a model. This function
 #' converts the value of a metric to such a number.
-#'
-#' These are the details of the transformations:
-#' \itemize{
-#' \item direction, sign, AUC -> weight = metric
-#' \item AIC, SIC, RMSE, Brier, MAE, CRPS -> weight = exp(-0.5 (metric - minimum value))
-#' }
+#' see [get.options.metric] for more details.
 #'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
@@ -50,9 +45,9 @@ s.weight.from.metric <- function(value, metricName, minValue = 0)
 #' @param minValue A minimum value used in exponential weight formula.
 #'
 #' @details
-#' See [s.weight.from.metric] for a discussion.
+#' See [s.weight.from.metric] and [get.options.metric] for more details.
 #'
-#' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
+#' Note that the main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
 #' @return A numeric value representing the converted weight.
 #' @export
@@ -85,6 +80,7 @@ s.metric.from.weight <- function(value, metricName, minValue = 0)
 #'
 #' @details
 #' This is generally a statistics helper method in this package and it shows the inner calculations.
+#' See AUC section in [get.options.metric] for a discussion.
 #'
 #'
 #' @return A list with the following items:

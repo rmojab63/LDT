@@ -431,77 +431,57 @@ CheckModelCheckItems <- function(O){
 #' Members can be numeric vectors for specifying a value for each target variable. See details.
 #'
 #' @details
-#' The following list describe the details of calculating the metrics:
-#' \itemize{
-#' \item **\code{AIC}**: Akaike Information Criterion which is an estimator of the relative quality of statistical model for a given set of data.
-#' Given a statistical model, if \eqn{k} is the number of estimated parameters and \eqn{L} is the maximized value of the likelihood function, then \eqn{AIC = 2k - 2\ln{L}}.
-#' Smaller value for AIC means higher quality of the model.
-#' We can convert AIC to model weight by calculating relative likelihood which is \eqn{rL = e^{0.5(AIC - min_{aic})}} where \eqn{min_{aic}} is minimum AIC value among all the candidate models. Model weight is \eqn{\frac{rL}{\sum rL}}. Since \eqn{exp(-0.5 * x)} transformation is invariant to translation, we can ignore the \eqn{min_{aic}} part.
-#' However,using \code{exp(-0.5 * AIC)} may lead to numerical inconsistencies when the AIC is relatively small.
-#' To avoid this, you can use this \code{minMetrics} argument, and the calculations will be based on the \code{exp(-0.5 * (AIC - minMetric$aic))} formula. This choice does not influence the final results, provided there are no numerical inconsistencies.
+#' An important aspect of \code{ldt} is model evaluation during the screening process. This involves considering both in-sample and out-of-sample evaluation metrics. In-sample metrics are computed using data that was used in the estimation process, while out-of-sample metrics are computed using new data. These metrics are well documented in the literature, and I will provide an overview of the main computational aspects and relevant references.
 #'
-#' \item **\code{SIC}**: Schwarz Information Criterion which is similar to AIC.
-#' The penalty term is larger in BIC than in AIC for sample sizes greater than 7. This means that BIC tends to favor simpler models than AIC.
-#' Its formula as a function of the number of observations (\eqn{n}), number of parameters of the model (\eqn{k}) and the value of maximized likelihood (\eqn{L}) is \eqn{SIC = ln(n)k - 2\ln{L}}.
-#' Smaller value for AIC means higher quality of the model.
-#' The AIC weight discussion is valid here.
 #'
-#' \item **\code{brier}**: Brier Score which measures the accuracy of probabilistic predictions for binary outcomes.
-#' It is calculated as the mean squared difference between the predicted probabilities and the actual outcomes.
-#' Its formula is \eqn{B_{in} = \frac{\sum (y_i-\hat{p}_i)^2}{n}}, where \eqn{y_i} are the actual values, \eqn{\hat{p}_i} is the predicted probability that \eqn{y_i} is equal to 1, and \eqn{n} is the number of observations.
-#' Its values are between 0 and 1. Lower values mean better predictions.
-#' In this package, \eqn{e^{-0.5*Brier}} formula is used to convert it to weight.
+#' @section AIC and SIC:
+#' According to \insertCite{burnham2002model;textual}{ldt} or \insertCite{greene2020econometric;textual}{ldt}, AIC and SIC are two commonly used metrics for comparing and choosing among different models with the same dependent variable(s). Given \eqn{L^*} as the maximum value of the likelihood function in a regression analysis with \eqn{k} estimated parameters and \eqn{N} observations, AIC is calculated by \eqn{2k-2\ln L^*} and SIC is calculated by \eqn{k\ln N-2\ln L^*}. SIC includes a stronger penalty for increasing the number of estimated parameters in the model.
 #'
-#' \item **\code{auc}**: Area Under the Receiver Operating Characteristic Curve (AUC-ROC) which measures the performance of a binary classification model.
-#' In ROC we plot the true positive rate (sensitivity) against the false positive rate (1-specificity) at different classification thresholds. AUC is the area under the resulting curve.
-#' Its value is between 0 and 1.
-#' An AUC of 0 indicates that the model is perfectly incorrect, meaning that it always predicts the opposite of the true class.
-#' An AUC of 0.5 indicates that the model is no better than random chance at distinguishing between the two classes.
-#' An AUC of 1 indicates that the model is able to perfectly distinguish between the two classes.
-#' In general, the higher the AUC-ROC, the better the model is at distinguishing between the two classes.
-#' In this package, the weight of AUC is its value.
+#' These metrics can be converted into weights using the formula \eqn{w=\exp (-0.5x)}, where \eqn{x} is the value of the metric. When divided by the sum of all weights, \eqn{w} can be interpreted as the probability that a given model is the best model among all members of the model set (see section 2.9 in \insertCite{burnham2002model;textual}{ldt}). Compared to the \insertCite{burnham2002model;textual}{ldt} discussion and since \eqn{f(x)=exp(-0.5x)} transformation is invariant to translation, the minimum AIC part is removed in the screening process. This is an important property because it enables the use of running statistics and parallel computation.
 #'
-#' \item **\code{sign}**: Sign Prediction Accuracy which reports the proportion of predictions that have the same sign as the actual values.
-#' It is calculated as the number of correct sign predictions divided by the total number of predictions.
-#' It is between 0 and 1, with higher values indicating better performance of the model.
-#' Its value is used as the wight of a model.
+#' @section MSE, RMSE, MSPE, and RMSPE:
+#' According to \insertCite{hyndman2018forecasting;textual}{ldt}, MSE and RMSE are two commonly used scale-dependent metrics, while MAPE is a commonly used unit-free metric. \code{ldt} also calculates the less common RMSPE metric. If there are \eqn{n} predictions and \eqn{e_i=y_i-\hat{y}_i} for \eqn{i=1\ldots n} is the prediction error, i.e., the distance between actual values (\eqn{y_i}) and predictions (\eqn{\hat{y}_i}), these metrics can be expressed analytically by the following formulas:
 #'
-#' \item **\code{direction}**: Directional Prediction Accuracy which is calculated as the proportion of predictions that correctly predict the direction of change, relative to the previous observation.
-#' It is between 0 and 1, with higher values indicating better performance of the model.
-#' Its value is used as the wight of a model.
+#' \deqn{
+#' \begin{aligned}
+#' &\text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|e_i|,
+#' &&\text{MAPE} = \frac{1}{n}\sum_{i=1}^{n}\left|\frac{e_i}{y_i}\right|\times 100 \\
+#' &\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(e_i)^2},\quad\quad
+#' &&\text{RMSPE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{e_i}{y_i}\right)^2}\times 100.
+#' \end{aligned}
+#' }
 #'
-#' \item **\code{rmse}**: Root Mean Squared Error which is based on the differences between the predicted values and the actual values.
-#' Its formula is \eqn{\sqrt{\frac{1}{n}\sum_{i=1}^{n}(\hat{y}_i - y_i)^2}} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
-#' Lower values of RMSE indicate better model fit, with an RMSE of 0 indicating a perfect fit.
-#' In this package, \eqn{e^{-0.5*RMSE}} formula is used to convert it to weight.
+#' Note that, first MAPE and RMSPE are not defined if \eqn{y_i} is zero and may not be meaningful or useful if it is near zero or negative. Second, although these metrics cannot be directly interpreted as weights, they are treated in a manner similar to AIC in the \code{ldt} package.. Third, caution is required when target variables are transformed, for example to a logarithmic scale. \code{ldt} provides an option to transform the data back when calculating these metrics.
 #'
-#' \item **\code{mae}**: Mean Absolute Error which is based on the differences between the predicted values and the actual values.
-#' Its formula is \eqn{\frac{1}{n}\sum_{i=1}^{n}|\hat{y}_i - y_i|} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
-#' Lower values of MAE indicate better model fit, with an MAE of 0 indicating a perfect fit.
-#' MAE gives less weight to large errors than RMSE. This means that RMSE will be more sensitive to large errors than MAE.
+#' @section Brier:
+#' The Brier score measures the accuracy of probabilistic predictions for binary outcomes. It is calculated as the mean squared difference between the actual values (\eqn{y_i}) and the predicted probabilities (\eqn{p_i}). Assuming that there are \eqn{n} predictions, its formula is given by:
 #'
-#' \item **\code{mape}**: Mean Absolute Percentage Error which is similar to MAE, but expressed as a percentage of the actual values.
-#' Its formula is \eqn{\frac{1}{n}\sum_{i=1}^{n}|\frac{\hat{y}_i - y_i}{y_i}|\times 100} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
-#' MAPE can be used to compare the accuracy of forecasts across different scales, while MAE cannot.
-#' Also note that MAE is always well-defined while MAPE is undefined if actual values are zero or negative.
+#' \eqn{
+#' \text{Brier} = \frac{\sum (y_i-\hat{p}_i)^2}{n},
+#' }
 #'
-#' \item **\code{rmspe}**: Root Mean Squared Percentage Error which is similar to RMAE, but expressed as a percentage of the actual values.
-#' Its formula is \eqn{\sqrt{\frac{1}{n}\sum_{i=1}^{n}(\frac{\hat{y}_i - y_i}{y_i})^2}\times 100} where \eqn{n} is the number of observations, \eqn{y_i} is the actual values and \eqn{\hat{y}_i} is the prediction.
-#' RMSPE can be used to compare the accuracy of forecasts across different scales, while RMSE cannot.
-#' Also note that RMSE is always well-defined while RMSPE is undefined if actual values are zero or negative.
-#' Unlike MAPE, RMSPE gives more weight to large errors.
+#' where \eqn{p_i} is the predicted probability that the \eqn{i}-th observation is positive. The value of this metric ranges from 0 to 1, with lower values indicating better predictions. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC.
 #'
-#' \item **\code{crps}**: Continuous Ranked Probability Score which calculates the accuracy of probabilistic forecasts.
-#' It is calculated as the mean squared difference between the predicted CDF and the empirical CDF of the observation.
-#' Its formula is \eqn{\int_{-\infty}^{\infty}(F(y) - 1\{y \geq x\})^2dy} where \eqn{F(y)} is the predicted CDF and \eqn{1\{y \geq x\}} is the empirical CDF.
-#' Under normality assumption (which is mainly the case in this package), the formula is \eqn{\frac{\sigma}{\sqrt{\pi}}\left(1 - 2\Phi\left(\frac{x - \mu}{\sigma}\right) + 2\frac{x - \mu}{\sigma}\phi\left(\frac{x - \mu}{\sigma}\right)\right)}.
-#' Unlike MAE, CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution.
+#' @section AUC:
+#' As described by \insertCite{fawcett2006introduction;textual}{ldt}, the receiver operating characteristic curve (ROC) plots the true positive rate (sensitivity) against the false positive rate (1-specificity) at different classification thresholds. The area under this curve is known as the AUC. Its value ranges from 0 to 1, with higher values indicating that the model is better at distinguishing between the two classes \insertCite{fawcett2006introduction,fawcett2006roc;textual}{ldt}. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. There is also an option to calculate the pessimistic or an instance-varying costs version of this metric. Although this metric does not have a direct interpretation as weights, in \code{ldt} its value is considered as weight.
 #'
-#'}
+#' @section CRPS:
+#' According to \insertCite{gneiting2005calibrated;textual}{ldt}, the continuous ranked probability score (CRPS) is a metric used to measure the accuracy of probabilistic predictions. Unlike MAE, RMSE, etc., CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution. For \eqn{n} normally distributed predictions with mean \eqn{\hat{y}_i} and variance \eqn{\operatorname{var}(\hat{y}_i)}, this metric can be expressed analytically as:
 #'
-#' Note that the suffix In in the name indicates that the actual values are the observations utilized
-#' in the estimation process. Conversely, the suffix Out signifies that out-of-sample actual
-#' values are used.
+#' \eqn{
+#' \text{CRPS}=\sum_{i=1}^{n} \sigma \left(\frac{1}{\sqrt{\pi}} - 2\Phi(z_i) + z_i (2\phi(z_i)-1)\right),
+#' }
+#'
+#' where \eqn{z_i=(y_i-\hat{y}_i)/\sqrt{\operatorname{var}(\hat{y}_i)}}, and \eqn{\Phi} and \eqn{\phi} are CDF and density functions of standard normal distribution. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC in the \code{ldt} package.
+#'
+#' @section Other metrics:
+#' There are some other metrics in \code{ldt}. One is ``directional prediction accuracy'', which is calculated as the proportion of predictions that correctly predict the direction of change relative to the previous observation. Its value ranges from 0 to 1, with higher values indicating better performance of the model. Its value is used as the weight of a model. Note that this is applicable only to time-series data.
+#'
+#' Another similar metric is ``sign prediction accuracy'', which reports the proportion of predictions that have the same sign as the actual values. It is calculated as the number of correct sign predictions divided by the total number of predictions. Its value ranges from 0 to 1, with higher values indicating better performance of the model. Its value is used as the weight of a model.
+#'
+#' @references
+#'   \insertAllCited{}
+#' @importFrom Rdpack reprompt
 #'
 #' @return A list with the given options.
 #'

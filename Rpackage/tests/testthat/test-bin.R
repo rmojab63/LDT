@@ -19,6 +19,7 @@ colnames(x) <- paste0("V", c(1:ncol(x)))
 dx = as.data.frame(x)
 
 
+
 test_that("Discrete choice (binary) estimation works", {
 
   for (linkFunc in c("logit", "probit")){
@@ -238,6 +239,16 @@ test_that("Discrete choice search (avgCost,best, weighted) works", {
   expect_equal(0.5,res$frequencyCostOut$target1$model$bests$best1$weight, tolerance = 1e-12) #because of the structure of cost tables
 })
 
+list.has.array <- function(List, arr) {
+  for (a in List) {
+    if (length(a) == length(arr)) {
+      if (all(a == arr)) {
+        return(TRUE)
+      }
+    }
+  }
+  return(FALSE)
+}
 
 test_that("Discrete choice search (avgCost,all) works", {
   skip_on_cran()

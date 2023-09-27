@@ -129,7 +129,7 @@ SEXP SearchSur(SEXP y, SEXP x, int numTargets, SEXP xSizes, SEXP xPartitions,
   auto extraNames = std::vector<std::string>({"extra"});
   List L = GetModelSetResults(model.Modelset, items, metricsNames, exoCount,
                               extraLabel, &extraNames, -exoStart + 1, exoNames,
-                              colNames, "coefs", "item");
+                              colNames, "coefs", "item", printMsg);
 
   L["info"] = List::create(
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),

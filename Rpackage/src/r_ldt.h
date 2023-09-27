@@ -120,4 +120,4 @@ List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &searchItems,
                         std::vector<std::string> &length1Names,
                         std::vector<std::string> &inclusionNames,
                         const char *length1Label,
-                        const char *length1_itemlabel);
+                        const char *length1_itemlabel, bool printMsg);

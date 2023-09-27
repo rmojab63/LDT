@@ -737,7 +737,7 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
                         std::vector<std::string> &length1Names,
                         std::vector<std::string> &inclusionNames,
                         const char *length1Label,
-                        const char *length1_itemlabel) {
+                        const char *length1_itemlabel, bool printMsg) {
   // output structure:
 
   std::vector<std::string> namesL;
@@ -767,8 +767,8 @@ List GetModelSetResults(ModelSet &model, SearchItems &searchItems,
                       _["searchedCount"] = wrap(result.SearchedCount),
                       _["failedCount"] = wrap(fcount),
                       _["failedDetails"] = wrap(failDetails));
-  if (fcount > 0)
-    warning("Error occurred in the search process. See 'result$counts'");
+  if (fcount > 0 & printMsg)
+    Rprintf("** Search process ended successfully. However, there are some failed estimations. See 'result$counts' for more details.");
 
   for (auto eIndex = 0; eIndex < searchItems.LengthEvals; eIndex++) {
 

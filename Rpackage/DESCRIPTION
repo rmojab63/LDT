@@ -19,7 +19,8 @@ Depends:
     R (>= 3.5.0)
 Imports:
     Rcpp,
-    tdata
+    tdata,
+    Rdpack (>= 0.7)
 Suggests: 
     knitr,
     testthat,
@@ -32,3 +33,4 @@ LinkingTo:
     Rcpp
 Config/testthat/edition: 3
 LazyData: true
+RdMacros: Rdpack

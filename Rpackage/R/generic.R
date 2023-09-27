@@ -203,7 +203,9 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 } # index of target in endogenous data
-                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea)
+                minM <- object$info$metricOptions$minMetrics[[mea]]
+                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea,
+                                           ifelse(is.null(minM),0,minM[[ifelse(length(minM)==1,1,jt)]]))
                 if (abs(wd - b$weight)> test_perc)
                   warning(paste0("Inconsistent weight: target=",targ,
                                ", metric=",mea,
@@ -239,7 +241,9 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 }
-                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea)
+                minM <- object$info$metricOptions$minMetrics[[mea]]
+                wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea,
+                                           ifelse(is.null(minM),0,minM[[ifelse(length(minM)==1,1,jt)]]))
                 if (abs(wd - b$weight)> test_perc)
                   warning(paste0("Inconsistent weight: target=",targ,
                                  ", metric=",mea,
@@ -287,10 +291,12 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                       } else {
                         which(b$depIndices == j)[[1]]
                       }
+                      minM <- object$info$metricOptions$minMetrics[[mea]]
+
                       testthat::expect_equal(
                         s.weight.from.metric(
-                          getMetricFrom(su_m, mea, jt, result$method), mea
-                        ), b$weight,
+                          getMetricFrom(su_m, mea, jt, result$method), mea,
+                          ifelse(is.null(minM),0,minM[[ifelse(length(minM)==1,1,jt)]])), b$weight,
                         tolerance = test_perc
                       )
 

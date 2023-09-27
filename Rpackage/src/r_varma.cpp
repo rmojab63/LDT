@@ -156,7 +156,7 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   List L = GetModelSetResults(model.Modelset, items, metricsNames,
                               (int)items.Length1, extraLabel, &extraNames,
                               -my.ColsCount + 1, type1Names, colNames,
-                              "predictions", "horizon");
+                              "predictions", "horizon", printMsg);
 
   L["info"] = List::create(
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),

@@ -152,24 +152,19 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' \item{info}{Some other general information.}
 #'
 #' @details
-#' Seasonal Integrated Vector Autoregressive Moving-Average is used for predicting time series variables.
-#' Its formula is:
+#' The VARMA model can be used to analyze multivariate time series data with seasonal or non-seasonal patterns. According to \insertCite{lutkepohl2005new;textual}{ldt}, it considers interdependencies between the series, making it a powerful tool for prediction. The specification of this model is given by:
 #' \deqn{
-#' \Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} +
-#'                               \sum_{i=1}^q B_i \epsilon_{t-i}  +
-#'                               C x_t  +
-#'                               \sum_{i=1}^P A_{is} y_{t-is} +
-#'                               \sum_{i=1}^Q B_{is} \epsilon_{t-is} +
-#'                               \epsilon_t,
+#' \Delta^d \Delta_s^D y_t = c + \sum_{i=1}^p A_i y_{t-i} + \sum_{i=1}^q B_i \epsilon_{t-i} + C x_t + \sum_{i=1}^P A_{is} y_{t-is} + \sum_{i=1}^Q B_{is} v_{t-is} + v_t,
 #' }
-#' where \eqn{y_t} is the vector of endogenous variables, \eqn{x_t} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} are the lag structure of the model.
-#' Furthermore, \eqn{c,\;C,\;A_i} and \eqn{B_i} for all available \eqn{i} are the parameters of the model.
-#' We use maximum likelihood estimator to estimate the parameters of the model.
-#' If \eqn{B_i} coefficients are not zero, identification restrictions are necessary to ensure that the model is uniquely identifiable.
-#' In the current implementation, this function restricts \eqn{B_i} coefficients to be diagonal.
+#' where \eqn{y_t:m\times 1} is the vector of endogenous variables, \eqn{x_t:k\times 1} is the vector exogenous variables, \eqn{s} is the number of seasons and \eqn{(p,d,q,P,D,Q)} determines the lag structure of the model. Furthermore, \eqn{c,C,A_i} and \eqn{B_i} for all available \eqn{i} determines the model’s parameters. \eqn{v_t} is the disturbance vector and is contemporaneously correlated between different equations, i.e., \eqn{E(v_tv_t')=\Sigma}.
+#' Given a sample of size \eqn{T}, the model can be estimated using maximum likelihood estimation. However, to ensure identifiability, it is necessary to impose additional constraints on the parameters (see chapter 12 in \insertCite{lutkepohl2005new;textual}{ldt}). In this function, diagonal MA equation form is used (see \insertCite{dufour2022practical;textual}{ldt}).
+#' In this function, the feasible GLS estimator is used to initialize the maximum likelihood, and the OLS estimator is used to calculate the initial value of the variance matrix of the error term. The condition number is calculated similar to the other models (see [estim.sur] or e.g., page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given a prediction horizon and required exogenous data, prediction is performed in a recursive schema, in which the actual estimated errors are used if available and zero otherwise. The variance of the predictions is also calculated recursively. Note that this function does not incorporate the coefficients uncertainty in calculation of the variance (see section 3.5 in \insertCite{lutkepohl2005new;textual}{ldt}).
 #'
-#' Note that the main purpose of exporting this method is to show the inner calculations of the search process in [search.varma] function.
+#' Finally, note that the main purpose of exporting this method is to show the inner calculations of the search process in [search.varma] function.
 #'
+#' @references
+#'   \insertAllCited{}
+#' @importFrom Rdpack reprompt
 #' @export
 #' @example man-roxygen/ex-estim.varma.R
 #' @seealso [search.varma], [search.varma.stepwise]
