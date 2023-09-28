@@ -25,6 +25,52 @@
 // #include <Rinternals.h>
 
 using namespace Rcpp;
+using namespace ldt;
+
+
+void UpdateSearchData(List& dataR, ldt::SearchData& data);
+
+void UpdateSearchCombinations(List combinationsR, ldt::SearchCombinations& combinations);
+
+void UpdateSearchOptions(List &optionsR, ldt::SearchOptions &options);
+
+void UpdateSearchItems(List &itemsR, ldt::SearchItems &items,
+                       Ti length1, Ti length2, const char *length1Informtion,
+                       const char *length2Informtion, bool type1NeedsModelEstim,
+                       bool type2NeedsModelEstim);
+
+void UpdateModelCheckItems(List &checksR,
+                           ldt::SearchModelChecks &checks,
+                           const ldt::SearchMetricOptions &metrics,
+                           const ldt::SearchItems &items);
+
+void UpdatemetricOptions(List &metricsR,
+                         ldt::SearchMetricOptions &metrics,
+                         std::vector<std::string> &metricNames,
+                         bool isTimeSeries,
+                         bool isDc,
+                         int numTargets);
+
+void UpdateOptions(List &itemsR,
+                   List &metricsR,
+                   List &modelChecksR,
+                   SearchMetricOptions &res_metric,
+                   SearchItems &res_items,
+                   SearchModelChecks &res_checks,
+                   std::vector<std::string> &metricsNames,
+                   int length1,
+                   int exoCount,
+                   int numTargets,
+                   int numDependents,
+                   bool isTimeSeries,
+                   bool type1NeedsModelEstim,
+                   const char *length1Informtion,
+                   bool isDc);
+
+
+void UpdatePcaOptions(bool printMsg, List pcaOptionsR,
+                      ldt::PcaAnalysisOptions &options);
+
 
 std::unique_ptr<double[]>
 CombineEndoExo(bool printMsg, ldt::Matrix<double> &result,
@@ -45,15 +91,7 @@ void GetPartitions(bool printMsg, std::vector<std::vector<int>> &result,
 void GetGroups(bool printMsg, std::vector<std::vector<int>> &result,
                SEXP &groups, int variableCount, int adjustPos, bool isX);
 
-void UpdateOptions(bool printMsg, List &searchItems, List &metricOptions,
-                   List &modelCheckItems, ldt::SearchMetricOptions &res_metric,
-                   ldt::SearchItems &res_items,
-                   ldt::SearchModelChecks &res_checks,
-                   std::vector<std::string> &metricsNames, int length1,
-                   int exoCount, int numTargets, int numDependents,
-                   bool isTimeSeries = false, bool type1NeedsModelEstim = true,
-                   const char *length1Informtion = "Coefficients",
-                   bool isDc = false);
+
 
 NumericMatrix insert_intercept(NumericMatrix a);
 
@@ -81,43 +119,24 @@ std::vector<std::string> GetDefaultColNames(std::string pre, int length);
 void UpdateRocOptions(bool printMsg, List &rocOptionsR,
                       ldt::RocOptions &options, const char *startMsg);
 
-void UpdatePcaOptions(bool printMsg, List pcaOptionsR, bool hasPca,
-                      ldt::PcaAnalysisOptions &options, const char *startMsg);
+
 
 void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
                         ldt::LimitedMemoryBfgsbOptions &options);
 
 void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
 
-void UpdateSearchItems(bool printMsg, List &searchItems,
-                       ldt::SearchItems &items, Ti length1, Ti length2,
-                       const char *length1Informtion,
-                       const char *length2Informtion, bool type1NeedsModelEstim,
-                       bool type2NeedsModelEstim);
-
-void UpdateSearchOptions(List &searchOptions, ldt::SearchOptions &options,
-                         int &reportInterval, bool &printMsg);
-
-void UpdateModelCheckItems(bool printMsg, List &checkOptions,
-                           ldt::SearchModelChecks &checks,
-                           const ldt::SearchMetricOptions &metrics,
-                           const ldt::SearchItems &items);
-
-void UpdatemetricOptions(bool printMsg, List &metricOptions,
-                         ldt::SearchMetricOptions &metrics,
-                         std::vector<std::string> &metricNames,
-                         bool isTimeSeries, bool isDc, int numTargets);
 
 void ReportProgress(bool pringMsg, int reportInterval, ldt::ModelSet &model,
                     bool &estimating, ldt::SearchOptions &options,
                     int allCount);
 
-List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &searchItems,
+List GetModelSetResults(ldt::ModelSet &model, ldt::SearchItems &items,
                         std::vector<std::string> &metricNames, int length1,
                         const char *extra1Label,
                         std::vector<std::string> *extra1Names,
                         int exoIndexesPlus,
                         std::vector<std::string> &length1Names,
                         std::vector<std::string> &inclusionNames,
-                        const char *length1Label,
-                        const char *length1_itemlabel, bool printMsg);
+                        const char *length1Label, const char *length1_itemlabel,
+                        bool printMsg);

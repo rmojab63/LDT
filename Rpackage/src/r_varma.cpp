@@ -9,8 +9,8 @@ using namespace ldt;
 SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
                  SEXP xGroups, SEXP maxParams, int seasonsCount, int maxHorizon,
                  SEXP newX, bool simUsePreviousEstim, double olsStdMultiplier,
-                 List lbfgsOptions, List metricOptions, List modelCheckItems,
-                 List searchItems, List searchOptions) {
+                 List lbfgsOptions, List metrics, List modelChecks, List items,
+                 List searchOptions) {
 
   if (y == R_NilValue)
     throw LdtException(ErrorType::kLogic, "R-varma",
@@ -102,9 +102,9 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
   auto metricsNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
-                items, checks, metricsNames, maxHorizon, mx.ColsCount,
-                numTargets, my.ColsCount, true, false, "Horizon", false);
+  UpdateOptions(printMsg, items, metrics, modelChecks, metrics, items, checks,
+                metricsNames, maxHorizon, mx.ColsCount, numTargets,
+                my.ColsCount, true, false, "Horizon", false);
 
   std::vector<std::string> type1Names;
   if (items.Length1 > 0) {
@@ -112,7 +112,7 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
       throw LdtException(
           ErrorType::kLogic, "R-varma",
           "Inconsistent argument and option: If 'type1' is enabled in "
-          "'searchItems', 'maxHorizon' cannot be zero");
+          "'items', 'maxHorizon' cannot be zero");
     checks.Prediction = true;
     for (int i = 0; i < items.Length1; i++)
       type1Names.push_back(std::string("Horizon") + std::to_string(i + 1));
@@ -164,8 +164,8 @@ SEXP SearchVarma(SEXP y, SEXP x, int numTargets, SEXP ySizes, SEXP yPartitions,
       _["olsStdMultiplier"] = wrap(olsStdMultiplier),
       _["simUsePreviousEstim"] = wrap(simUsePreviousEstim),
       _["maxHorizon"] = wrap(checks.Prediction ? maxHorizon : 0),
-      _["lbfgsOptions"] = lbfgsOptions, _["metricOptions"] = metricOptions,
-      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
+      _["lbfgsOptions"] = lbfgsOptions, _["metrics"] = metrics,
+      _["modelChecks"] = modelChecks, _["items"] = items,
       _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
 
   L.attr("class") =

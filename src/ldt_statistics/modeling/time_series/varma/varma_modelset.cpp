@@ -12,19 +12,19 @@ using namespace ldt;
 // #pragma region Searcher
 
 VarmaSearcher::VarmaSearcher(
-    SearchOptions &searchOptions, const SearchItems &searchItems,
+    const SearchData &data, SearchOptions &options, const SearchItems &items,
     const SearchMetricOptions &metrics, const SearchModelChecks &checks,
     Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
     DatasetTs<true> &source, const VarmaSizes sizes,
     const std::vector<Ti> &exoIndexes, Matrix<Tv> *forLowerBounds,
     Matrix<Tv> *forUpperBounds, LimitedMemoryBfgsbOptions *optimOptions,
     Tv stdMultiplier, bool usePreviousEstim, Ti maxHorizonCheck)
-    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, sizeG,
+    : Searcher::Searcher(data, options, items, metrics, checks, sizeG,
                          groupIndexMap, fixFirstG, 0) {
   Source = source; // copy for parallel (It uses the indexes)
   pExoIndexes = &exoIndexes;
   this->mFixFirstItems =
-      searchItems.LengthTargets; // don't estimate models without targets
+      items.LengthTargets; // don't estimate models without targets
 
   UsePreviousEstim = usePreviousEstim;
   StdMultiplier = stdMultiplier;
@@ -284,9 +284,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
             ? this->pChecks->MaxConditionNumber
             : INFINITY,
         StdMultiplier, false, count0 - this->pChecks->MinOutSim,
-        this->pMetrics->TransformForMetrics
-            ? &(this->pMetrics->TransformForMetrics)
-            : nullptr);
+        this->pData->Lambdas.size() == 0 ? nullptr : &this->pData->Lambdas);
 
     if (Model.ValidCounts == 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
@@ -413,21 +411,21 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 // #pragma region Modelset
 
 VarmaModelset::VarmaModelset(
-    SearchOptions &searchOptions, SearchItems &searchItems,
-    SearchMetricOptions &metrics, SearchModelChecks &checks,
-    const std::vector<Ti> &sizes, std::vector<std::vector<Ti>> &groupIndexMap,
-    DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,
-    Ti seasonCount, const std::vector<std::vector<Ti>> &exoIndexes,
-    bool usePreviousEstim, LimitedMemoryBfgsbOptions *optimOptions,
-    Tv stdMultiplier, Ti maxHorizonCheck) {
+    const SearchData &data, const SearchCombinations &combinations,
+    SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
+    SearchModelChecks &checks, const std::vector<Ti> &sizes,
+    std::vector<std::vector<Ti>> &groupIndexMap, DatasetTs<true> &source,
+    std::vector<Ti> varmaMaxParameters6, Ti seasonCount,
+    const std::vector<std::vector<Ti>> &exoIndexes, bool usePreviousEstim,
+    LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
+    Ti maxHorizonCheck) {
   metrics.Update(false, true);
   checks.Update(metrics);
-  searchItems.Update(metrics, searchItems.LengthTargets,
-                     searchItems.LengthDependents,
-                     searchItems.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthDependents,
+               items.LengthExogenouses);
 
-  // searchItems.Length1 is the forecast horizon in 'metrics.Type1'
-  if (searchItems.Length1 > 0 && checks.Prediction == false)
+  // items.Length1 is the forecast horizon in 'metrics.Type1'
+  if (items.Length1 > 0 && checks.Prediction == false)
     throw LdtException(ErrorType::kLogic, "varma-modelset",
                        "'Length1' is the forecast horizon. Set "
                        "'checks.Prediction=true' when "
@@ -436,7 +434,7 @@ VarmaModelset::VarmaModelset(
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMap) {
     for (auto &a : b) {
-      if (a > searchItems.LengthDependents)
+      if (a > items.LengthDependents)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
                            "invalid endogenous group element (it is larger "
                            "than the number "
@@ -477,13 +475,13 @@ VarmaModelset::VarmaModelset(
       throw LdtException(ErrorType::kLogic, "varma-modelset",
                          "invalid forecast bound multiplier");
     else { // create matrixes
-      ForecastLowers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
-          searchItems.LengthTargets, metrics.Horizons.size());
-      ForecastUppers = Matrix<Tv>(
-          new Tv[searchItems.LengthTargets * (Ti)metrics.Horizons.size()],
-          searchItems.LengthTargets, metrics.Horizons.size());
-      for (Ti i = 0; i < searchItems.LengthTargets; i++) {
+      ForecastLowers =
+          Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                     items.LengthTargets, metrics.Horizons.size());
+      ForecastUppers =
+          Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                     items.LengthTargets, metrics.Horizons.size());
+      for (Ti i = 0; i < items.LengthTargets; i++) {
         auto last = source.pData->Get0(i, T - 1);
         Tv g = 0;
         for (Ti j = 1; j < T; j++)
@@ -523,8 +521,8 @@ VarmaModelset::VarmaModelset(
                                            Q, seasonCount, true);
 
                   auto se = new VarmaSearcher(
-                      searchOptions, searchItems, metrics, checks, s,
-                      groupIndexMap, 0, source, vsizes, exo,
+                      data, options, items, metrics, checks, s, groupIndexMap,
+                      0, source, vsizes, exo,
                       hasBounds ? &ForecastLowers : nullptr,
                       hasBounds ? &ForecastUppers : nullptr, optimOptions,
                       stdMultiplier, usePreviousEstim, maxHorizonCheck);
@@ -538,8 +536,8 @@ VarmaModelset::VarmaModelset(
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
-                            searchItems, metrics, checks);
+  this->Modelset =
+      ModelSet(Searchers, data, combinations, options, items, metrics, checks);
 }
 
 // #pragma endregion

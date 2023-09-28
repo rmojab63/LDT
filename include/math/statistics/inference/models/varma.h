@@ -484,19 +484,17 @@ public:
       bool checkNan = true, PcaAnalysisOptions *pcaOptionsY = nullptr,
       PcaAnalysisOptions *pcaOptionsX = nullptr);
 
-  void
-  Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
-            Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
-            const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
-            Tv maxCondNum = 1e12, Tv stdMultipler = 2, bool coefUncer = false,
-            Ti maxInvalidSim = INT32_MAX,
-            const std::function<void(Tv &)> *transformForMetrics = nullptr);
+  void Calculate(Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel,
+                 Matrix<Tv> *exo = nullptr, const Matrix<Tv> *R = nullptr,
+                 const Matrix<Tv> *r = nullptr, bool usePreviousEstim = true,
+                 Tv maxCondNum = 1e12, Tv stdMultipler = 2,
+                 bool coefUncer = false, Ti maxInvalidSim = INT32_MAX,
+                 const std::vector<Tv> *boxCoxLambdas = nullptr);
 
-  void
-  CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
-             Tv stdMultipler = 2, bool coefUncer = false,
-             bool usePreviousEstim = false,
-             const std::function<void(Tv &)> *transformForMetrics = nullptr);
+  void CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum = 1e12,
+                  Tv stdMultipler = 2, bool coefUncer = false,
+                  bool usePreviousEstim = false,
+                  const std::vector<Tv> *boxCoxLambdas = nullptr);
 };
 
 class LDT_EXPORT VarmaSearcher : public Searcher {
@@ -528,8 +526,8 @@ class LDT_EXPORT VarmaSearcher : public Searcher {
   std::string EstimateOne(Tv *work, Ti *workI) override;
 
 public:
-  VarmaSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-                const SearchMetricOptions &metrics,
+  VarmaSearcher(const SearchData &data, SearchOptions &options,
+                const SearchItems &items, const SearchMetricOptions &metrics,
                 const SearchModelChecks &checks, Ti sizeG,
                 const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
                 DatasetTs<true> &source, const VarmaSizes sizes,
@@ -553,7 +551,8 @@ public:
 
   VarmaModelset(){};
 
-  VarmaModelset(SearchOptions &searchOptions, SearchItems &searchItems,
+  VarmaModelset(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, SearchItems &items,
                 SearchMetricOptions &metrics, SearchModelChecks &checks,
                 const std::vector<Ti> &sizes,
                 std::vector<std::vector<Ti>> &groupIndexMap,

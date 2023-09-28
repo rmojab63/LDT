@@ -18,20 +18,20 @@
 #' @param xGroups A list of integer vectors that determine different combinations of the indexes of the exogenous variables to be used as exogenous variables in the SUR regressions.
 #' @param maxParams An integer vector that determines the maximum values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(2,0,0,0,0,0)} is used.
 #' @param seasonsCount An integer value representing the number of observations per unit of time.
-#' @param maxHorizon An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelCheckItems} argument. Also, it is used as the maximum prediction horizon in checking predictions.
+#' @param maxHorizon An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelChecks} argument. Also, it is used as the maximum prediction horizon in checking predictions.
 #' @param newX A matrix of new exogenous data for out-of-sample prediction. It must have the same number of columns as the \code{x} argument.
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
 #' @param lbfgsOptions A list containing L-BFGS optimization options.
 #' Use [get.options.lbfgs] function for initialization.
-#' @param metricOptions A list of options for measuring performance.
-#' Use [get.options.metric] function to get them.
-#' @param modelCheckItems A list of options for excluding a subset of the model set.
-#' See and use [get.items.modelcheck] function to get them.
-#' @param searchItems A list of options for specifying the purpose of the search.
-#' See and use [get.items.search] function to get them.
-#' @param searchOptions A list of extra options for performing the search.
-#' See and use [get.options.search] function to get them.
+#' @param metrics A list of options for measuring performance.
+#' Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set.
+#' See and use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search.
+#' See and use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search.
+#' See and use [get.search.options] function to get them.
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
@@ -50,9 +50,9 @@ search.varma <- function(y, x = NULL, numTargets = 1,
                          seasonsCount = 0, maxHorizon = 0,
                          newX = NULL, simUsePreviousEstim = TRUE,
                          olsStdMultiplier = 2.0, lbfgsOptions = get.options.lbfgs(),
-                         metricOptions = get.options.metric(),
-                         modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
-                         searchOptions = get.options.search()){
+                         metrics = get.search.metrics(),
+                         modelChecks = get.search.modelchecks(), items = get.search.items(),
+                         options = get.search.options()){
   y = as.matrix(y)
   x = if (is.null(x)) NULL else as.matrix(x)
   numTargets = as.integer(numTargets)
@@ -81,25 +81,25 @@ search.varma <- function(y, x = NULL, numTargets = 1,
   else
     lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
 
-  if (is.null(metricOptions))
-    metricOptions = get.options.metric()
+  if (is.null(metrics))
+    metrics = get.search.metrics()
   else
-    metricOptions <- CheckmetricOptions(metricOptions)
+    metrics <- CheckmetricOptions(metrics)
 
-  if (is.null(modelCheckItems))
-    modelCheckItems = get.items.modelcheck()
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
   else
-    modelCheckItems <- CheckModelCheckItems(modelCheckItems)
+    modelChecks <- CheckModelCheckItems(modelChecks)
 
-  if (is.null(searchItems))
-    searchItems = get.items.search()
+  if (is.null(items))
+    items = get.search.items()
   else
-    searchItems <- CheckSearchItems(searchItems)
+    items <- CheckSearchItems(items)
 
-  if (is.null(searchOptions))
-    searchOptions = get.options.search()
+  if (is.null(options))
+    options = get.search.options()
   else
-    searchOptions <- CheckSearchOptions(searchOptions)
+    options <- CheckSearchOptions(options)
 
 
   startTime <- Sys.time()
@@ -108,7 +108,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
                       xGroups, maxParams, seasonsCount, maxHorizon,
                       newX, simUsePreviousEstim,
                       olsStdMultiplier, lbfgsOptions,
-                      metricOptions,modelCheckItems,searchItems,searchOptions)
+                      metrics,modelChecks,items,options)
 
   endTime <- Sys.time()
 
@@ -137,7 +137,7 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @param maxHorizon An integer representing the maximum prediction horizon. Set to zero to disable prediction.
 #' @param newX A matrix containing new exogenous variables to be used in predictions. Its columns must be the same as \code{x}.
 #' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable simulation.
-#' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.options.metric()].
+#' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.search.metrics()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
 #' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
@@ -253,11 +253,11 @@ GetEstim_varma <- function(searchRes, endoIndices,
                    } else {
                      as.matrix(newX[, exoIndices])
                    },
-                   simFixSize = searchRes$info$metricOptions$simFixSize,
-                   simHorizons = searchRes$info$metricOptions$simHorizons,
+                   simFixSize = searchRes$info$metrics$simFixSize,
+                   simHorizons = searchRes$info$metrics$simHorizons,
                    simUsePreviousEstim = searchRes$info$simUsePreviousEstim,
-                   simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
-                   simTransform = searchRes$info$metricOptions$transform,
+                   simMaxConditionNumber = searchRes$info$modelChecks$maxConditionNumber,
+                   simTransform = searchRes$info$metrics$transform,
                    printMsg = printMsg
   )
 

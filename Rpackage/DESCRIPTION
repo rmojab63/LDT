@@ -20,7 +20,8 @@ Depends:
 Imports:
     Rcpp,
     tdata,
-    Rdpack (>= 0.7)
+    Rdpack (>= 0.7),
+    MASS
 Suggests: 
     knitr,
     testthat,

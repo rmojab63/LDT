@@ -358,14 +358,13 @@ public:
   /// @param maxCondNum Maximum valid condition number
   /// @param maxInvalidSim Maximum number of invalid simulations before it exit
   /// the iteration loop
-  /// @param transformForMetrics A function to be used for transforming the data
-  /// when calculating metrics such as RMSE or MAE
-  void
-  Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R,
-            bool &cancel, Ti maxIteration, unsigned int seed,
-            Tv sigSearchMaxProb, Tv maxCondNum = INFINITY,
-            Ti maxInvalidSim = INT32_MAX,
-            const std::function<void(Tv &)> *transformForMetrics = nullptr);
+  /// @param boxCoxLambdas Box-Cox lambda parameters. If null or NAN it ignores
+  /// the transformation.
+  void Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work, Matrix<Tv> *R,
+                 bool &cancel, Ti maxIteration, unsigned int seed,
+                 Tv sigSearchMaxProb, Tv maxCondNum = INFINITY,
+                 Ti maxInvalidSim = INT32_MAX,
+                 const std::vector<Tv> *boxCoxLambdas = nullptr);
 };
 
 /// @brief A searcher class for SUR
@@ -396,8 +395,8 @@ class LDT_EXPORT SurSearcher : public Searcher {
 
 public:
   /// @brief Initializes a new instance of this method
-  /// @param searchOptions Passed to the base constructor
-  /// @param searchItems Passed to the base constructor
+  /// @param options Passed to the base constructor
+  /// @param items Passed to the base constructor
   /// @param metrics Passed to the base constructor
   /// @param checks Passed to the base constructor
   /// @param sizeG Passed to the base constructor
@@ -408,11 +407,11 @@ public:
   /// @param sigSearchMaxIter Maximum iterations for significant search
   /// @param sigSearchMaxProb p-value for significant search
   /// @param seed A seed for RNG
-  SurSearcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-              const SearchMetricOptions &metrics,
+  SurSearcher(const SearchData &data, SearchOptions &options,
+              const SearchItems &items, const SearchMetricOptions &metrics,
               const SearchModelChecks &checks, Ti sizeG,
               const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
-              Matrix<Tv> &source, std::vector<Ti> &endoIndices,
+              const Matrix<Tv> &source, const std::vector<Ti> &endoIndexes,
               Ti sigSearchMaxIter, Tv sigSearchMaxProb, unsigned int seed);
 };
 
@@ -429,22 +428,17 @@ public:
   SurModelset(){};
 
   /// @brief Initializes a new instance of this class
-  /// @param searchOptions Passed to the searcher
-  /// @param searchItems Passed to the searcher
+  /// @param data
+  /// @param combinations
+  /// @param options Passed to the searcher
+  /// @param items Passed to the searcher
   /// @param metrics Passed to the searcher
   /// @param checks Passed to the searcher
-  /// @param exoSizes Determines different sizes for exogenous variables
-  /// @param groupIndexMap Groups for exogenous variables
-  /// @param numFixXPartitions Number of first fixed partitions
-  /// @param source Data
-  /// @param endoIndices A list of potential endogenous indices
   /// @param sigSearchMaxIter Maximum iterations for significant search
   /// @param sigSearchMaxProb p-value for significant search
-  SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
+  SurModelset(const SearchData &data, const SearchCombinations &combinations,
+              SearchOptions &options, SearchItems &items,
               SearchMetricOptions &metrics, SearchModelChecks &checks,
-              const std::vector<Ti> &exoSizes,
-              std::vector<std::vector<Ti>> &groupIndexMap, Ti numFixXPartitions,
-              Matrix<Tv> &source, std::vector<std::vector<Ti>> &endoIndices,
               Ti sigSearchMaxIter, Tv sigSearchMaxProb);
 
   ~SurModelset() {

@@ -69,6 +69,59 @@ struct EstimationKeepComp {
 };
 
 /// @brief Search options
+struct LDT_EXPORT SearchData {
+
+  /// @brief holding the data
+  Matrix<Tv> Data;
+
+  /// @brief holding the out of sample exogenous data
+  Matrix<Tv> NewX;
+
+  /// @brief number of endogenous variables
+  int NumEndo;
+
+  /// @brief number of exogenous variables
+  int NumExo;
+
+  /// @brief number of observations in the data
+  int ObsCount;
+
+  /// @brief number of new observations
+  int NewObsCount;
+
+  /// @brief Box-Cox transformation parameters
+  std::vector<double> Lambdas;
+
+  /// @brief indicating whether the data includes an intercept
+  bool HasIntercept;
+
+  /// @brief indicating whether the data includes weights
+  bool HasWeight;
+};
+
+/// @brief parameters for 2-level nested loop
+struct SearchCombinations {
+
+  /// @brief the sizes.
+  std::vector<int> Sizes;
+
+  /// @brief the partitions.
+  std::vector<std::vector<int>> Partitions;
+
+  /// @brief number of fixed partitions.
+  int NumFixPartitions;
+
+  /// @brief number of fixed items in each partition
+  int NumFixItems;
+
+  /// @brief List of inner groups.
+  std::vector<std::vector<int>> InnerGroups;
+
+  /// @brief number of targets
+  int NumTargets;
+};
+
+/// @brief Search options
 struct LDT_EXPORT SearchOptions {
 
   /// @brief If true, search uses a parallel loop
@@ -76,6 +129,10 @@ struct LDT_EXPORT SearchOptions {
 
   /// @brief Set it to be true in order to signal stop
   bool RequestCancel = false;
+
+  /// @brief determines the interval between reporting the result.
+  /// To be used by R
+  int ReportInterval;
 };
 
 /// @brief Search measuring options
@@ -118,9 +175,6 @@ struct LDT_EXPORT SearchMetricOptions {
   /// @brief Determines the type of evaluation for discrete models. If true,
   /// weights are used in AUC or FrequencyCost calculations
   bool WeightedEval = false;
-
-  /// @brief Transform back data in calculation of RMSE, MAE etc.
-  std::function<void(Tv &)> TransformForMetrics;
 
   /// @brief Updates the indices, etc.
   /// @param isOutOfSampleRandom If true, the training sample is randomly
@@ -406,6 +460,9 @@ protected:
              Ti thirdIndex);
 
 public:
+  /// @brief A pointer to the provided \ref SearchData
+  const SearchData *pData = nullptr;
+
   /// @brief A pointer to the provided \ref SearchItems
   const SearchItems *pItems = nullptr;
 
@@ -457,8 +514,9 @@ public:
   Searcher(){};
 
   /// @brief Initializes a new instance of the class
-  /// @param searchOptions Search options in the project
-  /// @param searchItems Search items in the project
+  /// @brief Search data in the project
+  /// @param options Search options in the project
+  /// @param items Search items in the project
   /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
   /// @param SizeG The size of an integer array that can define this
@@ -470,9 +528,10 @@ public:
   /// contains these indices
   /// @param fixFirstItems Number of fixed items. \ref CurrentIndices always
   /// contains these indices
-  Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-           const SearchMetricOptions &metrics, const SearchModelChecks &checks,
-           Ti SizeG, const std::vector<std::vector<Ti>> &GroupIndexMap,
+  Searcher(const SearchData &data, SearchOptions &options,
+           const SearchItems &items, const SearchMetricOptions &metrics,
+           const SearchModelChecks &checks, Ti SizeG,
+           const std::vector<std::vector<Ti>> &GroupIndexMap,
            Ti fixFirstGroups = 0, Ti fixFirstItems = 0);
   virtual ~Searcher();
 
@@ -504,6 +563,10 @@ class LDT_EXPORT SearcherTest : public Searcher {
 class LDT_EXPORT ModelSet {
 
 public:
+  const SearchData *pData = nullptr;
+
+  const SearchCombinations *pCombinations = nullptr;
+
   /// @brief A pointer to the provided \ref SearchItems
   const SearchItems *pItems = nullptr;
 
@@ -522,9 +585,6 @@ public:
   /// @remark Don't use 'const' for shuffle
   std::vector<Searcher *> *pSearchers = nullptr;
 
-  /// @brief A pointer to the given list in the constructor
-  const std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
-
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;
 
@@ -536,15 +596,14 @@ public:
 
   /// @brief Initializes a new instance of this class
   /// @param searchers List of searchers
-  /// @param groupIndexMap Determines a grouping for the indices
-  /// @param searchOptions Search options in the project
-  /// @param searchItems Search items in the project
+  /// @param options Search options in the project
+  /// @param items Search items in the project
   /// @param metrics Metrics in the project
   /// @param checks Model checks in the project
-  ModelSet(std::vector<Searcher *> &searchers,
-           const std::vector<std::vector<Ti>> &groupIndexMap,
-           const SearchOptions &searchOptions, const SearchItems &searchItems,
-           const SearchMetricOptions &metrics, const SearchModelChecks &checks);
+  ModelSet(std::vector<Searcher *> &searchers, const SearchData &data,
+           const SearchCombinations &combinations, const SearchOptions &options,
+           const SearchItems &items, const SearchMetricOptions &metrics,
+           const SearchModelChecks &checks);
 
   /// @brief Starts the search in all the searchers
   /// @param work Work array of size \ref WorkSize

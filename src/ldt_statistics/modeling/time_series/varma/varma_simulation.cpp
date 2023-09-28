@@ -152,11 +152,13 @@ void GetScore(const ScoringType &type, Matrix<Tv> &result,
   }
 }
 
-void VarmaSimulation::Calculate(
-    Tv *storage, Tv *work, Matrix<Tv> &data, bool &cancel, Matrix<Tv> *exo,
-    const Matrix<Tv> *R, const Matrix<Tv> *r, bool usePreviousEstim,
-    Tv maxCondNum, Tv stdMultipler, bool coefUncer, Ti maxInvalidSim,
-    const std::function<void(Tv &)> *transformForMetrics) {
+void VarmaSimulation::Calculate(Tv *storage, Tv *work, Matrix<Tv> &data,
+                                bool &cancel, Matrix<Tv> *exo,
+                                const Matrix<Tv> *R, const Matrix<Tv> *r,
+                                bool usePreviousEstim, Tv maxCondNum,
+                                Tv stdMultipler, bool coefUncer,
+                                Ti maxInvalidSim,
+                                const std::vector<Tv> *boxCoxLambdas) {
 
   if (cancel)
     return;
@@ -191,10 +193,6 @@ void VarmaSimulation::Calculate(
 
   if (cancel)
     return;
-
-  std::function<void(Tv &)> tfm;
-  if (transformForMetrics)
-    tfm = *transformForMetrics;
 
   // set storage
   Ti pos = 0;
@@ -313,20 +311,21 @@ void VarmaSimulation::Calculate(
         std.Data[i] = std::sqrt(std.Data[i]);
     }
 
-    if (transformForMetrics) {
+    if (boxCoxLambdas) {
+      for (int j = 0; j < yy; j++) {
+        Array<Tv>::BoxCoxInv0(last.Data[j], boxCoxLambdas->at(j));
 
-      for (int i = 0; i < yy; i++)
-        tfm(last.Data[i]);
+        Array<Tv>::BoxCoxInv(act.ColBegin(j), act.RowsCount,
+                             boxCoxLambdas->at(j));
 
-      for (int i = 0; i < co; i++) {
-        tfm(act.Data[i]);
-        tfm(forc.Data[i]);
+        Array<Tv>::BoxCoxInv(forc.ColBegin(j), forc.RowsCount,
+                             boxCoxLambdas->at(j));
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int i = 0; i < co; i++) {
-          tfm(std.Data[i]);
-        }
+        for (int j = 0; j < yy; j++)
+          Array<Tv>::BoxCoxInv(std.ColBegin(j), std.RowsCount,
+                               boxCoxLambdas->at(j));
       }
     }
 
@@ -383,20 +382,16 @@ void VarmaSimulation::Calculate(
   }
 }
 
-void VarmaSimulation::CalculateE(
-    Tv *storage, Tv *work, Matrix<Tv> &data, Tv maxCondNum, Tv stdMultipler,
-    bool coefUncer, bool usePreviousEstim,
-    const std::function<void(Tv &)> *transformForMetrics) {
+void VarmaSimulation::CalculateE(Tv *storage, Tv *work, Matrix<Tv> &data,
+                                 Tv maxCondNum, Tv stdMultipler, bool coefUncer,
+                                 bool usePreviousEstim,
+                                 const std::vector<Tv> *boxCoxLambdas) {
   auto horizons = *pHorizons;
   auto metrics = *pMetrics;
   auto sizes = *pSizes;
   Ti hh = (Ti)horizons.size();
   Ti hMin = horizons.at(0);
   Ti hMax = horizons.at(hh - 1);
-
-  std::function<void(Tv &)> tfm;
-  if (transformForMetrics)
-    tfm = *transformForMetrics;
 
   // we should get t:
   auto D = DatasetTs<false>(data.RowsCount, data.ColsCount, true, false);
@@ -542,20 +537,21 @@ void VarmaSimulation::CalculateE(
         std.Data[i] = std::sqrt(std.Data[i]);
     }
 
-    if (transformForMetrics) {
+    if (boxCoxLambdas) {
+      for (int j = 0; j < yy; j++) {
+        Array<Tv>::BoxCoxInv0(last.Data[j], boxCoxLambdas->at(j));
 
-      for (int i = 0; i < yy; i++)
-        tfm(last.Data[i]);
+        Array<Tv>::BoxCoxInv(act.ColBegin(j), act.RowsCount,
+                             boxCoxLambdas->at(j));
 
-      for (int i = 0; i < co; i++) {
-        tfm(act.Data[i]);
-        tfm(forc.Data[i]);
+        Array<Tv>::BoxCoxInv(forc.ColBegin(j), forc.RowsCount,
+                             boxCoxLambdas->at(j));
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int i = 0; i < co; i++) {
-          tfm(std.Data[i]);
-        }
+        for (int j = 0; j < yy; j++)
+          Array<Tv>::BoxCoxInv(std.ColBegin(j), std.RowsCount,
+                               boxCoxLambdas->at(j));
       }
     }
 

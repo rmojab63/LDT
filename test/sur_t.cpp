@@ -329,7 +329,7 @@ TEST(Sur_t, search_t) {
   auto sigseaItr = 0;
 
   auto items = SearchItems();
-  auto searchOptions = SearchOptions();
+  auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
@@ -345,7 +345,7 @@ TEST(Sur_t, search_t) {
   items.ExtremeBoundsMultiplier = 2.0;
 
   metrics.SimFixSize = simfixsize;
-  searchOptions.Parallel = parallel;
+  options.Parallel = parallel;
   metrics.Seed = 340;
   metrics.TrainRatio = 0.8;
   metrics.MetricsIn = std::vector<GoodnessOfFitType>({GoodnessOfFitType::kAic});
@@ -356,8 +356,8 @@ TEST(Sur_t, search_t) {
   auto endoIndexes = std::vector<std::vector<Ti>>({{0}, {0, 1}, {0, 1, 2}});
   auto exogroups = std::vector<std::vector<Ti>>({{3}, {4}, {5}, {6}});
 
-  auto model = SurModelset(searchOptions, items, metrics, checks, exosizes,
-                           exogroups, 3, data, endoIndexes, sigseaItr, 0.5);
+  auto model = SurModelset(options, items, metrics, checks, exosizes, exogroups,
+                           3, data, endoIndexes, sigseaItr, 0.5);
   auto W = new Tv[model.Modelset.WorkSize];
   model.Modelset.Start(W, nullptr);
 

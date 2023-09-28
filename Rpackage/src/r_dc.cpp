@@ -61,8 +61,8 @@ void checkData(ldt::Matrix<double> &my, ldt::Matrix<double> &mx,
 // [[Rcpp::export(.SearchDc)]]
 SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
               SEXP costMatrices, bool searchLogit, bool searchProbit,
-              List optimOptions, List aucOptions, List metricOptions,
-              List modelCheckItems, List searchItems, List searchOptions) {
+              List optimOptions, List aucOptions, List metrics,
+              List modelChecks, List items, List options) {
 
   if (y == R_NilValue || x == R_NilValue)
     throw LdtException(ErrorType::kLogic, "R-dc",
@@ -79,7 +79,7 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   bool printMsg = false;
   auto options = SearchOptions();
   int reportInterval = 0;
-  UpdateSearchOptions(searchOptions, options, reportInterval, printMsg);
+  UpdateSearchOptions(options, options, reportInterval, printMsg);
 
   y = as<NumericMatrix>(y);
   x = as<NumericMatrix>(x);
@@ -117,9 +117,9 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
   auto metricsNames = std::vector<std::string>();
   auto items = SearchItems();
   auto checks = SearchModelChecks();
-  UpdateOptions(printMsg, searchItems, metricOptions, modelCheckItems, metrics,
-                items, checks, metricsNames, exoCount, exoCount, numTargets, 1,
-                false, true, "Coefficients", true);
+  UpdateOptions(printMsg, items, metrics, modelChecks, metrics, items, checks,
+                metricsNames, exoCount, exoCount, numTargets, 1, false, true,
+                "Coefficients", true);
 
   std::vector<ldt::Matrix<double>> costMatrices0;
   GetCostMatrices(printMsg, costMatrices0, costMatrices,
@@ -193,9 +193,9 @@ SEXP SearchDc(SEXP y, SEXP x, SEXP w, SEXP xSizes, SEXP xPartitions,
       _["yNames"] = colnames(y), _["xNames"] = colnames(x),
       _["costMatrices"] = costMatrices, _["searchLogit"] = wrap(searchLogit),
       _["searchProbit"] = wrap(searchProbit), _["optimOptions"] = optimOptions,
-      _["metricOptions"] = metricOptions,
-      _["modelCheckItems"] = modelCheckItems, _["searchItems"] = searchItems,
-      _["searchOptions"] = searchOptions, _["numTargets"] = wrap(numTargets));
+      _["metrics"] = metrics, _["modelChecks"] = modelChecks,
+      _["items"] = items, _["options"] = options,
+      _["numTargets"] = wrap(numTargets));
 
   L.attr("class") =
       std::vector<std::string>({"ldtsearchdc", "ldtsearch", "list"});

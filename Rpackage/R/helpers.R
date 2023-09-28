@@ -282,13 +282,13 @@ combineSearch <- function(list, type1Name = "coefs") {
 Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10)),
                      counts = c(NA, 40, 30, 20), savePre, ...) {
   dots <- list(...)
-  printMsg = dots$searchOptions$printMsg
+  printMsg = dots$options$printMsg
   if (is.null(printMsg))
     printMsg = FALSE
 
   # TODO: check search items here
   # dots <- list(...)
-  # if (dots$searchItems)
+  # if (dots$items)
   if (length(sizes) != length(counts)) {
     stop(paste0("Invalid number of elements in 'counts' (sizes=",
                 paste0(sizes, collapse=", "), "; counts=",
@@ -453,13 +453,6 @@ Search_s <- function(method, data, sizes = list(c(1, 2), c(3, 4), c(5), c(6:10))
   return(result)
 }
 
-
-if.not.null <- function(arg, default = NULL) {
-  if (is.null(arg)) {
-    return(default)
-  }
-  return(arg)
-}
 
 sprintf0 <- function(numFormat, x) {
   if (length(x) == 0) {

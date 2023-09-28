@@ -14,13 +14,13 @@ using namespace ldt;
 template <bool hasWeight, DiscreteChoiceModelType modelType,
           DiscreteChoiceDistType distType>
 DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
-    SearchOptions &searchOptions, const SearchItems &searchItems,
+    const SearchData &data, SearchOptions &options, const SearchItems &items,
     const SearchMetricOptions &metrics, const SearchModelChecks &checks,
     Ti SizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
     const Matrix<Tv> &source, Ti numChoices,
     const std::vector<Matrix<Tv>> &costMatrixes, unsigned int seed,
     Newton &newtonOptions, RocOptions &aucOptions)
-    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, SizeG,
+    : Searcher::Searcher(data, options, items, metrics, checks, SizeG,
                          groupIndexMap, fixFirstG, 0) {
 
   pCostMatrixes = &costMatrixes;
@@ -362,10 +362,11 @@ void DiscreteChoiceModelsetBase::Start(Tv *work, Ti *worki) {
 }
 
 DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
-    bool isBinary, bool hasWeight, SearchOptions &searchOptions,
-    SearchItems &searchItems, SearchMetricOptions &metrics,
-    SearchModelChecks &checks, const std::vector<Ti> &sizes,
-    const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
+    bool isBinary, bool hasWeight, const SearchData &data,
+    const SearchCombinations &combinations, SearchOptions &options,
+    SearchItems &items, SearchMetricOptions &metrics, SearchModelChecks &checks,
+    const std::vector<Ti> &sizes, const Matrix<Tv> &source,
+    std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit, bool addProbit,
     Newton &newtonOptions, RocOptions &aucOptions) {
   DiscreteChoiceModelsetBase *modelset;
@@ -373,29 +374,29 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kBinary>(
-              searchOptions, searchItems, metrics, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
-              addProbit);
+              data, combinations, options, items, metrics, checks, sizes,
+              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
+              addLogit, addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kBinary>(
-              searchOptions, searchItems, metrics, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
-              addProbit);
+              data, combinations, options, items, metrics, checks, sizes,
+              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
+              addLogit, addProbit);
     }
   } else {
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kOrdered>(
-              searchOptions, searchItems, metrics, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
-              addProbit);
+              data, combinations, options, items, metrics, checks, sizes,
+              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
+              addLogit, addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
-              searchOptions, searchItems, metrics, checks, sizes, source,
-              costMatrixes, groupIndexMaps, newtonOptions, aucOptions, addLogit,
-              addProbit);
+              data, combinations, options, items, metrics, checks, sizes,
+              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
+              addLogit, addProbit);
     }
   }
   return modelset;
@@ -409,10 +410,10 @@ DiscreteChoiceModelset<hasWeight, modelType>::~DiscreteChoiceModelset() {
 
 template <bool hasWeight, DiscreteChoiceModelType modelType>
 DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
-    SearchOptions &searchOptions, SearchItems &searchItems,
-    SearchMetricOptions &metrics, SearchModelChecks &checks,
-    const std::vector<Ti> &sizes, const Matrix<Tv> &source,
-    std::vector<Matrix<Tv>> &costMatrixes,
+    const SearchData &data, const SearchCombinations &combinations,
+    SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
+    SearchModelChecks &checks, const std::vector<Ti> &sizes,
+    const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
     std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
     RocOptions &aucOptions, bool addLogit, bool addProbit) {
 
@@ -422,11 +423,11 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   if (this->mNumChoices < 2)
     throw LdtException(ErrorType::kLogic, "dc-modelset",
                        "invalid number of choices");
-  searchItems.LengthTargets = 1;
-  searchItems.LengthDependents = 1;
-  searchItems.LengthExogenouses =
+  items.LengthTargets = 1;
+  items.LengthDependents = 1;
+  items.LengthExogenouses =
       hasWeight ? (int)(source.ColsCount - 2) : (int)(source.ColsCount - 1);
-  if (searchItems.LengthExogenouses <
+  if (items.LengthExogenouses <
       1) // =1, means the model has just one intercept. Let estimation process
          // throw error (if any)
     throw LdtException(ErrorType::kLogic, "dc-modelset",
@@ -434,23 +435,21 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
 
   metrics.Update(true, false);
   checks.Update(metrics);
-  searchItems.Update(metrics, searchItems.LengthTargets,
-                     searchItems.LengthDependents,
-                     searchItems.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthDependents,
+               items.LengthExogenouses);
 
-  // check searchItems.Length1 with the number of exogenous variables and
+  // check items.Length1 with the number of exogenous variables and
   // thresholds?!
-  if (searchItems.Length1 != 0 &&
-      searchItems.Length1 !=
-          (searchItems.LengthExogenouses + this->mNumChoices - 2))
+  if (items.Length1 != 0 &&
+      items.Length1 != (items.LengthExogenouses + this->mNumChoices - 2))
     throw LdtException(
         ErrorType::kLogic, "dc-modelset",
         "inconsistent number of exogenous variables and thresholds");
-  if (searchItems.Length1 != 0 && checks.Estimation == false)
+  if (items.Length1 != 0 && checks.Estimation == false)
     throw LdtException(ErrorType::kLogic, "dc-modelset",
                        "parameters are needed. Set 'checks.Estimation = true'");
 
-  this->pItems = &searchItems;
+  this->pItems = &items;
 
   this->pSource = &source;
   this->pCostMatrixes = &costMatrixes;
@@ -473,7 +472,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   // check group indexes and create sizes array
   for (auto const &b : groupIndexMaps) {
     for (auto &a : b) {
-      if (a > searchItems.LengthExogenouses)
+      if (a > items.LengthExogenouses)
         throw LdtException(
             ErrorType::kLogic, "dc-modelset",
             "invalid exogenous group element (it is larger than the number "
@@ -521,7 +520,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kLogit>(
-              searchOptions, searchItems, metrics, checks, s, groupIndexMaps, 0,
+              data, options, items, metrics, checks, s, groupIndexMaps, 0,
               source, this->mNumChoices, costMatrixes, seed, newtonOptions,
               aucOptions));
     }
@@ -529,14 +528,14 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kProbit>(
-              searchOptions, searchItems, metrics, checks, s, groupIndexMaps, 0,
+              data, options, items, metrics, checks, s, groupIndexMaps, 0,
               source, this->mNumChoices, costMatrixes, seed, newtonOptions,
               aucOptions));
     }
   }
 
-  this->Modelset = ModelSet(this->Searchers, groupIndexMaps, searchOptions,
-                            searchItems, metrics, checks);
+  this->Modelset = ModelSet(this->Searchers, data, combinations, options, items,
+                            metrics, checks);
 }
 
 // #pragma endregion

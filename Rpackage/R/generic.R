@@ -203,7 +203,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 } # index of target in endogenous data
-                minM <- object$info$metricOptions$minMetrics[[mea]]
+                minM <- object$info$metrics$minMetrics[[mea]]
                 wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea,
                                            ifelse(is.null(minM),0,minM[[ifelse(length(minM)==1,1,jt)]]))
                 if (abs(wd - b$weight)> test_perc)
@@ -241,7 +241,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                 } else {
                   which(b$depIndices == j)[[1]]
                 }
-                minM <- object$info$metricOptions$minMetrics[[mea]]
+                minM <- object$info$metrics$minMetrics[[mea]]
                 wd <- s.weight.from.metric(getMetricFrom(su_m, mea, jt, result$method), mea,
                                            ifelse(is.null(minM),0,minM[[ifelse(length(minM)==1,1,jt)]]))
                 if (abs(wd - b$weight)> test_perc)
@@ -291,7 +291,7 @@ summary.ldtsearch <- function(object, y, x = NULL, addModelBests = TRUE,
                       } else {
                         which(b$depIndices == j)[[1]]
                       }
-                      minM <- object$info$metricOptions$minMetrics[[mea]]
+                      minM <- object$info$metrics$minMetrics[[mea]]
 
                       testthat::expect_equal(
                         s.weight.from.metric(
@@ -439,7 +439,7 @@ cdfIndex = 0, ...) {
   }
 
   if (is.null(itemIndices)) {
-    itemIndices <- c(1:x$info$searchItems$bestK)
+    itemIndices <- c(1:x$info$items$bestK)
   }
 
   m_names <- m_names[metrics]
@@ -1144,11 +1144,11 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
 
       if (type == "normal") {
         sd <- sqrt(g$var)
-        sdint <- if.not.null(g$sdmultiplier, 2) * sd
+        sdint <- !is.null(g$sdmultiplier, 2) * sd
         x <- seq(g$mean - sdint, g$mean + sdint, length.out = numPoints)
         dists[[length(dists) + 1]] <- list(x = x, y = dnorm(x, g$mean, sd))
       } else if (type == "gld") {
-        quantiles <- if.not.null(g$quantiles, seq(0.01, 0.99, length.out = numPoints))
+        quantiles <- !is.null(g$quantiles, seq(0.01, 0.99, length.out = numPoints))
         dists[[length(dists) + 1]] <- list(
           x = s.gld.quantile(quantiles, g$p1, g$p2, g$p3, g$p4),
           y = s.gld.density.quantile(quantiles, g$p1, g$p2, g$p3, g$p4)
@@ -1195,18 +1195,18 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
   }
   if (is.na(ylim[[1]])) {
     ylim[[1]] <- boundFun(min(as.numeric(c(
-      sapply(points, function(p) if.not.null(p$y, 0)),
-      sapply(bounds, function(p) if.not.null(p$ymin, def_bound_ymin)),
-      sapply(intervals, function(p) if.not.null(p$y, (def_bound_ymin + def_bound_ymax) / 2)),
+      sapply(points, function(p) !is.null(p$y, 0)),
+      sapply(bounds, function(p) !is.null(p$ymin, def_bound_ymin)),
+      sapply(intervals, function(p) !is.null(p$y, (def_bound_ymin + def_bound_ymax) / 2)),
       sapply(dists, function(p) min(p$y, na.rm = TRUE))
     )), na.rm = TRUE), "ymin")
   }
 
   if (is.na(ylim[[2]])) {
     ylim[[2]] <- boundFun(max(as.numeric(c(
-      sapply(points, function(p) if.not.null(p$y, 0)),
-      sapply(bounds, function(p) if.not.null(p$ymax, def_bound_ymax)),
-      sapply(intervals, function(p) if.not.null(p$y, (def_bound_ymin + def_bound_ymax) / 2)),
+      sapply(points, function(p) !is.null(p$y, 0)),
+      sapply(bounds, function(p) !is.null(p$ymax, def_bound_ymax)),
+      sapply(intervals, function(p) !is.null(p$y, (def_bound_ymin + def_bound_ymax) / 2)),
       sapply(dists, function(p) max(p$y, na.rm = TRUE))
     )), na.rm = TRUE), "ymax")
   }
@@ -1251,11 +1251,11 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     i <- 0
     for (g in points) {
       i <- i + 1
-      pch <- if.not.null(g$pch, 4)
-      col <- if.not.null(g$col, "black")
-      cex <- if.not.null(g$cex, 3)
+      pch <- !is.null(g$pch, 4)
+      col <- !is.null(g$col, "black")
+      cex <- !is.null(g$cex, 3)
       graphics::points(
-        x = g$value, y = if.not.null(g$y, 0), type = "p",
+        x = g$value, y = !is.null(g$y, 0), type = "p",
         pch = pch, col = col, cex = cex
       )
       lgn_lgn[[i]] <- g$label
@@ -1279,13 +1279,13 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     for (g in bounds) {
       i <- i + 1
 
-      col <- if.not.null(g$col, rgb(0, 0, 0.0, alpha = 0.2))
-      density <- if.not.null(g$density, NULL)
-      border <- if.not.null(g$border, NA)
+      col <- !is.null(g$col, rgb(0, 0, 0.0, alpha = 0.2))
+      density <- !is.null(g$density, NULL)
+      border <- !is.null(g$border, NA)
       graphics::rect(
         xleft = g$xmin, xright = g$xmax,
-        ybottom = if.not.null(g$ymin, def_bound_ymin),
-        ytop = if.not.null(g$ymax, def_bound_ymax), density = density,
+        ybottom = !is.null(g$ymin, def_bound_ymin),
+        ytop = !is.null(g$ymax, def_bound_ymax), density = density,
         col = col, border = border
       )
       lgn_lgn[[i]] <- g$label
@@ -1312,12 +1312,12 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     for (g in intervals) {
       i <- i + 1
 
-      col <- if.not.null(g$col, "black")
-      lty <- if.not.null(g$lty, 1)
-      lwd <- if.not.null(g$lwy, 1)
-      pch <- if.not.null(g$pch, 8)
-      y <- if.not.null(g$y, 0)
-      cex <- if.not.null(g$cex, c(1, 1, 1))
+      col <- !is.null(g$col, "black")
+      lty <- !is.null(g$lty, 1)
+      lwd <- !is.null(g$lwy, 1)
+      pch <- !is.null(g$pch, 8)
+      y <- !is.null(g$y, 0)
+      cex <- !is.null(g$cex, c(1, 1, 1))
 
       graphics::points(
         x = c(g$xmin, g$value, g$xmax), y = c(y, y, y), type = "b",
@@ -1348,9 +1348,9 @@ coefs.plot <- function(points = NULL, bounds = NULL, intervals = NULL, distribut
     for (g in distributions) {
       i <- i + 1
       dist <- dists[[i]]
-      col <- if.not.null(g$col, "black")
-      lty <- if.not.null(g$lty, 1)
-      lwd <- if.not.null(g$lwd, 1)
+      col <- !is.null(g$col, "black")
+      lty <- !is.null(g$lty, 1)
+      lwd <- !is.null(g$lwd, 1)
 
       graphics::lines(
         x = dist$x, y = dist$y, type = "l",

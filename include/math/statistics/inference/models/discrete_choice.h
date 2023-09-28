@@ -567,8 +567,8 @@ class LDT_EXPORT DiscreteChoiceSearcher : public Searcher {
 
 public:
   /// @brief Initializes a new instance of the class
-  /// @param searchOptions It is passed to the base class
-  /// @param searchItems It is passed to the base class
+  /// @param options It is passed to the base class
+  /// @param items It is passed to the base class
   /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
   /// @param SizeG It is passed to the base class
@@ -581,8 +581,8 @@ public:
   /// the results
   /// @param newtonOptions Optimization options
   /// @param aucOptions Options for calculating AUC
-  DiscreteChoiceSearcher(SearchOptions &searchOptions,
-                         const SearchItems &searchItems,
+  DiscreteChoiceSearcher(const SearchData &data, SearchOptions &options,
+                         const SearchItems &items,
                          const SearchMetricOptions &metrics,
                          const SearchModelChecks &checks, Ti SizeG,
                          const std::vector<std::vector<Ti>> &groupIndexMap,
@@ -624,8 +624,9 @@ public:
 
   /// @brief Initializes the templated class from the types
   static DiscreteChoiceModelsetBase *
-  GetFromTypes(bool isBinary, bool hasWeight, SearchOptions &searchOptions,
-               SearchItems &searchItems, SearchMetricOptions &metrics,
+  GetFromTypes(bool isBinary, bool hasWeight, const SearchData &data,
+               const SearchCombinations &combinations, SearchOptions &options,
+               SearchItems &items, SearchMetricOptions &metrics,
                SearchModelChecks &checks, const std::vector<Ti> &sizes,
                const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
                std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit,
@@ -646,8 +647,8 @@ class LDT_EXPORT DiscreteChoiceModelset : public DiscreteChoiceModelsetBase {
 
 public:
   /// @brief
-  /// @param searchOptions It is passed to the base class
-  /// @param searchItems It is passed to the base class
+  /// @param options It is passed to the base class
+  /// @param items It is passed to the base class
   /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
   /// @param sizes Determines the number of exogenous data in different
@@ -660,14 +661,13 @@ public:
   /// @param aucOptions Options for calculating AUC
   /// @param addLogit If true, logit models are included in the model set
   /// @param addProbit If true, probit models are included in the model set
-  DiscreteChoiceModelset(SearchOptions &searchOptions, SearchItems &searchItems,
-                         SearchMetricOptions &metrics,
-                         SearchModelChecks &checks,
-                         const std::vector<Ti> &sizes, const Matrix<Tv> &source,
-                         std::vector<Matrix<Tv>> &costMatrixes,
-                         std::vector<std::vector<Ti>> &groupIndexMaps,
-                         Newton &newtonOptions, RocOptions &aucOptions,
-                         bool addLogit = true, bool addProbit = false);
+  DiscreteChoiceModelset(
+      const SearchData &data, const SearchCombinations &combinations,
+      SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
+      SearchModelChecks &checks, const std::vector<Ti> &sizes,
+      const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
+      std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
+      RocOptions &aucOptions, bool addLogit = true, bool addProbit = false);
 
   virtual ~DiscreteChoiceModelset();
 };

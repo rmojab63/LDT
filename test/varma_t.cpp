@@ -1299,7 +1299,7 @@ TEST(Varma_T, var_search) {
   data.Data(data0);
 
   auto items = SearchItems();
-  auto searchOptions = SearchOptions();
+  auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
@@ -1325,8 +1325,8 @@ TEST(Varma_T, var_search) {
   auto parm = std::vector<Ti>({2, 1, 2, 0, 0, 0});
 
   auto modelset =
-      VarmaModelset(searchOptions, items, metrics, checks, sizes, endogroups,
-                    data, parm, 0, exo, true, nullptr, 2, items.Length1);
+      VarmaModelset(options, items, metrics, checks, sizes, endogroups, data,
+                    parm, 0, exo, true, nullptr, 2, items.Length1);
   auto W = new Tv[modelset.Modelset.WorkSize];
   modelset.Modelset.Start(W, nullptr);
 

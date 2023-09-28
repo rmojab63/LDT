@@ -25,38 +25,27 @@
 #' @seealso [search.bin], [estim.bin], [s.roc]
 get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
                             pessimistic = FALSE, costs = NULL, costMatrix = NULL){
+  stopifnot(is.numeric(lowerThreshold) && length(lowerThreshold) == 1 && lowerThreshold >= 0)
+  stopifnot(is.numeric(upperThreshold) && length(upperThreshold) == 1 && lowerThreshold <= 1)
+  stopifnot(is.numeric(epsilon) && length(epsilon) == 1 && epsilon >= 0 && epsilon <= 1)
 
-  O = list(lowerThreshold = lowerThreshold, upperThreshold = upperThreshold,
-           epsilon=epsilon, pessimistic = pessimistic, costs=costs,
-           costMatrix = costMatrix)
-  O = CheckRocOptions(O)
-  O
-}
-
-CheckRocOptions <- function(O){
-  O$lowerThreshold = as.numeric(O$lowerThreshold);
-  O$upperThreshold = as.numeric(O$upperThreshold);
-  O$epsilon = as.numeric(O$epsilon);
-  O$pessimistic = as.logical(O$pessimistic);
-
-  if (O$lowerThreshold < 0)
-    stop("Invalid ROC option. 'lowerThreshold' cannot be negative.")
-  if (O$upperThreshold > 1)
-    stop("Invalid ROC option. 'upperThreshold' cannot be larger than 1.")
-  if (O$epsilon < 0 || O$epsilon > 1)
-    stop("Invalid ROC option. 'epsilon' must be positive and less than 1.")
-
-  if (is.null(O$costs) == FALSE) {
-    O$costs = as.numeric(O$costs)
-    O$costMatrix = as.matrix(O$costMatrix)
-
-    if (is.null(O["costMatrix"]))
-      stop("Invalid ROC option. 'costMatrix' cannot be NULL when there is a cost vector.")
-    if (nrow(O$costMatrix) != 2 || ncol(O$costMatrix) != 2)
-      stop("Invalid ROC option. 'costMatrix' must be a 2x2 matrix.")
+  if (!is.null(costs)) {
+    stopifnot(is.numeric(costs))
+    stopifnot(!is.null(costMatrix) && is.matrix(costMatrix) &&
+                nrow(costMatrix) == 2 && ncol(costMatrix) == 2)
   }
-  O
+
+  res = list(lowerThreshold = lowerThreshold,
+             upperThreshold = upperThreshold,
+             epsilon=epsilon,
+             pessimistic = pessimistic,
+             costs=costs,
+             costMatrix = costMatrix)
+  class(res) <- c("ldt.options.roc", "list")
+  res
 }
+
+
 
 #' Options for Nelder-Mead Optimization
 #'
@@ -79,45 +68,21 @@ CheckRocOptions <- function(O){
 get.options.neldermead <- function(maxIterations = 100, tolerance = 1e-6,
                                    reflection = 1, expansion = 2, contraction = 0.5,
                                    shrink = 1){
-  O = list(maxIterations = maxIterations,
+  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
+  stopifnot(is.numeric(tolerance) && length(tolerance) == 1 && tolerance >= 0)
+  stopifnot(is.numeric(reflection) && length(reflection) == 1 && reflection > 0)
+  stopifnot(is.numeric(expansion) && length(expansion) == 1 && expansion > 0)
+  stopifnot(is.numeric(contraction) && length(contraction) == 1 && contraction > 0)
+  stopifnot(is.numeric(shrink) && length(shrink) == 1 && shrink > 0)
+
+  res = list(maxIterations = maxIterations,
            tolerance = tolerance, reflection = reflection,
            expansion = expansion, contraction = contraction,
            shrink = shrink)
-  O = CheckNelderMeadOptions(O)
-  O
+  class(res) <- c("ldt.options.neldermead", "list")
+  res
+  res
 }
-
-
-CheckNelderMeadOptions <- function(O){
-  O$maxIterations <- as.integer(O$maxIterations)
-  O$tolerance <- as.numeric(O$tolerance)
-  O$reflection <- as.numeric(O$reflection)
-  O$expansion <- as.numeric(O$expansion)
-  O$contraction <- as.numeric(O$contraction)
-  O$shrink <- as.numeric(O$shrink)
-
-
-  if (O$maxIterations <= 0)
-    stop("Invalid Nelder-Mead option: 'maxIterations' must be positive.")
-
-  if (O$tolerance < 0)
-    stop("Invalid Nelder-Mead option: 'tolerance' cannot be negative.")
-
-  if (O$reflection <= 0)
-    stop("Invalid Nelder-Mead option: 'reflection' must be positive.")
-
-  if (O$expansion <= 0)
-    stop("Invalid Nelder-Mead option: 'expansion' must be positive.")
-
-  if (O$contraction <= 0)
-    stop("Invalid Nelder-Mead option: 'contraction' must be positive.")
-
-  if (O$shrink <= 0)
-    stop("Invalid Nelder-Mead option: 'shrink' must be positive.")
-
-  O
-}
-
 
 
 #' Get Options for PCA
@@ -139,34 +104,20 @@ CheckNelderMeadOptions <- function(O){
 #' @export
 #' @seealso [estim.bin], [estim.sur], [estim.varma], [s.pca]
 get.options.pca <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
-  O = list(
-    ignoreFirst = ignoreFirst, exactCount = exactCount,
-    cutoffRate = cutoffRate, max = max)
-  O = CheckPcaOptions(O)
-  O
+
+  stopifnot(is.numeric(ignoreFirst) && length(ignoreFirst) == 1 && ignoreFirst >= 0)
+  stopifnot(is.numeric(exactCount) && length(exactCount) == 1 && exactCount >= 0)
+  stopifnot(is.numeric(cutoffRate) && length(cutoffRate) == 1 && cutoffRate > 0 && cutoffRate < 1)
+  stopifnot(is.numeric(max) && length(max) == 1 && max > 0)
+
+  res = list(
+    ignoreFirst = ignoreFirst,
+    exactCount = exactCount,
+    cutoffRate = cutoffRate,
+    max = max)
+  class(res) <- c("ldt.options.pca", "list")
+  res
 }
-
-CheckPcaOptions <- function(O){
-  O$ignoreFirst <- as.integer(O$ignoreFirst)
-  O$exactCount <- as.integer(O$exactCount)
-  O$cutoffRate <- as.numeric(O$cutoffRate)
-  O$max <- as.integer(O$max)
-
-  if (O$ignoreFirst < 0)
-    stop("Invalid Pca option. 'ignoreFirst' cannot be negative.")
-
-  if (O$exactCount < 0)
-    stop("Invalid Pca option. 'exactCount' cannot be negative.")
-
-  if (O$cutoffRate <= 0 || O$cutoffRate > 1)
-    stop("Invalid Pca option. 'cutoffRate' must be positive and less than 1.")
-
-  if (O$max <= 0)
-    stop("Invalid Pca option. 'max' must be positive.")
-
-  O
-}
-
 
 #' Get Options for L-BFGS Optimization
 #'
@@ -182,35 +133,17 @@ CheckPcaOptions <- function(O){
 #' @export
 get.options.lbfgs <- function(maxIterations = 100, factor = 1e7,
                                projectedGradientTol = 0, maxCorrections = 5){
-  O = list(maxIterations = maxIterations,
+  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
+  stopifnot(is.numeric(factor) && length(factor) == 1 && factor > 0)
+  stopifnot(is.numeric(projectedGradientTol) && length(projectedGradientTol) == 1 && projectedGradientTol >= 0)
+  stopifnot(is.numeric(maxCorrections) && length(maxCorrections) == 1 && maxCorrections > 0)
+
+  res = list(maxIterations = maxIterations,
            factor = factor,
            projectedGradientTol = projectedGradientTol,
            maxCorrections = maxCorrections)
-  O = CheckLbfgsOptions(O)
-  O
-}
-
-
-CheckLbfgsOptions <- function(O){
-  O$maxIterations <- as.integer(O$maxIterations)
-  O$factor <- as.numeric(O$factor)
-  O$projectedGradientTol <- as.numeric(O$projectedGradientTol)
-  O$maxCorrections <- as.integer(O$maxCorrections)
-
-
-  if (O$maxIterations <= 0)
-    stop("Invalid L-BFGS option. 'maxIterations' must be positive.")
-
-  if (O$factor <= 0)
-    stop("Invalid L-BFGS option. 'factor' must be positive.")
-
-  if (O$projectedGradientTol < 0)
-    stop("Invalid L-BFGS option. 'projectedGradientTol' cannot be negative.")
-
-  if (O$maxCorrections <= 0)
-    stop("Invalid L-BFGS option. 'maxCorrections' must be positive.")
-
-  O
+  class(res) <- c("ldt.options.lbfgs", "list")
+  res
 }
 
 
@@ -228,335 +161,18 @@ CheckLbfgsOptions <- function(O){
 #' @export
 get.options.newton <- function(maxIterations = 100, functionTol = 1e-4,
                                gradientTol = 0, useLineSearch = TRUE){
-  O = list(maxIterations = maxIterations,
+
+  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
+  stopifnot(is.numeric(functionTol) && length(functionTol) == 1 && functionTol >= 0)
+  stopifnot(is.numeric(gradientTol) && length(gradientTol) == 1 && gradientTol >= 0)
+  stopifnot(is.logical(useLineSearch) && length(useLineSearch) == 1)
+
+
+  res = list(maxIterations = maxIterations,
            functionTol = functionTol,
            gradientTol = gradientTol,
            useLineSearch = useLineSearch)
-  O = CheckNewtonOptions(O)
-  O
+  class(res) <- c("ldt.options.newton", "list")
+  res
 }
 
-
-CheckNewtonOptions <- function(O){
-  O$maxIterations <- as.integer(O$maxIterations)
-  O$functionTol <- as.numeric(O$functionTol)
-  O$gradientTol <- as.numeric(O$gradientTol)
-  O$useLineSearch <- as.logical(O$useLineSearch)
-
-  if (O$maxIterations <= 0)
-    stop("Invalid Newton option. 'maxIterations' must be positive.")
-
-  if (O$functionTol < 0)
-    stop("Invalid Newton option. 'functionTol' cannot be negative.")
-
-  if (O$gradientTol < 0)
-    stop("Invalid Newton option. 'gradientTol' cannot be negative.")
-
-  O
-}
-
-
-#' Specify the Purpose of the Model Search Process
-#'
-#' Use this function to list the required items and information that should be saved and retrieved from the model set search process in \code{search.?} functions.
-#'
-#' @param model If \code{TRUE}, some information about the models is saved.
-#' @param type1 If \code{TRUE} and implemented, extra information is saved. This can be the coefficients in the SUR search or predictions in the VARMA search.
-#' @param type2 If \code{TRUE} and implemented, extra information is saved. This is similar to \code{type1}. **It is reserved for future updates.**
-#' @param bestK The number of best items to be saved in \code{model}, \code{type1}, or \code{type2} information.
-#' @param all If \code{TRUE}, all models' information is saved.
-#' @param inclusion If \code{TRUE}, inclusion weights are saved.
-#' @param cdfs Weighted average of the CDFs at each given point is calculated (for \code{type1} and \code{type2} cases).
-#' @param extremeMultiplier A number that determines the multiplier in the extreme bound analysis (for \code{type1} and \code{type2} cases). Use zero to disable it.
-#' @param mixture4 If \code{TRUE}, the first four moments of the average distributions are calculated in \code{type1} and \code{type2} cases.
-#'
-#' @return A list with the given options.
-#'
-#' @export
-get.items.search <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
-                             bestK = 1, all = FALSE, inclusion = FALSE,
-                             cdfs = numeric(0), extremeMultiplier = 0,
-                             mixture4 = FALSE){
-  O = list(model = model, type1 = type1,
-           type2 = type2, bestK = bestK,
-           all = all, inclusion = inclusion,
-           cdfs = cdfs,
-           extremeMultiplier = extremeMultiplier,
-           mixture4 = mixture4)
-  O = CheckSearchItems(O)
-  O
-}
-
-
-CheckSearchItems <- function(O){
-  O$model <- as.logical(O$model)
-  O$type1 <- as.logical(O$type1)
-  O$bestK <- as.integer(O$bestK)
-  O$all <- as.logical(O$all)
-  O$inclusion <- as.logical(O$inclusion)
-  O$cdfs <- as.numeric(O$cdfs)
-  O$extremeMultiplier <- as.numeric(O$extremeMultiplier)
-  O$mixture4 <- as.logical(O$mixture4)
-
-  if (O$bestK < 0)
-    stop("Invalid Search item. 'bestK' cannot be negative.")
-
-  if (O$extremeMultiplier < 0)
-    stop("Invalid Search item. 'extremeMultiplier' cannot be negative.")
-
-  O
-}
-
-
-#' Get Extra Options for Model Search Process
-#'
-#' Use this function to determine how the model search is performed.
-#'
-#' @param parallel If \code{TRUE}, a parallel search algorithm is used. This generally changes the speed and memory usage.
-#' @param reportInterval An integer representing the time interval (in seconds) for reporting progress (if any significant change has occurred). Set to zero to disable reporting.
-#' @param printMsg Set to \code{TRUE} to enable printing details.
-#'
-#' @return A list with the given options.
-
-#'
-#' @export
-get.options.search <- function(parallel = FALSE, reportInterval = 2,
-                               printMsg = FALSE){
-  O = list(parallel = parallel,
-           reportInterval = reportInterval,
-           printMsg = printMsg)
-  O = CheckSearchOptions(O)
-  O
-}
-
-CheckSearchOptions <- function(O){
-  if (O$parallel && .SupportsParallel() == FALSE) {
-    O$parallel = FALSE
-    warning("Warning: 'parallel' option is not available.")
-  }
-  O$reportInterval = as.integer(O$reportInterval)
-
-  if (O$reportInterval < 0)
-    stop("Invalid Search option. 'reportInterval' cannot be negative.")
-
-  O
-}
-
-
-#' Set Options to Exclude a Model Subset
-#'
-#' Use this function to determine which models should be skipped in the search process.
-#'
-#' @param estimation If \code{TRUE}, the model is estimated with all data and is ignored if this estimation fails. If \code{FALSE}, you might get a 'best model' that cannot be estimated.
-#' @param maxConditionNumber A number used to ignore an estimation that has a high condition number (if implemented in the search).
-#' @param minObsCount An integer used to ignore an estimation where the number of observations (after dealing with \code{NA}) is low. Use 0 to disable this check.
-#' @param minDof An integer used to ignore an estimation with low degrees of freedom (equation-wise). Use 0 to disable this check.
-#' @param minOutSim An integer used to ignore estimations with a low number of out-of-sample simulations (if implemented in the search).
-#' @param minR2 A number used to ignore estimations with a low value for 'R2' (if implemented in the search).
-#' @param maxAic A number used to ignore estimations with a high 'AIC' (if implemented in the search).
-#' @param maxSic A number used to ignore estimations with a high 'SIC' (if implemented in the search).
-#' @param prediction If \code{TRUE}, model data is predicted given all data and is ignored if this process fails. If \code{FALSE}, you might get a 'best model' that cannot be used for prediction.
-#' @param predictionBoundMultiplier A positive number used to create a bound and check predictions.
-#' The bound is created by multiplying this value by the average growth rate of the data.
-#' A model is ignored if its prediction lies outside of this bound. Use zero to disable this check.
-#'
-#' @return A list with the given options.
-#'
-#' @export
-get.items.modelcheck <- function( estimation = TRUE, maxConditionNumber = Inf,
-                                  minObsCount = 0, minDof = 0, minOutSim = 0,
-                                  minR2 = -Inf, maxAic = Inf, maxSic = Inf,
-                                  prediction = FALSE, predictionBoundMultiplier = 4){
-
-  O = list(
-    estimation = estimation,
-    maxConditionNumber = maxConditionNumber,
-    minObsCount = minObsCount, minDof = minDof,
-    minOutSim = minOutSim, maxSic = maxSic,
-    minR2 = minR2, maxAic = maxAic,
-    maxSic = maxSic, prediction = prediction,
-    predictionBoundMultiplier = predictionBoundMultiplier)
-  O = CheckModelCheckItems(O)
-  O
-}
-
-
-CheckModelCheckItems <- function(O){
-
-  O$estimation = as.logical(O$estimation)
-  O$maxConditionNumber = as.numeric(O$maxConditionNumber)
-  O$minObsCount = as.integer(O$minObsCount)
-  O$minDof = as.integer(O$minDof)
-  O$minOutSim = as.integer(O$minOutSim)
-  O$maxSic = as.numeric(O$maxSic)
-  O$minR2 = as.numeric(O$minR2)
-  O$maxAic = as.numeric(O$maxAic)
-  O$maxSic = as.numeric(O$maxSic)
-  O$prediction = as.logical(O$prediction)
-  O$predictionBoundMultiplier = as.numeric(O$predictionBoundMultiplier)
-
-  if (O$minObsCount < 0)
-    stop("Invalid model-Check option. 'minObsCount' cannot be negative.")
-
-  if (O$minDof < 0)
-    stop("Invalid model-Check option. 'minDof' cannot be negative.")
-
-  if (O$minOutSim < 0)
-    stop("Invalid model-Check option. 'minOutSim' cannot be negative.")
-
-  if (O$maxConditionNumber < 0)
-    stop("Invalid model-Check option. 'maxConditionNumber' cannot be negative.")
-
-  if (O$predictionBoundMultiplier < 0)
-    stop("Invalid model-Check option. 'predictionBoundMultiplier' cannot be negative.")
-
-  O
-}
-
-#' Get Options for Measuring Performance
-#'
-#' Use this function to get measuring options in \code{search.?} functions.
-#'
-#' @param typesIn A list of evaluation metrics when the model is estimated using all available data. It can be \code{aic}, \code{sic}, \code{frequencyCostIn}, \code{brierIn}, or \code{aucIn}. \code{NULL} means no metric.
-#' @param typesOut A list of evaluation metrics in a out-of-sample simulation. It can be \code{sign}, \code{direction}, \code{rmse}, \code{rmspe}, \code{mae}, \code{mape}, \code{crps}, \code{frequencyCostOut}, \code{brierOut}, or \code{aucOut}. Null means no metric.
-#' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
-#' @param trainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
-#' @param trainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
-#' @param seed A seed for the random number generator. Use zero for a random value. It can be negative to get reproducible results between the \code{search.?} function and the \code{estim.?} function.
-#' @param horizons An array of integers representing the prediction horizons to be used in out-of-sample simulations, if the model supports time-series prediction. If \code{NULL}, \code{c(1)} is used.
-#' @param weightedEval If \code{TRUE}, weights are used in evaluating discrete-choice models.
-#' @param transform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
-#' @param minMetrics a list of minimum values for adjusting the weights when applying the AIC weight formula.
-#' It can contain the following members: \code{aic}, \code{sic}, \code{brierIn}, \code{rmse}, \code{rmspe}, \code{mae}, \code{mape}, \code{crps}, \code{brierOut}.
-#' Members can be numeric vectors for specifying a value for each target variable. See details.
-#'
-#' @details
-#' An important aspect of \code{ldt} is model evaluation during the screening process. This involves considering both in-sample and out-of-sample evaluation metrics. In-sample metrics are computed using data that was used in the estimation process, while out-of-sample metrics are computed using new data. These metrics are well documented in the literature, and I will provide an overview of the main computational aspects and relevant references.
-#'
-#'
-#' @section AIC and SIC:
-#' According to \insertCite{burnham2002model;textual}{ldt} or \insertCite{greene2020econometric;textual}{ldt}, AIC and SIC are two commonly used metrics for comparing and choosing among different models with the same dependent variable(s). Given \eqn{L^*} as the maximum value of the likelihood function in a regression analysis with \eqn{k} estimated parameters and \eqn{N} observations, AIC is calculated by \eqn{2k-2\ln L^*} and SIC is calculated by \eqn{k\ln N-2\ln L^*}. SIC includes a stronger penalty for increasing the number of estimated parameters in the model.
-#'
-#' These metrics can be converted into weights using the formula \eqn{w=\exp (-0.5x)}, where \eqn{x} is the value of the metric. When divided by the sum of all weights, \eqn{w} can be interpreted as the probability that a given model is the best model among all members of the model set (see section 2.9 in \insertCite{burnham2002model;textual}{ldt}). Compared to the \insertCite{burnham2002model;textual}{ldt} discussion and since \eqn{f(x)=exp(-0.5x)} transformation is invariant to translation, the minimum AIC part is removed in the screening process. This is an important property because it enables the use of running statistics and parallel computation.
-#'
-#' @section MSE, RMSE, MSPE, and RMSPE:
-#' According to \insertCite{hyndman2018forecasting;textual}{ldt}, MSE and RMSE are two commonly used scale-dependent metrics, while MAPE is a commonly used unit-free metric. \code{ldt} also calculates the less common RMSPE metric. If there are \eqn{n} predictions and \eqn{e_i=y_i-\hat{y}_i} for \eqn{i=1\ldots n} is the prediction error, i.e., the distance between actual values (\eqn{y_i}) and predictions (\eqn{\hat{y}_i}), these metrics can be expressed analytically by the following formulas:
-#'
-#' \deqn{
-#' \begin{aligned}
-#' &\text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|e_i|,
-#' &&\text{MAPE} = \frac{1}{n}\sum_{i=1}^{n}\left|\frac{e_i}{y_i}\right|\times 100 \\
-#' &\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(e_i)^2},\quad\quad
-#' &&\text{RMSPE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{e_i}{y_i}\right)^2}\times 100.
-#' \end{aligned}
-#' }
-#'
-#' Note that, first MAPE and RMSPE are not defined if \eqn{y_i} is zero and may not be meaningful or useful if it is near zero or negative. Second, although these metrics cannot be directly interpreted as weights, they are treated in a manner similar to AIC in the \code{ldt} package.. Third, caution is required when target variables are transformed, for example to a logarithmic scale. \code{ldt} provides an option to transform the data back when calculating these metrics.
-#'
-#' @section Brier:
-#' The Brier score measures the accuracy of probabilistic predictions for binary outcomes. It is calculated as the mean squared difference between the actual values (\eqn{y_i}) and the predicted probabilities (\eqn{p_i}). Assuming that there are \eqn{n} predictions, its formula is given by:
-#'
-#' \eqn{
-#' \text{Brier} = \frac{\sum (y_i-\hat{p}_i)^2}{n},
-#' }
-#'
-#' where \eqn{p_i} is the predicted probability that the \eqn{i}-th observation is positive. The value of this metric ranges from 0 to 1, with lower values indicating better predictions. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC.
-#'
-#' @section AUC:
-#' As described by \insertCite{fawcett2006introduction;textual}{ldt}, the receiver operating characteristic curve (ROC) plots the true positive rate (sensitivity) against the false positive rate (1-specificity) at different classification thresholds. The area under this curve is known as the AUC. Its value ranges from 0 to 1, with higher values indicating that the model is better at distinguishing between the two classes \insertCite{fawcett2006introduction,fawcett2006roc;textual}{ldt}. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. There is also an option to calculate the pessimistic or an instance-varying costs version of this metric. Although this metric does not have a direct interpretation as weights, in \code{ldt} its value is considered as weight.
-#'
-#' @section CRPS:
-#' According to \insertCite{gneiting2005calibrated;textual}{ldt}, the continuous ranked probability score (CRPS) is a metric used to measure the accuracy of probabilistic predictions. Unlike MAE, RMSE, etc., CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution. For \eqn{n} normally distributed predictions with mean \eqn{\hat{y}_i} and variance \eqn{\operatorname{var}(\hat{y}_i)}, this metric can be expressed analytically as:
-#'
-#' \eqn{
-#' \text{CRPS}=\sum_{i=1}^{n} \sigma \left(\frac{1}{\sqrt{\pi}} - 2\Phi(z_i) + z_i (2\phi(z_i)-1)\right),
-#' }
-#'
-#' where \eqn{z_i=(y_i-\hat{y}_i)/\sqrt{\operatorname{var}(\hat{y}_i)}}, and \eqn{\Phi} and \eqn{\phi} are CDF and density functions of standard normal distribution. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC in the \code{ldt} package.
-#'
-#' @section Other metrics:
-#' There are some other metrics in \code{ldt}. One is ``directional prediction accuracy'', which is calculated as the proportion of predictions that correctly predict the direction of change relative to the previous observation. Its value ranges from 0 to 1, with higher values indicating better performance of the model. Its value is used as the weight of a model. Note that this is applicable only to time-series data.
-#'
-#' Another similar metric is ``sign prediction accuracy'', which reports the proportion of predictions that have the same sign as the actual values. It is calculated as the number of correct sign predictions divided by the total number of predictions. Its value ranges from 0 to 1, with higher values indicating better performance of the model. Its value is used as the weight of a model.
-#'
-#' @references
-#'   \insertAllCited{}
-#' @importFrom Rdpack reprompt
-#'
-#' @return A list with the given options.
-#'
-#' @export
-get.options.metric <- function(typesIn = character(0), typesOut = character(0),
-                               simFixSize = 10, trainRatio = 0.75,
-                               trainFixSize = 0, seed = 0,
-                               horizons = c(1L), weightedEval = FALSE,
-                               transform = NULL,
-                               minMetrics = list(aic = 0)){
-  O = list(
-    typesIn = typesIn, typesOut = typesOut,
-    simFixSize = simFixSize, trainRatio = trainRatio,
-    trainFixSize = trainFixSize, seed = seed,
-    horizons = horizons, weightedEval = weightedEval,
-    transform = transform,
-    minMetrics = minMetrics)
-  O = CheckmetricOptions(O)
-  O
-}
-
-
-CheckmetricOptions <- function(O){
-
-  O$typesIn = as.character(O$typesIn)
-  O$typesOut = as.character(O$typesOut)
-  O$weightedEval = as.logical(O$weightedEval)
-
-
-  if (length(O$typesIn) == 0 && length(O$typesOut) == 0)
-    stop("Invalid metric option. Both 'typesIn' and 'typesOut' are empty.")
-
-  if (length(O$typesOut) > 0) {
-    O$horizons = as.integer(O$horizons)
-    O$simFixSize = as.integer(O$simFixSize)
-    O$trainRatio = as.numeric(O$trainRatio)
-    O$trainFixSize = as.integer(O$trainFixSize)
-    O$seed = as.numeric(O$seed)
-
-    if (is.null(O$transform) == FALSE && is.character(O$transform) == FALSE && is.function(O$transform) == FALSE)
-      stop("Invalid transform option. It should be a character string or a function.")
-
-    for (h in O$horizons) {
-      if (h <= 0)
-        stop("Invalid metric option. zero or negative value in 'horizons'.")
-    }
-
-    if (O$simFixSize < 0)
-      stop("Invalid metric option. 'simFixSize' cannot be negative.")
-
-    if (O$trainRatio < 0 || O$trainRatio > 1)
-      stop("Invalid metric option. 'trainRatio' cannot be negative or cannot be larger than 1.")
-
-    if (O$trainFixSize < 0)
-      stop("Invalid metric option. 'trainFixSize' cannot be negative.")
-
-    # if (O$seed < 0)  It can be negative for similar distribution
-    # of the seeds in the searchers
-
-    if (O$trainRatio == 0 && O$trainFixSize == 0)
-      stop("Invalid metric option. Both 'trainRatio' and 'trainFixSize' are zero.")
-  }
-
-  # initialize adjustments:
-  if (is.null(O$minMetrics))
-    O$minMetrics = list()
-  ls <- c("aic", "sic", "rmse", "mae", "rmspe", "mape", "brierIn", "brierOut", "crps")
-  for (m in ls) {
-    if (!m %in% names(O$minMetrics)) {
-      O$minMetrics[[m]] <- 0
-    }
-    else{
-      O$minMetrics[[m]] <- as.numeric(O$minMetrics[[m]])
-    }
-  }
-
-  O
-}

@@ -177,7 +177,7 @@ Assuming that we know the maximum number of relevant variables, the code to sear
 ```{r eval=FALSE, include=TRUE}
 search_res <- search.sur(sample$y, sample$x, numTargets = ncol(sample$y),
                          xSizes = c(1:4), 
-                         metricOptions = get.options.metric(typesIn = c("sic")))
+                         metrics = get.search.metrics(typesIn = c("sic")))
 search_res
 ```
 
@@ -192,8 +192,8 @@ count_steps = c(NA, 20, 10, 9)
 search_step_res <-
   search.sur.stepwise(sample$y, sample$x, numTargets = ncol(sample$y),
                       xSizeSteps = x_size_steps, countSteps = count_steps,
-                      metricOptions = get.options.metric(typesIn = c("sic", "aic")),
-                      searchItems = get.items.search(bestK = 10)
+                      metrics = get.search.metrics(typesIn = c("sic", "aic")),
+                      items = get.search.items(bestK = 10)
   )
 search_step_res
 ```
@@ -235,13 +235,13 @@ In this section, we will discuss another aspect of `ldt`: out-of-sample evaluati
 The following code is similar to the code in the previous section, but we define a out-of-sample process:
 
 ```{r}
-metric_options <- get.options.metric(typesOut = c("rmse", "crps"), 
+metric_options <- get.search.metrics(typesOut = c("rmse", "crps"), 
                                      seed = -seed, simFixSize = 5, trainRatio = 0.75)
 search_step_res <-
   search.sur.stepwise(sample$y, sample$x, numTargets = ncol(sample$y),
                       xSizeSteps = x_size_steps, countSteps = count_steps,
-                      metricOptions = metric_options,
-                      searchItems = get.items.search(bestK = 10)
+                      metrics = metric_options,
+                      items = get.search.items(bestK = 10)
   )
 search_step_res
 ```
@@ -266,16 +266,16 @@ kableExtra::kable(res_table, "html", escape = FALSE, table.attr = "style='width:
                   caption = "Estimation result of best models found using `ldt::search.sur.stepwise` function and out-of-sample evaluation.")
 ```
 
-You may achieve better results by modifying the arguments of the get.options.metric function and using the `get.items.modelcheck` function to change the default value of `searchItems` (Recall that our goal is to exclude irrelevant `z?` variables and find zero restrictions). One important parameter to consider is the number of simulations, `simFixSize`. Its current value is `r metric_options$simFixSize`. By increasing this value, you can allow the models to demonstrate their capabilities more effectively during the search process. Of course, increasing the `simFixSize` is expensive!
+You may achieve better results by modifying the arguments of the get.search.metrics function and using the `get.search.modelchecks` function to change the default value of `items` (Recall that our goal is to exclude irrelevant `z?` variables and find zero restrictions). One important parameter to consider is the number of simulations, `simFixSize`. Its current value is `r metric_options$simFixSize`. By increasing this value, you can allow the models to demonstrate their capabilities more effectively during the search process. Of course, increasing the `simFixSize` is expensive!
  
 
 ## A Closer Look at the Coefficients
 When searching and estimating a model set, `ldt` gathers various types of information, including the coefficients in the context of seemingly unrelated systems. You can adjust the arguments of the `search.sur` function to report the evaluation metric of all estimations or to summarize the estimation information for a coefficient. For example, you might want to know the combined distribution of a coefficient in all estimated models or perform an extreme bound analysis.
 
-Let’s use the sample from the previous example for this purpose. We can use the get.items.search function to request other types of information:
+Let’s use the sample from the previous example for this purpose. We can use the get.search.items function to request other types of information:
 
 ```{r}
-search_items <- get.items.search(type1 = TRUE, bestK = 10,
+search_items <- get.search.items(type1 = TRUE, bestK = 10,
                                  inclusion = TRUE, 
                                  cdfs = seq(-0.8, 0.3, 0.01),
                                  extremeMultiplier = 1.95, 
@@ -290,8 +290,8 @@ Let’s repeat the estimation with these new options:
 search_step_res <-
   search.sur.stepwise(sample$y, sample$x, numTargets = ncol(sample$y),
                       xSizeSteps = x_size_steps, countSteps = count_steps,
-                      metricOptions = get.options.metric(typesIn = c("aic")),
-                      searchItems = search_items)
+                      metrics = get.search.metrics(typesIn = c("aic")),
+                      items = search_items)
 ```
 
 For convenience, let’s print the true model here: \begin{aligned} r sample$eqsLatexSys \end{aligned}

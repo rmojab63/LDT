@@ -171,12 +171,12 @@ The following code uses the `search.bin` function to find the actual model:
 ```{r eval=FALSE, include=TRUE}
 search_res <- search.bin(sample_l$y, sample_l$x[,-1], sample_l$w,
                         xSizes = c(1:5), 
-                        metricOptions = get.options.metric(typesIn = c("sic")))
+                        metrics = get.search.metrics(typesIn = c("sic")))
 ```
 
 The `xSizes = c(1:4)` part assumes that we know the number of relevant explanatory variables is less than 5. The `metric_options` part shows that we use SIC metrics to evaluate and compare models.
 
-This code is time-consuming and is not evaluated here. However, on my system, the elapsed time is 77 seconds (the number of searched models is 317682). Note that if we change our previous guess and assume that the maximum number of relevant variables is larger, for example 5, the size of the practical model set becomes 3187367 (10 times larger) and this is estimated in 977 seconds (12 times larger) on my system. Many factors affect this time, including optimization process options. Also check the parallel option in `get.options.search()` function. 
+This code is time-consuming and is not evaluated here. However, on my system, the elapsed time is 77 seconds (the number of searched models is 317682). Note that if we change our previous guess and assume that the maximum number of relevant variables is larger, for example 5, the size of the practical model set becomes 3187367 (10 times larger) and this is estimated in 977 seconds (12 times larger) on my system. Many factors affect this time, including optimization process options. Also check the parallel option in `get.search.options()` function. 
 
 One might reduce the number of potential explanatory variables using theory or statistical testing. Since `ldt` dislikes user discretion, it provides a more systematic approach. The idea behind it is simple: estimate smaller models, select variables, estimate larger models with fewer potential explanatory variables. Here is the code:
 
@@ -187,8 +187,8 @@ count_steps = c(NA, 20, 10, 9)
 search_step_res <-
   search.bin.stepwise(y = sample_l$y, x = sample_l$x, w = sample_l$w,
                       xSizeSteps = x_size_steps, countSteps = count_steps,
-                      metricOptions = get.options.metric(typesIn = c("aic","sic", "auc", "brier")),
-                      searchItems = get.items.search(bestK = 10))
+                      metrics = get.search.metrics(typesIn = c("aic","sic", "auc", "brier")),
+                      items = get.search.items(bestK = 10))
 search_step_res
 ```
 
@@ -205,7 +205,7 @@ ssum <- summary(search_step_res,
                 printMsg = FALSE)
 ```
 
-Usually, there is more than one model in the `summary` output. This is because the output is first “target-variable-specific” and second “evaluation-specific”. In this application, there is just one target but we requested four different types of evaluations in the get.options.metric function. We can report the results by creating a list of estimated models and using the coefs.table function:
+Usually, there is more than one model in the `summary` output. This is because the output is first “target-variable-specific” and second “evaluation-specific”. In this application, there is just one target but we requested four different types of evaluations in the get.search.metrics function. We can report the results by creating a list of estimated models and using the coefs.table function:
 
 ```{r}
 mod_list <- list("SIC" = ssum$sic$target1$model$bests$best1,
@@ -253,14 +253,14 @@ With current seed and other options, all metrics point to a common model. In thi
 Let’s see if we can do any better by using out-of-sample evaluations. The following code is similar to the code in the previous section, but we define a out-of-sample process:
 
 ```{r}
-metric_options <- get.options.metric(typesOut = c("auc", "brier"), 
+metric_options <- get.search.metrics(typesOut = c("auc", "brier"), 
                                        seed = -seed, simFixSize = 5, trainRatio = 0.75)
 search_step_res <-
   search.bin.stepwise(y = sample_l$y, x = sample_l$x, w = sample_l$w,
                       xSizeSteps = x_size_steps, countSteps = count_steps,
-                      metricOptions = metric_options,
-                      searchItems = get.items.search(bestK = 10),
-                      searchOptions = get.options.search(printMsg = FALSE))
+                      metrics = metric_options,
+                      items = get.search.items(bestK = 10),
+                      options = get.search.options(printMsg = FALSE))
 search_step_res
 ```
 

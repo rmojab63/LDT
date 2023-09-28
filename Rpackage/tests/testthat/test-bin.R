@@ -217,8 +217,8 @@ test_that("Discrete choice search (avgCost,best) works", {
   g1 = c(1L,2L)
   g2 = c(3L,4L)
   res <- search.bin(x[,1,drop=FALSE], x[,3:7],
-                  searchOptions = get.options.search(printMsg = printMsg),
-                              metricOptions = get.options.metric(typesIn = c(), typesOut = c("frequencyCost")),
+                  options = get.search.options(printMsg = printMsg),
+                              metrics = get.search.metrics(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2), xSizes = c(1L,2L))
   expect_equal(0.5,res$frequencyCostOut$target1$model$bests$best1$weight, tolerance = 1e-16) #because of the structure of cost tables
 })
@@ -233,8 +233,8 @@ test_that("Discrete choice search (avgCost,best, weighted) works", {
   g2 = c(3L,4L)
   g3 = c(5L,6L)
   res <- search.bin(x[,1,drop=FALSE], x[,3:8], x[,10,drop=FALSE],
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  metricOptions = get.options.metric(typesIn = c(), typesOut = c("frequencyCost")),
+                  options = get.search.options(printMsg = printMsg),
+                  metrics = get.search.metrics(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2,g3), xSizes = c(1L,2L,3L))
   expect_equal(0.5,res$frequencyCostOut$target1$model$bests$best1$weight, tolerance = 1e-12) #because of the structure of cost tables
 })
@@ -258,10 +258,10 @@ test_that("Discrete choice search (avgCost,all) works", {
   c2=matrix(c(0.5,1, 0, 1, 0, 1),2,3) # reversed
   g1 = c(1L,2L)
   g2 = c(3L,4L)
-  res <- search.bin(x[,1,drop=FALSE], x[,3:7], searchOptions = get.options.search(printMsg = printMsg),
-                  metricOptions = get.options.metric(typesIn = c(), typesOut = c("frequencyCost")),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:7], options = get.search.options(printMsg = printMsg),
+                  metrics = get.search.metrics(typesIn = c(), typesOut = c("frequencyCost")),
                               costMatrices = list(c1,c2), xPartitions = list(g1,g2), xSizes = c(1L,2L),
-                              searchItems = get.items.search(bestK = 0, all = TRUE))
+                              items = get.search.items(bestK = 0, all = TRUE))
   for (a in res$frequencyCostOut$target1$model$all)
     expect_equal(0.5,a$weight, tolerance = 1e-16) #because of the structure of cost tables
 
@@ -288,10 +288,10 @@ test_that("Discrete choice search (aic, one model) works", {
   g1 = c(1L)
   g2 = c(2L)
   res <- search.bin(x[,1,drop=FALSE], x[,3:4],
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+                  options = get.search.options(printMsg = printMsg),
+                  metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                               xPartitions = list(g1,g2), xSizes = c(2L),
-                              searchItems = get.items.search(bestK = 1, all = TRUE))
+                              items = get.search.items(bestK = 1, all = TRUE))
 
   res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, linkFunc = "logit", printMsg = printMsg)
   expect_equal(res$aic$target1$model$bests$best1$weight, exp(-0.5*res1$metrics[2,1]), tolerance = 1e-14)
@@ -309,11 +309,11 @@ test_that("Discrete choice search (avgCost, one model) works", {
   g2 = c(2L)
   tratio = 0.8
 
-  res <- search.bin(x[,1,drop=FALSE], x[,3:4], searchOptions = get.options.search(printMsg = printMsg),
-                  metricOptions = get.options.metric(typesIn = c(), typesOut = c("frequencyCost"),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:4], options = get.search.options(printMsg = printMsg),
+                  metrics = get.search.metrics(typesIn = c(), typesOut = c("frequencyCost"),
                                                                                  seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2L), costMatrices = list(c1),
-                              searchItems = get.items.search(bestK = 1, all = FALSE))
+                              items = get.search.items(bestK = 1, all = FALSE))
 
   res1 = estim.bin(x[,1,drop=FALSE],x[,c(3,4)],NULL, linkFunc = "logit",
                         costMatrices = list(c1), simSeed = 340, simFixSize = 200,
@@ -331,11 +331,11 @@ test_that("Discrete choice search (avgCost, best & all) works", {
   g2 = c(4L,5L,6L,7L,8L,9L)
   tratio = 0.8
 
-  res <- search.bin(x[,1,drop=FALSE], x[,3:20], searchOptions = get.options.search(printMsg = printMsg),
-                  metricOptions = get.options.metric(typesIn = c("sic"), typesOut = c("frequencyCost"),
+  res <- search.bin(x[,1,drop=FALSE], x[,3:20], options = get.search.options(printMsg = printMsg),
+                  metrics = get.search.metrics(typesIn = c("sic"), typesOut = c("frequencyCost"),
                                                                                   seed = -340, simFixSize = 200, trainRatio = tratio),
                               xPartitions = list(g1,g2), xSizes = c(2L), costMatrices = list(c1),
-                              searchItems = get.items.search(bestK = 4, all = TRUE))
+                              items = get.search.items(bestK = 4, all = TRUE))
 
   expect_true(length(res$frequencyCostOut$target1$model$all)>2)
   j=0
@@ -375,14 +375,14 @@ test_that("Discrete choice search (NA) works", {
 
   g1 = c(1L,2L)
   g2 = c(3L,4L)
-  res1 <- search.bin(y0, Z0, w0, searchOptions = get.options.search(printMsg = printMsg),
-                   metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res1 <- search.bin(y0, Z0, w0, options = get.search.options(printMsg = printMsg),
+                   metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
-                               searchItems = get.items.search(bestK = 1, all = FALSE))
-  res2 <- search.bin(yNA, ZNA, wNA, searchOptions = get.options.search(printMsg = printMsg),
-                   metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+                               items = get.search.items(bestK = 1, all = FALSE))
+  res2 <- search.bin(yNA, ZNA, wNA, options = get.search.options(printMsg = printMsg),
+                   metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
-                               searchItems = get.items.search(bestK = 1, all = FALSE))
+                               items = get.search.items(bestK = 1, all = FALSE))
 
   expect_equal(res1$aic$target1$model$bests$best1$weight, res2$aic$target1$model$bests$best1$weight, tolerance = 1e-15)
 })
@@ -393,14 +393,14 @@ test_that("Discrete choice search (parallel) works", {
 
   g1 = c(1L,2L,3L,4L,5L,6L)
   g2 = c(7L,8L,9L,10L,11L,12L)
-  res1 <- search.bin(x[,1,drop=FALSE], x[,3:20], metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res1 <- search.bin(x[,1,drop=FALSE], x[,3:20], metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
-                               searchItems = get.items.search(bestK = 1, all = TRUE),
-                               searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
-  res2 <- search.bin(x[,1,drop=FALSE], x[,3:20], metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+                               items = get.search.items(bestK = 1, all = TRUE),
+                               options = get.search.options(parallel = FALSE, printMsg = printMsg))
+  res2 <- search.bin(x[,1,drop=FALSE], x[,3:20], metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                xPartitions = list(g1,g2), xSizes = c(2L),
-                               searchItems = get.items.search(bestK = 1, all = TRUE),
-                               searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg))
+                               items = get.search.items(bestK = 1, all = TRUE),
+                               options = get.search.options(parallel = TRUE, printMsg = printMsg))
 
   expect_equal(res1$aic$target1$model$bests$best1$weight, res2$aic$target1$model$bests$best1$weight, tolerance = 1e-15)
 })
@@ -412,11 +412,11 @@ test_that("Discrete choice search works with restricted AIC", {
   Exo=x[,4:20]
   g1 = c(1L,2L,3L,4L,5L,6L)
   g2 = c(7L,8L,9L,10L,11L,12L)
-  res = search.bin(x[,1,drop=FALSE], Exo, metricOptions = get.options.metric(typesIn = c("aic", "auc"), typesOut = c()),
+  res = search.bin(x[,1,drop=FALSE], Exo, metrics = get.search.metrics(typesIn = c("aic", "auc"), typesOut = c()),
                                    xPartitions = list(g1,g2), xSizes = c(1L,2L),
-                                   modelCheckItems = get.items.modelcheck(maxAic = 59),
-                                   searchItems = get.items.search(bestK = 1, all = TRUE),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   modelChecks = get.search.modelchecks(maxAic = 59),
+                                   items = get.search.items(bestK = 1, all = TRUE),
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
   alls = list()
   for (m in res$aic$target1$model$all){
     M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]), printMsg = printMsg)
@@ -430,10 +430,10 @@ test_that("Discrete choice search works with inclusion weights", {
 
   y=x[,c(1), drop = FALSE]
   Exo=x[,4:7]
-  res = search.bin(y, Exo, metricOptions = get.options.metric(typesIn = c("auc"), typesOut = c()),
+  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("auc"), typesOut = c()),
                                    xSizes = c(1L,2L),
-                                   searchItems = get.items.search(bestK = 1, all = TRUE, inclusion = TRUE),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   items = get.search.items(bestK = 1, all = TRUE, inclusion = TRUE),
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
   inclusion = matrix(0,6,2)
   for (m in res$aucIn$target1$model$all){
     # endogenous
@@ -460,10 +460,10 @@ test_that("Discrete choice search works with coefficients (bests)", {
 
   y=x[,c(1), drop=FALSE]
   Exo=x[,4:7]
-  res = search.bin(y, Exo, metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
-                                   searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE),
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
 
   for (u in c(1:4)){
     best_coef2 = NULL
@@ -505,11 +505,11 @@ test_that("Discrete choice search works with coefficients (cdfs)", {
 
   y=x[,c(1), drop=FALSE]
   Exo=x[,4:7]
-  res = search.bin(y, Exo, metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
-                                   searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
+                                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 cdfs = c(0,1)),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
   for (u in c(1:4)){
     sum = 0
     c = 0
@@ -539,11 +539,11 @@ test_that("Discrete choice search works with coefficients (extreme bounds)", {
 
   y=x[,c(1),drop=FALSE]
   Exo=x[,4:7]
-  res = search.bin(y, Exo, metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
-                                   searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
+                                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 extremeMultiplier = 2),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
   mn = Inf
   mx = -Inf
   h = 2
@@ -569,11 +569,11 @@ test_that("Discrete choice search works with coefficients (mixture)", {
 
   y=x[,c(1),drop=FALSE]
   Exo=x[,4:7]
-  res = search.bin(y, Exo, metricOptions = get.options.metric(typesIn = c("aic"), typesOut = c()),
+  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
                                    xSizes = c(1L,2L),
-                                   searchItems = get.items.search(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
+                                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
                                                                 extremeMultiplier = 2, mixture4 = TRUE),
-                                   searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                                   options = get.search.options(parallel = FALSE, printMsg = printMsg))
 
   coefs = c()
   vars = c()
@@ -611,13 +611,13 @@ test_that("Discrete choice summary works", {
   Exo=x[,4:7]
 
   res <- search.bin(y, Exo,searchLogit = TRUE, searchProbit = TRUE,costMatrices = list(c1, c2),
-                  metricOptions = get.options.metric(typesIn = c("sic", "aic", "aucIn", "frequencyCost"), typesOut = c("frequencyCost", "auc"),
+                  metrics = get.search.metrics(typesIn = c("sic", "aic", "aucIn", "frequencyCost"), typesOut = c("frequencyCost", "auc"),
                                                      seed = -400,
                                                      simFixSize = 10, trainRatio = 0.75, trainFixSize = 0),
 
                   xSizes = c(1L,2L),
-                  searchItems = get.items.search(bestK = 5, type1=TRUE, all = TRUE),
-                  searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg))
+                  items = get.search.items(bestK = 5, type1=TRUE, all = TRUE),
+                  options = get.search.options(parallel = FALSE, printMsg = printMsg))
 
   su =summary(res, y = y, x = Exo, addModelBests = TRUE,
               addModelAll = FALSE, addItem1 = FALSE, w = NULL, test = TRUE)
@@ -635,20 +635,20 @@ test_that("Discrete choice SplitSearch works (no subsetting)", {
 
   # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
 
-  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
+  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  metricOptions = get.options.metric(c("sic", "aic"), c("frequencyCost"), seed = -400)
-  searchOptions = get.options.search(FALSE, printMsg = FALSE)
+  metrics = get.search.metrics(c("sic", "aic"), c("frequencyCost"), seed = -400)
+  options = get.search.options(FALSE, printMsg = FALSE)
 
   split = search.bin.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                      costMatrices = list(c1, c2),
-                      searchItems = searchItems, metricOptions = metricOptions,
-                      searchOptions = searchOptions, savePre = NULL)
+                      items = items, metrics = metrics,
+                      options = options, savePre = NULL)
 
   whole = search.bin(y, Exo, xSizes = c(1L,2L,3L),
                    costMatrices = list(c1, c2),
-                    searchItems = searchItems, metricOptions = metricOptions,
-                    searchOptions = searchOptions)
+                    items = items, metrics = metrics,
+                    options = options)
 
   # CHECK ALL
 

@@ -3,30 +3,23 @@
 #'
 #' Use this function to create a Seemingly Unrelated Regression model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns.
-#' @param numTargets An integer for the number of targets variables.
-#' If for example 2, the first two variable in the first columns of \code{y} will be target.
-#' Information is saved just for the target variables.
-#' It must be positive and cannot be larger than the number of endogenous variables.
-#' @param xSizes An integer vector specifying the number of exogenous variables in the regressions.
-#' E.g., \code{c(1,2)} means the model set contains all regressions with 1 and 2 exogenous variables.
-#' If \code{NULL}, \code{c(1)} is used.
-#' @param xPartitions A list of integer vectors that partition the indexes of the exogenous variables.
-#' No regression is estimated with two variables in the same partition.
-#' If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.
-#' @param numFixXPartitions Number of partitions at the beginning of \code{xPartitions} to be included in all regressions.
-#' @param yGroups A list of integer vectors that determine different combinations of the indexes of the endogenous variables to be used as endogenous variables in the SUR regressions.
-#' @param searchSigMaxIter An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
-#' @param searchSigMaxProb A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
-#' @param metricOptions A list of options for measuring performance.
-#' Use [get.options.metric] function to get them.
-#' @param modelCheckItems A list of options for excluding a subset of the model set.
-#' See and use [get.items.modelcheck] function to get them.
-#' @param searchItems A list of options for specifying the purpose of the search.
-#' See and use [get.items.search] function to get them.
-#' @param searchOptions A list of extra options for performing the search.
-#' See and use [get.options.search] function to get them.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
+#' This function is designed to help you specify endogenous and exogenous variables by a list of equations.
+#' It also helps to add intercept or define Box-Cox transformations for the endogenous variables.
+#' @param combinations A list that determines the combinations of endogenous and exogenous variables in the search process.
+#' Use [get.combinations()] function to define it.
+#' This is a two-level nested loop and in this function, the outer loop is defined over the exogenous variables.
+#' @param metrics A list of options for measuring performance.
+#' Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set.
+#' See and use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search.
+#' See and use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search.
+#' See and use [get.search.options] function to get them.
+#' @param searchSigMaxIter Maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
+#' @param searchSigMaxProb Maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
@@ -41,64 +34,54 @@
 #' @example man-roxygen/ex-search.sur.R
 #'
 #' @seealso [estim.sur], [search.sur.stepwise]
-search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
-                      xPartitions = NULL, numFixXPartitions = 0,
-                      yGroups = NULL, searchSigMaxIter = 0,
-                      searchSigMaxProb = 0.1, metricOptions = get.options.metric(),
-                      modelCheckItems = get.items.modelcheck(), searchItems = get.items.search(),
-                      searchOptions = get.options.search()){
+search.sur <- function(data = get.data(),
+                       combinations = get.combinations(),
+                       metrics = get.search.metrics(),
+                       modelChecks = get.search.modelchecks(),
+                       items = get.search.items(),
+                       options = get.search.options(),
+                       searchSigMaxIter = 0,
+                       searchSigMaxProb = 0.1){
+  if (data$hasWeights)
+    stop("SUR search does not support weighted observations.")
 
-  y = as.matrix(y)
-  x = as.matrix(x)
-  numTargets = as.integer(numTargets)
-  xSizes = if (is.null(xSizes)) c(1L) else as.integer(xSizes)
-  numFixXPartitions = as.integer(numFixXPartitions)
-  searchSigMaxIter = as.integer(searchSigMaxIter)
-  searchSigMaxProb = as.numeric(searchSigMaxProb)
+  combinations <- get.indexation(combinations, data, FALSE) # it also check for inconsistencies, etc.
 
-  if (is.null(xPartitions) == FALSE){
-    xPartitions = as.list(xPartitions)
-    for (i in c(1:length(xPartitions)))
-      xPartitions[[i]] = as.integer(xPartitions[[i]])
-  }
+  stopifnot(is.numeric(searchSigMaxIter) && length(searchSigMaxIter) == 1 &&
+              searchSigMaxIter > 0)
+  stopifnot(is.numeric(searchSigMaxProb) && length(searchSigMaxProb) == 1 &&
+              searchSigMaxProb > 0 && searchSigMaxProb < 1)
+  if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
+    stop("searchSigMaxProb cannot be zero when search is enabled.")
 
-  if (is.null(yGroups) == FALSE){
-    yGroups = as.list(yGroups)
-    for (i in c(1:length(yGroups)))
-      yGroups[[i]] = as.integer(yGroups[[i]])
-  }
+  if (is.null(metrics))
+    metrics = get.search.metrics()
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
+  if (is.null(items))
+    items = get.search.items()
+  if (is.null(options))
+    options = get.search.options()
 
-  if (is.null(metricOptions))
-    metricOptions = get.options.metric()
-  else
-    metricOptions <- CheckmetricOptions(metricOptions)
-
-  if (is.null(modelCheckItems))
-    modelCheckItems = get.items.modelcheck()
-  else
-    modelCheckItems <- CheckModelCheckItems(modelCheckItems)
-
-  if (is.null(searchItems))
-    searchItems = get.items.search()
-  else
-    searchItems <- CheckSearchItems(searchItems)
-
-  if (is.null(searchOptions))
-    searchOptions = get.options.search()
-  else
-    searchOptions <- CheckSearchOptions(searchOptions)
 
   startTime <- Sys.time()
-
-  res <- .SearchSur(y, x, numTargets, xSizes, xPartitions, numFixXPartitions,
-                    yGroups, searchSigMaxIter, searchSigMaxProb, metricOptions,
-                    modelCheckItems, searchItems, searchOptions)
-
+  res <- .SearchSur(data, combinations, metrics, modelChecks, items, options,
+                    as.integer(searchSigMaxIter), searchSigMaxProb)
   endTime <- Sys.time()
 
+  res$info$data <- data
+  res$info$combinations <- combinations
+  res$info$metrics <- metrics
+  res$info$options <- options
+  res$info$modelChecks <- modelChecks
+  res$info$items <- items
   res$info$startTime <- startTime
   res$info$endTime <- endTime
 
+  res$info$searchSigMaxIter <- searchSigMaxIter
+  res$info$searchSigMaxProb <- searchSigMaxProb
+
+  class(res) <- c("ldtsearchsur", "ldtsearch", "list")
   res
 }
 
@@ -107,22 +90,20 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #'
 #' Use this function to estimate a Seemingly Unrelated Regression model.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns.
-#' @param addIntercept If \code{TRUE}, intercept is added automatically to \code{x}.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
+#' This function is designed to help you specify endogenous and exogenous variables by a list of equations.
+#' It also helps to add intercept or define Box-Cox transformations for the endogenous variables.
 #' @param searchSigMaxIter An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
 #' @param searchSigMaxProb A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
-#' @param restriction A \code{km x q} matrix of restrictions where \code{m=ncols(y)}, \code{k=ncols(x)} and \code{q} is the number of unrestricted coefficients.
-#' @param newX A matrix with new exogenous data to be used in the projections. Its number of columns must be equal to \code{x}. It can be \code{NULL}.
-#' @param pcaOptionsY A list of options to use principal components of the \code{y}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
-#' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
+#' @param restriction A \code{km x q} matrix of restrictions where \code{m} is the number of endogenous data, \code{k} is the number of exogenous data, and \code{q} is the number of unrestricted coefficients.
+#' @param pcaOptionsY A list of options to use principal components of the endogenous data, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
+#' @param pcaOptionsX A list of options to use principal components of the exogenous data, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
 #' @param simTrainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
 #' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param simMaxConditionNumber A number for the maximum value for the condition number in the simulation.
-#' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
@@ -165,51 +146,57 @@ search.sur <- function(y, x, numTargets = 1, xSizes = NULL,
 #' @example man-roxygen/ex-estim.sur.R
 #'
 #' @seealso [search.sur], [search.sur.stepwise]
-estim.sur <- function(y, x, addIntercept = TRUE,
-                     searchSigMaxIter = 0, searchSigMaxProb = 0.1,
-                     restriction = NULL, newX = NULL,
-                     pcaOptionsY = NULL, pcaOptionsX = NULL,
-                     simFixSize = 0, simTrainFixSize = 0,
-                     simTrainRatio = 0.75, simSeed = 0,
-                     simMaxConditionNumber = Inf, simTransform = NULL,
-                     printMsg = FALSE){
-  y = as.matrix(y)
-  x = as.matrix(x)
-  addIntercept = as.logical(addIntercept)
-  searchSigMaxIter = as.integer(searchSigMaxIter)
-  searchSigMaxProb = as.numeric(searchSigMaxProb)
-  restriction = if (is.null(restriction)) NULL else as.matrix(restriction)
-  newX = if (is.null(newX)) NULL else as.matrix(newX)
-  simFixSize = as.integer(simFixSize)
-  simTrainRatio = as.numeric(simTrainRatio)
-  simTrainFixSize = as.integer(simTrainFixSize)
-  simSeed = as.integer(simSeed)
-  simMaxConditionNumber = as.numeric(simMaxConditionNumber)
-  printMsg = as.logical(printMsg)
+estim.sur <- function(data, searchSigMaxIter = 0,
+                      searchSigMaxProb = 0.1,
+                      restriction = NULL,
+                      pcaOptionsY = NULL,
+                      pcaOptionsX = NULL,
+                      simFixSize = 0,
+                      simTrainFixSize = 0,
+                      simTrainRatio = 0.75,
+                      simSeed = 0,
+                      simMaxConditionNumber = Inf){
 
-  if (is.null(simTransform) == FALSE && is.character(simTransform) == FALSE && is.function(simTransform) == FALSE)
-    stop("Invalid 'simTransform'. It should be a character string or a function.")
+  stopifnot(is.numeric(searchSigMaxIter) && length(searchSigMaxIter) == 1 &&
+              searchSigMaxIter > 0)
+  stopifnot(is.numeric(searchSigMaxProb) && length(searchSigMaxProb) == 1 &&
+              searchSigMaxProb > 0 && searchSigMaxProb < 1)
+  if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
+    stop("searchSigMaxProb cannot be zero when search is enabled.")
+  if (searchSigMaxIter > 0 && !is.null(restriction))
+    stop("restriction must be null when  significant search is enabled.")
 
-  if (is.null(pcaOptionsY) == FALSE)
-    pcaOptionsY = CheckPcaOptions(as.list(pcaOptionsY))
-  if (is.null(pcaOptionsX) == FALSE)
-    pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
+  stopifnot(!is.null(restriction) && is.matrix(restriction))
 
-  res <- .EstimSur(y, x, addIntercept,
-                   searchSigMaxIter, searchSigMaxProb,
-                   restriction, newX, pcaOptionsY, pcaOptionsX,
+  stopifnot(is.numeric(simFixSize) && length(simFixSize) == 1 &&
+              simFixSize >= 0)
+  stopifnot(is.numeric(simTrainRatio) && length(simTrainRatio) == 1 &&
+              simTrainRatio >= 0 && simTrainRatio <= 1)
+  stopifnot(is.numeric(simTrainFixSize) && length(simTrainFixSize) == 1 &&
+              simTrainFixSize >= 0)
+  stopifnot(is.numeric(simSeed) && length(simSeed) == 1 && simSeed < 1)
+  stopifnot(is.numeric(simMaxConditionNumber) && length(simMaxConditionNumber) == 1)
+
+  if (is.null(pcaOptionsY))
+    pcaOptionsY = get.options.pca()
+  if (is.null(pcaOptionsX))
+    pcaOptionsX = get.options.pca()
+
+  res <- .EstimSur(data, searchSigMaxIter, searchSigMaxProb,
+                   restriction, pcaOptionsY, pcaOptionsX,
                    simFixSize, simTrainRatio,
                    simTrainFixSize, simSeed,
-                   simMaxConditionNumber, simTransform, printMsg)
+                   simMaxConditionNumber)
 
-  res$info$searchSigMaxIter = searchSigMaxIter
-  res$info$addIntercept = addIntercept
-  res$info$searchSigMaxProb=searchSigMaxProb
-  res$info$simFixSize=simFixSize
-  res$info$simTrainFixSize=simTrainFixSize
-  res$info$simTrainRatio=simTrainRatio
-  res$info$simSeed=simSeed
-  res$info$simMaxConditionNumber=simMaxConditionNumber
+  res$info$data <- data
+  res$info$searchSigMaxIter <- searchSigMaxIter
+  res$info$addIntercept <- addIntercept
+  res$info$searchSigMaxProb <- searchSigMaxProb
+  res$info$simFixSize <- simFixSize
+  res$info$simTrainFixSize <- simTrainFixSize
+  res$info$simTrainRatio <- simTrainRatio
+  res$info$simSeed <- simSeed
+  res$info$simMaxConditionNumber <- simMaxConditionNumber
 
   res
 }
@@ -234,12 +221,12 @@ GetEstim_sur <- function(searchRes, endoIndices,
     newX = NULL,
     pcaOptionsY = NULL,
     pcaOptionsX = NULL,
-    simFixSize = searchRes$info$metricOptions$simFixSize,
-    simTrainRatio = searchRes$info$metricOptions$trainRatio,
-    simTrainFixSize = searchRes$info$metricOptions$trainFixSize,
-    simSeed = abs(searchRes$info$metricOptions$seed),
-    simMaxConditionNumber = searchRes$info$modelCheckItems$maxConditionNumber,
-    simTransform = searchRes$info$metricOptions$transform,
+    simFixSize = searchRes$info$metrics$simFixSize,
+    simTrainRatio = searchRes$info$metrics$trainRatio,
+    simTrainFixSize = searchRes$info$metrics$trainFixSize,
+    simSeed = abs(searchRes$info$metrics$seed),
+    simMaxConditionNumber = searchRes$info$modelChecks$maxConditionNumber,
+    simTransform = searchRes$info$metrics$transform,
     printMsg = printMsg
   )
 

@@ -15,17 +15,17 @@
 
 using namespace ldt;
 
-ModelSet::ModelSet(std::vector<Searcher *> &searchers,
-                   const std::vector<std::vector<Ti>> &groupIndexMap,
-                   const SearchOptions &searchOptions,
-                   const SearchItems &searchItems,
+ModelSet::ModelSet(std::vector<Searcher *> &searchers, const SearchData &data,
+                   const SearchCombinations &combinations,
+                   const SearchOptions &options, const SearchItems &items,
                    const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks) {
   pSearchers = &searchers;
-  pGroupIndexMap = &groupIndexMap;
 
-  pOptions = &searchOptions;
-  pItems = &searchItems;
+  pData = &data;
+  pCombinations = &combinations;
+  pOptions = &options;
+  pItems = &items;
   pChecks = &checks;
   pMetrics = &metrics;
 

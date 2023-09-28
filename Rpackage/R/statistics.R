@@ -6,14 +6,14 @@
 #'
 #' @param value Numeric value of the metric.
 #' @param metricName Character string specifying the name of the metric.
-#' See [get.options.metric] function for the list of available options.
+#' See [get.search.metrics] function for the list of available options.
 #' @param minValue A minimum value to be used for metrics with exponential weight formula.
 #'
 #' @details
 #' Given a collection of models for the data, a metric is not
 #' generally a metric of the relative quality of a model. This function
 #' converts the value of a metric to such a number.
-#' see [get.options.metric] for more details.
+#' see [get.search.metrics] for more details.
 #'
 #' The main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
@@ -41,11 +41,11 @@ s.weight.from.metric <- function(value, metricName, minValue = 0)
 #'
 #' @param value Numeric value of the weight.
 #' @param metricName Character string specifying the name of the metric.
-#' See \code{\link{get.options.metric}} function for the list of available options.
+#' See \code{\link{get.search.metrics}} function for the list of available options.
 #' @param minValue A minimum value used in exponential weight formula.
 #'
 #' @details
-#' See [s.weight.from.metric] and [get.options.metric] for more details.
+#' See [s.weight.from.metric] and [get.search.metrics] for more details.
 #'
 #' Note that the main purpose of exporting this statistics helper method is to show the inner calculations of the package.
 #'
@@ -80,7 +80,7 @@ s.metric.from.weight <- function(value, metricName, minValue = 0)
 #'
 #' @details
 #' This is generally a statistics helper method in this package and it shows the inner calculations.
-#' See AUC section in [get.options.metric] for a discussion.
+#' See AUC section in [get.search.metrics] for a discussion.
 #'
 #'
 #' @return A list with the following items:

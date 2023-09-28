@@ -37,14 +37,14 @@ for (j in c(1:num_y)) {
 x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
 num_targets = 2
 metric_options <-
-  get.options.metric(typesIn = c("sic")) # We use SIC for searching
+  get.search.metrics(typesIn = c("sic")) # We use SIC for searching
 search_res <-
   search.sur(
     sample$y,
     data[, 2:(length(data))],
     numTargets = num_targets,
     xSizes = x_sizes,
-    metricOptions = metric_options
+    metrics = metric_options
   )
 # best model's explanatory indexes for the first and second variables:
 print(search_res$sic$target1$model$bests$best1$exoIndices)
@@ -69,15 +69,15 @@ for (j in c(1:num_targets)) {
 # Try a step-wise search (you can estimate larger models, faster):
 x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
 counts_steps = c(NA, 10, 9)
-search_items <- get.items.search(bestK = 10)
+search_items <- get.search.items(bestK = 10)
 search_step_res <-
   search.sur.stepwise(
     y = data[, 1:num_y],
     x = data[, 2:(length(data))],
     xSizeSteps = x_sizes_steps,
     countSteps = counts_steps,
-    metricOptions = metric_options,
-    searchItems = search_items
+    metrics = metric_options,
+    items = search_items
   )
 print(search_step_res$sic$target1$model$bests$best1$exoIndices)
 # Use summary like before.

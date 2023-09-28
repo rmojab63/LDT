@@ -8,8 +8,8 @@
 
 using namespace ldt;
 
-Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
-                   const SearchMetricOptions &metrics,
+Searcher::Searcher(const SearchData &data, SearchOptions &options,
+                   const SearchItems &items, const SearchMetricOptions &metrics,
                    const SearchModelChecks &checks, Ti SizeG,
                    const std::vector<std::vector<Ti>> &groupIndexMap,
                    Ti fixFirstGroups, Ti fixFirstItems) {
@@ -19,8 +19,9 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
         ErrorType::kLogic, "searcher",
         "fixed number of groups cannot be larger than Size in the searcher");
 
-  pOptions = &searchOptions;
-  pItems = &searchItems;
+  pData = &data;
+  pOptions = &options;
+  pItems = &items;
   pChecks = &checks;
   pMetrics = &metrics;
 
@@ -46,48 +47,44 @@ Searcher::Searcher(SearchOptions &searchOptions, const SearchItems &searchItems,
   GroupIndexes.SetSequence(0, 1);
   InnerIndexes.SetValue(0);
 
-  if (searchItems.LengthEvals == 0 || searchItems.LengthTargets == 0)
+  if (items.LengthEvals == 0 || items.LengthTargets == 0)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "no evaluation or target is given");
-  if (searchItems.LengthEvals != metrics.EvalIsPosOrientation.size())
+  if (items.LengthEvals != metrics.EvalIsPosOrientation.size())
     throw LdtException(ErrorType::kLogic, "searcher",
                        "metric orientations are not provided.");
 
-  if (searchItems.KeepModelEvaluations == false && searchItems.Length1 == 0 &&
-      searchItems.Length2 == 0)
-    throw LdtException(
-        ErrorType::kLogic, "searcher",
-        "nothing is saved in the searcher. Check the searchItems");
+  if (items.KeepModelEvaluations == false && items.Length1 == 0 &&
+      items.Length2 == 0)
+    throw LdtException(ErrorType::kLogic, "searcher",
+                       "nothing is saved in the searcher. Check the items");
 
-  Summaries0 =
-      std::vector<std::vector<SearcherSummary>>(searchItems.LengthEvals);
-  Summaries1 = std::vector<std::vector<std::vector<SearcherSummary>>>(
-      searchItems.LengthEvals);
-  Summaries2 = std::vector<std::vector<std::vector<SearcherSummary>>>(
-      searchItems.LengthEvals);
+  Summaries0 = std::vector<std::vector<SearcherSummary>>(items.LengthEvals);
+  Summaries1 =
+      std::vector<std::vector<std::vector<SearcherSummary>>>(items.LengthEvals);
+  Summaries2 =
+      std::vector<std::vector<std::vector<SearcherSummary>>>(items.LengthEvals);
 
-  for (int i = 0; i < searchItems.LengthEvals; i++) { // evaluations
-    Summaries0.at(i) = std::vector<SearcherSummary>(searchItems.LengthTargets);
+  for (int i = 0; i < items.LengthEvals; i++) { // evaluations
+    Summaries0.at(i) = std::vector<SearcherSummary>(items.LengthTargets);
     Summaries1.at(i) =
-        std::vector<std::vector<SearcherSummary>>(searchItems.LengthTargets);
+        std::vector<std::vector<SearcherSummary>>(items.LengthTargets);
     Summaries2.at(i) =
-        std::vector<std::vector<SearcherSummary>>(searchItems.LengthTargets);
+        std::vector<std::vector<SearcherSummary>>(items.LengthTargets);
 
-    for (int k = 0; k < searchItems.LengthTargets; k++) { // targets
+    for (int k = 0; k < items.LengthTargets; k++) { // targets
 
       Summaries0.at(i).at(k) =
           SearcherSummary(i, k, 0, pItems, metrics.EvalIsPosOrientation.at(i));
 
-      Summaries1.at(i).at(k) =
-          std::vector<SearcherSummary>(searchItems.Length1);
-      Summaries2.at(i).at(k) =
-          std::vector<SearcherSummary>(searchItems.Length2);
+      Summaries1.at(i).at(k) = std::vector<SearcherSummary>(items.Length1);
+      Summaries2.at(i).at(k) = std::vector<SearcherSummary>(items.Length2);
 
-      for (int j = 0; j < searchItems.Length1; j++)
+      for (int j = 0; j < items.Length1; j++)
         Summaries1.at(i).at(k).at(j) = SearcherSummary(
             i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
 
-      for (int j = 0; j < searchItems.Length2; j++)
+      for (int j = 0; j < items.Length2; j++)
         Summaries2.at(i).at(k).at(j) = SearcherSummary(
             i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
     }

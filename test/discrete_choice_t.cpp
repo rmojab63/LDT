@@ -538,7 +538,7 @@ TEST(DiscreteChoice_t, searcherSmall) {
       20, 4);
 
   auto items = SearchItems();
-  auto searchOptions = SearchOptions();
+  auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
@@ -575,8 +575,8 @@ TEST(DiscreteChoice_t, searcherSmall) {
   RocOptions rocOptions;
   auto modelset =
       DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
-          searchOptions, items, metrics, checks, sizes, source, costs, groups,
-          newton, rocOptions, true, true);
+          options, items, metrics, checks, sizes, source, costs, groups, newton,
+          rocOptions, true, true);
 
   auto W = new Tv[modelset.Modelset.WorkSize];
   auto Wi = new Ti[modelset.Modelset.WorkSizeI];
@@ -700,7 +700,7 @@ TEST(DiscreteChoice_t, searcherLarager) {
       40, 32);
 
   auto items = SearchItems();
-  auto searchOptions = SearchOptions();
+  auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
@@ -730,8 +730,8 @@ TEST(DiscreteChoice_t, searcherLarager) {
   auto newton = Newton();
   RocOptions rocOptions;
   auto modelset = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, metrics, checks, sizes, source, costs,
-      groups, true, false, newton, rocOptions);
+      true, true, options, items, metrics, checks, sizes, source, costs, groups,
+      true, false, newton, rocOptions);
 
   // add groups
 
@@ -793,7 +793,7 @@ TEST(DiscreteChoice_t, searcherNan) {
       41, 5);
 
   auto items = SearchItems();
-  auto searchOptions = SearchOptions();
+  auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
   auto checks = SearchModelChecks();
 
@@ -818,11 +818,11 @@ TEST(DiscreteChoice_t, searcherNan) {
   auto vms = std::vector<Matrix<Tv>>();
   RocOptions rocOptions;
   auto modelset1 = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, metrics, checks, sizes, source1, vms,
-      groups, true, false, newton, rocOptions);
+      true, true, options, items, metrics, checks, sizes, source1, vms, groups,
+      true, false, newton, rocOptions);
   auto modelset2 = *DiscreteChoiceModelsetBase::GetFromTypes(
-      true, true, searchOptions, items, metrics, checks, sizes, source2, vms,
-      groups, true, false, newton, rocOptions);
+      true, true, options, items, metrics, checks, sizes, source2, vms, groups,
+      true, false, newton, rocOptions);
 
   // add groups
 

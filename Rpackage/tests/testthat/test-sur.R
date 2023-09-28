@@ -265,9 +265,9 @@ test_that("search.sur works for insample", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+                  options = get.search.options( printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(c("aic", "sic"), character(0)))
   res1 = estim.sur(y[,res$aic$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$aic$target1$model$bests$best1$exoIndices,drop=FALSE],
                   simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
@@ -288,9 +288,9 @@ test_that("search.sur works for insample", {
   y=x[,c(2,3,1)]
   Exo=x[,c(5,4,7,6)]
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+                   options = get.search.options( printMsg = printMsg),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(c("aic", "sic"), character(0)))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
 })
@@ -302,9 +302,9 @@ test_that("search.sur works with fixed exogenous variables", {
   Exo=x[,4:7]
   res = search.sur(y, Exo,2, xSizes = c(3L),  yGroups = list(c(2L),c(1L,3L),c(1L,2L,3L)),
                   numFixXPartitions = 3,
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+                  options = get.search.options( printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(c("aic", "sic"), character(0)))
 
   for (m in res$aic$target1$model$all){
     expect_equal(c(1,2,3),m$exoIndices[1:3])
@@ -318,18 +318,18 @@ test_that("search.sur works for insample when changing indexes", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = F, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 0),
-                  metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+                  options = get.search.options(parallel = F, printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 0),
+                  metrics = get.search.metrics(c("aic", "sic"), character(0)))
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
 
   # change Indexes
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search(parallel = F, printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 0),
-                   metricOptions = get.options.metric(c("aic", "sic"), character(0)))
+                   options = get.search.options(parallel = F, printMsg = printMsg),
+                   items = get.search.items(all = TRUE, bestK = 0),
+                   metrics = get.search.metrics(c("aic", "sic"), character(0)))
   allWeights3 = sort(sapply(res3$aic$target2$model$all, function(x){x$weight}))
 
   expect_equal(as.numeric(allWeights), as.numeric(allWeights3), tolerance = 1e-8)
@@ -342,9 +342,9 @@ test_that("search.sur works for out-of-sample", {
   y=x[,c(1,2,3),drop=FALSE]
   Exo=x[,4:7,drop=FALSE]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options( printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))  # negative seed for equal seed in the searchers
   res1 = estim.sur(y[,res$rmse$target1$model$bests$best1$depIndices,drop=FALSE],
                   Exo[,res$rmse$target1$model$bests$best1$exoIndices,drop=FALSE],
@@ -364,9 +364,9 @@ test_that("search.sur works for out-of-sample", {
   y=x[,c(2,3,1)]
   Exo=x[,c(5,4,7,6)]
   res3 = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                   options = get.search.options( printMsg = printMsg),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   expect_equal(res$bests$target2$aic$best1$weight, res3$bests$target1$aic$best1$weight, tolerance = 1e-14)
 
@@ -378,9 +378,9 @@ test_that("search.sur works for out-of-sample when changing indexes", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search( printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options( printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
@@ -388,9 +388,9 @@ test_that("search.sur works for out-of-sample when changing indexes", {
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
   res3 = search.sur(y, Exo,2,  yGroups = list(c(2L),c(1L,2L),c(1L,2L,3L)),
-                   searchOptions = get.options.search( printMsg = printMsg),
-                   searchItems = get.items.search(all = TRUE, bestK = 2),
-                   metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                   options = get.search.options( printMsg = printMsg),
+                   items = get.search.items(all = TRUE, bestK = 2),
+                   metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                       seed = -340))
   allWeights3 = sort(sapply(res3$crps$target2$model$all, function(x){x$weight}))
 
@@ -403,16 +403,16 @@ test_that("search.sur works when parallel", {
   y=x[,c(2,1,3)]
   Exo=x[,c(5,4,7,6)]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = FALSE, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options(parallel = FALSE, printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(parallel = TRUE, printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options(parallel = TRUE, printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   allWeights0 = sort(sapply(res$crps$target1$model$all, function(x){x$weight}))
 
@@ -426,9 +426,9 @@ test_that("search.sur works for fixed training sample", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(all = TRUE, bestK = 2),
-                  metricOptions = get.options.metric(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(all = TRUE, bestK = 2),
+                  metrics = get.search.metrics(character(0),c( "crps", "mae", "rmse"),simFixSize = 4, trainRatio = 0.65,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
   res1 = estim.sur(as.matrix(y[,res$mae$target1$model$bests$best1$depIndices]),
@@ -461,10 +461,10 @@ test_that("search.sur works with restricted aic", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  modelCheckItems = get.items.modelcheck(maxAic = 300),
-                  searchItems = get.items.search(all = TRUE, bestK = 0),
-                  metricOptions = get.options.metric(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options(printMsg = printMsg),
+                  modelChecks = get.search.modelchecks(maxAic = 300),
+                  items = get.search.items(all = TRUE, bestK = 0),
+                  metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
   alls = list()
@@ -482,9 +482,9 @@ test_that("search.sur works with inclusion weights", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo, numTargets = 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
-                  metricOptions = get.options.metric(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(type1 = FALSE, all = TRUE, bestK = 2,inclusion = TRUE ),
+                  metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = -340))
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
@@ -510,9 +510,9 @@ test_that("search.sur works with coefficients (bests)", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
-                  metricOptions = get.options.metric(c("sic", "aic"),c("rmse", "sign")))
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 2,inclusion = FALSE ),
+                  metrics = get.search.metrics(c("sic", "aic"),c("rmse", "sign")))
   best_coef2 = NULL
   w=-Inf
   for (m in res$aic$target1$model$all){
@@ -543,11 +543,11 @@ test_that("search.sur works with coefficients (cdfs)", {
   y=x[,c(1,2,3),drop=FALSE]
   Exo=x[,4:7,drop=FALSE]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                cdfs = c(0,1,0)),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   sum = 0
   c = 0
@@ -576,11 +576,11 @@ test_that("search.sur works with coefficients (extreme bounds)", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo,2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 2),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   mn = Inf
   mx = -Inf
@@ -607,12 +607,12 @@ test_that("search.sur works with coefficients (mixture)", {
   y=x[,c(1,2)]
   Exo=x[,3:7]
   res = search.sur(y, Exo, 1, yGroups = list(c(1L,2L)), xSizes = c(1L,2L,3L,4L,5L),
-                  searchOptions = get.options.search(printMsg = printMsg),
-                  searchItems = get.items.search(type1 = TRUE,
+                  options = get.search.options(printMsg = printMsg),
+                  items = get.search.items(type1 = TRUE,
                                                all = TRUE, bestK = 0,inclusion = FALSE,
                                                extremeMultiplier = 0,
                                                mixture4 = TRUE),
-                  metricOptions = get.options.metric(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
+                  metrics = get.search.metrics(c("aic"),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      seed = 0))
   coefs = c()
   vars = c()
@@ -647,10 +647,10 @@ test_that("SUR summary works", {
   y=x[,c(1,2,3)]
   Exo=x[,4:7]
   res = search.sur(y, Exo, 2,  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L)), xSizes = c(1L,2L,3L),
-                  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
+                  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 2, inclusion = TRUE,
                                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 ),
-                  metricOptions = get.options.metric(c("sic", "aic"), c("rmse", "sign"), seed = -400),
-                  searchOptions = get.options.search(TRUE, printMsg = printMsg))
+                  metrics = get.search.metrics(c("sic", "aic"), c("rmse", "sign"), seed = -400),
+                  options = get.search.options(TRUE, printMsg = printMsg))
 
   su =summary(res, y, Exo, addModelAll = TRUE, addItem1 = TRUE, test = TRUE)
 
@@ -668,20 +668,20 @@ test_that("SUR SplitSearch works (no subsetting)", {
 
   yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L))
   numTargets = 2
-  searchItems = get.items.search(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
+  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
                                cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  metricOptions = get.options.metric(c("sic", "aic"), c("crps"), seed = -400)
-  searchOptions = get.options.search(FALSE, printMsg = printMsg)
+  metrics = get.search.metrics(c("sic", "aic"), c("crps"), seed = -400)
+  options = get.search.options(FALSE, printMsg = printMsg)
 
   split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
                       numTargets = numTargets,  yGroups = yGroups,
-                      searchItems = searchItems, metricOptions = metricOptions,
-                      searchOptions = searchOptions, savePre = NULL)
+                      items = items, metrics = metrics,
+                      options = options, savePre = NULL)
 
   whole = search.sur(y, Exo, xSizes = c(1L,2L,3L),
                     numTargets = numTargets,  yGroups = yGroups,
-                    searchItems = searchItems, metricOptions = metricOptions,
-                    searchOptions = searchOptions)
+                    items = items, metrics = metrics,
+                    options = options)
 
   # CHECK ALL
 

@@ -17,21 +17,21 @@
 #' Given the number of choices \code{n}, a frequency cost matrix is an \code{m x n+1} matrix.
 #' The first column determines the thresholds.
 #' Elements in the \code{j}-th column determine the costs corresponding to the \code{j-1}-th choice in \code{y}.
-#' It can be \code{NULL} if it is not selected in \code{metricOptions}.
+#' It can be \code{NULL} if it is not selected in \code{metrics}.
 #' @param searchLogit If \code{TRUE}, logit regressions are added to the model set.
 #' @param searchProbit If \code{TRUE}, probit regressions are added to the model set.
 #' @param optimOptions A list for Newton optimization options.
 #' Use [get.options.newton] function to get the options.
 #' @param aucOptions A list for AUC calculation options.
 #' Use [get.options.roc] function to get the options.
-#' @param metricOptions A list of options for measuring performance.
-#' Use [get.options.metric] function to get them.
-#' @param modelCheckItems A list of options for excluding a subset of the model set.
-#' See and use [get.items.modelcheck] function to get them.
-#' @param searchItems A list of options for specifying the purpose of the search.
-#' See and use [get.items.search] function to get them.
-#' @param searchOptions A list of extra options for performing the search.
-#' See and use [get.options.search] function to get them.
+#' @param metrics A list of options for measuring performance.
+#' Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set.
+#' See and use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search.
+#' See and use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search.
+#' See and use [get.search.options] function to get them.
 #'
 #'
 #' @return A nested list with the following members:
@@ -52,10 +52,10 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
                       xPartitions = NULL, costMatrices = NULL,
                       searchLogit = TRUE, searchProbit = FALSE,
                       optimOptions = get.options.newton(), aucOptions = get.options.roc(),
-                      metricOptions = get.options.metric(),
-                      modelCheckItems = get.items.modelcheck(),
-                      searchItems = get.items.search(),
-                      searchOptions = get.options.search()){
+                      metrics = get.search.metrics(),
+                      modelChecks = get.search.modelchecks(),
+                      items = get.search.items(),
+                      options = get.search.options()){
 
   y = as.matrix(y)
   x = as.matrix(x)
@@ -87,33 +87,33 @@ search.bin <- function(y, x, w = NULL, xSizes = NULL,
   else
     aucOptions = CheckRocOptions(aucOptions)
 
-  if (is.null(metricOptions))
-    metricOptions = get.options.metric()
+  if (is.null(metrics))
+    metrics = get.search.metrics()
   else
-    metricOptions <- CheckmetricOptions(metricOptions)
+    metrics <- CheckmetricOptions(metrics)
 
-  if (is.null(modelCheckItems))
-    modelCheckItems = get.items.modelcheck()
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
   else
-    modelCheckItems <- CheckModelCheckItems(modelCheckItems)
+    modelChecks <- CheckModelCheckItems(modelChecks)
 
-  if (is.null(searchItems))
-    searchItems = get.items.search()
+  if (is.null(items))
+    items = get.search.items()
   else
-    searchItems <- CheckSearchItems(searchItems)
+    items <- CheckSearchItems(items)
 
-  if (is.null(searchOptions))
-    searchOptions = get.options.search()
+  if (is.null(options))
+    options = get.search.options()
   else
-    searchOptions <- CheckSearchOptions(searchOptions)
+    options <- CheckSearchOptions(options)
 
   startTime <- Sys.time()
 
   res <- .SearchDc(y, x, w, xSizes, xPartitions, costMatrices,
                    searchLogit, searchProbit,
-                   optimOptions, aucOptions, metricOptions ,
-                   modelCheckItems, searchItems,
-                   searchOptions)
+                   optimOptions, aucOptions, metrics ,
+                   modelChecks, items,
+                   options)
 
   endTime <- Sys.time()
 
@@ -225,10 +225,10 @@ GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, 
                 newX = if (is.null(exoIndices) || is.null(newX)) NULL else newX[, exoIndices, drop=FALSE],
                 pcaOptionsX = NULL,
                 costMatrices = searchRes$info$costMatrices,
-                simFixSize = searchRes$info$metricOptions$simFixSize,
-                simTrainRatio = searchRes$info$metricOptions$trainRatio,
-                simTrainFixSize = searchRes$info$metricOptions$trainFixSize,
-                simSeed = abs(searchRes$info$metricOptions$seed),
+                simFixSize = searchRes$info$metrics$simFixSize,
+                simTrainRatio = searchRes$info$metrics$trainRatio,
+                simTrainFixSize = searchRes$info$metrics$trainFixSize,
+                simSeed = abs(searchRes$info$metrics$seed),
                 printMsg = printMsg
   )
 

@@ -11,19 +11,20 @@ using namespace ldt;
 
 // #pragma region Searcher
 
-SurSearcher::SurSearcher(SearchOptions &searchOptions,
-                         const SearchItems &searchItems,
-                         const SearchMetricOptions &metrics,
-                         const SearchModelChecks &checks, Ti sizeG,
-                         const std::vector<std::vector<Ti>> &groupIndexMap,
-                         Ti fixFirstG, Matrix<Tv> &source,
-                         std::vector<Ti> &endoIndexes, Ti sigSearchMaxIter,
-                         Tv sigSearchMaxProb, unsigned int seed)
-    : Searcher::Searcher(searchOptions, searchItems, metrics, checks, sizeG,
+SurSearcher::SurSearcher(
+    const SearchData &data, SearchOptions &options, const SearchItems &items,
+    const SearchMetricOptions &metrics, const SearchModelChecks &checks,
+    Ti sizeG, const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
+    const Matrix<Tv> &source, const std::vector<Ti> &endoIndexes,
+    Ti sigSearchMaxIter, Tv sigSearchMaxProb, unsigned int seed)
+    : Searcher::Searcher(data, options, items, metrics, checks, sizeG,
                          groupIndexMap, fixFirstG, 0) {
   Seed = seed;
   pSource = &source; // copy ?!
-  EndoIndexes = Matrix<Ti>(&endoIndexes[0], (Ti)endoIndexes.size(), 1);
+  EndoIndexes =
+      Matrix<Ti>(const_cast<Ti *>(&endoIndexes[0]), (Ti)endoIndexes.size(), 1);
+  // I use EndoIndexes in EstimationKeep classes and they are constant.
+  // Therefore, it is safe to use const_cast.
 
   SigSearchMaxIter = sigSearchMaxIter;
   SigSearchMaxProb = sigSearchMaxProb;
@@ -65,7 +66,7 @@ SurSearcher::SurSearcher(SearchOptions &searchOptions,
   for (auto a : endoIndexes) {
     i++;
     Indexes.at(i) = a;
-    if (a < searchItems.LengthTargets)
+    if (a < items.LengthTargets)
       TargetsPositions.push_back(a);
   }
   if (TargetsPositions.size() == 0)
@@ -135,9 +136,7 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
         SigSearchMaxProb,
         this->pChecks->mCheckCN ? this->pChecks->MaxConditionNumber : INFINITY,
         this->pMetrics->SimFixSize - this->pChecks->MinOutSim,
-        this->pMetrics->TransformForMetrics
-            ? &(this->pMetrics->TransformForMetrics)
-            : nullptr);
+        this->pData->Lambdas.size() == 0 ? nullptr : &this->pData->Lambdas);
 
     j = (Ti)this->pMetrics->MetricsIn.size();
     for (t = 0; t < (Ti)TargetsPositions.size(); t++) {
@@ -236,34 +235,30 @@ std::string SurSearcher::EstimateOne(Tv *work, Ti *workI) {
 
 // #pragma region Modelset
 
-SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
+SurModelset::SurModelset(const SearchData &data,
+                         const SearchCombinations &combinations,
+                         SearchOptions &options, SearchItems &items,
                          SearchMetricOptions &metrics,
-                         SearchModelChecks &checks,
-                         const std::vector<Ti> &exoSizes,
-                         std::vector<std::vector<Ti>> &groupIndexMap,
-                         Ti numFixXPartitions, Matrix<Tv> &source,
-                         std::vector<std::vector<Ti>> &endoIndexes,
-                         Ti sigSearchMaxIter, Tv sigSearchMaxProb) {
+                         SearchModelChecks &checks, Ti sigSearchMaxIter,
+                         Tv sigSearchMaxProb) {
   metrics.Update(true, false);
   checks.Update(metrics);
-  searchItems.Update(metrics, searchItems.LengthTargets,
-                     searchItems.LengthDependents,
-                     searchItems.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthDependents,
+               items.LengthExogenouses);
 
-  // check searchItems.Length1 with the number of exogenous variables ?!
-  if (searchItems.Length1 != 0 &&
-      searchItems.Length1 != searchItems.LengthExogenouses)
+  // check items.Length1 with the number of exogenous variables ?!
+  if (items.Length1 != 0 && items.Length1 != items.LengthExogenouses)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "inconsistent number of exogenous variables");
-  if (searchItems.Length1 != 0 && checks.Estimation == false)
+  if (items.Length1 != 0 && checks.Estimation == false)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "parameters are needed. Set 'checks.Estimation = true'");
 
   // check group indexes and create sizes array
-  for (auto const &b : groupIndexMap) {
+  for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a < searchItems.LengthDependents ||
-          a >= searchItems.LengthDependents + searchItems.LengthExogenouses)
+      if (a < items.LengthDependents ||
+          a >= items.LengthDependents + items.LengthExogenouses)
         throw LdtException(
             ErrorType::kLogic, "sur-modelset",
             "invalid exogenous group element (it is larger than the number "
@@ -275,35 +270,36 @@ SurModelset::SurModelset(SearchOptions &searchOptions, SearchItems &searchItems,
   }
 
   unsigned int co = 0;
-  for (auto const &s : exoSizes) {
+  for (auto const &s : combinations.Sizes) {
     if (s <= 0)
       throw LdtException(
           ErrorType::kLogic, "sur-modelset",
           "invalid exogenous size (zero or negative). Make sure array is "
           "initialized properly");
-    if (numFixXPartitions > s)
+    if (combinations.NumFixPartitions > s)
       continue;
-    for (auto &e : endoIndexes) {
+    for (auto &e : combinations.InnerGroups) {
       if (e.size() == 0)
         throw LdtException(ErrorType::kLogic, "sur-modelset",
                            "empty endogenous indexes");
 
-      if (e.at(0) > searchItems.LengthTargets)
+      if (e.at(0) > items.LengthTargets)
         continue; // no target here
       auto seed = metrics.Seed == 0
                       ? 0
                       : (unsigned int)(metrics.Seed < 0 ? -metrics.Seed
                                                         : (metrics.Seed + co));
       co++;
-      auto se = new SurSearcher(searchOptions, searchItems, metrics, checks, s,
-                                groupIndexMap, numFixXPartitions, source, e,
+      auto se = new SurSearcher(data, options, items, metrics, checks, s,
+                                combinations.Partitions,
+                                combinations.NumFixPartitions, data.Data, e,
                                 sigSearchMaxIter, sigSearchMaxProb, seed);
       Searchers.push_back(se);
     }
   }
 
-  this->Modelset = ModelSet(Searchers, groupIndexMap, searchOptions,
-                            searchItems, metrics, checks);
+  this->Modelset =
+      ModelSet(Searchers, data, combinations, options, items, metrics, checks);
 }
 
 // #pragma endregion
