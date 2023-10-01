@@ -5,13 +5,8 @@ using namespace Rcpp;
 using namespace ldt;
 
 // [[Rcpp::export(.SearchSur)]]
-SEXP SearchSur(List data,
-               List combinations,
-               List metrics,
-               List modelChecks,
-               List items,
-               List options,
-               int searchSigMaxIter,
+SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
+               List items, List options, int searchSigMaxIter,
                double searchSigMaxProb) {
 
   auto options_ = SearchOptions();
@@ -21,20 +16,29 @@ SEXP SearchSur(List data,
   UpdateSearchData(data, data_);
 
   auto combinations_ = SearchCombinations();
-  UpdateSearchCombinations(combinations, combinations_)
-
+  UpdateSearchCombinations(combinations, combinations_);
 
   auto metrics_ = SearchMetricOptions();
   auto metricsNames = std::vector<std::string>();
   auto items_ = SearchItems();
   auto checks_ = SearchModelChecks();
+
+  auto length1 = data_.NumExo;
+
   UpdateOptions(items, metrics, modelChecks, metrics_, items_, checks_,
-                metricsNames, mx.ColsCount, mx.ColsCount, numTargets,
-                my.ColsCount, false, true, "Coefficients", false);
+                metricsNames, length1, data_.NumExo, combinations_.NumTargets,
+                data_.NumEndo, false, true, "Coefficients", false);
+
+  auto exoStart = data_.NumEndo;
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto exoNames =
+      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
+  auto targetNames = std::vector<std::string>(
+      colNames.begin(), colNames.begin() + items_.LengthTargets);
 
   // Modelset
-  auto model = SurModelset(data_, combinations_, options_, items_, metrics_, checks_,
-                           searchSigMaxIter, searchSigMaxProb);
+  auto model = SurModelset(data_, combinations_, options_, items_, metrics_,
+                           checks_, searchSigMaxIter, searchSigMaxProb);
 
   bool estimating = true;
 
@@ -55,42 +59,42 @@ SEXP SearchSur(List data,
     estimating = false;
   });
 
-  ReportProgress(printMsg, reportInterval, model.Modelset, estimating, options,
+  ReportProgress(options_.ReportInterval, model.Modelset, estimating, options_,
                  alli);
 
-  if (options.RequestCancel)
+  if (options_.RequestCancel)
     return R_NilValue;
 
   auto extraLabel = "";
   auto extraNames = std::vector<std::string>({"extra"});
-  List L = GetModelSetResults(model.Modelset, items, metricsNames, exoCount,
-                              extraLabel, &extraNames, -exoStart + 1, exoNames,
-                              colNames, "coefs", "item", printMsg);
+  List L = GetModelSetResults(
+      model.Modelset, items_, metricsNames, targetNames, extraLabel, extraNames,
+      exoNames, colNames, std::string("coefs"), options_.ReportInterval > 0);
 
   return L;
 }
 
 // [[Rcpp::export(.EstimSur)]]
-SEXP EstimSur(List data, int searchSigMaxIter,
-              double searchSigMaxProb, SEXP restriction,
-              SEXP pcaOptionsY, SEXP pcaOptionsX, int simFixSize,
-              double simTrainRatio, int simTrainFixSize, int simSeed,
-              double simMaxConditionNumber) {
+SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
+              SEXP restriction, SEXP pcaOptionsY, SEXP pcaOptionsX,
+              int simFixSize, double simTrainRatio, int simTrainFixSize,
+              int simSeed, double simMaxConditionNumber) {
 
- auto data_ = SearchData();
+  auto data_ = SearchData();
   UpdateSearchData(data, data_);
 
   // Restrictions
   bool hasR = restriction != R_NilValue;
   ldt::Matrix<double> restriction_;
-  if (hasR)
-    restriction_.SetData(&restriction[0], restriction.nrow(), restriction.ncol());
-
+  if (hasR) {
+    auto rest0 = as<NumericMatrix>(restriction);
+    restriction_.SetData(&rest0[0], rest0.nrow(), rest0.ncol());
+  }
 
   std::unique_ptr<double[]> R_d;
   if (searchSigMaxIter > 0) {
     // create the R for significant search
-    int mk = k * m;
+    int mk = data_.NumExo * data_.NumEndo;
     hasR = true;
     R_d = std::unique_ptr<double[]>(new double[mk * mk]);
     restriction_.SetData(R_d.get(), mk, mk);
@@ -102,7 +106,7 @@ SEXP EstimSur(List data, int searchSigMaxIter,
   if (hasPcaX) {
     List pcaOptionsX_ = as<List>(pcaOptionsX);
     UpdatePcaOptions(pcaOptionsX_, pcaOptionsX0);
-    if (data_.hasIntercept)
+    if (data_.HasIntercept)
       pcaOptionsX0.IgnoreFirstCount += 1; // intercept is added here. Ignore it
   }
 
@@ -116,16 +120,15 @@ SEXP EstimSur(List data, int searchSigMaxIter,
   // Estimate
 
   auto model = SurExtended(
-      data.Data.RowsCount, data.NumEndo, data.NumExo, hasR, true,
-      true, data.NewObsCount, searchSigMaxIter, true,
+      data_.Data.RowsCount, data_.NumEndo, data_.NumExo, hasR, true, true,
+      data_.NewObsCount, searchSigMaxIter, true,
       hasPcaY ? &pcaOptionsY0 : nullptr, hasPcaX ? &pcaOptionsX0 : nullptr);
   auto W = std::unique_ptr<double[]>(new double[model.WorkSize]);
   auto S = std::unique_ptr<double[]>(new double[model.StorageSize]);
 
-
-  model.Calculate(data.Data, data.NumEndo, S.get(), W.get(), hasR ? &restriction_ : nullptr,
-                  searchSigMaxProb, data.NewObsCount > 0 ? &data.NewX : nullptr, nullptr);
-
+  model.Calculate(data_.Data, data_.NumEndo, S.get(), W.get(),
+                  hasR ? &restriction_ : nullptr, searchSigMaxProb,
+                  data_.NewObsCount > 0 ? &data_.NewX : nullptr, nullptr);
 
   // save isRestricted before running simulation because pR changes
   auto isRestricted = ldt::Matrix<double>();
@@ -158,17 +161,16 @@ SEXP EstimSur(List data, int searchSigMaxIter,
   std::unique_ptr<double[]> S0;
   if (simFixSize > 0) {
 
-    simModel = SurSimulation(data.Data.RowsCount, data.NumEndo, data.NumExo, simTrainRatio,
-                             simTrainFixSize, metrics, hasR, searchSigMaxIter,
-                             hasPcaY ? &pcaOptionsY0 : nullptr,
-                             hasPcaX ? &pcaOptionsX0 : nullptr);
+    simModel = SurSimulation(
+        data_.Data.RowsCount, data_.NumEndo, data_.NumExo, simTrainRatio,
+        simTrainFixSize, metrics, hasR, searchSigMaxIter,
+        hasPcaY ? &pcaOptionsY0 : nullptr, hasPcaX ? &pcaOptionsX0 : nullptr);
 
     auto W0 = std::unique_ptr<double[]>(new double[simModel.WorkSize]);
     S0 = std::unique_ptr<double[]>(new double[simModel.StorageSize]);
 
-
     bool cancel = false; //??
-    simModel.Calculate(data.Data, data.NumEndo, S0.get(), W0.get(),
+    simModel.Calculate(data_.Data, data_.NumEndo, S0.get(), W0.get(),
                        hasR ? &restriction_ : nullptr, cancel, simFixSize,
                        simSeed, searchSigMaxProb, simMaxConditionNumber,
                        INT32_MAX);
@@ -178,7 +180,8 @@ SEXP EstimSur(List data, int searchSigMaxIter,
   int metricCount = 7; // logL, aic, sic, ...
   if (simFixSize > 0)
     metricCount += simModel.Results.RowsCount;
-  auto metricsResD = std::unique_ptr<double[]>(new double[metricCount * m]);
+  auto metricsResD =
+      std::unique_ptr<double[]>(new double[metricCount * data_.NumEndo]);
   auto metricsRes =
       ldt::Matrix<double>(metricsResD.get(), metricCount, model.Y.ColsCount);
   auto metricsResRowNames = std::vector<std::string>(
@@ -210,8 +213,8 @@ SEXP EstimSur(List data, int searchSigMaxIter,
       simFails[h] = List::create(_["message"] = wrap(k), _["count"] = wrap(v));
     }
 
-    if (fcount > 0) {
-      if (printMsg)
+    /*if (fcount > 0) {
+      if (options_.)
         Rprintf("    Failed Count in Simulation=%i\n", fcount);
       int i = -1;
       for (const auto &[k, v] : simModel.Errors) {
@@ -220,14 +223,15 @@ SEXP EstimSur(List data, int searchSigMaxIter,
           Rprintf("        %i. (%i, %.2f) msg=%s\n", i, v,
                   (v / (double)fcount) * 100, k.c_str());
       }
-    }
+    }*/
   }
 
   // Names
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
   std::vector<std::string> endoNames;
   std::vector<std::string> exoNames;
-  for (auto i = 0; i < mat.ColsCount; i++) {
-    if (i < m)
+  for (auto i = 0; i < data_.NumEndo + data_.NumExo; i++) {
+    if (i < data_.NumEndo)
       endoNames.push_back(colNames.at(i));
     else
       exoNames.push_back(colNames.at(i));
@@ -264,25 +268,24 @@ SEXP EstimSur(List data, int searchSigMaxIter,
           _["exoEq"] = wrap(model.X.ColsCount),
           _["exoAll"] = wrap(model.Model.gamma.length())),
       _["estimations"] = List::create(
-          _["coefs"] =
-              as_matrix(model.Model.beta, &exoNames_pca, &endoNames_pca),
+          _["coefs"] = as_matrix(model.Model.beta, exoNames_pca, endoNames_pca),
           _["stds"] =
-              as_matrix(model.Model.e_beta_std, &exoNames_pca, &endoNames_pca),
+              as_matrix(model.Model.e_beta_std, exoNames_pca, endoNames_pca),
           _["tstats"] =
-              as_matrix(model.Model.e_beta_t, &exoNames_pca, &endoNames_pca),
+              as_matrix(model.Model.e_beta_t, exoNames_pca, endoNames_pca),
           _["pValues"] =
-              as_matrix(model.Model.e_beta_prob, &exoNames_pca, &endoNames_pca),
+              as_matrix(model.Model.e_beta_prob, exoNames_pca, endoNames_pca),
           _["gamma"] = as_matrix(model.Model.gamma),
           _["gammaVar"] = as_matrix(model.Model.gamma_var),
           _["sigma"] =
-              as_matrix(model.Model.resid_var, &endoNames_pca, &endoNames_pca),
+              as_matrix(model.Model.resid_var, endoNames_pca, endoNames_pca),
           _["isRestricted"] =
               model.Model.pR
-                  ? (SEXP)as_matrix(isRestricted, &exoNames_pca, &endoNames_pca)
+                  ? (SEXP)as_matrix(isRestricted, exoNames_pca, endoNames_pca)
                   : R_NilValue),
-      _["metrics"] = as_matrix(metricsRes, &metricsResRowNames, &endoNames_pca),
+      _["metrics"] = as_matrix(metricsRes, metricsResRowNames, endoNames_pca),
       _["projection"] =
-          hasNewX == false
+          data_.NewObsCount == false
               ? R_NilValue
               : (SEXP)List::create(
                     _["means"] = as_matrix(model.Projections.Means),
@@ -295,14 +298,7 @@ SEXP EstimSur(List data, int searchSigMaxIter,
                           : (SEXP)List::create(
                                 _["validIter"] = wrap(simModel.ValidIters),
                                 _["validCounts"] = wrap(simModel.ValidCounts),
-                                _["failed"] = simFails),
-      _["info"] =
-          List::create(_["y"] = y, _["x"] = x, _["pcaOptionsY"] = pcaOptionsY,
-                       _["pcaOptionsX"] = pcaOptionsX));
-
-  L.attr("class") =
-      std::vector<std::string>({"ldtestimsur", "ldtestim", "list"});
-  L.attr("method") = "sur";
+                                _["failed"] = simFails));
 
   return L;
 }

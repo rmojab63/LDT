@@ -1,0 +1,120 @@
+
+
+get.metric.from.estim <- function(model, metricName, targetName) {
+  row <- which(rownames(model$metrics) == metricName)
+  if (length(row) != 1)
+    stop("metric not found. method=", attr(model, "method"), "metric=", metricName, "target=", target)
+  col <- which(colnames(model$metrics) == targetName)
+  if (length(col) != 1)
+    stop("target not found. method=", attr(model, "method"), "metric=", metricName, "target=", target)
+  r <- model$metrics[row[[1]], col[[1]]]
+  r
+}
+
+#' Summary for an \code{ldt.search.item} object
+#'
+#' An \code{ldt.search.item} object is a member of \code{ldt.search} object.
+#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#'
+#' @param object An \code{ldt.search.item} object.
+#' @param searchResult Parent list of \code{object}, which is an \code{ldt.search} object.
+#' @param test If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process.
+#' @param ... Additional arguments.
+#'
+#' @return The output changes with the type of the \code{object}.
+#' If it contains the indices of dependent variables of an estimated model, it returns the estimation output.
+#' @export
+summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ...) {
+
+  if (is.null(object))
+    stop("argument is null.")
+  if (!is(object, "ldt.search.item"))
+    stop("Invalid class. An 'ldt.search.item' object is expected.")
+
+  method <- tolower(attr(searchResult, "method"))
+
+  if (!is.null(object$value) && is.list(object$value) && !is.null(object$value$depIndices)) { # estimate the model
+    if (is.null(searchResult))
+      stop("'searchResult' is NULL. In order to re-estimate the model, you should set this argument.")
+
+    fun.name <- paste0("estim.", method, ".from.search")
+    if (!exists(fun.name))
+      stop("Invalid or not implemented type of method: ", method)
+
+    res <- do.call(fun.name, list(searchResult = searchResult,
+                           endoIndices = object$value$depIndices,
+                           exoIndices = object$value$exoIndices))
+
+    if (test){
+
+      metric <- get.metric.from.estim(res, object$evalName, object$targetName)
+      if (abs(metric - object$value$metric)>1e-10){
+        stop(paste0("Inconsistent metric: target=",object$targetName,
+                       ", metric=", object$evalName,
+                       ", search metric=", object$value$metric,
+                       ", estimation metric=", metric))
+      }
+
+      if (!is.null(object$value$mean)){ #test parameter or forecasts, etc.
+        if (method == "sur" || method == "binary") {
+          # get x name from the type name (see "r_ldt.cpp" code)
+          xName = strsplit(sub(".*'([^']*)'.*", "\\1", object$typeName), split = "'")[[1]]
+          row = which(xName == rownames(res$estimations$coefs))
+          col <- which(object$targetName == colnames(res$estimations$coefs))
+          mean <- res$estimations$coefs[row, col]
+          if (abs(mean - object$value$mean)>1e-10)
+            stop(paste0("Inconsistent mean: target=",object$targetName,
+                        ", metric=", object$evalName,
+                        ", search mean=", object$value$mean,
+                        ", estimation mean=", mean))
+
+          var <-  res$estimations$stds[row, col]
+          if (abs(var - sqrt(object$value$var))>1e-10)
+            stop(paste0("Inconsistent variance: target=",object$targetName,
+                        ", metric=", object$evalName,
+                        ", search var=", object$value$var,
+                        ", estimation var=", var))
+
+        } else if (method == "varma") {
+          # item$name is Horizon1,...
+          #TODO:
+        }
+
+      }
+
+    }
+
+    return(res)
+   }
+
+
+  return(res)
+}
+
+
+
+
+#' Title
+#'
+#' @param object
+#' @param test
+#' @param ...
+#'
+#' @return
+#' @export
+summary.ldt.search <- function(object, test = TRUE, ...) {
+
+  if (is.null(object))
+    stop("argument is null.")
+  if (!is(object, "ldt.search"))
+    stop("Invalid class. An 'ldt.search' object is expected.")
+
+  for (i in 1:length(object$results)){
+
+    object$results[[i]]$value <- summary.ldt.search.item(object = object$results[[i]],
+                                            searchResult =  object,
+                                            test = test, ...)
+  }
+  class(object) <- c("ldt.search.summary", "ldt.search", "list")
+  object
+}

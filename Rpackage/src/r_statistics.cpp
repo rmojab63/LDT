@@ -136,8 +136,9 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
     points.Set0(i, 1, std::get<1>(auc0->Points.at(i)));
   }
 
-  List L = List::create(_["n"] = wrap(N), _["auc"] = wrap(auc->Result),
-                        _["points"] = as_matrix(points, nullptr, &colnames));
+  List L = List::create(
+      _["n"] = wrap(N), _["auc"] = wrap(auc->Result),
+      _["points"] = as_matrix(points, std::vector<std::string>(), colnames));
 
   L.attr("class") = std::vector<std::string>({"ldtroc", "list"});
 

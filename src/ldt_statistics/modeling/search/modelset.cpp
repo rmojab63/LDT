@@ -115,7 +115,7 @@ Ti ModelSet::GetExpectedNumberOfModels() const {
 void ModelSet::CombineInfo(SearcherModelingInfo &result,
                            std::vector<SearcherSummary *> &list0,
                            std::vector<SearcherSummary *> &list1,
-                           std::vector<SearcherSummary *> &list2) {
+                           std::vector<SearcherSummary *> &list2) const {
 
   result.ExpectedCount = GetExpectedNumberOfModels();
   result.SearchedCount = GetNumberOfEstimatedModels();
@@ -156,9 +156,9 @@ void ModelSet::CombineInfo(SearcherModelingInfo &result,
   }
 }
 
-void ModelSet::CombineAll(Ti index1, Ti index2, Ti index3,
+void ModelSet::CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
                           const std::vector<SearcherSummary *> &summaries,
-                          std::vector<EstimationKeep *> &result) {
+                          std::vector<EstimationKeep *> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -172,9 +172,10 @@ void ModelSet::CombineAll(Ti index1, Ti index2, Ti index3,
   }
 }
 
-void ModelSet::CombineBests(Ti index1, Ti index2, Ti index3,
+void ModelSet::CombineBests(const Ti &index1, const Ti &index2,
+                            const Ti &index3,
                             const std::vector<SearcherSummary *> &summaries,
-                            std::vector<EstimationKeep *> &result) {
+                            std::vector<EstimationKeep *> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -204,9 +205,9 @@ void ModelSet::CombineBests(Ti index1, Ti index2, Ti index3,
 }
 
 void ModelSet::CombineInclusionWeights(
-    Ti index1, Ti index2, Ti index3,
+    const Ti &index1, const Ti &index2, const Ti &index3,
     const std::vector<SearcherSummary *> &summaries,
-    RunningMoments<1, true, false, Tv> &result) {
+    RunningMoments<1, true, false, Tv> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -220,9 +221,10 @@ void ModelSet::CombineInclusionWeights(
   }
 }
 
-void ModelSet::CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
+void ModelSet::CombineCdfAt(const Ti &index1, const Ti &index2,
+                            const Ti &index3, const Ti &cdfIndex,
                             const std::vector<SearcherSummary *> &summaries,
-                            RunningMoments<1, true, true, Tv> &result) {
+                            RunningMoments<1, true, true, Tv> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -237,8 +239,9 @@ void ModelSet::CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
 }
 
 void ModelSet::CombineExtremeBounds(
-    Ti index1, Ti index2, Ti index3,
-    const std::vector<SearcherSummary *> &summaries, double &min, double &max) {
+    const Ti &index1, const Ti &index2, const Ti &index3,
+    const std::vector<SearcherSummary *> &summaries, double &min,
+    double &max) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");
@@ -256,9 +259,10 @@ void ModelSet::CombineExtremeBounds(
   }
 }
 
-void ModelSet::CombineMixture(Ti index1, Ti index2, Ti index3,
+void ModelSet::CombineMixture(const Ti &index1, const Ti &index2,
+                              const Ti &index3,
                               const std::vector<SearcherSummary *> &summaries,
-                              RunningMoments<4, true, true, Tv> &result) {
+                              RunningMoments<4, true, true, Tv> &result) const {
   if (summaries.size() == 0)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "list of search summaries is empty!");

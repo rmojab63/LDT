@@ -26,8 +26,8 @@ get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
   stopifnot(is.logical(all) && length(all) == 1)
   stopifnot(is.logical(inclusion) && length(inclusion) == 1)
   stopifnot(is.logical(mixture4) && length(mixture4) == 1)
-  stopifnot(is.numeric(bestK) && length(bestK) == 1 && bestK >= 0)
-  stopifnot(is.numeric(extremeMultiplier) && length(extremeMultiplier) == 1 && extremeMultiplier > 0)
+  stopifnot(is.zero.or.positive.number(bestK))
+  stopifnot(is.zero.or.positive.number(extremeMultiplier))
   stopifnot(is.numeric(cdfs))
 
   res = list(model = model, type1 = type1,
@@ -36,7 +36,7 @@ get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
              cdfs = cdfs,
              extremeMultiplier = extremeMultiplier,
              mixture4 = mixture4)
-  class(res) <- c("ldt.search.items", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -52,16 +52,13 @@ get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
 #' @return A list with the given options.
 #'
 #' @export
-get.search.options <- function(parallel = FALSE, reportInterval = 2,
-                               printMsg = FALSE){
+get.search.options <- function(parallel = FALSE, reportInterval = 0){
   stopifnot(is.logical(parallel) && length(parallel) == 1)
-  stopifnot(is.logical(printMsg) && length(printMsg) == 1)
-  stopifnot(is.numeric(reportInterval) && length(reportInterval) == 1 && reportInterval >= 0)
+  stopifnot(is.zero.or.positive.number(reportInterval))
 
   res = list(parallel = parallel,
-           reportInterval = reportInterval,
-           printMsg = printMsg)
-  class(res) <- c("ldt.search.options", "list")
+           reportInterval = reportInterval)
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -94,14 +91,14 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
   stopifnot(is.logical(estimation) && length(estimation) == 1)
   stopifnot(is.logical(prediction) && length(prediction) == 1)
 
-  stopifnot(is.numeric(minObsCount) && length(minObsCount) == 1 && minObsCount >= 0)
-  stopifnot(is.numeric(minDof) && length(minDof) == 1 && minDof >= 0)
-  stopifnot(is.numeric(minOutSim) && length(minOutSim) == 1 && minOutSim >= 0)
-  stopifnot(is.numeric(maxConditionNumber) && length(maxConditionNumber) == 1 && maxConditionNumber >= 0)
-  stopifnot(is.numeric(predictionBoundMultiplier) && length(predictionBoundMultiplier) == 1 && predictionBoundMultiplier >= 0)
-  stopifnot(is.numeric(minR2) && length(minR2) == 1)
-  stopifnot(is.numeric(maxAic) && length(maxAic) == 1)
-  stopifnot(is.numeric(maxSic) && length(maxSic) == 1)
+  stopifnot(is.zero.or.positive.number(minObsCount))
+  stopifnot(is.zero.or.positive.number(minDof))
+  stopifnot(is.zero.or.positive.number(minOutSim))
+  stopifnot(is.zero.or.positive.number(maxConditionNumber))
+  stopifnot(is.zero.or.positive.number(predictionBoundMultiplier))
+  stopifnot(is.number(minR2))
+  stopifnot(is.number(maxAic))
+  stopifnot(is.number(maxSic))
 
   res = list(
     estimation = estimation,
@@ -111,7 +108,7 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
     minR2 = minR2, maxAic = maxAic,
     maxSic = maxSic, prediction = prediction,
     predictionBoundMultiplier = predictionBoundMultiplier)
-  class(res) <- c("ldt.search.modelchecks", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -188,27 +185,41 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
 #' @return A list with the given options.
 #'
 #' @export
-get.search.metrics <- function(typesIn = character(0), typesOut = character(0),
-                               simFixSize = 10, trainRatio = 0.75,
-                               trainFixSize = 0, seed = 0,
-                               horizons = c(1L), weightedEval = FALSE,
+get.search.metrics <- function(typesIn = c("aic"),
+                               typesOut = NULL,
+                               simFixSize = 2,
+                               trainRatio = 0.75,
+                               trainFixSize = 0,
+                               seed = 0,
+                               horizons = c(1L),
+                               weightedEval = FALSE,
                                minMetrics = list(aic = 0)){
 
   stopifnot(is.logical(weightedEval) && length(weightedEval) == 1)
+
+  if (is.null(typesIn))
+    typesIn = character(0)
+  if (is.null(typesOut))
+    typesOut = character(0)
+
   stopifnot(is.character(typesIn))
   stopifnot(is.character(typesOut))
 
   if (length(typesIn) == 0 && length(typesOut) == 0)
     stop("Invalid metric option. Both 'typesIn' and 'typesOut' are empty.")
 
-  if (length(O$typesOut) > 0) {
-    stopifnot(is.numeric(horizons) && length(horizons) > 1 && all(horizons >= 1))
-    stopifnot(is.numeric(simFixSize) && length(simFixSize) == 1 && simFixSize >= 1)
-    stopifnot(is.numeric(trainRatio) && length(trainRatio) == 1 && trainRatio >= 0 && trainRatio <= 1)
-    stopifnot(is.numeric(trainFixSize) && length(trainFixSize) == 1 && trainFixSize >= 1)
-    stopifnot(is.numeric(seed) && length(seed) > 1) # It can be negative for similar distribution
-    # of the seeds in the searchers
+  if (length(typesOut) > 0) {
+    stopifnot(is.numeric(horizons) && all(horizons >= 1))
+    stopifnot(is.positive.number(simFixSize))
+    stopifnot(is.zero.or.positive.number(trainRatio) && trainRatio <= 1)
+    stopifnot(is.zero.or.positive.number(trainFixSize))
+    stopifnot(is.number(seed)) # It can be negative for similar distribution of the seeds in the searchers
+    if (seed == 0)
+      seed = runif(1,10,10e4) # set it here such that it is reported in the info section
     stopifnot(trainRatio != 0 || trainFixSize != 0)
+
+    if (simFixSize < 1)
+      stop("'simFixSize' must be larger than 1 when out-of-sample measures exists.")
   }
 
   # initialize adjustments:
@@ -221,8 +232,8 @@ get.search.metrics <- function(typesIn = character(0), typesOut = character(0),
     if (!m %in% names(minMetrics)) {
       minMetrics[[m]] <- 0
     }
-    else
-      stopifnot(is.numeric(minMetrics[[m]]) && length(minMetrics[[m]]) == 1)
+    else if (!is.number(minMetrics[[m]]))
+      stop("An element in 'minMetrics' is not a number.")
   }
 
   res = list(
@@ -235,7 +246,7 @@ get.search.metrics <- function(typesIn = character(0), typesOut = character(0),
     horizons = horizons,
     weightedEval = weightedEval,
     minMetrics = minMetrics)
-  class(res) <- c("ldt.search.metrics", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 

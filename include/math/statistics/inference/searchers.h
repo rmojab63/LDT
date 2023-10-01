@@ -629,7 +629,7 @@ public:
   void CombineInfo(SearcherModelingInfo &result,
                    std::vector<SearcherSummary *> &list0,
                    std::vector<SearcherSummary *> &list1,
-                   std::vector<SearcherSummary *> &list2);
+                   std::vector<SearcherSummary *> &list2) const;
 
   /// @brief Combines all estimations for a specific item
   /// @param index1 Metric index of the item
@@ -637,9 +637,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineAll(Ti index1, Ti index2, Ti index3,
+  void CombineAll(const Ti &index1, const Ti &index2, const Ti &index3,
                   const std::vector<SearcherSummary *> &summaries,
-                  std::vector<EstimationKeep *> &result);
+                  std::vector<EstimationKeep *> &result) const;
 
   /// @brief Combines best estimations for a specific item
   /// @param index1 Metric index of the item
@@ -647,9 +647,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineBests(Ti index1, Ti index2, Ti index3,
+  void CombineBests(const Ti &index1, const Ti &index2, const Ti &index3,
                     const std::vector<SearcherSummary *> &summaries,
-                    std::vector<EstimationKeep *> &result);
+                    std::vector<EstimationKeep *> &result) const;
 
   /// @brief Combines inclusion weights for a specific item
   /// @param index1 Metric index of the item
@@ -657,9 +657,10 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineInclusionWeights(Ti index1, Ti index2, Ti index3,
-                               const std::vector<SearcherSummary *> &summaries,
-                               RunningMoments<1, true, false, Tv> &result);
+  void
+  CombineInclusionWeights(const Ti &index1, const Ti &index2, const Ti &index3,
+                          const std::vector<SearcherSummary *> &summaries,
+                          RunningMoments<1, true, false, Tv> &result) const;
 
   /// @brief Combines CDF at a specific point for a specific item
   /// @param index1 Metric index of the item
@@ -668,9 +669,10 @@ public:
   /// @param cdfIndex the specific point for CDF
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineCdfAt(Ti index1, Ti index2, Ti index3, Ti cdfIndex,
+  void CombineCdfAt(const Ti &index1, const Ti &index2, const Ti &index3,
+                    const Ti &cdfIndex,
                     const std::vector<SearcherSummary *> &summaries,
-                    RunningMoments<1, true, true, Tv> &result);
+                    RunningMoments<1, true, true, Tv> &result) const;
 
   /// @brief Combines extreme bounds for a specific item
   /// @param index1 Metric index of the item
@@ -678,9 +680,10 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineExtremeBounds(Ti index1, Ti index2, Ti index3,
+  void CombineExtremeBounds(const Ti &index1, const Ti &index2,
+                            const Ti &index3,
                             const std::vector<SearcherSummary *> &summaries,
-                            double &min, double &max);
+                            double &min, double &max) const;
 
   /// @brief Combines mixture data for a specific item
   /// @param index1 Metric index of the item
@@ -688,9 +691,9 @@ public:
   /// @param index3 Third index of the item
   /// @param summaries The related list filled in \ref CombineInfo
   /// @param result A place to save the result
-  void CombineMixture(Ti index1, Ti index2, Ti index3,
+  void CombineMixture(const Ti &index1, const Ti &index2, const Ti &index3,
                       const std::vector<SearcherSummary *> &summaries,
-                      RunningMoments<4, true, true, Tv> &result);
+                      RunningMoments<4, true, true, Tv> &result) const;
 };
 
 } // namespace ldt

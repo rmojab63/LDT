@@ -17,12 +17,12 @@
 #' @return A list of items suitable for being used in the \code{ldt::search.?} functions. It has the following members:
 #' \item{data}{The final data matrix. Endogenous variables are in the first columns, then comes the weights (if given), then the intercept (if added), and finally the exogenous variables.}
 #' \item{numEndo}{The number of endogenous variables in the data.}
-#' \item{numExo}{The number of exogenous variables in the data. It does not count 'intercept' if it is added.}
+#' \item{numExo}{The number of exogenous variables in the data (including 'intercept' if it is added).}
 #' \item{obsCount}{The number of observations in the original data.}
 #' \item{newX}{The matrix of new observations for the exogenous variables.}
 #' \item{newObsCount}{The number of observations in the new data.}
 #' \item{lambdas}{The lambda parameters used in the Box-Cox transformation.}
-#' \item{hasIntercept}{Indicates whether there is an intercept column in the final matrix.}
+#' \item{hasIntercept}{Indicates whether an intercept column in added in the final matrix.}
 #' \item{hasWeight}{Indicates whether there is a weight column in the final matrix.}
 #'
 #' @examples
@@ -49,24 +49,29 @@
 #' @export
 get.data <- function(data, endogenous = 1, equations = NULL,
                      weights = NULL, lambdas = NULL, newData = NULL,
-                     addIntercept = FALSE, ...) {
+                     addIntercept = TRUE, ...) {
 
   stopifnot(is.matrix(data) || is.data.frame(data))
   if (!is.null(newData))
     stopifnot(is.matrix(newData) || is.data.frame(newData))
 
   if (is.null(equations)) { # use endogenous
+    data <- as.matrix(data)
 
-    stopifnot((is.numeric(endogenous) && length(endogenous) == 1) || is.character(endogenous))
+    stopifnot(is.number(endogenous) || is.character(endogenous))
     numEndo <- ifelse(is.numeric(endogenous), as.integer(endogenous), length(endogenous))
     if (numEndo == 0)
       stop("Number of endogenous variables cannot be zero.")
+    if (numEndo > ncol(data))
+      stop("Invalid number of endogenous variables. It is larger than the number of columns in data.")
     numExo <- ncol(data) - numEndo
 
     # make sure it is a numeric matrix:
     data <- matrix(as.numeric(data), ncol = ncol(data), dimnames = list(NULL, colnames(data)))
 
     # column names might be missing:
+    if (any(nchar(colnames(data)) == 0))
+      stop("data has columns with empty names.")
     if (is.null(colnames(data))) {
       if (is.character(endogenous))
         stop("data has no column name while endogenous is a list of names.")
@@ -80,19 +85,23 @@ get.data <- function(data, endogenous = 1, equations = NULL,
         } # else, newData is null
       } # there is no exogenous variable
     } # else, data has column names
-
+    else{
+      if (is.null(newData) == FALSE && is.null(colnames(newData)))
+        stop("data has column names, while column names in newData is missing")
+    }
     if (is.character(endogenous)){ # reorder columns
       idx <- match(endogenous, colnames(data))
       data <- data[, c(idx, setdiff(seq_len(ncol(data)), idx))]
     }
 
     if (addIntercept){
-      data <- cbind(data[,1:numEndo],rep(1,nrow(data)), data[,(numEndo+1):ncol(data)])
+      data <- cbind(data[,1:numEndo,drop=FALSE],rep(1,nrow(data)), data[,(numEndo+1):ncol(data),drop=FALSE])
       colnames(data)[numEndo + 1] <- "(Intercept)"
       if (!is.null(newData)){
         newData <- cbind(rep(1,nrow(newData)), newData)
         colnames(newData)[1] <- "(Intercept)"
       }
+      numExo = numExo + 1
     }
 
   }
@@ -103,8 +112,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
     numEndo <- data0$numResponse
     if (numEndo == 0)
       stop("Number of endogenous variables cannot be zero.")
-    numExo <- ncol(data) - numEndo -
-      ifelse(addIntercept, 1, 0) # make it consistent with the other case
+    numExo <- ncol(data) - numEndo # it counts the intercept
 
     # deal with newData
     if (!is.null(newData)){
@@ -129,7 +137,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   obsCount <- nrow(data)
 
   if (!is.null(lambdas)) {
-    bcRes <- boxCoxTransform(data[, 1:numEndo], lambdas)
+    bcRes <- boxCoxTransform(data[, 1:numEndo,drop=FALSE], lambdas, ...)
     data[, 1:numEndo] <- bcRes$data
     lambdas <- bcRes$lambda
   }
@@ -137,17 +145,17 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   if(!is.null(weights)){
     stopifnot(is.numeric(weights) || (is.matrix(weights) && ncol(weights) == 1))
     stopifnot(length(weights) == nrow(data))
-    data <- cbind(data[,1:numEndo], weights, data[,(numEndo+1):ncol(data)])
+    data <- cbind(data[,1:numEndo,drop=FALSE], weights, data[,(numEndo+1):ncol(data),drop=FALSE])
     colnames(data)[numEndo+1] <- "(weights)"
   }
 
   if (!is.null(newData)) {
-    exoNames <- colnames(data[, (numEndo+1+ifelse(is.null(weights),0,1)):ncol(data)])
+    exoNames <- colnames(data[, (numEndo+1+ifelse(is.null(weights),0,1)):ncol(data),drop=FALSE])
     if (is.null(colnames(newData)) ||
         !all(exoNames %in% colnames(newData)))
       stop("Error:Compared with the exogenous variables, newData either lacks some necessary columns or does not have the correct column names.")
 
-    newData <- newData[,exoNames] # reorder and filter columns
+    newData <- newData[,exoNames, drop=FALSE] # reorder and filter columns
   }
 
   res <- list(data = data,
@@ -172,10 +180,28 @@ get.data <- function(data, endogenous = 1, equations = NULL,
 #' @return The input \code{data} with updated data matrix
 get.data.append.newX <- function(data){
   new_rows <- cbind(matrix(NA,
-                           ncol = data$numEndo + ifelse(data$hasWeight,0,1),
-                           nrow = nrow(data$newX)), newX)
+                           ncol = data$numEndo + ifelse(data$hasWeight,1,0),
+                           nrow = nrow(data$newX)), data$newX)
   colnames(new_rows) <- colnames(data$data)
   data$data <- rbind(data$data, new_rows)
+  data
+}
+
+#' Remove Rows with Missing Observations from Data
+#'
+#' @param data Output of [get.data] function
+#' @param warn If true,  warning message about the indices of the removed rows is shown
+#'
+#' @return The input \code{data} but with updated \code{data$data} and \code{data$obsCount}
+get.data.keep.complete <- function(data, warn = TRUE){
+  incomplete_rows <- which(apply(data$data, 1, function(x) any(is.na(x) | is.nan(x))))
+
+  if (length(incomplete_rows) > 0) {
+    if (warn)
+      warning(paste("Removed rows with missing observations: ", paste(incomplete_rows, collapse = ", ")))
+    data$data <- data$data[-incomplete_rows, ]
+    data$obsCount <- nrow(data$data)
+  }
   data
 }
 
@@ -287,8 +313,9 @@ boxCoxTransform <- function(data, lambda, ...) {
   res <- data
 
   for (i in 1:ncol(data)) {
-    if (length(lambda) == 1 && is.na(lambda)) { # estimate
-      model <- boxcox(data[,i]~1, plotit = FALSE)
+    if ((length(lambda) == 1 && is.na(lambda)) ||
+        (length(lambda) == ncol(data) && is.na(lambda[i]))) { # estimate
+      model <- boxcox(data[,i]~1, plotit = FALSE, ...)
       li <- model$x[which.max(model$y)]
     }
     else if (length(lambda) == 1)
@@ -396,15 +423,16 @@ get.combinations <- function(sizes = c(1, 2),
 #' @param outerOverEndogenous \code{TRUE} if outer loop is defined over the endogenous variables. \code{FALSE} for exogenous.
 #'
 #' @return A list similar to the input \code{combinations}, but with all character vectors in \code{innerGroups} or \code{partitions} converted to numeric vectors based on the index of the columns in the \code{data} matrix.
+#' It sums the exogenous indexes with the number of endogenous variables and returns zero-based indexation for C code.
 #'
 get.indexation <- function(combinations, data, outerOverEndogenous) {
 
   stopifnot(!is.null(data))
   if (!(is(data, "ldt.search.data")))
-    stop("invalid class. Use 'get.data()' function to generate 'data'.")
+    stop("Invalid class. Use 'get.data()' function to generate 'data'.")
   stopifnot(!is.null(combinations))
-  if (!(is(data, "ldt.search.combinations")))
-    stop("invalid class. Use 'get.combinations()' function to generate 'combinations'.")
+  if (!(is(combinations, "ldt.search.combinations")))
+    stop("Invalid class. Use 'get.combinations()' function to generate 'combinations'.")
   stopifnot(is.matrix(data$data) && is.numeric(data$data) && !is.null(colnames(data$data)))
 
   if (outerOverEndogenous == FALSE && data$numExo == 0)
@@ -420,19 +448,20 @@ get.indexation <- function(combinations, data, outerOverEndogenous) {
     if (any(is.na(indices))) {
       stop("Some column names are not found in the data matrix.")
     }
-    return(indices)
+    return(as.integer(indices))
   }
 
   if (!is.null(combinations$partitions)) {
     combinations$partitions <-
       lapply(combinations$partitions,
              function(x){
-               j <- ifelse(is.character(x),colnames_to_index(x, colnames(data$data)),x)
-               if (j < 0)
-                 stop("Negative index in partitions.")
-               if (outerOverEndogenous && j > data$numEndo)
+               j <- if (is.character(x)) {colnames_to_index(x, colnames(data$data))}
+               else {as.integer(x)}
+               if (any(j) < 1)
+                 stop("Zero or negative index in partitions.")
+               if (outerOverEndogenous && any(j > data$numEndo))
                  stop("Invalid index in partitions. Make sure they are less than the number of endogenous variables.")
-               if (outerOverEndogenous && j > data$numExo)
+               if (outerOverEndogenous == FALSE && any(j > data$numExo))
                  stop("Invalid index in partitions. Make sure they are less than the number of exogenous variables.")
                j
              })
@@ -447,15 +476,27 @@ get.indexation <- function(combinations, data, outerOverEndogenous) {
   combinations$innerGroups <-
     lapply(combinations$innerGroups,
            function(x){
-             j <- ifelse(is.character(x),colnames_to_index(x, colnames(data$data)),x)
-             if (j < 0)
-               stop("Negative index in innerGroups.")
-             if (outerOverEndogenous && j > data$numExo)
+             j <- if (is.character(x))
+               {colnames_to_index(x, colnames(data$data))}
+             else
+               {as.integer(x)}
+             if (any(j < 1))
+               stop("Zero or negative index in innerGroups.")
+             if (outerOverEndogenous && any(j > data$numExo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of exogenous variables.")
-             if (outerOverEndogenous && j > data$numEndo)
+             if (outerOverEndogenous  == FALSE && any(j > data$numEndo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of endogenous variables.")
              j
            })
+
+  # zero-based indexation and moving exogenous indices:
+  for (i in c(1:length(combinations$partitions))){
+    combinations$partitions[[i]] <- combinations$partitions[[i]] - 1
+    if (outerOverEndogenous == FALSE)
+      combinations$partitions[[i]] <- combinations$partitions[[i]] + data$numEndo
+  }
+  for (i in c(1:length(combinations$innerGroups)))
+    combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] - 1
 
   return(combinations)
 }

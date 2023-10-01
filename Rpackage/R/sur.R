@@ -42,15 +42,13 @@ search.sur <- function(data = get.data(),
                        options = get.search.options(),
                        searchSigMaxIter = 0,
                        searchSigMaxProb = 0.1){
-  if (data$hasWeights)
+  if (data$hasWeight)
     stop("SUR search does not support weighted observations.")
 
   combinations <- get.indexation(combinations, data, FALSE) # it also check for inconsistencies, etc.
 
-  stopifnot(is.numeric(searchSigMaxIter) && length(searchSigMaxIter) == 1 &&
-              searchSigMaxIter > 0)
-  stopifnot(is.numeric(searchSigMaxProb) && length(searchSigMaxProb) == 1 &&
-              searchSigMaxProb > 0 && searchSigMaxProb < 1)
+  stopifnot(is.zero.or.positive.number(searchSigMaxIter))
+  stopifnot(is.positive.number(searchSigMaxProb) && searchSigMaxProb < 1)
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
     stop("searchSigMaxProb cannot be zero when search is enabled.")
 
@@ -81,7 +79,8 @@ search.sur <- function(data = get.data(),
   res$info$searchSigMaxIter <- searchSigMaxIter
   res$info$searchSigMaxProb <- searchSigMaxProb
 
-  class(res) <- c("ldtsearchsur", "ldtsearch", "list")
+  class(res) <- c("ldt.search.sur", "ldt.search", "list")
+  attr(res, "method") <- "SUR"
   res
 }
 
@@ -156,50 +155,76 @@ estim.sur <- function(data, searchSigMaxIter = 0,
                       simTrainRatio = 0.75,
                       simSeed = 0,
                       simMaxConditionNumber = Inf){
-
-  stopifnot(is.numeric(searchSigMaxIter) && length(searchSigMaxIter) == 1 &&
-              searchSigMaxIter > 0)
-  stopifnot(is.numeric(searchSigMaxProb) && length(searchSigMaxProb) == 1 &&
-              searchSigMaxProb > 0 && searchSigMaxProb < 1)
+  data <- get.data.keep.complete(data)
+  stopifnot(is.zero.or.positive.number(searchSigMaxIter))
+  stopifnot(is.positive.number(searchSigMaxProb) && searchSigMaxProb < 1)
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
     stop("searchSigMaxProb cannot be zero when search is enabled.")
   if (searchSigMaxIter > 0 && !is.null(restriction))
     stop("restriction must be null when  significant search is enabled.")
 
-  stopifnot(!is.null(restriction) && is.matrix(restriction))
+  if (!is.null(restriction))
+    stopifnot(is.matrix(restriction))
 
-  stopifnot(is.numeric(simFixSize) && length(simFixSize) == 1 &&
-              simFixSize >= 0)
-  stopifnot(is.numeric(simTrainRatio) && length(simTrainRatio) == 1 &&
-              simTrainRatio >= 0 && simTrainRatio <= 1)
-  stopifnot(is.numeric(simTrainFixSize) && length(simTrainFixSize) == 1 &&
-              simTrainFixSize >= 0)
-  stopifnot(is.numeric(simSeed) && length(simSeed) == 1 && simSeed < 1)
-  stopifnot(is.numeric(simMaxConditionNumber) && length(simMaxConditionNumber) == 1)
+  stopifnot(is.zero.or.positive.number(simFixSize))
+  stopifnot(is.zero.or.positive.number(simTrainRatio) && simTrainRatio <= 1)
+  stopifnot(is.zero.or.positive.number(simTrainFixSize))
+  stopifnot(is.zero.or.positive.number(simSeed))
+  if (simSeed == 0)
+    simSeed = runif(1,10,10e4) # set it here such that it is reported in the info section
+  stopifnot(is.number(simMaxConditionNumber))
 
-  if (is.null(pcaOptionsY))
-    pcaOptionsY = get.options.pca()
-  if (is.null(pcaOptionsX))
-    pcaOptionsX = get.options.pca()
+  if (!is.null(pcaOptionsX))
+    stopifnot(is.list(pcaOptionsX))
+  if (!is.null(pcaOptionsY))
+    stopifnot(is.list(pcaOptionsY))
 
-  res <- .EstimSur(data, searchSigMaxIter, searchSigMaxProb,
+  res <- .EstimSur(data, as.integer(searchSigMaxIter), searchSigMaxProb,
                    restriction, pcaOptionsY, pcaOptionsX,
-                   simFixSize, simTrainRatio,
-                   simTrainFixSize, simSeed,
+                   as.integer(simFixSize), simTrainRatio,
+                   as.integer(simTrainFixSize), as.integer(simSeed),
                    simMaxConditionNumber)
 
   res$info$data <- data
   res$info$searchSigMaxIter <- searchSigMaxIter
-  res$info$addIntercept <- addIntercept
   res$info$searchSigMaxProb <- searchSigMaxProb
+  res$info$pcaOptionsY <- pcaOptionsY
+  res$info$pcaOptionsX <- pcaOptionsX
   res$info$simFixSize <- simFixSize
   res$info$simTrainFixSize <- simTrainFixSize
   res$info$simTrainRatio <- simTrainRatio
   res$info$simSeed <- simSeed
   res$info$simMaxConditionNumber <- simMaxConditionNumber
 
+  class(res) <- c("ldtestimsur", "ldtestim", "list")
+
   res
 }
+
+
+estim.sur.from.search <- function(searchResult, endoIndices, exoIndices, ...){
+  search_data <- searchResult$info$data
+  exoIndices <- exoIndices + 1 # adjust for zero-based
+  endoIndices <- endoIndices + 1
+  data <- get.data(search_data$data[,c(endoIndices, exoIndices), drop = FALSE],
+                   endogenous = length(endoIndices),
+                   weights = NULL,
+                   lambdas = search_data$lambdas,
+                   addIntercept = FALSE,...)
+
+
+  estim.sur(
+    data = data,
+    searchSigMaxIter = searchResult$info$searchSigMaxIter,
+    searchSigMaxProb = searchResult$info$searchSigMaxProb,
+    simFixSize = searchResult$info$metrics$simFixSize,
+    simTrainRatio = searchResult$info$metrics$trainRatio,
+    simTrainFixSize = searchResult$info$metrics$trainFixSize,
+    simSeed = abs(searchResult$info$metrics$seed),
+    simMaxConditionNumber = searchResult$info$modelChecks$maxConditionNumber
+  )
+}
+
 
 # get estimation from search result
 GetEstim_sur <- function(searchRes, endoIndices,

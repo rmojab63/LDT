@@ -25,14 +25,15 @@
 #' @seealso [search.bin], [estim.bin], [s.roc]
 get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e-12,
                             pessimistic = FALSE, costs = NULL, costMatrix = NULL){
-  stopifnot(is.numeric(lowerThreshold) && length(lowerThreshold) == 1 && lowerThreshold >= 0)
-  stopifnot(is.numeric(upperThreshold) && length(upperThreshold) == 1 && lowerThreshold <= 1)
-  stopifnot(is.numeric(epsilon) && length(epsilon) == 1 && epsilon >= 0 && epsilon <= 1)
+  stopifnot(is.zero.or.positive.number(lowerThreshold))
+  stopifnot(is.zero.or.positive.number(upperThreshold) && upperThreshold <= 1)
+  stopifnot(is.zero.or.positive.number(epsilon) && epsilon <= 1)
 
   if (!is.null(costs)) {
     stopifnot(is.numeric(costs))
-    stopifnot(!is.null(costMatrix) && is.matrix(costMatrix) &&
-                nrow(costMatrix) == 2 && ncol(costMatrix) == 2)
+    if (!(!is.null(costMatrix) && is.matrix(costMatrix) &&
+                nrow(costMatrix) == 2 && ncol(costMatrix) == 2))
+      stop("Cost matrix must be 2x2 numeric matrix.")
   }
 
   res = list(lowerThreshold = lowerThreshold,
@@ -41,7 +42,7 @@ get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e
              pessimistic = pessimistic,
              costs=costs,
              costMatrix = costMatrix)
-  class(res) <- c("ldt.options.roc", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -68,18 +69,18 @@ get.options.roc <- function(lowerThreshold = 0, upperThreshold = 1, epsilon = 1e
 get.options.neldermead <- function(maxIterations = 100, tolerance = 1e-6,
                                    reflection = 1, expansion = 2, contraction = 0.5,
                                    shrink = 1){
-  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
-  stopifnot(is.numeric(tolerance) && length(tolerance) == 1 && tolerance >= 0)
-  stopifnot(is.numeric(reflection) && length(reflection) == 1 && reflection > 0)
-  stopifnot(is.numeric(expansion) && length(expansion) == 1 && expansion > 0)
-  stopifnot(is.numeric(contraction) && length(contraction) == 1 && contraction > 0)
-  stopifnot(is.numeric(shrink) && length(shrink) == 1 && shrink > 0)
+  stopifnot(is.positive.number(maxIterations) && maxIterations >= 0)
+  stopifnot(is.zero.or.positive.number(tolerance))
+  stopifnot(is.positive.number(reflection))
+  stopifnot(is.positive.number(expansion))
+  stopifnot(is.positive.number(contraction))
+  stopifnot(is.positive.number(shrink))
 
   res = list(maxIterations = maxIterations,
            tolerance = tolerance, reflection = reflection,
            expansion = expansion, contraction = contraction,
            shrink = shrink)
-  class(res) <- c("ldt.options.neldermead", "list")
+  class(res) <- c("ldt.list", "list")
   res
   res
 }
@@ -105,17 +106,17 @@ get.options.neldermead <- function(maxIterations = 100, tolerance = 1e-6,
 #' @seealso [estim.bin], [estim.sur], [estim.varma], [s.pca]
 get.options.pca <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, max = 1000){
 
-  stopifnot(is.numeric(ignoreFirst) && length(ignoreFirst) == 1 && ignoreFirst >= 0)
-  stopifnot(is.numeric(exactCount) && length(exactCount) == 1 && exactCount >= 0)
-  stopifnot(is.numeric(cutoffRate) && length(cutoffRate) == 1 && cutoffRate > 0 && cutoffRate < 1)
-  stopifnot(is.numeric(max) && length(max) == 1 && max > 0)
+  stopifnot(is.zero.or.positive.number(ignoreFirst))
+  stopifnot(is.zero.or.positive.number(exactCount))
+  stopifnot(is.positive.number(cutoffRate) && cutoffRate < 1)
+  stopifnot(is.positive.number(max) && max > 0)
 
   res = list(
     ignoreFirst = ignoreFirst,
     exactCount = exactCount,
     cutoffRate = cutoffRate,
     max = max)
-  class(res) <- c("ldt.options.pca", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -133,16 +134,16 @@ get.options.pca <- function(ignoreFirst = 1, exactCount = 0, cutoffRate = 0.8, m
 #' @export
 get.options.lbfgs <- function(maxIterations = 100, factor = 1e7,
                                projectedGradientTol = 0, maxCorrections = 5){
-  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
-  stopifnot(is.numeric(factor) && length(factor) == 1 && factor > 0)
-  stopifnot(is.numeric(projectedGradientTol) && length(projectedGradientTol) == 1 && projectedGradientTol >= 0)
-  stopifnot(is.numeric(maxCorrections) && length(maxCorrections) == 1 && maxCorrections > 0)
+  stopifnot(is.positive.number(maxIterations) && maxIterations >= 1)
+  stopifnot(is.positive.number(factor))
+  stopifnot(is.zero.or.positive.number(projectedGradientTol))
+  stopifnot(is.positive.number(maxCorrections) && maxIterations >= 1)
 
   res = list(maxIterations = maxIterations,
            factor = factor,
            projectedGradientTol = projectedGradientTol,
            maxCorrections = maxCorrections)
-  class(res) <- c("ldt.options.lbfgs", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 
@@ -162,17 +163,16 @@ get.options.lbfgs <- function(maxIterations = 100, factor = 1e7,
 get.options.newton <- function(maxIterations = 100, functionTol = 1e-4,
                                gradientTol = 0, useLineSearch = TRUE){
 
-  stopifnot(is.numeric(maxIterations) && length(maxIterations) == 1 && maxIterations > 0)
-  stopifnot(is.numeric(functionTol) && length(functionTol) == 1 && functionTol >= 0)
-  stopifnot(is.numeric(gradientTol) && length(gradientTol) == 1 && gradientTol >= 0)
+  stopifnot(is.positive.number(maxIterations) && maxIterations >= 1)
+  stopifnot(is.zero.or.positive.number(functionTol))
+  stopifnot(is.zero.or.positive.number(gradientTol))
   stopifnot(is.logical(useLineSearch) && length(useLineSearch) == 1)
-
 
   res = list(maxIterations = maxIterations,
            functionTol = functionTol,
            gradientTol = gradientTol,
            useLineSearch = useLineSearch)
-  class(res) <- c("ldt.options.newton", "list")
+  class(res) <- c("ldt.list", "list")
   res
 }
 

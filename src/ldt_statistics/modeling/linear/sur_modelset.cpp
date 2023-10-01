@@ -257,12 +257,15 @@ SurModelset::SurModelset(const SearchData &data,
   // check group indexes and create sizes array
   for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a < items.LengthDependents ||
-          a >= items.LengthDependents + items.LengthExogenouses)
+      if (a < items.LengthDependents)
+        throw LdtException(ErrorType::kLogic, "sur-modelset",
+                           "invalid exogenous group element (it is less that "
+                           "the index of the first exogenous variable)");
+      if (a >= items.LengthDependents + items.LengthExogenouses)
         throw LdtException(
             ErrorType::kLogic, "sur-modelset",
             "invalid exogenous group element (it is larger than the number "
-            "of available variables)");
+            "of available exogenous variables)");
       if (a < 0)
         throw LdtException(ErrorType::kLogic, "sur-modelset",
                            "invalid exogenous group element (it is negative)");

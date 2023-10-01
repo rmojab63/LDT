@@ -1,6 +1,7 @@
 ﻿  
 OPTION(USE_MKL "MKL" OFF)#TODO: some fixes is needed
 OPTION(USE_OPENBLAS "OpenBLAS" OFF)
+OPTION(COMPILE_R "R" ON)
 
 # BUILD_COMPLETE : If a package is not found, it throws error. Otherwise, it builds the project but without the required package
 
@@ -121,7 +122,7 @@ file(GLOB SOURCES
  src/array.cpp
   
 )
- 
+
 SET(LDT_HEADER_DIR ${PROJECT_SOURCE_DIR}/include 
                    ${PROJECT_SOURCE_DIR}/include/math 
 				   ${PROJECT_SOURCE_DIR}/include/blas 
@@ -129,6 +130,29 @@ SET(LDT_HEADER_DIR ${PROJECT_SOURCE_DIR}/include
 				   ${PROJECT_SOURCE_DIR}/include/math/statistics/inference
 				   ${PROJECT_SOURCE_DIR}/include/math/statistics/inference/models
 				   )
+
+if(COMPILE_R)
+    list(APPEND SOURCES
+         Rpackage/src/r_ldt.h
+         Rpackage/src/r_statistics.cpp
+		 Rpackage/src/r_clustering.cpp
+		 Rpackage/src/r_ldt.cpp
+		 Rpackage/src/r_sur.cpp
+		 #Rpackage/src/r_varma.h
+		 #Rpackage/src/r_dc.h
+    )
+  
+	# currently, I hard code the paths:  
+	set(R_PATH "C:/Program Files/R/R-4.3.1")
+	set(R_CPP_PATH "C:/Users/rmoja/AppData/Local/R/win-library/4.3/Rcpp")
+ 
+  include_directories(${R_PATH}/include)
+  include_directories(${R_CPP_PATH}/include)
+ 
+  message(STATUS "R Include Dir: ${R_INCLUDE_DIR}/include")
+  message(STATUS "Rcpp Include Dir: ${R_CPP_PATH}/include")
+  
+endif()
 
 # ------ Rcpp: Frequency package
 
@@ -287,6 +311,11 @@ if (CMAKEPRESETS)
 
 endif () 
 
+
+if(COMPILE_R) 
+  target_link_libraries(ldt "${R_PATH}/bin/x64/R.dll")
+  target_link_libraries(ldt "${R_CPP_PATH}/libs/x64/Rcpp.dll")
+endif()
 
 if(BUILD_TEST)
      message(STATUS "Building tests...")

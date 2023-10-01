@@ -116,7 +116,8 @@
         "xlocmon": "cpp",
         "xloctime": "cpp",
         "ranges": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "csetjmp": "cpp"
     },
     "spellright.language": [
         "en"
