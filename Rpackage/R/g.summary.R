@@ -13,16 +13,22 @@ get.metric.from.estim <- function(model, metricName, targetName) {
 
 #' Summary for an \code{ldt.search.item} object
 #'
-#' An \code{ldt.search.item} object is a member of \code{ldt.search} object.
-#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#' While you can get a summary of an item in a search result, this function is mainly designed to be called from [print.ldt.search] function.
+#' Its main job is to estimate the full model using the reported indices from the search process.
 #'
 #' @param object An \code{ldt.search.item} object.
 #' @param searchResult Parent list of \code{object}, which is an \code{ldt.search} object.
 #' @param test If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process.
 #' @param ... Additional arguments.
 #'
-#' @return The output changes with the type of the \code{object}.
-#' If it contains the indices of dependent variables of an estimated model, it returns the estimation output.
+#' @details
+#' An \code{ldt.search.item} object is a member of \code{ldt.search} object.
+#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+
+#'
+#'
+#' @return If the object contains the indices of dependent variables of an estimated model, it returns the estimation output.
+#' Otherwise, it returns object.
 #' @export
 summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ...) {
 
@@ -42,17 +48,17 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
       stop("Invalid or not implemented type of method: ", method)
 
     res <- do.call(fun.name, list(searchResult = searchResult,
-                           endoIndices = object$value$depIndices,
-                           exoIndices = object$value$exoIndices))
+                                  endoIndices = object$value$depIndices,
+                                  exoIndices = object$value$exoIndices))
 
     if (test){
 
       metric <- get.metric.from.estim(res, object$evalName, object$targetName)
       if (abs(metric - object$value$metric)>1e-10){
         stop(paste0("Inconsistent metric: target=",object$targetName,
-                       ", metric=", object$evalName,
-                       ", search metric=", object$value$metric,
-                       ", estimation metric=", metric))
+                    ", metric=", object$evalName,
+                    ", search metric=", object$value$metric,
+                    ", estimation metric=", metric))
       }
 
       if (!is.null(object$value$mean)){ #test parameter or forecasts, etc.
@@ -79,14 +85,16 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
           # item$name is Horizon1,...
           #TODO:
         }
-
       }
-
     }
-
     return(res)
-   }
+  }
 
+  #TODO:
+  #if (object$typeName == "inclusion")
+  #if (object$typeName == "extreme bound")
+  #if (object$typeName == "cdf")
+  #if (object$typeName == "mixture")
 
   return(res)
 }
@@ -94,13 +102,19 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 
 
 
-#' Title
+#' Summary for an \code{ldt.search} object
 #'
-#' @param object
-#' @param test
-#' @param ...
+#' Use this function to get the full estimation of the models reported in the output of a search process.
 #'
-#' @return
+#' @param object An \code{ldt.search} object.
+#' @param test If \code{TRUE} and applicable (e.g., in model estimation), it checks the metrics and throws error for any inconsistencies between the current estimation and the one calculated in the search process.
+#' @param ... Additional arguments.
+#'
+#' @details
+#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#'
+#'
+#' @return The output replaces the value of \code{object$results} with the summary from [summary.ldt.search.item].
 #' @export
 summary.ldt.search <- function(object, test = TRUE, ...) {
 
@@ -112,8 +126,8 @@ summary.ldt.search <- function(object, test = TRUE, ...) {
   for (i in 1:length(object$results)){
 
     object$results[[i]]$value <- summary.ldt.search.item(object = object$results[[i]],
-                                            searchResult =  object,
-                                            test = test, ...)
+                                                         searchResult =  object,
+                                                         test = test, ...)
   }
   class(object) <- c("ldt.search.summary", "ldt.search", "list")
   object

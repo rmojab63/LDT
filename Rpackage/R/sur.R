@@ -185,6 +185,7 @@ estim.sur <- function(data, searchSigMaxIter = 0,
                    as.integer(simTrainFixSize), as.integer(simSeed),
                    simMaxConditionNumber)
 
+
   res$info$data <- data
   res$info$searchSigMaxIter <- searchSigMaxIter
   res$info$searchSigMaxProb <- searchSigMaxProb
@@ -196,8 +197,8 @@ estim.sur <- function(data, searchSigMaxIter = 0,
   res$info$simSeed <- simSeed
   res$info$simMaxConditionNumber <- simMaxConditionNumber
 
-  class(res) <- c("ldtestimsur", "ldtestim", "list")
-
+  class(res) <- c("ldt.estim.sur", "ldt.estim", "list")
+  attr(res, "method") <- "SUR"
   res
 }
 

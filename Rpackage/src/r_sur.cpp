@@ -177,27 +177,28 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
   }
 
   // Metrics
-  int metricCount = 7; // logL, aic, sic, ...
+  int metricCount = 5; // logL, aic, sic, ...
   if (simFixSize > 0)
     metricCount += simModel.Results.RowsCount;
   auto metricsResD =
       std::unique_ptr<double[]>(new double[metricCount * data_.NumEndo]);
   auto metricsRes =
       ldt::Matrix<double>(metricsResD.get(), metricCount, model.Y.ColsCount);
-  auto metricsResRowNames = std::vector<std::string>(
-      {"logL", "aic", "sic", "hqic", "r2", "f", "fProb"});
+  auto metricsResRowNames = std::vector<std::string>({
+      "logL", "aic", "sic", "hqic", "r2" //, "f", "fProb"
+  });
   metricsRes.SetRow(0, model.Model.logLikelihood);
   metricsRes.SetRow(1, model.Model.Aic);
   metricsRes.SetRow(2, model.Model.Sic);
   metricsRes.SetRow(3, model.Model.Hqic);
   metricsRes.SetRow(4, model.Model.r2);
-  metricsRes.SetRow(5, model.Model.f);
-  metricsRes.SetRow(6, model.Model.f_prob);
+  // metricsRes.SetRow(5, model.Model.f); // check its validity
+  // metricsRes.SetRow(6, model.Model.f_prob);
   if (simFixSize > 0) {
-    int k = 7;
+    int k = 5;
     for (auto m : metricNames) {
       metricsResRowNames.push_back(m);
-      metricsRes.SetRowFromRow(k, simModel.Results, k - 7);
+      metricsRes.SetRowFromRow(k, simModel.Results, k - 5);
       k++;
     }
   }
@@ -263,10 +264,6 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
     endoNames_pca = endoNames;
 
   List L = List::create(
-      _["counts"] = List::create(
-          _["obs"] = wrap(model.Y.RowsCount), _["eq"] = wrap(model.Y.ColsCount),
-          _["exoEq"] = wrap(model.X.ColsCount),
-          _["exoAll"] = wrap(model.Model.gamma.length())),
       _["estimations"] = List::create(
           _["coefs"] = as_matrix(model.Model.beta, exoNames_pca, endoNames_pca),
           _["stds"] =
@@ -277,6 +274,8 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
               as_matrix(model.Model.e_beta_prob, exoNames_pca, endoNames_pca),
           _["gamma"] = as_matrix(model.Model.gamma),
           _["gammaVar"] = as_matrix(model.Model.gamma_var),
+          _["resid"] = as_matrix(model.Model.resid, std::vector<std::string>(),
+                                 endoNames_pca),
           _["sigma"] =
               as_matrix(model.Model.resid_var, endoNames_pca, endoNames_pca),
           _["isRestricted"] =

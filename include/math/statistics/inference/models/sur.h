@@ -82,6 +82,12 @@ public:
   /// @brief After \ref Calculate, p-value of \ref f
   Tv f_prob = NAN;
 
+  /// @brief First degrees of freedom in calculating \ref f_prob
+  Tv f_prob_d1 = NAN;
+
+  /// @brief Second degrees of freedom in calculating \ref f_prob
+  Tv f_prob_d2 = NAN;
+
   /// @brief After \ref Calculate, AIC
   Tv Aic = NAN;
 

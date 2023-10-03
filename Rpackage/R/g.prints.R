@@ -1,4 +1,8 @@
 
+paste00 <- function(x, collapse = ", ") {
+  paste(sprintf(paste0("%.", options()$digits, "g"), x), collapse = collapse)
+}
+
 # Define the print method for 'options' class
 rec.print.list <- function(x, indent = "") {
   for(i in seq_along(x)) {
@@ -13,10 +17,10 @@ rec.print.list <- function(x, indent = "") {
       mat = x[[i]]
       rows <- apply(mat, 1, function(row) {
         if (ncol(mat) > 4) {
-          row_string <- paste(row[1:4], collapse = ", ")
+          row_string <- paste00(row[1:4], collapse = ", ")
           row_string <- paste0(row_string, ", ...; ")
         } else {
-          row_string <- paste(row, collapse = ", ")
+          row_string <- paste00(row, collapse = ", ")
           row_string <- paste0(row_string, "; ")
         }
         return(row_string)
@@ -31,9 +35,9 @@ rec.print.list <- function(x, indent = "") {
     }
     else if (is.vector(x[[i]]) && length(x[[i]]) > 1) {
       if (length(x[[i]]) > 10)
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
+        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste00(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
       else
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste(x[[i]], collapse = ", "), "\n", sep = "")
+        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste00(x[[i]], collapse = ", "), "\n", sep = "")
     }
     else if (is.vector(x[[i]]) && length(x[[i]])  == 0) {
       cat(indent, names(x)[i], " (0x1): \n", sep = "")
@@ -69,10 +73,16 @@ print.ldt.list <- function(x, ...) {
 
 #' Prints an \code{ldt.search} object
 #'
-#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#' Prints the main results in an \code{ldt.search} object.
+#' This includes information about the first best models and significant coefficients.
+#'
 #'
 #' @param x An object of class \code{ldt.search}
 #' @param ... Additional arguments
+#'
+#' @details
+#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#'
 #'
 #' @return This function has no output.
 #' @export
@@ -140,11 +150,13 @@ print.ldt.search <- function(x, ...) {
         }
 
         if (x$info$items$inclusion){
-
-          inclusion <- values[which(sapply(values, function(y){y$typeName == "best model" && y$info == 0}))][[1]]
-          cat(indent, "Inclusion weights:\n")
+          inclusion <- values[which(sapply(values, function(y){y$typeName == "inclusion"}))][[1]]
+          cat(indent, "Inclusion weights average:\n")
+          mi <- which.max(inclusion$value[,1])
           rec.print.list(list(
-            maximum = "TODO"
+            "maximum value" = max(inclusion$value[,1]),
+            "name" = rownames(inclusion$value)[mi],
+            "count" = inclusion$value[,2][mi]
           ), indent = c(indent, "  "))
         }
 
@@ -153,19 +165,56 @@ print.ldt.search <- function(x, ...) {
       if (x$info$items$type1){
 
         if (x$info$items$bestK){
-          #TODO: print for best coefficients
+          best_coefs <- values[which(sapply(values, function(y){y$info == 0 && startsWith(y$typeName, "best coef for")}))]
+          cat(indent, "Best significant coeffiecients [mean-1.95*std, mean, mean+1.95*std]:\n")
+          lst <- lapply(best_coefs, function(b)c(b$value$mean - 1.95 * sqrt(b$value$var),
+                                                 b$value$mean,
+                                                 b$value$mean + 1.95 * sqrt(b$value$var)))
+          names(lst) <- sapply(best_coefs, function(b)strsplit(sub(".*'([^']*)'.*", "\\1", b$typeName), split = "'")[[1]])
+          lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
+          rec.print.list(lst, indent = c(indent, "  "))
         }
 
-        if (x$info$items$extremeMultiplier){
-          #TODO:
+        if (x$info$items$extremeMultiplier > 0){
+          extremeB <- values[which(sapply(values, function(y){startsWith(y$typeName, "extreme")}))]
+          cat(indent, "Extreme bounds (significant):\n")
+          sig <- extremeB$value[which(extremeB$value[,1]>0 | extremeB$value[,2]<0),,drop=FALSE]
+          if (!is.null(sig)  && nrow(sig) > 0){
+            lst <- lapply(1:nrow(sig), function(e)c(sig[e,1],sig[e,2]))
+            names(lst) <- rownames(sig)
+            rec.print.list(lst, indent = c(indent, "  "))
+          }
+          else
+            cat(c(indent, "  "), "(none)\n")
         }
 
-        if (x$info$items$cdfs){
-          #TODO:
+        if (length(x$info$items$cdfs) > 0){
+          cdfs <- values[which(sapply(values, function(y){ y$info == 0 && startsWith(y$typeName, "cdf")}))]
+          cat(indent, "CDF (significant):\n")
+          if (length(cdfs) == 0)
+            cat(c(indent, "  "), "CDF at 0 is not available.")
+          else{
+            cdfs <- cdfs[[1]]
+            sig <- cdfs$value[which(cdfs$value[,1]<0.1 | cdfs$value[,1]>0.9),,drop=FALSE]
+            if (!is.null(sig) && nrow(sig) > 0){
+              lst <- lapply(1:nrow(sig), function(e)c(sig[e,1]))
+              names(lst) <- rownames(sig)
+              rec.print.list(lst, indent = c(indent, "  "))
+            }
+            else
+              cat(c(indent, "  "), "(none)\n")
+          }
         }
 
         if (x$info$items$mixture4){
-          #TODO:
+          mixture <- values[which(sapply(values, function(y){startsWith(y$typeName, "mixture")}))][[1]]
+          cat(indent, "Mixture significant [mean-1.95*std, mean, mean+1.95*std]:\n")
+          lst <- lapply(1:nrow(mixture$value), function(i)c(mixture$value[i,1] - 1.95 * sqrt(mixture$value[i,2]),
+                                                      mixture$value[i,1],
+                                                      mixture$value[i,1] + 1.95 * sqrt(mixture$value[i,2])))
+          names(lst) <- rownames(mixture$value)
+          lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
+          rec.print.list(lst, indent = c(indent, "  "))
         }
 
       }
@@ -180,7 +229,105 @@ print.ldt.search <- function(x, ...) {
     cat(" ** results for ", x$info$items$bestK, " best model(s) are saved\n", sep="")
   if (x$info$items$all)
     cat(" ** results for all estimated models are saved\n")
-
 }
 
+#' Prints an \code{ldt.estim} object
+#'
+#' Prints the main results in an \code{ldt.estim} object.
+#'
+#' @param x An object of class \code{ldt.estim}
+#' @param ... Additional arguments
+#'
+#' @details
+#' An \code{ldt.search} object is an output from one of the \code{search.?} functions (see \code{search.sur}, \code{search.varma}, or \code{search.bin}).
+#'
+#'
+#' @return This function has no output.
+#' @export
+print.ldt.estim <- function(x, ...) {
+
+  if (is.null(x))
+    stop("argument is null.")
+  if (!is(x, "ldt.estim"))
+    stop("Invalid class. An 'ldt.estim' object is expected.")
+
+  cat("LDT '", attr(x, "method") ,"' estimation result\n")
+
+  coefs <- x$estimations$coefs
+  stds <- x$estimations$std
+  tstats <- x$estimations$tstats
+  pValues <- x$estimations$pValues
+
+  max_chars <- max(nchar(rownames(coefs)))
+  max_widths <- sapply(list(coefs, stds, tstats, pValues), function(mat) max(nchar(format(mat))))
+
+  dep_vars <- colnames(coefs)
+
+  j <- 0
+  for (dep_var in dep_vars) {
+    j <- j + 1
+    cat(paste0("\nDependent variable: ", dep_var, "\n"))
+    cat("----------------------------------------------------\n")
+    cat("Residuals:\n")
+    residuals_summary <- summary(x$estimations$resid[,dep_var])
+    print(residuals_summary)
+    cat("\n")
+
+    df <- data.frame(coefs[,dep_var], stds[,dep_var], tstats[,dep_var], pValues[,dep_var])
+    rownames(df) <- rownames(coefs)
+
+    ms <- max(ifelse(df[,4] < .001, 3,
+                            ifelse(df[,4] < .01, 2,
+                                   ifelse(df[,4] < .1, 1, 0))), na.rm = TRUE)
+
+    colnames(df) <- c("Estimate", "Std. Error", "t value", paste0("Pr(>|t|)", strrep(" ", ms+1)))
+    stars <- ifelse(res$estimations$isRestricted[,dep_var] == 1, paste0("r", strrep(" ", ms - 1)),
+                    ifelse(df[,4] < .001, "***",
+                           ifelse(df[,4] < .01, paste0("**", strrep(" ", ms - 2)),
+                                  ifelse(df[,4] < .05, paste0("*", strrep(" ", ms - 1)),
+                                         ifelse(df[,4] < .1, paste0(".", strrep(" ", ms - 1)),
+                                                strrep(" ", ms))))))
+
+    formatted_df <- format(df, digits = 4, nsmall = 4, justify = "left")
+    formatted_df[,4] =  paste0(format(df[,4], digits = 4, nsmall = 4), " " , stars)
+    formatted_df[res$estimations$isRestricted[,dep_var] == 1, 3:4] <- gsub("NaN", "  -", formatted_df[df[, 2] == 0, 3:4])
+    print(formatted_df)
+
+    cat("---\n")
+    cat("Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n r restricted\n\n")
+
+    cat("Number of observations: ", x$info$data$obsCount, "\n")
+    cat("Number of equations in the system: ", x$info$data$numEndo, "(current equation: ", j, ")\n")
+    numRes <-  - ifelse (is.null(x$estimations$isRestricted), 0, sum(x$estimations$isRestricted[,dep_var]))
+    cat("Number of restrictions in the equation: ", numRes,  "\n")
+    cat("Number of estimated coefficients in the equation: ", x$info$data$numExo - numRes,  "\n")
+    cat("\n")
+    cat("R-squared: ", x$metrics["r2",dep_var], "\n")
+    #cat("F-statistic: ", x$metrics["f",dep_var], " on ", x$counts$fProbD1, "and", x$counts$fProbD2, " DF,  p-value: ", x$metrics["fProb",dep_var]) #TODO: check its validity, esp. the degrees of freedom in multivariate case
+    cat("Akaike Information Criterion: ", x$metrics["aic",dep_var], "\n")
+    cat("Schwartz Information Criterion: ", x$metrics["aic",dep_var], "\n")
+  }
+  cat("\n")
+
+  cat("Number of observations: ", x$info$data$obsCount, "\n")
+  cat("Number of exogenous variables in the system: ", x$info$data$numExo)
+  cat("Number of restrictions in the system: ", sum(x$estimations$isRestricted),  "\n")
+  cat("\n")
+
+  if (!is.null(x$projection)){
+    cat(" ** Projection results are available.\n")
+  }
+  if (!is.null(x$simulation)){
+    cat(" ** Simulation results are available. Number of out-of-sample simulations: ", x$simulation$validCounts,"\n")
+  }
+  if (!is.null(x$info$pcaOptionsY)){
+    cat(" ** Principle components are used for endogenous data.\n")
+  }
+  if (!is.null(x$info$pcaOptionsX)){
+    cat(" ** Principle components are used for exogenous data.\n")
+  }
+  if (!is.null(x$info$searchSigMaxIter > 0)){
+    cat(" ** Zero restrictions are automatically selected (alpha=", x$info$searchSigMaxProb,").\n")
+  }
+}
 

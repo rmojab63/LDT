@@ -36,7 +36,7 @@ test_that("estim.sur estimation works with NO restrictions (OLS)", {
            -0.01306229557043696,  0.01754567721511469,  0.01380101248468951)
   #rcov = as.numeric(resR$residCov)*18/22
   rcov = c(379.12773062174330,  -74.25995265091441,  -74.25995265091441, 1004.26919375767909)
-  expect_equal(as.numeric(res$estimations$gamma), cofs, tolerance = 1e-8)
+  expect_equal(as.numeric(coef(res)), cofs, tolerance = 1e-8)
   expect_equal(as.numeric(res$estimations$sigma),
                rcov, tolerance = 1e-8) # adjusted dof
 
@@ -109,7 +109,8 @@ test_that("estim.sur peojection works with NO restrictions (OLS)", {
   rcov = c(380.49525763946917, -74.49900118994805,
            -74.49900118994805, 1004.63372739176225) # as.numeric(resR$residCov)
 
-  expect_equal(as.numeric(res$projection$means[,1]), prd, tolerance = 1e-3) # ??
+  pr <- predict(res)
+  expect_equal(as.numeric(pr$means[,1]), prd, tolerance = 1e-3) # ??
   expect_equal(as.numeric(res$estimations$sigma), rcov, tolerance = 1e-3)
 
   # I could not reproduce the exact results of the coefficient variance.
@@ -445,7 +446,7 @@ test_that("search.sur works with restricted aic", {
 test_that("search.sur works with inclusion weights", {
   skip_on_cran()
 
-  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 2),
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
                    combinations = get.combinations(sizes = c(1, 2),
                                                    innerGroups = list(c(2),c(1,3),c(1,2,3)),
                                                    numTargets = 2),
