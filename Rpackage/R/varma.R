@@ -232,13 +232,13 @@ estim.varma <- function(y, x = NULL, params = NULL,
 
 # get estimation from search result
 GetEstim_varma <- function(searchRes, endoIndices,
-                           exoIndices, y, x, printMsg,
+                           exogenous, y, x, printMsg,
                            params, newX = NULL, ...) {
   M <- estim.varma(y[, endoIndices, drop = FALSE],
-                   x = if (is.null(exoIndices) || is.null(x)) {
+                   x = if (is.null(exogenous) || is.null(x)) {
                      NULL
                    } else {
-                     x[, exoIndices, drop = FALSE]
+                     x[, exogenous, drop = FALSE]
                    },
                    params = params,
                    seasonsCount = searchRes$info$seasonsCount,
@@ -248,10 +248,10 @@ GetEstim_varma <- function(searchRes, endoIndices,
                    pcaOptionsY = NULL,
                    pcaOptionsX = NULL,
                    maxHorizon = searchRes$info$maxHorizon,
-                   newX = if (is.null(exoIndices) || is.null(newX)) {
+                   newX = if (is.null(exogenous) || is.null(newX)) {
                      NULL
                    } else {
-                     as.matrix(newX[, exoIndices])
+                     as.matrix(newX[, exogenous])
                    },
                    simFixSize = searchRes$info$metrics$simFixSize,
                    simHorizons = searchRes$info$metrics$simHorizons,

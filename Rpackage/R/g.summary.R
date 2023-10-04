@@ -39,7 +39,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 
   method <- tolower(attr(searchResult, "method"))
 
-  if (!is.null(object$value) && is.list(object$value) && !is.null(object$value$depIndices)) { # estimate the model
+  if (!is.null(object$value) && is.list(object$value) && !is.null(object$value$endogenous)) { # estimate the model
     if (is.null(searchResult))
       stop("'searchResult' is NULL. In order to re-estimate the model, you should set this argument.")
 
@@ -48,8 +48,8 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
       stop("Invalid or not implemented type of method: ", method)
 
     res <- do.call(fun.name, list(searchResult = searchResult,
-                                  endoIndices = object$value$depIndices,
-                                  exoIndices = object$value$exoIndices))
+                                  endogenous = object$value$endogenous,
+                                  exogenous = object$value$exogenous))
 
     if (test){
 

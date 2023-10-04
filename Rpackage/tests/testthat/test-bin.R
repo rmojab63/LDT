@@ -265,7 +265,7 @@ test_that("Discrete choice search (avgCost,all) works", {
   for (a in res$frequencyCostOut$target1$model$all)
     expect_equal(0.5,a$weight, tolerance = 1e-16) #because of the structure of cost tables
 
-  alli = lapply(res$frequencyCostOut$target1$model$all, function(x) x$exoIndices)
+  alli = lapply(res$frequencyCostOut$target1$model$all, function(x) x$exogenous)
   expect_equal(8,length(alli))
   expect_true(list.has.array(alli, c(1)))
   expect_true(list.has.array(alli, c(2)))
@@ -343,7 +343,7 @@ test_that("Discrete choice search (avgCost, best & all) works", {
     expect_true(res$frequencyCostOut$target1$model$bests$best1$weight >= a[[1]])
 
     # note that in the indexes, we should adjust the indexes too
-    aa<-a$exoIndices+2
+    aa<-a$exogenous+2
     resB = estim.bin(x[,1,drop=FALSE],as.matrix(x[,aa]),NULL, linkFunc = "logit",
                           costMatrices = list(c1), simSeed = 340, simFixSize = 200,
                           simTrainRatio = tratio, printMsg = printMsg)
@@ -419,7 +419,7 @@ test_that("Discrete choice search works with restricted AIC", {
                                    options = get.search.options(parallel = FALSE, printMsg = printMsg))
   alls = list()
   for (m in res$aic$target1$model$all){
-    M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]), printMsg = printMsg)
+    M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]), printMsg = printMsg)
     alls = append(alls, M$metrics[2,1])
     expect_true(as.numeric(M$metrics[2,1]) <= 59)
   }
@@ -443,8 +443,8 @@ test_that("Discrete choice search works with inclusion weights", {
     inclusion[2,1] = inclusion[2,1] + m$weight
     inclusion[2,2] = inclusion[2,2] + 1
 
-    for (e in m$exoIndices){
-      d = e + 2 # the dependent variable and the intercept are not in the m$exoIndices
+    for (e in m$exogenous){
+      d = e + 2 # the dependent variable and the intercept are not in the m$exogenous
       inclusion[d,1] = inclusion[d,1] + m$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
@@ -469,7 +469,7 @@ test_that("Discrete choice search works with coefficients (bests)", {
     best_coef2 = NULL
     w=-Inf
     for (m in res$aic$target1$model$all){
-      if (any(m$exoIndices==u)){
+      if (any(m$exogenous==u)){
         if (w<m$weight){
           w=m$weight
           best_coef2 = m
@@ -487,11 +487,11 @@ test_that("Discrete choice search works with coefficients (bests)", {
     else if (u==4)
       item = res$aic$target1$coefs$bests$item5
     expect_equal(item$best1$weight, best_coef2$weight, tolerance = 1e-10)
-    expect_equal(item$best1$exoIndices, best_coef2$exoIndices, tolerance = 1e-10)
+    expect_equal(item$best1$exogenous, best_coef2$exogenous, tolerance = 1e-10)
 
     # are mean and variance equal?
     M = estim.bin(y,
-                       x = as.matrix(Exo[,item$best1$exoIndices]),
+                       x = as.matrix(Exo[,item$best1$exogenous]),
                        simFixSize = 0, printMsg = printMsg)
     expect_equal(exp(-0.5 * M$metrics[2,1]), item$best1$weight, tolerance = 1e-10)
     expect_equal(item$best1$mean, M$estimations$gamma[[2]], tolerance = 1e-10)
@@ -516,9 +516,9 @@ test_that("Discrete choice search works with coefficients (cdfs)", {
     cc=0
     for (m in res$aic$target1$model$all){
 
-      if (any(m$exoIndices==u)){
-        ind = which(m$exoIndices == u) + 1 #+1 for intercept
-        M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
+      if (any(m$exogenous==u)){
+        ind = which(m$exogenous == u) + 1 #+1 for intercept
+        M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
                            simFixSize = 0, printMsg = printMsg)
         coef = M$estimations$gamma[ind]
         sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -549,9 +549,9 @@ test_that("Discrete choice search works with coefficients (extreme bounds)", {
   h = 2
   for (m in res$aic$target1$model$all){
 
-    if (any(m$exoIndices==h)) {
-      ind = which(m$exoIndices == h) + 1 #+1 for intercept
-      M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
+    if (any(m$exogenous==h)) {
+      ind = which(m$exogenous == h) + 1 #+1 for intercept
+      M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
                          simFixSize = 0, printMsg = printMsg)
       coef = M$estimations$gamma[ind]
       sd = sqrt(M$estimations$gammaVar[ind,ind])
@@ -580,10 +580,10 @@ test_that("Discrete choice search works with coefficients (mixture)", {
   weights = c()
   h = 1
   for (m in res$aic$target1$model$all){
-    if (any(m$exoIndices==h)) {
-      M = estim.bin(y, x = as.matrix(Exo[,m$exoIndices]),
+    if (any(m$exogenous==h)) {
+      M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
                          simFixSize = 0, printMsg = printMsg)
-      ind = which(m$exoIndices == h) + 1 #+1 for intercept
+      ind = which(m$exogenous == h) + 1 #+1 for intercept
       coefs = append(coefs,M$estimations$gamma[ind])
       vars = append(vars, M$estimations$gammaVar[ind,ind])
       weights = append(weights, m$weight)
@@ -683,16 +683,16 @@ test_that("Discrete choice SplitSearch works (no subsetting)", {
     i = i + 1
     s_item <- split$aic$target1$coefs$bests[[i]]
     expect_equal(w_item$best1$weight, s_item$best1$weight, tolerance =1e-10)
-    expect_equal(w_item$best1$exoIndices, s_item$best1$exoIndices, tolerance =1e-10)
+    expect_equal(w_item$best1$exogenous, s_item$best1$exogenous, tolerance =1e-10)
     expect_equal(w_item$best1$var, s_item$best1$var, tolerance =1e-10)
 
 
     expect_equal(w_item$best3$weight, s_item$best3$weight, tolerance =1e-10)
-    expect_equal(w_item$best3$exoIndices, s_item$best3$exoIndices, tolerance =1e-10)
+    expect_equal(w_item$best3$exogenous, s_item$best3$exogenous, tolerance =1e-10)
     expect_equal(w_item$best3$var, s_item$best3$var, tolerance =1e-10)
 
     expect_equal(w_item$best5$weight, s_item$best5$weight, tolerance =1e-10)
-    expect_equal(w_item$best5$exoIndices, s_item$best5$exoIndices, tolerance =1e-10)
+    expect_equal(w_item$best5$exogenous, s_item$best5$exogenous, tolerance =1e-10)
     expect_equal(w_item$best5$var, s_item$best5$var, tolerance =1e-10)
 
   }

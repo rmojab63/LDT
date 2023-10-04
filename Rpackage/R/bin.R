@@ -217,12 +217,12 @@ estim.bin <- function(y, x, w = NULL,
 }
 
 # get estimation from search result
-GetEstim_bin <- function(searchRes, endoIndices, exoIndices, y, x, printMsg, w, linkFunc, newX, ...) {
+GetEstim_bin <- function(searchRes, endoIndices, exogenous, y, x, printMsg, w, linkFunc, newX, ...) {
   M <- estim.bin(y,
-                x = if (is.null(exoIndices) || is.null(x)) NULL else x[, exoIndices, drop = FALSE],
+                x = if (is.null(exogenous) || is.null(x)) NULL else x[, exogenous, drop = FALSE],
                 w = w,
                 linkFunc = linkFunc,
-                newX = if (is.null(exoIndices) || is.null(newX)) NULL else newX[, exoIndices, drop=FALSE],
+                newX = if (is.null(exogenous) || is.null(newX)) NULL else newX[, exogenous, drop=FALSE],
                 pcaOptionsX = NULL,
                 costMatrices = searchRes$info$costMatrices,
                 simFixSize = searchRes$info$metrics$simFixSize,

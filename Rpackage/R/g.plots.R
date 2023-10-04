@@ -5,17 +5,33 @@
 #'
 #' @param x An object of type \code{ldt.estim}.
 #' @param equation A number or a name of endogenous variable specifying an equation in the estimated system.
-#' @param type One of these numbers: 1, 2, 3, or 5. See \code{which} argument in [plot.lm] documentation (Note that \code{which=4 or 6} is not implemented).
-#' Also, see [residuals.ldt.estim] function documentation for a description on how standardized residuals are calculated.
+#' @param type One of these numbers: 1, 2, 3, or 5. See \code{which} argument in [plot.lm] documentation.
 #' @param textArgs A list of additional arguments to customize the "abline" function.
 #' @param ablineArgs A list of additional arguments to customize the "text" function used for labeling influential observations.
 #' @param ... additional arguments to be passed to "plot" (or "qqnorm" function for \code{type=2}, or "barplot" for \code{type=4}).
 #'
+#' @details
+#' This function is designed to be similar to [plot.lm] function.
+#' However, note that an \code{ldt.estim} object might be a system estimation.
+#'
+#' Some plots use standardized residuals. Note that they are not calculated in a system estimation context. See [residuals.ldt.estim] documentation for a description.
+#' Cook's distance is also calculated equation-wise. Its formula is:
+#' \deqn{
+#' d = \frac{r_i^2}{k*var(r)}\frac{h_{ii}}{(1-h_{ii})^2}
+#' }
+#' where \eqn{r_i} and \eqn{h_{ii}} are residual and leverage in \eqn{i}-th observation, respectively. \eqn{var(r)} is variance of residuals and \eqn{k} is the number of estimated coefficients in the equation.
+#' Note that Cook's distance is not implemented for weighted observations.
+#'
+#'
 #' @return This function creates diagnostic plots for regression models.
 #' It also returns a list with \code{x} and \code{y} data used in plot functions.
 #' @export
-plot.ldt.estim <- function(x, equation = 1, type = c(1,2,3,4,5,6),
-                           ablineArgs = list(), textArgs = list(), ...) {
+plot.ldt.estim <- function(x,
+                           equation = 1,
+                           type = c(1,2,3,4,5,6),
+                           ablineArgs = list(col = "lightblue"),
+                           textArgs = list(pos = 3, cex = 0.7, col = "red"),
+                           ...) {
   equation <- checkEquation(x, equation, TRUE)
   stopifnot(is.numeric(type))
   if (length(type) > 1)
@@ -29,8 +45,6 @@ plot.ldt.estim <- function(x, equation = 1, type = c(1,2,3,4,5,6),
     residuals <- resid(x, equation = equation, standardized = TRUE)
 
   args <- list(...)
-  ablineArgs <- modifyList(list(col = "lightblue"), ablineArgs)
-  textArgs <- modifyList(list(pos = 3, cex = 0.7, col = "red"), textArgs)
 
   x_data <- NULL
   y_data <- NULL

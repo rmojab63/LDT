@@ -458,8 +458,19 @@ void ReportProgress(int reportInterval, ModelSet &model, bool &estimating,
     Rprintf("Calculations Ended.\n");
 }
 
+static std::vector<std::string>
+extractElements(const std::vector<std::string> &vec,
+                const ldt::Matrix<int> &indices) {
+  std::vector<std::string> extractedElements;
+  for (int i = 0; i < indices.length(); ++i) {
+    extractedElements.push_back(vec[indices.Data[i]]);
+  }
+  return extractedElements;
+}
+
 static void add_CoefInfo(const std::string &eName, const std::string &tName,
                          const std::string &typeName,
+                         const std::vector<std::string> &colNames,
                          std::vector<List> &results,
                          const std::vector<EstimationKeep *> &list,
                          const std::string &extra1Label,
@@ -480,14 +491,14 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
     names.push_back(std::string("weight"));
 
     if (b->Dependents.Data) {
-      value.push_back(as_ivector(b->Dependents));
+      value.push_back(wrap(extractElements(colNames, b->Dependents)));
     } else
-      value.push_back(IntegerVector({0}));
-    names.push_back(std::string("depIndices"));
+      value.push_back(CharacterVector::create(colNames.at(0)));
+    names.push_back(std::string("endogenous"));
 
     if (b->Exogenouses.Data) {
-      value.push_back(as_ivector(b->Exogenouses));
-      names.push_back(std::string("exoIndices"));
+      value.push_back(wrap(extractElements(colNames, b->Exogenouses)));
+      names.push_back(std::string("exogenous"));
     }
 
     if (addCoefs) {
@@ -517,6 +528,7 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
 
 static void add_Lengthi(const int &eIndex, const std::string &eName,
                         const int &tIndex, std::string tName,
+                        const std::vector<std::string> &colNames,
                         std::vector<List> &results, const ModelSet &model,
                         const std::vector<SearcherSummary *> &list,
                         const SearchItems &items,
@@ -534,8 +546,8 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
       model.CombineBests(eIndex, tIndex, i, list, bests);
 
       if (bests.size() != 0)
-        add_CoefInfo(eName, tName, typeName, results, bests, extra1Label,
-                     extra1Names, true);
+        add_CoefInfo(eName, tName, typeName, colNames, results, bests,
+                     extra1Label, extra1Names, true);
     }
   }
 
@@ -623,6 +635,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
 
 List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                         const std::vector<std::string> &metricNames,
+                        const std::vector<std::string> &colNames,
                         const std::vector<std::string> &targetNames,
                         const std::string &extra1Label,
                         const std::vector<std::string> &extra1Names,
@@ -676,8 +689,8 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           auto bests = std::vector<EstimationKeep *>();
           model.CombineBests(eIndex, tIndex, 0, list0, bests);
 
-          add_CoefInfo(eName, tName, typeName, results, bests, extra1Label,
-                       extra1Names, false);
+          add_CoefInfo(eName, tName, typeName, colNames, results, bests,
+                       extra1Label, extra1Names, false);
         }
 
         if (items.KeepAll) {
@@ -686,8 +699,8 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           auto all = std::vector<EstimationKeep *>();
           model.CombineAll(eIndex, tIndex, 0, list0, all);
 
-          add_CoefInfo(eName, tName, typeName, results, all, extra1Label,
-                       extra1Names, false);
+          add_CoefInfo(eName, tName, typeName, colNames, results, all,
+                       extra1Label, extra1Names, false);
         }
 
         if (items.KeepInclusionWeights) {
@@ -715,8 +728,8 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
       }
 
       if (items.Length1 > 0) {
-        add_Lengthi(eIndex, eName, tIndex, tName, results, model, list1, items,
-                    extra1Label, length1Names, extra1Names);
+        add_Lengthi(eIndex, eName, tIndex, tName, colNames, results, model,
+                    list1, items, extra1Label, length1Names, extra1Names);
       }
 
       if (items.Length2 > 0) {

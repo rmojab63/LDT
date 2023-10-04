@@ -88,6 +88,7 @@ void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
 
 List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                         const std::vector<std::string> &metricNames,
+                        const std::vector<std::string> &colNames,
                         const std::vector<std::string> &targetNames,
                         const std::string &extra1Label,
                         const std::vector<std::string> &extra1Names,

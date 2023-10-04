@@ -27,7 +27,7 @@ x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables
 metric_options <- get.search.metrics(typesIn = c("sic")) # We use SIC for searching
 search_res <- search.bin(sample$y, data[,3:ncol(data)],
                         xSizes = x_sizes, metrics = metric_options)
-print(search_res$sic$target1$model$bests$best1$exoIndices) # print best model's explanatory indexes
+print(search_res$sic$target1$model$bests$best1$exogenous) # print best model's explanatory indexes
 
 # Use summary function to estimate the best model:
 search_sum <- summary(search_res, y = sample$y, x = data[,3:ncol(data)])
@@ -45,6 +45,6 @@ search_step_res <- search.bin.stepwise(sample$y, data[,3:ncol(data)],
                                       xSizeSteps = x_sizes_steps, countSteps = counts_steps,
                                       metrics = metric_options,
                                       items = search_items)
-print(search_step_res$sic$target1$model$bests$best1$exoIndices)
+print(search_step_res$sic$target1$model$bests$best1$exogenous)
 # Use summary like before.
 

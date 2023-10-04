@@ -2,12 +2,12 @@
 test_that("get.data handles matrix without name correctly", {
   data <- matrix(1:24, ncol = 6)
 
-  result <- get.data(data, endogenous = 1)
+  result <- get.data(data, endogenous = 1, addIntercept = FALSE)
   expect_equal(colnames(result$data), c("Y1","X1","X2","X3","X4","X5"))
   expect_equal(result$numExo, ncol(data) - 1)
   expect_equal(result$obsCount, 4)
 
-  result <- get.data(data, endogenous = 2)
+  result <- get.data(data, endogenous = 2, addIntercept = FALSE)
   expect_equal(colnames(result$data), c("Y1", "Y2", "X1","X2","X3","X4"))
   expect_equal(result$numExo, ncol(data) - 2)
 
@@ -28,7 +28,7 @@ test_that("get.data handles matrix without name correctly", {
   expect_equal(length(result$lambdas), 2)
 
   newX <- matrix(51:62, ncol = 4)
-  result <- get.data(data, endogenous = 2, newData = newX)
+  result <- get.data(data, endogenous = 2, newData = newX, addIntercept = FALSE)
   expect_equal(c(result$data[,1]), c(1,2,3,4))
   expect_equal(c(result$data[,2]), c(5,6,7,8))
   expect_equal(c(result$data[,3]), c(9,10,11,12))
@@ -79,7 +79,7 @@ test_that("get.data handles matrix with name correctly", {
   data <- matrix(1:24, ncol = 6,
                  dimnames = list(NULL,c("V1", "V2", "V3", "V4", "V5", "V6")))
 
-  result <- get.data(data, endogenous = c("V6", "V1"))
+  result <- get.data(data, endogenous = c("V6", "V1"), addIntercept = FALSE)
   expect_equal(colnames(result$data), c("V6","V1","V2","V3","V4","V5"))
   expect_equal(result$numExo, ncol(data) - 2)
   expect_equal(result$obsCount, 4)
@@ -95,7 +95,7 @@ test_that("get.data handles matrix with name correctly", {
   expect_equal(colnames(result$data), c("V6","V1", "(weights)", "(Intercept)", "V2","V3","V4","V5"))
 
   newX <- matrix(51:62, ncol = 4, dimnames = list(NULL, c("V2","V3","V4","V5")))
-  result <- get.data(data, endogenous = c("V6", "V1"), newData = newX)
+  result <- get.data(data, endogenous = c("V6", "V1"), newData = newX, addIntercept = FALSE)
   result <- get.data.append.newX(result)
   expect_equal(c(result$data[,1]), c(21,22,23,24,NA,NA,NA))
   expect_equal(c(result$data[,2]), c(1,2,3,4,NA,NA,NA))
@@ -121,7 +121,7 @@ test_that("get.data handles equations correctly", {
      Y2 ~ X4 + X3
   )
 
-  result <- get.data(data, equations = equations)
+  result <- get.data(data, equations = equations, addIntercept = FALSE)
   expect_equal(colnames(result$data), c("Y1","Y2","X2","X1","X4","X3"))
   expect_equal(result$numExo, ncol(data) - 2)
   expect_equal(result$obsCount, 4)
@@ -140,18 +140,91 @@ test_that("get.data handles equations correctly", {
 
 
   newX <- matrix(51:62, ncol = 4, dimnames = list(NULL, c("X1","X2","X3","X4")))
-  result <- get.data(data, equations = equations, newData = newX)
+  result <- get.data(data, equations = equations, newData = newX, addIntercept = FALSE)
   result <- get.data.append.newX(result)
   expect_equal(c(result$data[,"Y1"]), c(data[,"Y1"],NA,NA,NA))
   expect_equal(c(result$data[,"X2"]), c(data[,"X2"],54, 55, 56))
   expect_equal(c(result$data[, "X1"]), c(data[,"X1"],51, 52, 53))
 
   newX <- matrix(51:65, ncol = 5, dimnames = list(NULL, c("X1","X2","X3","X4", "X0")))
-  result <- get.data(data, equations = equations, newData = newX)
+  result <- get.data(data, equations = equations, newData = newX, addIntercept = FALSE)
   result <- get.data.append.newX(result)
   expect_equal(c(result$data[,"Y1"]), c(data[,"Y1"],NA,NA,NA))
   expect_equal(c(result$data[,"X2"]), c(data[,"X2"],54, 55, 56))
   expect_equal(c(result$data[, "X1"]), c(data[,"X1"],51, 52, 53))
 
 })
+
+test_that("get.indexation handles out-of-indices", {
+  mat <- data.frame(matrix(1:24, ncol = 6))
+  colnames(mat) <- c("X1", "X2", "Y2", "X3", "Y1", "X4")
+  equations <- list(
+    Y1 ~ X2 + X1,
+    Y2 ~ X4 + X3
+  )
+
+  for (weights in list(NULL, c(1:4))){ # weights should not change the result
+
+    # Two endogenous, Four exogenous,
+    data <- get.data(mat, equations = equations, addIntercept = FALSE, weights = weights)
+
+    # check sizes
+    combinations <- get.combinations(sizes = c(1,2), numTargets = 2)
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    combinations <- get.combinations(sizes = c(1,2, 3), numTargets = 2)
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    combinations <- get.combinations(sizes = c(1,2,4), numTargets = 2, innerGroups = list(c(1,2)))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = c(1,2,5), numTargets = 2)
+    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = c(1,2), numTargets = 3)
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+
+    # check sizes as a list (and stepsNumVariables)
+    expect_error(get.combinations(sizes = list(c(1,2)), numTargets = 2, stepsNumVariables = c(NA, 6)))
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 7))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+
+    combinations <- get.combinations(sizes = list(c(1,2), c(3)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = list(c(1,2), c(4)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = list(c(1,2), c(5)), numTargets = 2, stepsNumVariables = c(NA, 6))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+
+    # check innerGroups
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
+                                     innerGroups = list(c(1,2), c(3,4)))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
+                                     innerGroups = list(c(1,2), c(3,5)))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+
+
+    # check partitions
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
+                                     partitions = list(c(1),c(2)), innerGroups = list(c(1,2)))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
+                                     partitions = list(c(1),c(3)), innerGroups = list(c(1,2)))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
+                                     partitions = list(c(1),c(5)))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+
+  }
+
+})
+
+
+
 

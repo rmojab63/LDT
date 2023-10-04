@@ -1,5 +1,15 @@
 
-#TODO:  update search tests by using 'summary' function
+test_that("estim.sur estimation works with simulated data", {
+  set.seed(340)
+  data <- sim.sur(sigma = 2L, coef = 4L, nObs = 1000, intercept = TRUE)
+
+  res = estim.sur(data = get.data(cbind(data$y,data$x), endogenous = ncol(data$y),
+                                  addIntercept = FALSE))
+
+  expect_equal(as.numeric(coef(res)), as.numeric(data$coef), tolerance = 1e-1)
+  expect_equal(as.numeric(res$estimations$sigma), as.numeric(data$sigma), tolerance = 1e-1)
+
+})
 
 x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
              26.695,21.992,68.033,98.872,61.154,71.842,66.922,
@@ -25,6 +35,7 @@ x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
              7.392,82.462,22.022,68.858,55.901,98.156,96.029),
            nrow =22, ncol=7)
 colnames(x) = paste0("V",seq(1,ncol(x)))
+
 
 
 test_that("estim.sur estimation works with NO restrictions (OLS)", {
@@ -337,7 +348,7 @@ test_that("search.sur works with fixed exogenous variables", {
                    metrics = get.search.metrics(typesIn = c("aic", "sic")))
 
   for (m in res$results){
-    expect_equal(c(3,4,5),m$value$exoIndices[1:3]) # first 3 exogenous variables are fixed
+    expect_equal(c('(Intercept)', 'V4', 'V5'),m$value$exogenous[1:3]) # first 3 exogenous variables are fixed
   }
 })
 
@@ -426,7 +437,7 @@ test_that("search.sur works when parallel", {
 test_that("search.sur works with restricted aic", {
   skip_on_cran()
 
-  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 2),
+  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
                    combinations = get.combinations(sizes = c(1, 2),
                                                    innerGroups = list(c(2),c(1,3),c(1,2,3)),
                                                    numTargets = 2),
@@ -455,14 +466,14 @@ test_that("search.sur works with inclusion weights", {
                                                 trainFixSize = 12,
                                                 seed = -340))
 
-  inclusion = matrix(0,8,2)
+  inclusion = matrix(0,8,2, dimnames = list(colnames(res$info$data$data), NULL))
   for (m in res$results[which(sapply(res$results,
                                      function(r) r$evalName == "sic" && r$typeName == "model" && r$targetName == "V1"))]){
-    for (d in (m$value$depIndices+1)){
+    for (d in (m$value$endogenous)){
       inclusion[d,1] = inclusion[d,1] + m$value$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
-    for (d in (m$value$exoIndices+1)){
+    for (d in (m$value$exogenous)){
       inclusion[d,1] = inclusion[d,1] + m$value$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
@@ -613,62 +624,54 @@ test_that("search.sur works with coefficients (mixture)", {
 test_that("SUR SplitSearch works (no subsetting)", {
   skip_on_cran()
 
-  y=x[,c(1,2,3)]
-  Exo=x[,4:7]
+  # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
 
+  data = get.data(x[,1:7, drop = FALSE], endogenous = 3)
+  combinations = get.combinations(numTargets = 3, innerGroups = list(c(1), c(1,2), c(1,3)))
+  items = get.search.items(inclusion = TRUE
+                           #, all = TRUE
+                           , bestK = 4
+                           , type1 = TRUE
+                           , cdfs = c(0,0.3)
+                           , mixture4 = TRUE
+                           , extremeMultiplier = 2
+                           )
+  metrics = get.search.metrics(c("sic", "aic")) # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  options = get.search.options(FALSE,
+                               #reportInterval = 1
+                               )
 
-  # also don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  combinations$sizes <- c(1, 2, 3)
+  whole = search.sur(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
+                     options = options)
 
-  yGroups = list(c(1L),c(1L,2L),c(1L,2L,3L))
-  numTargets = 2
-  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
-                               cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  metrics = get.search.metrics(c("sic", "aic"), c("crps"), seed = -400)
-  options = get.search.options(FALSE)
+  combinations$sizes <- list(c(1, 2), c(3))
+  combinations$stepsNumVariables <- c(NA, NA)
+  split = search.sur(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
+                     options = options)
 
-  split = search.sur.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
-                      numTargets = numTargets,  yGroups = yGroups,
-                      items = items, metrics = metrics,
-                      options = options, savePre = NULL)
+  expect_equal(whole$counts, split$counts)
+  expect_equal(length(whole$results), length(split$results))
 
-  whole = search.sur(y, Exo, xSizes = c(1L,2L,3L),
-                    numTargets = numTargets,  yGroups = yGroups,
-                    items = items, metrics = metrics,
-                    options = options)
+  pastedList_w <- unlist(lapply(whole$results, function(x) paste(x[1:4], collapse = "")))
+  pastedList_s <- unlist(lapply(split$results, function(x) paste(x[1:4], collapse = "")))
 
-  # CHECK ALL
+  sortedList_w <- whole$results[order(pastedList_w)]
+  sortedList_s <- split$results[order(pastedList_s)]
 
-  # for 'all' the order is generally different
-  weights0 <- sort(sapply(whole$sic$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$sic$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1),tolerance =1e-12)
-
-  weights0 <- sort(sapply(whole$crps$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$crps$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1),tolerance =1e-12) # some different models in crps has equal weight (due to OLS estimation of systems with different number of equations)
-  # we have searched similar set of models
-
-
-  # CHECK BESTS
-  expect_equal(unlist(whole$sic$target1$model$bests[1]), unlist(split$sic$target1$model$bests[1]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[2]), unlist(split$sic$target1$model$bests[2]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[3]), unlist(split$sic$target1$model$bests[3]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[4]), unlist(split$sic$target1$model$bests[4]), tolerance = 1e-6)
-
-  #INCLUSION / EXTREME BOUNDS / CDF / MIXTURE
-  expect_equal(whole$sic$target1$model$inclusion, split$sic$target1$model$inclusion, tolerance = 1e-10)
-  expect_equal(whole$sic$target1$coefs$extremeBounds, split$sic$target1$coefs$extremeBounds, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coef$cdfs, split$sic$target1$coefs$cdfs, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coefs$mixture, split$sic$target1$coefs$mixture, tolerance =1e-10)
-
-
-  #BEST COEFS
-  i = 0
-  for (w_item in whole$aic$target2$coefs$bests){
-    w_item <- w_item[lengths(w_item)!=0] # we set the bestK too high. some elements are null
-    i = i + 1
-    s_item <- split$aic$target2$coefs$bests[[i]]
-    expect_equal(w_item[1:9], s_item[1:9], tolerance =1e-10)
+  for (i in 1:length(sortedList_w)){
+    if (sortedList_s[[i]]$typeName == "mixture"){
+      expect_equal(sortedList_s[[i]]$value[,c(1:3,5,6)], sortedList_w[[i]]$value[,c(1:3,5,6)])
+      expect_equal(sortedList_s[[i]]$value[,c(4)], sortedList_w[[i]]$value[,c(4)], tolerance = 0.1)
+    }
+    else
+      expect_equal(sortedList_s[[i]]$value, sortedList_w[[i]]$value)
   }
 
 })

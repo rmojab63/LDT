@@ -61,27 +61,36 @@ search.sur <- function(data = get.data(),
   if (is.null(options))
     options = get.search.options()
 
+  if (is.list(combinations$sizes)){ # use steps
+    # steps will re-call this function with modified combinations in which sizes is no longer a list
+    res <- search.steps("sur", innerIsExogenous = FALSE, data = data, combinations = combinations,
+                        metrics = metrics, modelChecks = modelChecks, items = items, options = options,
+                        searchSigMaxIter = searchSigMaxIter, searchSigMaxProb = searchSigMaxProb)
+    res
+  }
+  else {
 
-  startTime <- Sys.time()
-  res <- .SearchSur(data, combinations, metrics, modelChecks, items, options,
-                    as.integer(searchSigMaxIter), searchSigMaxProb)
-  endTime <- Sys.time()
+    startTime <- Sys.time()
+    res <- .SearchSur(data, combinations, metrics, modelChecks, items, options,
+                      as.integer(searchSigMaxIter), searchSigMaxProb)
+    endTime <- Sys.time()
 
-  res$info$data <- data
-  res$info$combinations <- combinations
-  res$info$metrics <- metrics
-  res$info$options <- options
-  res$info$modelChecks <- modelChecks
-  res$info$items <- items
-  res$info$startTime <- startTime
-  res$info$endTime <- endTime
+    res$info$data <- data
+    res$info$combinations <- combinations
+    res$info$metrics <- metrics
+    res$info$options <- options
+    res$info$modelChecks <- modelChecks
+    res$info$items <- items
+    res$info$startTime <- startTime
+    res$info$endTime <- endTime
 
-  res$info$searchSigMaxIter <- searchSigMaxIter
-  res$info$searchSigMaxProb <- searchSigMaxProb
+    res$info$searchSigMaxIter <- searchSigMaxIter
+    res$info$searchSigMaxProb <- searchSigMaxProb
 
-  class(res) <- c("ldt.search.sur", "ldt.search", "list")
-  attr(res, "method") <- "SUR"
-  res
+    class(res) <- c("ldt.search.sur", "ldt.search", "list")
+    attr(res, "method") <- "SUR"
+    res
+  }
 }
 
 
@@ -203,12 +212,10 @@ estim.sur <- function(data, searchSigMaxIter = 0,
 }
 
 
-estim.sur.from.search <- function(searchResult, endoIndices, exoIndices, ...){
+estim.sur.from.search <- function(searchResult, endogenous, exogenous, ...){
   search_data <- searchResult$info$data
-  exoIndices <- exoIndices + 1 # adjust for zero-based
-  endoIndices <- endoIndices + 1
-  data <- get.data(search_data$data[,c(endoIndices, exoIndices), drop = FALSE],
-                   endogenous = length(endoIndices),
+  data <- get.data(search_data$data[,c(endogenous, exogenous), drop = FALSE],
+                   endogenous = length(endogenous),
                    weights = NULL,
                    lambdas = search_data$lambdas,
                    addIntercept = FALSE,...)
@@ -227,121 +234,6 @@ estim.sur.from.search <- function(searchResult, endoIndices, exoIndices, ...){
 }
 
 
-# get estimation from search result
-GetEstim_sur <- function(searchRes, endoIndices,
-                         exoIndices, y, x, printMsg, ...) {
-  y <- y[, endoIndices, drop = FALSE]
-  x <- if (is.null(exoIndices) || is.null(x)) {
-    NULL
-  } else {
-    x[, c(exoIndices), drop = FALSE]
-  }
-
-  M <- estim.sur(
-    y = y,
-    x = x,
-    addIntercept = FALSE,
-    searchSigMaxIter = searchRes$info$searchSigMaxIter,
-    searchSigMaxProb = searchRes$info$searchSigMaxProb,
-    restriction = NULL,
-    newX = NULL,
-    pcaOptionsY = NULL,
-    pcaOptionsX = NULL,
-    simFixSize = searchRes$info$metrics$simFixSize,
-    simTrainRatio = searchRes$info$metrics$trainRatio,
-    simTrainFixSize = searchRes$info$metrics$trainFixSize,
-    simSeed = abs(searchRes$info$metrics$seed),
-    simMaxConditionNumber = searchRes$info$modelChecks$maxConditionNumber,
-    simTransform = searchRes$info$metrics$transform,
-    printMsg = printMsg
-  )
-
-  return(M)
-}
-
-
-#' Step-wise Search for Best SUR Models
-#'
-#' For a large model set, use this function to find the best seemingly unrelated regression models.
-#' It selects a subset of variables from smaller models and moves to the bigger ones.
-#'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns.
-#' @param xSizeSteps A list of model dimensions to be estimated in each step.
-#' Its size determines the number of steps.
-#' @param countSteps An integer vector to determine the number of variables to be used in each step.
-#' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
-#' Select an appropriate value for \code{bestK} in the options.
-#' @param savePre A directory for saving and loading the progress.
-#' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
-#' @param ... other arguments to pass to [search.sur] function such as the \code{numTargets} argument.
-#' Note that \code{xSizes} is ineffective here.
-#'
-#' @return Similar to [search.sur] function.
-#' @export
-#'
-#' @examples
-#' # See the example in the 'search.sur' function.
-#'
-#' @seealso [search.sur], [estim.sur]
-search.sur.stepwise <- function(y, x, xSizeSteps = list(c(1), c(2)),
-                                countSteps = c(NA, 10),
-                                savePre = NULL, ...) {
-
-  if (is.null(savePre) == FALSE && (is.character(savePre) == FALSE || length(savePre) > 1))
-    stop("'savePre' must be a character string.")
-
-  Search_s("sur", data = x, sizes = xSizeSteps, counts = countSteps,
-          savePre = savePre, y = y, ...)
-}
-
-
-sur.to.latex.eqs <- function(sigma, coef, intercept, numFormat = "%.2f") {
-  num_y <- ncol(coef)
-  num_x <- nrow(coef) - ifelse(intercept, 1, 0)
-  eqs <- character(num_y)
-  for (i in seq_len(num_y)) {
-    b <- coef[, i]
-    if (intercept) {
-      eqs[i] <- paste0("Y_", i, " = ", sprintf0(numFormat, b[1]))
-      if (num_x > 0) {
-        eqs[i] <- paste0(eqs[i], " + ", paste0(sprintf0(numFormat, b[-1]), " X_", seq_len(num_x), collapse = " + "))
-      }
-    } else {
-      eqs[i] <- paste0("Y_", i, " = ", paste0(sprintf0(numFormat, b), " X_", seq_len(num_x), collapse = " + "))
-    }
-    eqs[i] <- paste0(eqs[i], " + E_", i, ", \\sigma_",i,"^2 = ", sprintf0(numFormat, sigma[[i,i]]))
-  }
-  eqs_latex <- paste(eqs, collapse = " \\\\ ")
-
-  return(eqs_latex)
-}
-
-sur.to.latex.mat <- function(sigma, coef, intercept = TRUE, numFormat = "%.2f",
-                             num_x_break = 3, y_label = "Y", x_label= "X", e_label = "E") {
-  num_y <- ncol(coef)
-  num_x <- nrow(coef)
-
-  y_vec <- latex.variable.vector(num_y, y_label)
-
-  coef_t <- t(coef)
-  x_mat <- latex.matrix(mat = coef_t, numFormat = numFormat)
-
-  x_vec <- latex.variable.vector(num_x, x_label, intercept, num_x_break)
-
-  e_vec <- latex.variable.vector(num_y, e_label)
-
-  s_mat <- latex.matrix(mat = sigma, numFormat = numFormat)
-
-  eq_latex <- paste0(y_vec, " = ", x_mat," ", x_vec," + ", e_vec, ", \\Sigma = ", s_mat)
-
-
-
-  return(eq_latex)
-}
-
-
 #' Generate Random Sample from an SUR Model
 #'
 #' This function generates a random sample from an Seemingly Unrelated Regression model.
@@ -352,8 +244,6 @@ sur.to.latex.mat <- function(sigma, coef, intercept = TRUE, numFormat = "%.2f",
 #' If it is an integer value, it specifies the number of independent variables in each equation of the SUR model and coefficient matrix is generated randomly.
 #' @param nObs Number of observations to generate.
 #' @param intercept If \code{TRUE}, an intercept is included in the model as the first exogenous variable.
-#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-#' If \code{NULL}, conversion to latex or html representations are disabled.
 #'
 #' @return A list with the following items:
 #'   \item{y}{matrix, the generated dependent variable.}
@@ -362,16 +252,13 @@ sur.to.latex.mat <- function(sigma, coef, intercept = TRUE, numFormat = "%.2f",
 #'   \item{sigma}{matrix, the covariance matrix of the disturbances.}
 #'   \item{coef}{matrix, the coefficients used in the model.}
 #'   \item{intercept}{logical, whether an intercept was included in the model.}
-#'   \item{eqsLatex}{character string, Latex representation of the equations of the system.}
-#'   \item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 #'
 #' @export
 #' @importFrom stats rnorm
 #' @example man-roxygen/ex-sim.sur.R
 #' @seealso [sim.varma],[estim.sur],[search.sur]
 sim.sur <- function(sigma = 1L, coef = 1L,
-                    nObs = 100, intercept = TRUE,
-                    numFormat = "%.2f") {
+                    nObs = 100, intercept = TRUE) {
 
   nObs = as.integer(nObs)
   if (nObs <= 0)
@@ -424,8 +311,6 @@ sim.sur <- function(sigma = 1L, coef = 1L,
     }
   }
 
-
-
   errors <- rand.mnormal(nObs, mu = rep(0, num_y), sigma = sigma)
   e <- errors$sample
   if (length(x) != 0)
@@ -453,9 +338,8 @@ sim.sur <- function(sigma = 1L, coef = 1L,
 
   result <- list(y = y, x = x, e = e,
                  sigma = sigma, coef = coef,
-                 intercept = intercept,
-                 eqsLatex = ifelse(is.null(numFormat), NULL, sur.to.latex.eqs(sigma, coef, intercept, as.character(numFormat))),
-                 eqsLatexSys = ifelse(is.null(numFormat), NULL, sur.to.latex.mat(sigma, coef, intercept, as.character(numFormat))))
+                 intercept = intercept)
 
   return(result)
 }
+

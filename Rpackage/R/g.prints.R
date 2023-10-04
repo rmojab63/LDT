@@ -33,6 +33,14 @@ rec.print.list <- function(x, indent = "") {
 
       cat(indent, names(x)[i], " (", nrow(x[[i]]) ,"x", ncol(x[[i]]), "): ", mat_str, "\n", sep = "")
     }
+    else if (is.character(x[[i]])) {
+      if (length(x[[i]]) == 1)
+        cat(indent, names(x)[i], ": ", x[[i]], "\n", sep = "")
+      else if (length(x[[i]]) > 10)
+        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste0(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
+      else
+        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste0(x[[i]], collapse = ", "), "\n", sep = "")
+    }
     else if (is.vector(x[[i]]) && length(x[[i]]) > 1) {
       if (length(x[[i]]) > 10)
         cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste00(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
@@ -141,8 +149,8 @@ print.ldt.search <- function(x, ...) {
           }
           else{
             rec.print.list(list(
-              endogenous = colnames(x$info$data$data)[best$value$depIndices+1],
-              exogenous = if (is.null(best$value$exoIndices)) {NULL} else {colnames(x$info$data$data)[best$value$exoIndices+1]},
+              endogenous = best$value$endogenous,
+              exogenous = best$value$exogenous,
               metric = best$value$metric
             ), indent = c(indent, "  "))
           }

@@ -67,9 +67,10 @@ SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
 
   auto extraLabel = "";
   auto extraNames = std::vector<std::string>({"extra"});
-  List L = GetModelSetResults(
-      model.Modelset, items_, metricsNames, targetNames, extraLabel, extraNames,
-      exoNames, colNames, std::string("coefs"), options_.ReportInterval > 0);
+  List L = GetModelSetResults(model.Modelset, items_, metricsNames, colNames,
+                              targetNames, extraLabel, extraNames, exoNames,
+                              colNames, std::string("coefs"),
+                              options_.ReportInterval > 0);
 
   return L;
 }

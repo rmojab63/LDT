@@ -234,7 +234,7 @@ test_that("ARMA search works for In-Sample with exogenous", {
                     options = get.search.options(printMsg = printMsg),
                     metrics = get.search.metrics(c("aic"),c()),
                     modelChecks = get.search.modelchecks(prediction = FALSE))
-  res1 = estim.varma(Z, x = Exo[,res$aic$target1$model$bests$best1$exoIndices, drop = FALSE],
+  res1 = estim.varma(Z, x = Exo[,res$aic$target1$model$bests$best1$exogenous, drop = FALSE],
                      params = res$aic$target1$model$bests$best1$parameters, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * res1$metrics[2,1]), res$aic$target1$model$bests$best1$weight, tolerance = 1e-10)
 })
@@ -253,13 +253,13 @@ test_that("VARMA search works for In-Sample with exogenous", {
 
   allWeights = sort(sapply(res$aic$target1$model$all, function(x){x$weight}))
   for (m in res$aic$target1$model$all){
-    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE],
+    M = estim.varma(Endo[,m$endogenous, drop = FALSE], x = Exo[,m$exogenous, drop = FALSE],
               params = m$parameters, simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
     expect_equal(exp(-0.5 * M$metrics[2,1]), m$weight, tolerance = 1e-10)
   }
 
 
-  res1 = estim.varma(Endo[,res$sic$target1$model$bests$best1$depIndices, drop = FALSE], x = Exo[,res$sic$target1$model$bests$best1$exoIndices, drop = FALSE],
+  res1 = estim.varma(Endo[,res$sic$target1$model$bests$best1$endogenous, drop = FALSE], x = Exo[,res$sic$target1$model$bests$best1$exogenous, drop = FALSE],
                      params = res$sic$target1$model$bests$best1$parameters, simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * res1$metrics[3,1]), res$sic$target1$model$bests$best1$weight, tolerance = 1e-10)
   # find best in all
@@ -342,12 +342,12 @@ test_that("V-ARMA search works for Out-Sample", {
                                                predictionBoundMultiplier = 200))
 
   for (m in res$crps$target1$model$all){
-    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
+    M = estim.varma(Endo[,m$endogenous, drop = FALSE], x = Exo[,m$exogenous, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
               params =  m$parameters, simFixSize = 2, addIntercept = FALSE, simUsePreviousEstim = FALSE, printMsg = printMsg)
      expect_equal(s.metric.from.weight(m$weight, "crps"), as.numeric(M$metrics[10,1]), tolerance = 1e-10)
   }
   for (m in res$rmse$target1$model$all){
-    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
+    M = estim.varma(Endo[,m$endogenous, drop = FALSE], x = Exo[,m$exogenous, drop = FALSE], maxHorizon = 0, simHorizons = c(1L,2L),
                     params =  m$parameters, simFixSize = 2, addIntercept = FALSE, simUsePreviousEstim = FALSE, printMsg = printMsg)
     expect_equal(s.metric.from.weight(m$weight, "rmse"), as.numeric(M$metrics[8,1]), tolerance = 1e-10)
   }
@@ -412,7 +412,7 @@ test_that("VARMA search works with restricted aic", {
 
   alls = list()
   for (m in res$crps$target1$model$all){
-    M = estim.varma(Endo[,m$depIndices, drop = FALSE], x = Exo[,m$exoIndices, drop = FALSE], params = m$parameters,
+    M = estim.varma(Endo[,m$endogenous, drop = FALSE], x = Exo[,m$exogenous, drop = FALSE], params = m$parameters,
             addIntercept = FALSE, printMsg = printMsg)
     alls = append(alls, M$metrics[2,1])
     expect_true(as.numeric(M$metrics[2,1]) <= 300)
@@ -435,11 +435,11 @@ test_that("VARMA search works with inclusion weights", {
 
   inclusion = matrix(0,7,2)
   for (m in res$crps$target1$model$all){
-    for (d in m$depIndices){
+    for (d in m$endogenous){
       inclusion[d,1] = inclusion[d,1] + m$weight
       inclusion[d,2] = inclusion[d,2] + 1
     }
-    for (e in m$exoIndices){
+    for (e in m$exogenous){
       d = e + ncol(Endo)
       inclusion[d,1] = inclusion[d,1] + m$weight
       inclusion[d,2] = inclusion[d,2] + 1
@@ -475,14 +475,14 @@ test_that("VARMA search works with predictions (bests)", {
     }
   }
   expect_equal(res$aic$target1$predictions$bests$horizon1$best1$weight, best_pred2$weight, tolerance = 1e-10)
-  expect_equal(res$aic$target1$predictions$bests$horizon1$best1$depIndices, best_pred2$depIndices, tolerance = 1e-10)
-  expect_equal(res$aic$target1$predictions$bests$horizon1$best1$exoIndices, best_pred2$exoIndices, tolerance = 1e-10)
+  expect_equal(res$aic$target1$predictions$bests$horizon1$best1$endogenous, best_pred2$endogenous, tolerance = 1e-10)
+  expect_equal(res$aic$target1$predictions$bests$horizon1$best1$exogenous, best_pred2$exogenous, tolerance = 1e-10)
 
   # are mean and variance equal?
-  M = estim.varma( y= as.matrix(Endo[,res$aic$target1$predictions$bests$horizon1$best1$depIndices, drop = FALSE]),
+  M = estim.varma( y= as.matrix(Endo[,res$aic$target1$predictions$bests$horizon1$best1$endogenous, drop = FALSE]),
             params = res$aic$target1$predictions$bests$horizon1$best1$parameters,
-          x = as.matrix(Exo[,res$aic$target1$predictions$bests$horizon1$best1$exoIndices, drop = FALSE]),
-          newX = as.matrix(newX[,res$aic$target1$predictions$bests$horizon1$best1$exoIndices]), maxHorizon = 3,
+          x = as.matrix(Exo[,res$aic$target1$predictions$bests$horizon1$best1$exogenous, drop = FALSE]),
+          newX = as.matrix(newX[,res$aic$target1$predictions$bests$horizon1$best1$exogenous]), maxHorizon = 3,
           simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
   expect_equal(exp(-0.5 * M$metrics[2,1]), res$aic$target1$predictions$bests$horizon1$best1$weight, tolerance = 1e-10)
   expect_equal(res$aic$target1$predictions$bests$horizon1$best1$mean, M$prediction$means[M$prediction$startIndex], tolerance = 1e-9)
@@ -511,10 +511,10 @@ test_that("VARMA search works with predictions (cdfs)", {
   cc = 0
   for (m in res$aic$target1$model$all){
 
-    M = estim.varma( y= as.matrix(Endo[,m$depIndices, drop = FALSE]),
+    M = estim.varma( y= as.matrix(Endo[,m$endogenous, drop = FALSE]),
                params = m$parameters,
-               x = as.matrix(Exo[,m$exoIndices, drop = FALSE]),
-               newX = as.matrix(newX[,m$exoIndices]), maxHorizon = 3,
+               x = as.matrix(Exo[,m$exogenous, drop = FALSE]),
+               newX = as.matrix(newX[,m$exogenous]), maxHorizon = 3,
                simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
 
     hh=h+M$prediction$startIndex - 1
@@ -548,10 +548,10 @@ test_that("VARMA search works with predictions (extreme bounds)", {
   h = 2
   for (m in res$aic$target1$model$all){
 
-    M = estim.varma( y= Endo[,m$depIndices, drop = FALSE],
+    M = estim.varma( y= Endo[,m$endogenous, drop = FALSE],
                params = m$parameters,
-               x = Exo[,m$exoIndices, drop = FALSE],
-               newX = newX[,m$exoIndices, drop = FALSE], maxHorizon = 3,
+               x = Exo[,m$exogenous, drop = FALSE],
+               newX = newX[,m$exogenous, drop = FALSE], maxHorizon = 3,
                simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
 
     hh=h+M$prediction$startIndex - 1
@@ -586,10 +586,10 @@ test_that("VARMA search works with predictions (mixture)", {
   v = 1
   h = 1
   for (m in res$aic$target1$model$all){
-    M = estim.varma( y= Endo[,m$depIndices,drop = FALSE],
+    M = estim.varma( y= Endo[,m$endogenous,drop = FALSE],
                params = m$parameters,
-               x = Exo[,m$exoIndices,drop = FALSE],
-               newX = newX[,m$exoIndices,drop = FALSE], maxHorizon = 3,
+               x = Exo[,m$exogenous,drop = FALSE],
+               newX = newX[,m$exogenous,drop = FALSE], maxHorizon = 3,
                simFixSize = 0, addIntercept = FALSE, printMsg = printMsg)
 
     hh=h+M$prediction$startIndex - 1

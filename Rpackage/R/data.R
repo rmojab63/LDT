@@ -143,6 +143,8 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   }
 
   if(!is.null(weights)){
+    if ("(Weights)" %in% colnames(data))
+      stop("Invalid column name in 'data'. '(Weights)' is reserved.")
     stopifnot(is.numeric(weights) || (is.matrix(weights) && ncol(weights) == 1))
     stopifnot(length(weights) == nrow(data))
     data <- cbind(data[,1:numEndo,drop=FALSE], weights, data[,(numEndo+1):ncol(data),drop=FALSE])
@@ -167,7 +169,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
               lambdas = lambdas,
               hasIntercept = addIntercept,
               hasWeight = !is.null(weights))
-  class(res) <- c("ldt.search.data")
+  class(res) <- c("ldt.search.data", "ldt.list", "list")
   return(res)
 }
 
@@ -346,14 +348,20 @@ boxCoxTransform <- function(data, lambda, ...) {
 #' The inner loop is defined by a list of predefined combinations of the variables.
 #' Each variable can belong to either endogenous or exogenous variables based on their usage.
 #'
-#' @param sizes A numeric vector that determines the sizes of outer loop combinations.
+#' @param sizes A numeric vector or a list of numeric vectors that determines the sizes of outer loop combinations.
 #' For example, if the outer loop belongs to the endogenous variables, \code{c(1, 2)} means all models with 1 and 2 equations.
 #' If the outer loop belongs to exogenous variables, \code{c(1,2)} means all regressions with 1 and 2 exogenous variables.
+#' It can also be a list of numeric vectors for step-wise search.
+#' Each vector determines the size of the models in an step. In the next step, a subset of potential variables is selected by using \code{stepsNumVariables} argument. See also \code{stepsSavePre} argument.
 #' @param partitions A list of numeric vectors or character vectors that partitions the outer loop variables. No model is estimated with two variables from the same partition.
 #' @param numFixPartitions A single number that determines the number of partitions at the beginning of \code{partitions} to be included in all models.
 #' @param innerGroups A list of numeric vectors or character vectors that determines different combinations of the variables for the inner loop.
 #' For example, if the inner loop belongs to exogenous data, \code{list(c(1), c(1, 2))} means estimating all models with just the first exogenous variable and all models with the first and second exogenous variables.
 #' @param numTargets An integer for the number of target variables at the first columns of the data matrix. Results of a search process are specific to these variables. A model is not estimated if it does not contain a target variable.
+#' @param stepsNumVariables A numeric vector. If \code{sizes} is a list (i.e., a step-wise search), this vector must be of equal length and determines the number of variables (with best performance) in each step.
+#' @param stepsFixedNames A character vector. If \code{sizes} is a list (i.e., a step-wise search), this vector determines the name of variables to be included in all steps.
+#' @param stepsSavePre A name for saving and loading the progress, if \code{sizes} is a list.
+#' Each step's result is saved in a file (name=\code{paste0(stepsSavePre,i)} where \code{i} is the index of the step.
 #'
 #' @details
 #' The indexation in \code{ldt} is a two-level nested loop over different combinations of endogenous and exogenous variables, similar to the following code:
@@ -388,8 +396,24 @@ get.combinations <- function(sizes = c(1, 2),
                              partitions = NULL,
                              numFixPartitions = 0,
                              innerGroups = list(c(1)),
-                             numTargets = 1){
-  stopifnot(is.numeric(sizes))
+                             numTargets = 1,
+                             stepsNumVariables = c(NA, NA),
+                             stepsFixedNames = NULL,
+                             stepsSavePre = NULL){
+  stopifnot(is.numeric(sizes) || is.list(sizes))
+  if (is.list(sizes)){
+    for (size in sizes)
+      if (!is.numeric(size) )
+        stop("An element in 'sizes' argument is not numeric.")
+    stopifnot(is.numeric(stepsNumVariables))
+    stopifnot(all(is.na(stepsNumVariables) | stepsNumVariables >= 1))
+    stopifnot(is.null(stepsSavePre) || is.character(stepsSavePre))
+    if (is.character(stepsSavePre))
+      stopifnot(length(stepsSavePre) != 1)
+    stopifnot(length(sizes) == length(stepsNumVariables))
+
+    stopifnot(is.null(stepsFixedNames) || is.character(stepsFixedNames))
+  }
   stopifnot(is.numeric(numTargets) && length(numTargets) == 1 && numTargets >= 0)
 
   stopifnot(is.null(partitions) || is.list(partitions))
@@ -407,8 +431,11 @@ get.combinations <- function(sizes = c(1, 2),
               partitions = partitions,
               numFixPartitions = numFixPartitions,
               innerGroups = innerGroups,
-              numTargets = numTargets)
-  class(res) <- "ldt.search.combinations"
+              numTargets = numTargets,
+              stepsNumVariables = stepsNumVariables,
+              stepsFixedNames = stepsFixedNames,
+              stepsSavePre = stepsSavePre)
+  class(res) <- c("ldt.search.combinations", "ldt.list", "list")
   return(res)
 }
 
@@ -420,12 +447,12 @@ get.combinations <- function(sizes = c(1, 2),
 #'
 #' @param combinations A list returned by the [get.combinations] function.
 #' @param data A list returned by [get.data] function.
-#' @param outerOverEndogenous \code{TRUE} if outer loop is defined over the endogenous variables. \code{FALSE} for exogenous.
+#' @param innerIsExogenous Use \code{TRUE} if outer loop is defined over the endogenous variables and \code{FALSE} if it is for exogenous.
 #'
 #' @return A list similar to the input \code{combinations}, but with all character vectors in \code{innerGroups} or \code{partitions} converted to numeric vectors based on the index of the columns in the \code{data} matrix.
 #' It sums the exogenous indexes with the number of endogenous variables and returns zero-based indexation for C code.
 #'
-get.indexation <- function(combinations, data, outerOverEndogenous) {
+get.indexation <- function(combinations, data, innerIsExogenous) {
 
   stopifnot(!is.null(data))
   if (!(is(data, "ldt.search.data")))
@@ -435,7 +462,11 @@ get.indexation <- function(combinations, data, outerOverEndogenous) {
     stop("Invalid class. Use 'get.combinations()' function to generate 'combinations'.")
   stopifnot(is.matrix(data$data) && is.numeric(data$data) && !is.null(colnames(data$data)))
 
-  if (outerOverEndogenous == FALSE && data$numExo == 0)
+  dup_cols <- anyDuplicated(colnames(data$data))
+  if (dup_cols > 0)
+    stop("'data' has duplicate column names.")
+
+  if (innerIsExogenous == FALSE && data$numExo == 0)
     stop("Number of exogenous variables cannot be zero.") #TODO: check for intercept
   # we check for non-zero number of endogenous variables in 'get.data'
 
@@ -448,28 +479,63 @@ get.indexation <- function(combinations, data, outerOverEndogenous) {
     if (any(is.na(indices))) {
       stop("Some column names are not found in the data matrix.")
     }
-    return(as.integer(indices))
+    return(sort(as.integer(indices)))
   }
+
+  if (is.list(combinations$sizes)) {
+    combinations$sizes <- lapply(combinations$sizes, function(x){
+      j <- sort(as.integer(x))
+      if (any(j < 1))
+        stop("Zero or negative index in sizes.")
+      if (innerIsExogenous == FALSE && any(j > data$numExo))
+        stop("Invalid value in sizes. Make sure they are less than the number of exogenous variables.")
+      if (innerIsExogenous && any(j > data$numEndo))
+        stop("Invalid index in sizes. Make sure they are less than the number of endogenous variables.")
+      j
+    })
+
+    combinations$stepsNumVariables <- as.integer(combinations$stepsNumVariables)
+    if (any(!is.na(combinations$stepsNumVariables) & combinations$stepsNumVariables < 1))
+      stop("Zero or negative value in stepsNumVariables.")
+    if (any(!is.na(combinations$stepsNumVariables) & combinations$stepsNumVariables > data$numEndo + data$numExo))
+      stop("Invalid value in stepsNumVariables. Make sure they are whether 'NA' or less than the number of variables.")
+
+    if (!is.null(combinations$stepsFixedNames) && length(combinations$stepsFixedNames) != 0){
+      if (!any(combinations$stepsFixedNames %in% colnames(data$data)))
+        stop("Invalid item in 'stepsFixedNames'. Make sure they are valid names of variables.")
+    }
+    else
+      combinations$stepsFixedNames = character(0)
+  }
+  else{
+    combinations$sizes = sort(as.integer(combinations$sizes))
+    if (any(combinations$sizes < 1))
+      stop("Zero or negative index in sizes.")
+    if (innerIsExogenous == FALSE && any(combinations$sizes > data$numExo))
+      stop("Invalid value in sizes. Make sure they are less than the number of exogenous variables.")
+    if (innerIsExogenous && any(combinations$sizes > data$numEndo))
+      stop("Invalid index in sizes. Make sure they are less than the number of endogenous variables.")
+  }
+
 
   if (!is.null(combinations$partitions)) {
     combinations$partitions <-
       lapply(combinations$partitions,
              function(x){
                j <- if (is.character(x)) {colnames_to_index(x, colnames(data$data))}
-               else {as.integer(x)}
+               else {sort(as.integer(x))}
                if (any(j) < 1)
                  stop("Zero or negative index in partitions.")
-               if (outerOverEndogenous && any(j > data$numEndo))
-                 stop("Invalid index in partitions. Make sure they are less than the number of endogenous variables.")
-               if (outerOverEndogenous == FALSE && any(j > data$numExo))
-                 stop("Invalid index in partitions. Make sure they are less than the number of exogenous variables.")
+               if (innerIsExogenous && any(j > data$numEndo))
+                 stop("Invalid index in partitions(=", j,"). Make sure they are less than the number of endogenous variables (=", data$numEndo, ").")
+               if (innerIsExogenous == FALSE && any(j > data$numExo))
+                 stop("Invalid index in partitions (=", j,"). Make sure they are less than the number of exogenous variables (=", data$numExo, ").")
                j
              })
-
   }
   else{ # put each variable in its own partition
     combinations$partitions <-
-      lapply(1:ifelse(outerOverEndogenous, data$numEndo, data$numExo),
+      lapply(1:ifelse(innerIsExogenous, data$numEndo, data$numExo),
              function(x)c(x))
   }
 
@@ -479,20 +545,31 @@ get.indexation <- function(combinations, data, outerOverEndogenous) {
              j <- if (is.character(x))
                {colnames_to_index(x, colnames(data$data))}
              else
-               {as.integer(x)}
+               {sort(as.integer(x))}
              if (any(j < 1))
                stop("Zero or negative index in innerGroups.")
-             if (outerOverEndogenous && any(j > data$numExo))
+             if (innerIsExogenous && any(j > data$numExo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of exogenous variables.")
-             if (outerOverEndogenous  == FALSE && any(j > data$numEndo))
+             if (innerIsExogenous  == FALSE && any(j > data$numEndo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of endogenous variables.")
              j
            })
 
+
+  combinations$innerGroups <- unique(combinations$innerGroups)
+
+  if (innerIsExogenous == FALSE){ # inner is endogenous
+    inner_group_values <- unique(unlist(combinations$innerGroups))
+    for (t in 1:combinations$numTargets)
+    if (!(t %in% inner_group_values))
+       stop("Invalid 'innerGroups' argument in 'combinations'. A target variable (index=",t,") is not reported in this list.")
+  }
+
+
   # zero-based indexation and moving exogenous indices:
   for (i in c(1:length(combinations$partitions))){
     combinations$partitions[[i]] <- combinations$partitions[[i]] - 1
-    if (outerOverEndogenous == FALSE)
+    if (innerIsExogenous == FALSE)
       combinations$partitions[[i]] <- combinations$partitions[[i]] + data$numEndo
   }
   for (i in c(1:length(combinations$innerGroups)))

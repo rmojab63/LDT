@@ -47,8 +47,8 @@ search_res <-
     metrics = metric_options
   )
 # best model's explanatory indexes for the first and second variables:
-print(search_res$sic$target1$model$bests$best1$exoIndices)
-print(search_res$sic$target2$model$bests$best1$exoIndices)
+print(search_res$sic$target1$model$bests$best1$exogenous)
+print(search_res$sic$target2$model$bests$best1$exogenous)
 
 # Use summary function to estimate the best models:
 search_sum <-
@@ -79,5 +79,5 @@ search_step_res <-
     metrics = metric_options,
     items = search_items
   )
-print(search_step_res$sic$target1$model$bests$best1$exoIndices)
+print(search_step_res$sic$target1$model$bests$best1$exogenous)
 # Use summary like before.
