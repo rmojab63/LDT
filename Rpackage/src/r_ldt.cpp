@@ -25,17 +25,21 @@ void UpdateSearchData(List &dataR, SearchData &data) {
 
   auto mat = as<NumericMatrix>(dataR["data"]);
   data.Data.SetData(&mat[0], mat.nrow(), mat.ncol());
+
   data.NumEndo = as<int>(dataR["numEndo"]);
   data.NumExo = as<int>(dataR["numExo"]);
   data.ObsCount = as<int>(dataR["obsCount"]);
   data.NewObsCount = as<int>(dataR["newObsCount"]);
+
   if (data.NewObsCount > 0) {
     auto mat1 = as<NumericMatrix>(dataR["newX"]);
     data.NewX.SetData(&mat1[0], mat1.nrow(), mat1.ncol());
   }
+
   auto lambdasR = dataR["lambdas"];
   if (lambdasR != R_NilValue)
     data.Lambdas = as<std::vector<double>>(lambdasR);
+
   data.HasIntercept = as<bool>(dataR["hasIntercept"]);
   data.HasWeight = as<bool>(dataR["hasWeight"]);
 }
@@ -291,24 +295,11 @@ void UpdatePcaOptions(List optionsR, PcaAnalysisOptions &options) {
     options.CheckValidity();
 }
 
-void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
-                        LimitedMemoryBfgsbOptions &options) {
-  if (printMsg)
-    Rprintf("L-BFGS options:\n");
-  options.Factor = as<double>(lbfgsOptions["factor"]);
-  options.IterationMax = as<int>(lbfgsOptions["maxIterations"]);
-  options.ProjectedGradientTol =
-      as<double>(lbfgsOptions["projectedGradientTol"]);
-  options.mMaxCorrections = as<int>(lbfgsOptions["maxCorrections"]);
-  ;
-
-  if (printMsg) {
-    Rprintf("    - Maximum Number of Iterations=%i\n", options.IterationMax);
-    Rprintf("    - Factor=%f\n", options.Factor);
-    Rprintf("    - Projected Gradient Tolerance=%f\n",
-            options.ProjectedGradientTol);
-    Rprintf("    - Maximum Corrections=%i\n", options.mMaxCorrections);
-  }
+void UpdateLbfgsOptions(List &optionsR, LimitedMemoryBfgsbOptions &options) {
+  options.Factor = as<double>(optionsR["factor"]);
+  options.IterationMax = as<int>(optionsR["maxIterations"]);
+  options.ProjectedGradientTol = as<double>(optionsR["projectedGradientTol"]);
+  options.mMaxCorrections = as<int>(optionsR["maxCorrections"]);
 }
 
 void UpdateNewtonOptions(bool printMsg, List &newtonR, Newton &newton) {
@@ -408,9 +399,9 @@ IntegerVector as_ivector(const ldt::Matrix<int> &vec,
   return res;
 }
 
-void ReportProgress(int reportInterval, ModelSet &model, bool &estimating,
-                    SearchOptions &options, int allCount) {
-  auto printMsg = reportInterval > 0;
+void ReportProgress(ModelSet &model, bool &estimating, SearchOptions &options,
+                    int allCount) {
+  auto printMsg = options.ReportInterval > 0;
   auto start = std::chrono::system_clock::now();
   if (printMsg)
     Rprintf("Calculations Started ...\n");
@@ -432,7 +423,7 @@ void ReportProgress(int reportInterval, ModelSet &model, bool &estimating,
     }
 
     i++;
-    if (reportInterval == 0 || i <= reportInterval)
+    if (options.ReportInterval == 0 || i <= options.ReportInterval)
       continue;
     i = 0;
 
@@ -473,7 +464,6 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
                          const std::vector<std::string> &colNames,
                          std::vector<List> &results,
                          const std::vector<EstimationKeep *> &list,
-                         const std::string &extra1Label,
                          const std::vector<std::string> &extra1Names,
                          const bool &addCoefs) {
 
@@ -511,7 +501,7 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
 
     if (b->Extra.Data) {
       value.push_back(as_ivector(b->Extra, extra1Names));
-      names.push_back(extra1Label);
+      names.push_back("extra");
     }
     Rcpp::List valueR = wrap(value);
     valueR.attr("names") = wrap(names);
@@ -532,14 +522,13 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
                         std::vector<List> &results, const ModelSet &model,
                         const std::vector<SearcherSummary *> &list,
                         const SearchItems &items,
-                        const std::string &extra1Label,
                         const std::vector<std::string> &length1Names,
                         const std::vector<std::string> &extra1Names) {
 
   if (items.KeepBestCount > 0) {
     for (auto i = 0; i < items.Length1; i++) {
 
-      auto typeName = std::string("best coef for '") + length1Names.at(i) +
+      auto typeName = std::string("best item for '") + length1Names.at(i) +
                       std::string("'");
 
       auto bests = std::vector<EstimationKeep *>();
@@ -547,7 +536,7 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
 
       if (bests.size() != 0)
         add_CoefInfo(eName, tName, typeName, colNames, results, bests,
-                     extra1Label, extra1Names, true);
+                     extra1Names, true);
     }
   }
 
@@ -637,7 +626,6 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                         const std::vector<std::string> &metricNames,
                         const std::vector<std::string> &colNames,
                         const std::vector<std::string> &targetNames,
-                        const std::string &extra1Label,
                         const std::vector<std::string> &extra1Names,
                         const std::vector<std::string> &length1Names,
                         const std::vector<std::string> &inclusionNames,
@@ -690,7 +678,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           model.CombineBests(eIndex, tIndex, 0, list0, bests);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, bests,
-                       extra1Label, extra1Names, false);
+                       extra1Names, false);
         }
 
         if (items.KeepAll) {
@@ -700,7 +688,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           model.CombineAll(eIndex, tIndex, 0, list0, all);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, all,
-                       extra1Label, extra1Names, false);
+                       extra1Names, false);
         }
 
         if (items.KeepInclusionWeights) {
@@ -729,7 +717,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
 
       if (items.Length1 > 0) {
         add_Lengthi(eIndex, eName, tIndex, tName, colNames, results, model,
-                    list1, items, extra1Label, length1Names, extra1Names);
+                    list1, items, length1Names, extra1Names);
       }
 
       if (items.Length2 > 0) {

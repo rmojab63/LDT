@@ -1298,6 +1298,9 @@ TEST(Varma_T, var_search) {
   auto data = DatasetTs<true>(data0.RowsCount, data0.ColsCount, true, true);
   data.Data(data0);
 
+  auto searchdata = SearchData();
+  searchdata.Data = data0;
+
   auto items = SearchItems();
   auto options = SearchOptions();
   auto metrics = SearchMetricOptions();
@@ -1312,9 +1315,12 @@ TEST(Varma_T, var_search) {
   items.Length1 = 2;
   checks.Prediction = true;
 
-  auto sizes = std::vector<Ti>({1});
-  auto exo = std::vector<std::vector<Ti>>({{6}});
-  auto endogroups = std::vector<std::vector<Ti>>({{0}, {1}, {2}});
+  auto searchCombinations = SearchCombinations();
+  searchCombinations.Sizes = std::vector<Ti>({1});
+  searchCombinations.Partitions = std::vector<std::vector<Ti>>({{0}, {1}, {2}});
+  searchCombinations.NumTargets = 2;
+  searchCombinations.InnerGroups = std::vector<std::vector<Ti>>({{6}});
+
   metrics.SimFixSize = 2;
   metrics.Horizons = std::vector<Ti>({1});
   metrics.MetricsIn = std::vector<GoodnessOfFitType>(
@@ -1325,8 +1331,8 @@ TEST(Varma_T, var_search) {
   auto parm = std::vector<Ti>({2, 1, 2, 0, 0, 0});
 
   auto modelset =
-      VarmaModelset(options, items, metrics, checks, sizes, endogroups, data,
-                    parm, 0, exo, true, nullptr, 2, items.Length1);
+      VarmaModelset(searchdata, searchCombinations, options, items, metrics,
+                    checks, data, parm, 0, true, nullptr, 2, items.Length1);
   auto W = new Tv[modelset.Modelset.WorkSize];
   modelset.Modelset.Start(W, nullptr);
 

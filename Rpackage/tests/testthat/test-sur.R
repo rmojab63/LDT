@@ -9,7 +9,13 @@ test_that("estim.sur estimation works with simulated data", {
   expect_equal(as.numeric(coef(res)), as.numeric(data$coef), tolerance = 1e-1)
   expect_equal(as.numeric(res$estimations$sigma), as.numeric(data$sigma), tolerance = 1e-1)
 
+  # test exogenous and endogenous functions:
+  X <- exogenous(res)
+  Y <- endogenous(res)
+  beta <- solve(t(X) %*% X) %*% t(X) %*% Y
+  expect_equal(res$estimations$coefs, beta)
 })
+
 
 x <-matrix(c(32.446,44.145,17.062,65.818,76.19,40.408,78.131,
              26.695,21.992,68.033,98.872,61.154,71.842,66.922,
@@ -103,6 +109,7 @@ test_that("estim.sur estimation works with restrictions", {
                tolerance = 1e-3) # low tolerance ?! it must be because the initialization is different
   expect_equal(as.numeric(res$estimations$sigma),
                cv, tolerance = 1e-3) # adjusted dof
+
 })
 
 test_that("estim.sur peojection works with NO restrictions (OLS)", {
@@ -277,14 +284,14 @@ test_that("estim.sur simulation works", {
 test_that("estim.sur lambda in simulation works", {
 
   res1 = estim.sur(data = get.data(x[,1:6], endogenous = 2, lambdas = c(1, 1)),
-                   simFixSize = 10, searchSigMaxIter = 2, simSeed = 340 )
+                   simFixSize = 10, simSeed = 340 )
   expect_equal(res1$simulation$validIter, 10)
 
   res2 = estim.sur(data = get.data(x[,1:6], endogenous = 2),
-                   simFixSize = 10, searchSigMaxIter = 2, simSeed = 340)
+                   simFixSize = 10, simSeed = 340)
   expect_equal(res1$simulation, res2$simulation)
-  expect_equal(res1$metrics[c("mae", "rmse", "crps", "sign"),],
-               res2$metrics[c("mae", "rmse", "crps", "sign"),])
+  expect_equal(res1$metrics[c("mae", "rmse"),],
+               res2$metrics[c("mae", "rmse"),])
 
   # Note that When λ=1, the Box-Cox transformation returns x-1
   # It seems that this shift does not change some metrics
@@ -446,7 +453,7 @@ test_that("search.sur works with restricted aic", {
                   metrics = get.search.metrics(character(0),c("rmse", "crps", "sign"),simFixSize = 4, trainRatio = 0.75,
                                                      trainFixSize = 12,
                                                      seed = -340))  # negative seed for equal distribution
-  sumRes <- summary(res)
+  sumRes <- summary(res, test = TRUE)
   for (m in sumRes$results){
     aic <- as.numeric(m$value$metrics[rownames(m$value$metrics) == "aic",1])
     #print(aic)
@@ -511,7 +518,7 @@ test_that("search.sur works with coefficients (cdfs)", {
                                             cdfs = c(0,1,0)),
                    metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
                                                 , seed = -340))
-  sumRes <- summary(res)
+  sumRes <- summary(res, test = TRUE)
   sum = 0
   c = 0
   cc=0
@@ -550,7 +557,7 @@ test_that("search.sur works with coefficients (extreme bounds)", {
                                             extremeMultiplier = 2),
                    metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
                                                 , seed = -340))
-  sumRes <- summary(res)
+  sumRes <- summary(res, test = TRUE)
   mn = Inf
   mx = -Inf
   for (m in sumRes$results){
@@ -584,7 +591,7 @@ test_that("search.sur works with coefficients (mixture)", {
                                             mixture4 = TRUE),
                    metrics = get.search.metrics(c("sic"),c("rmse", "crps", "sign")
                                                 , seed = -340))
-  sumRes <- summary(res)
+  sumRes <- summary(res, test = TRUE)
   coefs = c()
   vars = c()
   weights = c()

@@ -31,24 +31,24 @@ rec.print.list <- function(x, indent = "") {
         mat_str = paste(mat_str, " ...")
       }
 
-      cat(indent, names(x)[i], " (", nrow(x[[i]]) ,"x", ncol(x[[i]]), "): ", mat_str, "\n", sep = "")
+      cat(indent, names(x)[i], ": (", nrow(x[[i]]) ,"x", ncol(x[[i]]), ") ", mat_str, "\n", sep = "")
     }
     else if (is.character(x[[i]])) {
       if (length(x[[i]]) == 1)
         cat(indent, names(x)[i], ": ", x[[i]], "\n", sep = "")
       else if (length(x[[i]]) > 10)
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste0(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
+        cat(indent, names(x)[i], ": (", length(x[[i]]) ,"x1) ", paste0(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
       else
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste0(x[[i]], collapse = ", "), "\n", sep = "")
+        cat(indent, names(x)[i], ": (", length(x[[i]]) ,"x1) ", paste0(x[[i]], collapse = ", "), "\n", sep = "")
     }
     else if (is.vector(x[[i]]) && length(x[[i]]) > 1) {
       if (length(x[[i]]) > 10)
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste00(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
+        cat(indent, names(x)[i], ": (", length(x[[i]]) ,"x1) ", paste00(x[[i]][1:10], collapse = ", "), "...\n", sep = "")
       else
-        cat(indent, names(x)[i], " (", length(x[[i]]) ,"x1): ", paste00(x[[i]], collapse = ", "), "\n", sep = "")
+        cat(indent, names(x)[i], ": (", length(x[[i]]) ,"x1) ", paste00(x[[i]], collapse = ", "), "\n", sep = "")
     }
     else if (is.vector(x[[i]]) && length(x[[i]])  == 0) {
-      cat(indent, names(x)[i], " (0x1): \n", sep = "")
+      cat(indent, names(x)[i], ": (0x1) \n", sep = "")
     }
     else {
       cat(indent, names(x)[i], ": ", x[[i]], "\n", sep = "")
@@ -173,7 +173,7 @@ print.ldt.search <- function(x, ...) {
       if (x$info$items$type1){
 
         if (x$info$items$bestK){
-          best_coefs <- values[which(sapply(values, function(y){y$info == 0 && startsWith(y$typeName, "best coef for")}))]
+          best_coefs <- values[which(sapply(values, function(y){y$info == 0 && startsWith(y$typeName, "best item for")}))]
           cat(indent, "Best significant coeffiecients [mean-1.95*std, mean, mean+1.95*std]:\n")
           lst <- lapply(best_coefs, function(b)c(b$value$mean - 1.95 * sqrt(b$value$var),
                                                  b$value$mean,
@@ -304,22 +304,20 @@ print.ldt.estim <- function(x, ...) {
     cat("---\n")
     cat("Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n r restricted\n\n")
 
-    cat("Number of observations: ", x$info$data$obsCount, "\n")
+    cat("Number of observations: ", nrow(x$estimations$Y), "\n")
+    omitted_dp <- nrow(x$info$data$data) - nrow(x$estimations$Y)
+    if (omitted_dp != 0)
+      cat("Number of data-points omitted: ", omitted_dp, "\n")
     cat("Number of equations in the system: ", x$info$data$numEndo, "(current equation: ", j, ")\n")
     numRes <-  - ifelse (is.null(x$estimations$isRestricted), 0, sum(x$estimations$isRestricted[,dep_var]))
     cat("Number of restrictions in the equation: ", numRes,  "\n")
     cat("Number of estimated coefficients in the equation: ", x$info$data$numExo - numRes,  "\n")
-    cat("\n")
-    cat("R-squared: ", x$metrics["r2",dep_var], "\n")
+    if ("r2" %in% rownames(x$metrics))
+      cat("R-squared: ", x$metrics["r2",dep_var], "\n")
     #cat("F-statistic: ", x$metrics["f",dep_var], " on ", x$counts$fProbD1, "and", x$counts$fProbD2, " DF,  p-value: ", x$metrics["fProb",dep_var]) #TODO: check its validity, esp. the degrees of freedom in multivariate case
     cat("Akaike Information Criterion: ", x$metrics["aic",dep_var], "\n")
-    cat("Schwartz Information Criterion: ", x$metrics["aic",dep_var], "\n")
+    cat("Schwartz Information Criterion: ", x$metrics["sic",dep_var], "\n")
   }
-  cat("\n")
-
-  cat("Number of observations: ", x$info$data$obsCount, "\n")
-  cat("Number of exogenous variables in the system: ", x$info$data$numExo)
-  cat("Number of restrictions in the system: ", sum(x$estimations$isRestricted),  "\n")
   cat("\n")
 
   if (!is.null(x$projection)){
@@ -334,8 +332,36 @@ print.ldt.estim <- function(x, ...) {
   if (!is.null(x$info$pcaOptionsX)){
     cat(" ** Principle components are used for exogenous data.\n")
   }
-  if (!is.null(x$info$searchSigMaxIter > 0)){
+  if (!is.null(x$info$searchSigMaxIter) && x$info$searchSigMaxIter > 0){
     cat(" ** Zero restrictions are automatically selected (alpha=", x$info$searchSigMaxProb,").\n")
   }
+}
+
+
+#' Prints an \code{ldt.varma.prediction} object
+#'
+#' An \code{ldt.varma.prediction} object is the output of [predict.ldt.estim.varma()] function.
+#'
+#' @param x An object of class \code{ldt.varma.prediction}
+#' @param ... Additional arguments
+#'
+#' @return This function has no output.
+#' @export
+print.ldt.varma.prediction <- function(x, ...) {
+  if (is.null(x))
+    stop("argument is null.")
+  if (!is(x, "ldt.varma.prediction"))
+    stop("Invalid class. An 'ldt.varma.prediction' object is expected.")
+  if (nrow(x$means) == x$startIndex)
+    stop("Invalid data. Prediction is not available.")
+
+  cat("LDT VARMA prediction:\n")
+  rec.print.list(list(
+    `Maximum horizon` = nrow(x$means) - x$startIndex,
+    `Number of variables` = ncol(x$means),
+    `Has variance` = !is.null(x$vars),
+    `Prediction at horizon 1` = x$means[x$startIndex,],
+    `Variance at horizon 1` = if (is.null(x$vars)) {NULL} else {x$vars[x$startIndex,]}
+  ), "  ")
 }
 

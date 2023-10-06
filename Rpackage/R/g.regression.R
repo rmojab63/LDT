@@ -33,7 +33,7 @@ checkEquation <- function(object, equations, justOne){
 #' @export
 endogenous <- function(object, equations = NULL, ...){
   equations <- checkEquation(object, equations, FALSE)
-  object$info$data$data[, equations, drop=FALSE]
+  object$estimations$Y[, equations, drop=FALSE]
 }
 
 #' Extract Exogenous Variable(s) Data
@@ -50,12 +50,12 @@ endogenous <- function(object, equations = NULL, ...){
 #' @export
 exogenous <- function(object, equation = 1, ...){
   equation <- checkEquation(object, equation, TRUE)
-  exogenous <- c((object$info$data$numEndo+1+ifelse(object$info$data$hasWeight,1,0)):ncol(object$info$data$data))
+  X <- object$estimations$X
   if (!is.null(object$estimations$isRestricted)){
     not_restricted <- as.logical(1 - object$estimations$isRestricted[,equation])
-    exogenous <- exogenous[not_restricted]
+    X <- X[,not_restricted]
   }
-  object$info$data$data[, exogenous, drop=FALSE]
+  X
 }
 
 
@@ -90,15 +90,33 @@ coef.ldt.estim <- function(object, equations = NULL, removeZeroRest = FALSE, ...
 }
 
 
-hatvalues0 <- function(object, equation){
-  X <- exogenous(object, equation = equation)
+hatvalues0 <- function(object, equation, addNA = TRUE){
+  #TODO:can be more efficient
+  method <- tolower(attr(object, "method"))
+
+  X <- exogenous(object, equation = equation) # it takes PCA and restrictions into account
+
   H <- X %*% solve(t(X) %*% X) %*% t(X)
-  diag(H)
+  res <- diag(H)
+
+  if (addNA && method == "varma"){
+    omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid)
+    res <- c(rep(NA, omit_obs), res)
+  }
+  res
 }
 
-cooks.distance0 <- function(object, equation){
-  h <- hatvalues0(object, equation)
+cooks.distance0 <- function(object, equation, addNA = TRUE){
+  method <- tolower(attr(object, "method"))
+  omit_obs <- 0
+  if (method == "varma")
+    omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid)
+
+  h <- hatvalues0(object, equation, FALSE)
   r <- resid(object, equation)
+  if (omit_obs > 0)
+    r <- r[(omit_obs+1):length(r)]
+
   mse <- sum(r^2)/length(r)
   c <- coef(object, equations = equation, removeZeroRest = TRUE)
   p <- length(c[1])
@@ -106,7 +124,11 @@ cooks.distance0 <- function(object, equation){
     stop("Cook's distance is not implemented for weighted observations.") # couldn't find a reference
   }
   else
-    r^2 * h / (p*mse*(1-h^2))
+    res <- r^2 * h / (p*mse*(1-h^2))
+
+  if (addNA && omit_obs > 0)
+    res <- c(rep(NA, omit_obs), res)
+  res
 }
 
 #' Extract Residuals Data
@@ -115,7 +137,7 @@ cooks.distance0 <- function(object, equation){
 #'
 #' @param object An object of class \code{ldt.estim}.
 #' @param equation A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
-#' @param type Determines the type of the calculations. If more than one type is specified, the first item is used. See details.
+#' @param standardized If \code{TRUE}, standardized residuals are returned. See details.
 #' @param ...
 #'
 #' @details
@@ -126,12 +148,14 @@ cooks.distance0 <- function(object, equation){
 #' @return A matrix containing the residuals data.
 #' @export
 residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, ...){
+  method <- tolower(attr(object, "method"))
   stopifnot(is.logical(standardized))
   equations <- checkEquation(object, equations, FALSE)
   resid <- object$estimations$resid[, equations, drop=FALSE]
+
   if (standardized) {
     for (i in equations){
-      hii <- hatvalues0(object, equation = i)
+      hii <- hatvalues0(object, equation = i, addNA = FALSE)
       s <- sd(resid)
       if (object$info$data$hasWeight){
         weights <- object$info$data[,object$info$data$numEndo + 1]
@@ -142,6 +166,12 @@ residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, 
       }
     }
   }
+
+  omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid) # for VARMA
+  if (method == "varma")
+    resid <- rbind(matrix(NA, ncol = ncol(resid), nrow = omit_obs), resid)
+
+
   resid
 }
 
@@ -158,7 +188,7 @@ residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, 
 #' @export
 fitted.ldt.estim <- function(object, equations = NULL, ...){
   equations <- checkEquation(object, equations, FALSE)
-  resid <- object$estimations$resid[, equations, drop=FALSE]
+  resid <- residuals.ldt.estim(object, equations = equations, standardized = FALSE)
   y <- object$info$data$data[, equations, drop=FALSE]
   y - resid
 }
@@ -215,10 +245,55 @@ BIC.ldt.estim <- function(object, ...){
 #' @param object An object of class \code{ldt.estim}
 #' @param ... Additional arguments.
 #'
-#' @return A list containing the predicted (projected) mean and variancesf.
+#' @return A list containing the predicted (projected) means and variances.
 #' @export
 predict.ldt.estim <- function(object, ...){
   object$projection
 }
+
+#' Extract Prediction Results from a \code{ldt.estim.varma} Object
+#'
+#' This function extracts predicted mean and its variance from an \code{ldt.estim.varma} object.
+#' new data must be provided while estimating the model.
+#'
+#' @param object An object of class \code{ldt.estim.varma}
+#' @param startFrequency Frequency of the first observation used in the estimation.
+#' This is object of class \code{ldtf}.
+#' @param ... Additional arguments.
+#'
+#' @return An object of class \code{ldt.varma.prediction}, which is a list with predicted \code{means} and (if available) \code{variances}.
+#'
+#' @export
+predict.ldt.estim.varma <- function(object, startFrequency = NULL, ...){
+  if (is.null(object$prediction) || is.null(object$prediction$means))
+    stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")
+  hasVar = !is.null(object$prediction$vars)
+  if (is.null(startFrequency))
+    startFrequency = object$info$startFrequency
+  if (is.null(startFrequency))
+    startFrequency = tdata::f.cross.section(1)
+
+  predStart = tdata::next.freq(startFrequency,
+                               object$info$data$obsCount - object$prediction$startIndex + 1)
+  labs <- tdata::get.seq0(predStart, ncol(object$prediction$means), by = 1)
+
+  means <- t(object$prediction$means)
+  vars <- NULL
+  rownames(means) <- labs
+  if (hasVar){
+    vars <- t(object$prediction$vars)
+    rownames(vars) <- labs
+  }
+  res <- list(means = means,
+              vars = vars,
+              startIndex = object$prediction$startIndex)
+
+  class(res) <- c("ldt.varma.prediction", "list")
+  attr(res, "ldtf") <- predStart
+  res
+}
+
+
+
 
 

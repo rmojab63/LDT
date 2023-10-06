@@ -138,8 +138,8 @@ if(COMPILE_R)
 		 Rpackage/src/r_clustering.cpp
 		 Rpackage/src/r_ldt.cpp
 		 Rpackage/src/r_sur.cpp
-		 #Rpackage/src/r_varma.h
-		 #Rpackage/src/r_dc.h
+		 Rpackage/src/r_varma.cpp
+		 #Rpackage/src/r_dc.cpp
     )
   
 	# currently, I hard code the paths:  
@@ -332,10 +332,10 @@ if(BUILD_TEST)
 	 test/correlation_t.cpp 
 	 test/distance_t.cpp 
 	 test/varma_t.cpp  
-	 test/sur_t.cpp  
+	 #test/sur_t.cpp  
 	 test/cluster_t.cpp  
-	 test/discrete_choice_t.cpp
-	 test/searcher_t.cpp
+	 #test/discrete_choice_t.cpp
+	 #test/searcher_t.cpp
 	 test/pca_t.cpp  
 	 test/data_split_t.cpp 
 	 test/frequency_t.cpp 

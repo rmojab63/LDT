@@ -15,6 +15,11 @@ SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
   auto data_ = SearchData();
   UpdateSearchData(data, data_);
 
+  auto exoStart = data_.NumEndo;
+  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
+  auto exoNames =
+      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
+
   auto combinations_ = SearchCombinations();
   UpdateSearchCombinations(combinations, combinations_);
 
@@ -29,10 +34,6 @@ SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
                 metricsNames, length1, data_.NumExo, combinations_.NumTargets,
                 data_.NumEndo, false, true, "Coefficients", false);
 
-  auto exoStart = data_.NumEndo;
-  auto colNames = as<std::vector<std::string>>(colnames(data["data"]));
-  auto exoNames =
-      std::vector<std::string>(colNames.begin() + exoStart, colNames.end());
   auto targetNames = std::vector<std::string>(
       colNames.begin(), colNames.begin() + items_.LengthTargets);
 
@@ -59,18 +60,15 @@ SEXP SearchSur(List data, List combinations, List metrics, List modelChecks,
     estimating = false;
   });
 
-  ReportProgress(options_.ReportInterval, model.Modelset, estimating, options_,
-                 alli);
+  ReportProgress(model.Modelset, estimating, options_, alli);
 
   if (options_.RequestCancel)
     return R_NilValue;
 
-  auto extraLabel = "";
   auto extraNames = std::vector<std::string>({"extra"});
-  List L = GetModelSetResults(model.Modelset, items_, metricsNames, colNames,
-                              targetNames, extraLabel, extraNames, exoNames,
-                              colNames, std::string("coefs"),
-                              options_.ReportInterval > 0);
+  List L = GetModelSetResults(
+      model.Modelset, items_, metricsNames, colNames, targetNames, extraNames,
+      exoNames, colNames, std::string("coefs"), options_.ReportInterval > 0);
 
   return L;
 }
@@ -174,7 +172,8 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
     simModel.Calculate(data_.Data, data_.NumEndo, S0.get(), W0.get(),
                        hasR ? &restriction_ : nullptr, cancel, simFixSize,
                        simSeed, searchSigMaxProb, simMaxConditionNumber,
-                       INT32_MAX);
+                       INT32_MAX,
+                       data_.Lambdas.size() > 0 ? &data_.Lambdas : nullptr);
   }
 
   // Metrics
@@ -266,6 +265,10 @@ SEXP EstimSur(List data, int searchSigMaxIter, double searchSigMaxProb,
 
   List L = List::create(
       _["estimations"] = List::create(
+          _["Y"] = as_matrix(model.Y, std::vector<std::string>(),
+                             endoNames_pca), // might change due to PCA
+          _["X"] = as_matrix(model.X, std::vector<std::string>(),
+                             exoNames_pca), // might change due to PCA
           _["coefs"] = as_matrix(model.Model.beta, exoNames_pca, endoNames_pca),
           _["stds"] =
               as_matrix(model.Model.e_beta_std, exoNames_pca, endoNames_pca),

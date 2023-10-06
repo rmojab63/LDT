@@ -24,6 +24,7 @@
 #' \item{lambdas}{The lambda parameters used in the Box-Cox transformation.}
 #' \item{hasIntercept}{Indicates whether an intercept column in added in the final matrix.}
 #' \item{hasWeight}{Indicates whether there is a weight column in the final matrix.}
+#' \item{startFrequency}{Frequency of the first observation, extracted from \code{ldtf} attribute of \code{data}, if available. It will be used in time-series analysis, such as VARMA estimation.}
 #'
 #' @examples
 #' # Example 1:
@@ -54,7 +55,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   stopifnot(is.matrix(data) || is.data.frame(data))
   if (!is.null(newData))
     stopifnot(is.matrix(newData) || is.data.frame(newData))
-
+  startFreq <- attr(data, "ldtf")
   if (is.null(equations)) { # use endogenous
     data <- as.matrix(data)
 
@@ -95,7 +96,10 @@ get.data <- function(data, endogenous = 1, equations = NULL,
     }
 
     if (addIntercept){
-      data <- cbind(data[,1:numEndo,drop=FALSE],rep(1,nrow(data)), data[,(numEndo+1):ncol(data),drop=FALSE])
+      if (numEndo == ncol(data))
+        data <- cbind(data[,1:numEndo,drop=FALSE],rep(1,nrow(data)))
+      else
+        data <- cbind(data[,1:numEndo,drop=FALSE],rep(1,nrow(data)), data[,(numEndo+1):ncol(data),drop=FALSE])
       colnames(data)[numEndo + 1] <- "(Intercept)"
       if (!is.null(newData)){
         newData <- cbind(rep(1,nrow(newData)), newData)
@@ -152,12 +156,16 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   }
 
   if (!is.null(newData)) {
-    exoNames <- colnames(data[, (numEndo+1+ifelse(is.null(weights),0,1)):ncol(data),drop=FALSE])
-    if (is.null(colnames(newData)) ||
-        !all(exoNames %in% colnames(newData)))
-      stop("Error:Compared with the exogenous variables, newData either lacks some necessary columns or does not have the correct column names.")
-
-    newData <- newData[,exoNames, drop=FALSE] # reorder and filter columns
+    strt <- (numEndo+1+ifelse(is.null(weights),0,1))
+    if (strt <= ncol(data)){
+      exoNames <- colnames(data[, strt:ncol(data),drop=FALSE])
+      if (is.null(colnames(newData)) ||
+          !all(exoNames %in% colnames(newData)))
+        stop("Error:Compared with the exogenous variables, newData either lacks some necessary columns or does not have the correct column names.")
+      newData <- newData[,exoNames, drop=FALSE] # reorder and filter columns
+    }
+    else
+      newData <- NULL
   }
 
   res <- list(data = data,
@@ -168,7 +176,8 @@ get.data <- function(data, endogenous = 1, equations = NULL,
               newObsCount = ifelse(is.null(newData),0, nrow(newData)),
               lambdas = lambdas,
               hasIntercept = addIntercept,
-              hasWeight = !is.null(weights))
+              hasWeight = !is.null(weights),
+              startFrequency = startFreq)
   class(res) <- c("ldt.search.data", "ldt.list", "list")
   return(res)
 }
@@ -178,15 +187,38 @@ get.data <- function(data, endogenous = 1, equations = NULL,
 #' Use it for VARMA estimation
 #'
 #' @param data The output of [get.data] function.
+#' @param maxHorizon Number of expected new data
 #'
 #' @return The input \code{data} with updated data matrix
-get.data.append.newX <- function(data){
-  new_rows <- cbind(matrix(NA,
-                           ncol = data$numEndo + ifelse(data$hasWeight,1,0),
-                           nrow = nrow(data$newX)), data$newX)
-  colnames(new_rows) <- colnames(data$data)
-  data$data <- rbind(data$data, new_rows)
-  data
+get.data.append.newX <- function(data, maxHorizon = NA){
+  if (is.null(data$newX)){
+    if (is.na(maxHorizon))
+      return(data)
+    else if (data$hasIntercept && data$numExo == 1){
+      new_rows <- cbind(matrix(NA,
+                               ncol = data$numEndo + ifelse(data$hasWeight,1,0),
+                               nrow = maxHorizon), rep(1,maxHorizon))
+      colnames(new_rows) <- colnames(data$data)
+      data$data <- rbind(data$data, new_rows)
+      return(data)
+    }
+    else if (maxHorizon > 0 && data$numExo != 0)
+        stop("Number of new data points (=0) is less than the required maximum horizon (=", maxHorizon,").")
+    else
+      return(data)
+  }
+  else{
+    if (!is.na(maxHorizon) && maxHorizon > 0 && nrow(data$newX) < maxHorizon)
+      stop("Number of new data points (=", nrow(data$newX)
+           ,") is less than the required maximum horizon (=", maxHorizon,").")
+
+    new_rows <- cbind(matrix(NA,
+                             ncol = data$numEndo + ifelse(data$hasWeight,1,0),
+                             nrow = nrow(data$newX)), data$newX)
+    colnames(new_rows) <- colnames(data$data)
+    data$data <- rbind(data$data, new_rows)
+    return(data)
+  }
 }
 
 #' Remove Rows with Missing Observations from Data
@@ -392,12 +424,12 @@ boxCoxTransform <- function(data, lambda, ...) {
 #' @return A list of items suitable for being used in the \code{ldt::search.?} functions.
 #' @export
 #'
-get.combinations <- function(sizes = c(1, 2),
+get.combinations <- function(sizes = c(1),
                              partitions = NULL,
                              numFixPartitions = 0,
                              innerGroups = list(c(1)),
                              numTargets = 1,
-                             stepsNumVariables = c(NA, NA),
+                             stepsNumVariables = c(NA),
                              stepsFixedNames = NULL,
                              stepsSavePre = NULL){
   stopifnot(is.numeric(sizes) || is.list(sizes))
@@ -423,6 +455,8 @@ get.combinations <- function(sizes = c(1, 2),
 
   stopifnot(is.numeric(numFixPartitions) && length(numFixPartitions) == 1)
 
+  if (is.null(innerGroups))
+    innerGroups = list()
   stopifnot(is.list(innerGroups))
   for (innerGroup in innerGroups)
     stopifnot(is.numeric(innerGroup) || is.character(innerGroup))
@@ -543,9 +577,9 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
     lapply(combinations$innerGroups,
            function(x){
              j <- if (is.character(x))
-               {colnames_to_index(x, colnames(data$data))}
+             {colnames_to_index(x, colnames(data$data))}
              else
-               {sort(as.integer(x))}
+             {sort(as.integer(x))}
              if (any(j < 1))
                stop("Zero or negative index in innerGroups.")
              if (innerIsExogenous && any(j > data$numExo))
@@ -561,19 +595,22 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
   if (innerIsExogenous == FALSE){ # inner is endogenous
     inner_group_values <- unique(unlist(combinations$innerGroups))
     for (t in 1:combinations$numTargets)
-    if (!(t %in% inner_group_values))
-       stop("Invalid 'innerGroups' argument in 'combinations'. A target variable (index=",t,") is not reported in this list.")
+      if (!(t %in% inner_group_values))
+        stop("Invalid 'innerGroups' argument in 'combinations'. A target variable (index=",t,") is not reported in this list.")
   }
 
 
   # zero-based indexation and moving exogenous indices:
-  for (i in c(1:length(combinations$partitions))){
+  for (i in seq_along(combinations$partitions)){
     combinations$partitions[[i]] <- combinations$partitions[[i]] - 1
     if (innerIsExogenous == FALSE)
       combinations$partitions[[i]] <- combinations$partitions[[i]] + data$numEndo
   }
-  for (i in c(1:length(combinations$innerGroups)))
+  for (i in seq_along(combinations$innerGroups)){
     combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] - 1
+    if (innerIsExogenous)
+      combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] + data$numEndo
+  }
 
   return(combinations)
 }

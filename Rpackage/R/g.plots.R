@@ -1,4 +1,16 @@
 
+expand_lim <- function(data, percentage = 0.15, fix_min = NA, fix_max = NA){
+  if (is.na(fix_min)){
+    min_data <- min(data, na.rm = TRUE)
+    fix_min <- min_data - percentage*abs(min_data)
+  }
+  if (is.na(fix_max)){
+    max_data <- max(data, na.rm = TRUE)
+    fix_max <- max_data + percentage * abs(max_data)
+  }
+  c(fix_min, fix_max)
+}
+
 #' Plot Diagnostics for \code{ldt.estim} Object
 #'
 #' This function creates diagnostic plots for estimated regression models of \code{ldt.estim} class.
@@ -51,7 +63,8 @@ plot.ldt.estim <- function(x,
   if (type == 1) { # Residuals vs Fitted
     x_data <- fitted
     y_data <- residuals
-    args <- modifyList(list(main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals"), args)
+    args <- modifyList(list(main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals",
+                            ylim = expand_lim(y_data)), args)
 
     do.call(plot, c(list(x=x_data, y = y_data), args))
     do.call(abline, c(list(h = 0), ablineArgs))
@@ -62,7 +75,9 @@ plot.ldt.estim <- function(x,
   }
   else if (type == 2) { # Residual Q-Q
     y_data <- residuals
-    args <- modifyList(list(main = "Normal Q-Q", ylab = "Standardized Residuals"), args)
+
+    args <- modifyList(list(main = "Normal Q-Q", ylab = "Standardized Residuals",
+                            ylim = expand_lim(y_data)), args)
 
     points <- do.call(qqnorm, c(list(y_data), args))
     qqline(y_data)
@@ -75,7 +90,7 @@ plot.ldt.estim <- function(x,
     x_data <- fitted
     y_data <- sqrt(abs(residuals))
     args <- modifyList(list(main = "Scale-Location", xlab = "Fitted Values", ylab = expression(sqrt(abs("Standardized Residuals"))),
-                            ylim = c(0,max(y_data)*1.1)), args)
+                            ylim = expand_lim(y_data, fix_min = 0)), args)
 
     do.call(plot, c(list(x=x_data, y = y_data), args))
     do.call(abline, c(list(h = 0), ablineArgs))
@@ -86,7 +101,8 @@ plot.ldt.estim <- function(x,
   }
   else if (type == 4) {
     x_data <- as.numeric(cooks.distance0(x, equation = equation))
-    args <- modifyList(list(main = "Cook's distance", xlab = "Observation Number", ylab = "Cook's distance"), args)
+    args <- modifyList(list(main = "Cook's distance", xlab = "Observation Number", ylab = "Cook's distance",
+                            ylim = expand_lim(x_data, fix_min = 0)), args)
     midpoints <- do.call(barplot, c(list(x_data), args))
 
     high_data <- x_data > 7/length(x_data)
@@ -96,7 +112,8 @@ plot.ldt.estim <- function(x,
   else if (type == 5) {
     x_data <- hatvalues0(x, equation = equation)
     y_data <- residuals
-    args <- modifyList(list(main = "Standardized Residuals vs Leverage", xlab = "Leverage", ylab = "Standardized Residuals"), args)
+    args <- modifyList(list(main = "Standardized Residuals vs Leverage", xlab = "Leverage", ylab = "Standardized Residuals",
+                            ylim = expand_lim(y_data)), args)
 
     do.call(plot, c(list(x=x_data, y = y_data), args))
     do.call(abline, c(list(h = 0), ablineArgs))
@@ -108,16 +125,17 @@ plot.ldt.estim <- function(x,
   else if (type == 6) {
     x_data <- hatvalues0(x, equation = equation)
     y_data <- cooks.distance0(x, equation = equation)
-    args <- modifyList(list(main = "Cook's dist vs Leverage/(1-Leverage)", xlab = "Leverage/(1-Leverage)", ylab = "Cook's distance"), args)
+    args <- modifyList(list(main = "Cook's dist vs Leverage/(1-Leverage)", xlab = "Leverage/(1-Leverage)", ylab = "Cook's distance",
+                            ylim = expand_lim(y_data, fix_min = 0)), args)
 
     do.call(plot, c(list(x=x_data, y = y_data), args))
     do.call(abline, c(list(h = 0), ablineArgs))
 
-    high_y <- 7 / length(y_data)
-    high_x <- 2 * mean(x_data)
+    high_y <- 5 / length(y_data)
+    high_x <- 1.5 * mean(x_data, na.rm = TRUE)
     high_data <- which(y_data > high_y & x_data > high_x)
     if (length(high_data) > 0)
-      do.call(text, c(list(x = x_data[high_data], y = y_data[high_data], labels = ifelse(high_data, 1:length(x_data), "")), textArgs))
+      do.call(text, c(list(x = x_data[high_data], y = y_data[high_data], labels = high_data), textArgs))
   }
   else {
     print("Invalid 'type' argument.")

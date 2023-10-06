@@ -150,7 +150,7 @@ combine.search <- function(list, method) {
     }
 
     new_best_models <- newR$results[which(sapply(newR$results, function(item) item$typeName == "best model"))]
-    new_best_coefs <-newR$results[which(sapply(newR$results, function(item) startsWith(item$typeName, "best coef for")))]
+    new_best_coefs <-newR$results[which(sapply(newR$results, function(item) startsWith(item$typeName, "best item for")))]
     new_inclusions <- newR$results[which(sapply(newR$results, function(item) item$typeName == "inclusion"))]
     new_cdfs <- newR$results[which(sapply(newR$results, function(item) item$typeName == "cdf"))]
     new_mixtures <- newR$results[which(sapply(newR$results, function(item) item$typeName == "mixture"))]
@@ -187,7 +187,7 @@ combine.search <- function(list, method) {
         #else we have already deal with them
       }
 
-      if (startsWith(item$typeName, "best coef for")){
+      if (startsWith(item$typeName, "best item for")){
         if (item$info == 0 && !eval_target_type %in% dealt_with){
           nbm <- new_best_coefs[which(sapply(new_best_coefs, function(new_item) item$evalName == new_item$evalName && item$targetName == new_item$targetName && item$typeName == new_item$typeName))]
           ids <- which(sapply(result$results, function(new_item) length(new_item) != 1 && new_item$typeName == item$typeName && item$evalName == new_item$evalName && item$targetName == new_item$targetName))
@@ -424,10 +424,13 @@ search.steps <- function(method, innerIsExogenous, ...) {
     for (j in c(1:length(combinations_i$partitions))){
       combinations_i$partitions[[j]] <- combinations_i$partitions[[j]] + 1
       if (innerIsExogenous == FALSE)
-        combinations_i$partitions[[j]] <- combinations_i$partitions[[j]] - data$numEndo
+        combinations_i$partitions[[j]] <- combinations_i$partitions[[j]] - data_i$numEndo
     }
-    for (j in c(1:length(combinations_i$innerGroups)))
+    for (j in c(1:length(combinations_i$innerGroups))){
       combinations_i$innerGroups[[j]] <- combinations_i$innerGroups[[j]] + 1
+      if (innerIsExogenous)
+        combinations_i$innerGroups[[j]] <- combinations_i$innerGroups[[j]] - data_i$numEndo
+    }
 
 
     dots$data <- data_i

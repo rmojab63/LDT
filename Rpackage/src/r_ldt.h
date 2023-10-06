@@ -57,7 +57,7 @@ void UpdateOptions(List &itemsR, List &metricsR, List &modelChecksR,
 
 void UpdatePcaOptions(List optionsR, ldt::PcaAnalysisOptions &options);
 
-void ReportProgress(int reportInterval, ldt::ModelSet &model, bool &estimating,
+void ReportProgress(ldt::ModelSet &model, bool &estimating,
                     ldt::SearchOptions &options, int allCount);
 
 NumericMatrix as_matrix(
@@ -81,8 +81,7 @@ as_ivector(const ldt::Matrix<int> &vec,
 void UpdateRocOptions(bool printMsg, List &rocOptionsR,
                       ldt::RocOptions &options, const char *startMsg);
 
-void UpdateLbfgsOptions(bool printMsg, List &lbfgsOptions,
-                        ldt::LimitedMemoryBfgsbOptions &options);
+void UpdateLbfgsOptions(List &optionsR, LimitedMemoryBfgsbOptions &options);
 
 void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
 
@@ -90,7 +89,6 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                         const std::vector<std::string> &metricNames,
                         const std::vector<std::string> &colNames,
                         const std::vector<std::string> &targetNames,
-                        const std::string &extra1Label,
                         const std::vector<std::string> &extra1Names,
                         const std::vector<std::string> &length1Names,
                         const std::vector<std::string> &inclusionNames,

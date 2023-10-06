@@ -34,9 +34,9 @@ VarmaSearcher::VarmaSearcher(
   pForUpperBounds = forUpperBounds;
 
   Sizes = sizes; //  copy
-  Params = Matrix<Ti>(new Ti[7]{Sizes.ArP, Sizes.ArD, Sizes.ArQ, Sizes.MaP,
-                                Sizes.MaD, Sizes.MaQ, Sizes.SeasonsCount},
-                      (Ti)7, 1);
+  Params = Matrix<Ti>(new Ti[6]{Sizes.ArP, Sizes.ArD, Sizes.ArQ, Sizes.MaP,
+                                Sizes.MaD, Sizes.MaQ},
+                      (Ti)6, 1);
   if (exoIndexes.size() > 0) {
     ExoIndexes =
         Matrix<Ti>(new Ti[exoIndexes.size()], (Ti)exoIndexes.size(), 1);
@@ -60,11 +60,8 @@ VarmaSearcher::VarmaSearcher(
     }
   }
 
-  if (metrics.SimFixSize > 0) { // we estimate a simulation model
-    if (metrics.MetricsOut.size() == 0)
-      throw LdtException(
-          ErrorType::kLogic, "varma-modelset",
-          "simulation is requested by there is no evaluation metric");
+  if (metrics.SimFixSize > 0 &&
+      metrics.MetricsOut.size() > 0) { // we estimate a simulation model
     Model = VarmaSimulation(Sizes, metrics.SimFixSize, metrics.Horizons,
                             metrics.MetricsOut,
                             optimOptions); // no PCA in search
@@ -194,6 +191,11 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
                           ? this->pChecks->MaxConditionNumber
                           : INFINITY);
 
+    /*if (DModel.Result.Optim.Iteration ==
+        DModel.Result.Optim.Options.IterationMax)
+      throw LdtException(ErrorType::kLogic, "varma-modelset",
+                         "maximum number of iteration reached.");*/
+
     if (this->pChecks) {
       if (this->pChecks->MaxAic < DModel.Result.Aic)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
@@ -271,7 +273,7 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
     }
   }
 
-  if (this->pMetrics->SimFixSize > 0) {
+  if (this->pMetrics->SimFixSize > 0 && this->pMetrics->MetricsOut.size() > 0) {
     auto count0 = Model.mCount;
 
     if (this->pOptions->RequestCancel)
@@ -410,15 +412,15 @@ std::string VarmaSearcher::EstimateOne(Tv *work, Ti *workI) {
 
 // #pragma region Modelset
 
-VarmaModelset::VarmaModelset(
-    const SearchData &data, const SearchCombinations &combinations,
-    SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
-    SearchModelChecks &checks, const std::vector<Ti> &sizes,
-    std::vector<std::vector<Ti>> &groupIndexMap, DatasetTs<true> &source,
-    std::vector<Ti> varmaMaxParameters6, Ti seasonCount,
-    const std::vector<std::vector<Ti>> &exoIndexes, bool usePreviousEstim,
-    LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
-    Ti maxHorizonCheck) {
+VarmaModelset::VarmaModelset(const SearchData &data,
+                             const SearchCombinations &combinations,
+                             SearchOptions &options, SearchItems &items,
+                             SearchMetricOptions &metrics,
+                             SearchModelChecks &checks, DatasetTs<true> &source,
+                             std::vector<Ti> varmaMaxParameters6,
+                             Ti seasonCount, bool usePreviousEstim,
+                             LimitedMemoryBfgsbOptions *optimOptions,
+                             Tv stdMultiplier, Ti maxHorizonCheck) {
   metrics.Update(false, true);
   checks.Update(metrics);
   items.Update(metrics, items.LengthTargets, items.LengthDependents,
@@ -432,7 +434,7 @@ VarmaModelset::VarmaModelset(
                        "it is positive");
 
   // check group indexes and create sizes array
-  for (auto const &b : groupIndexMap) {
+  for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
       if (a > items.LengthDependents)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
@@ -452,12 +454,8 @@ VarmaModelset::VarmaModelset(
     if (i < 0)
       throw LdtException(ErrorType::kLogic, "varma-modelset",
                          "invalid varma parameter");
-  if (seasonCount < 2) {
-    varmaMaxParameters6.at(3) = 0;
-    varmaMaxParameters6.at(4) = 0;
-    varmaMaxParameters6.at(5) = 0;
-  }
-  ExoIndexes = exoIndexes;
+
+  ExoIndexes = combinations.InnerGroups;
   if (ExoIndexes.size() == 0)
     ExoIndexes.resize(1); // add empty for loop
 
@@ -465,40 +463,31 @@ VarmaModelset::VarmaModelset(
            1; // The first target determines the number of observations
               // (this is required for out-of-sample exogenous data)
 
-  bool hasBounds = checks.PredictionBoundMultiplier > 0;
-  if (metrics.MetricsOut.size() != 0) {
-    if (hasBounds && checks.Prediction == false)
-      throw LdtException(
-          ErrorType::kLogic, "varma-modelset",
-          "forecast bounds are given but 'forecast check' is false");
-    if (checks.PredictionBoundMultiplier < 0)
-      throw LdtException(ErrorType::kLogic, "varma-modelset",
-                         "invalid forecast bound multiplier");
-    else { // create matrixes
-      ForecastLowers =
-          Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-                     items.LengthTargets, metrics.Horizons.size());
-      ForecastUppers =
-          Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
-                     items.LengthTargets, metrics.Horizons.size());
-      for (Ti i = 0; i < items.LengthTargets; i++) {
-        auto last = source.pData->Get0(i, T - 1);
-        Tv g = 0;
-        for (Ti j = 1; j < T; j++)
-          g += source.pData->Get0(i, j) - source.pData->Get0(i, j - 1);
-        g /= T - 1;
-        g = std::abs(checks.PredictionBoundMultiplier * g);
-        Ti j = -1;
-        for (auto &h : metrics.Horizons) {
-          j++;
-          ForecastLowers.Set0(i, j, last - h * g);
-          ForecastUppers.Set0(i, j, last + h * g);
-        }
+  bool hasBounds = checks.Prediction && checks.PredictionBoundMultiplier > 0;
+  if (metrics.MetricsOut.size() != 0 && hasBounds) {
+    ForecastLowers =
+        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                   items.LengthTargets, metrics.Horizons.size());
+    ForecastUppers =
+        Matrix<Tv>(new Tv[items.LengthTargets * (Ti)metrics.Horizons.size()],
+                   items.LengthTargets, metrics.Horizons.size());
+    for (Ti i = 0; i < items.LengthTargets; i++) {
+      auto last = source.pData->Get0(i, T - 1);
+      Tv g = 0;
+      for (Ti j = 1; j < T; j++)
+        g += source.pData->Get0(i, j) - source.pData->Get0(i, j - 1);
+      g /= T - 1;
+      g = std::abs(checks.PredictionBoundMultiplier * g);
+      Ti j = -1;
+      for (auto &h : metrics.Horizons) {
+        j++;
+        ForecastLowers.Set0(i, j, last - h * g);
+        ForecastUppers.Set0(i, j, last + h * g);
       }
     }
   }
 
-  for (auto const &s : sizes) {
+  for (auto const &s : combinations.Sizes) {
     if (s <= 0)
       throw LdtException(
           ErrorType::kLogic, "varma-modelset",
@@ -521,8 +510,8 @@ VarmaModelset::VarmaModelset(
                                            Q, seasonCount, true);
 
                   auto se = new VarmaSearcher(
-                      data, options, items, metrics, checks, s, groupIndexMap,
-                      0, source, vsizes, exo,
+                      data, options, items, metrics, checks, s,
+                      combinations.Partitions, 0, source, vsizes, exo,
                       hasBounds ? &ForecastLowers : nullptr,
                       hasBounds ? &ForecastUppers : nullptr, optimOptions,
                       stdMultiplier, usePreviousEstim, maxHorizonCheck);

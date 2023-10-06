@@ -35,7 +35,7 @@
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{...}{...}
 #' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
 #'
 #' Note that the output does not contain any estimation results,
@@ -43,81 +43,115 @@
 #'
 #' @export
 #' @example man-roxygen/ex-search.varma.R
-#' @seealso [estim.varma], [search.varma.stepwise]
-search.varma <- function(y, x = NULL, numTargets = 1,
-                         ySizes = NULL, yPartitions = NULL,
-                         xGroups = NULL, maxParams = c(1,0,0,0,0,0),
-                         seasonsCount = 0, maxHorizon = 0,
-                         newX = NULL, simUsePreviousEstim = TRUE,
-                         olsStdMultiplier = 2.0, lbfgsOptions = get.options.lbfgs(),
+#' @seealso [estim.varma]
+search.varma <- function(data = get.data(),
+                         combinations = get.combinations(),
                          metrics = get.search.metrics(),
-                         modelChecks = get.search.modelchecks(), items = get.search.items(),
-                         options = get.search.options()){
-  y = as.matrix(y)
-  x = if (is.null(x)) NULL else as.matrix(x)
-  numTargets = as.integer(numTargets)
-  ySizes = if (is.null(ySizes)) c(1L) else as.integer(ySizes)
-  maxParams = if (is.null(maxParams)) c(2L,0L,0L,0L,0L,0L) else as.integer(maxParams)
-  seasonsCount = as.integer(seasonsCount)
-  maxHorizon = as.integer(maxHorizon)
-  newX = if (is.null(newX)) NULL else as.matrix(newX)
-  simUsePreviousEstim = as.logical(simUsePreviousEstim)
-  olsStdMultiplier = as.numeric(olsStdMultiplier)
+                         modelChecks = get.search.modelchecks(),
+                         items = get.search.items(),
+                         options = get.search.options(),
+                         maxParams = c(1,0,0,0,0,0),
+                         seasonsCount = 0,
+                         maxHorizon = 0,
+                         simUsePreviousEstim = FALSE,
+                         olsStdMultiplier = 2.0,
+                         lbfgsOptions = get.options.lbfgs()){
 
-  if (is.null(yPartitions) == FALSE){
-    yPartitions = as.list(yPartitions)
-    for (i in c(1:length(yPartitions)))
-      yPartitions[[i]] = as.integer(yPartitions[[i]])
-  }
+  if (data$hasWeight)
+    stop("VARMA search does not support weighted observations.")
 
-  if (is.null(xGroups) == FALSE){
-    xGroups = as.list(xGroups)
-    for (i in c(1:length(xGroups)))
-      xGroups[[i]] = as.integer(xGroups[[i]])
-  }
+  data <- get.data.append.newX(data, maxHorizon = maxHorizon)
 
-  if (is.null(lbfgsOptions))
-    lbfgsOptions = get.options.lbfgs()
-  else
-    lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
+  combinations <- get.indexation(combinations, data, TRUE) # it also check for inconsistencies, etc.
 
   if (is.null(metrics))
     metrics = get.search.metrics()
   else
-    metrics <- CheckmetricOptions(metrics)
-
+    stopifnot(is.list(metrics))
   if (is.null(modelChecks))
     modelChecks = get.search.modelchecks()
   else
-    modelChecks <- CheckModelCheckItems(modelChecks)
-
+    stopifnot(is.list(modelChecks))
   if (is.null(items))
     items = get.search.items()
   else
-    items <- CheckSearchItems(items)
-
+    stopifnot(is.list(items))
   if (is.null(options))
     options = get.search.options()
   else
-    options <- CheckSearchOptions(options)
+    stopifnot(is.list(options))
 
 
-  startTime <- Sys.time()
+  stopifnot(is.numeric(maxParams) && length(maxParams) <= 6)
+  if (length(maxParams) < 6)
+    maxParams <- c(maxParams, rep(0, 6 - length(maxParams)))
+  maxParams <- as.integer(maxParams)
+  stopifnot(all(maxParams>=0)) #handles NA case
 
-  res <- .SearchVarma(y, x, numTargets, ySizes, yPartitions,
-                      xGroups, maxParams, seasonsCount, maxHorizon,
-                      newX, simUsePreviousEstim,
-                      olsStdMultiplier, lbfgsOptions,
-                      metrics,modelChecks,items,options)
+  stopifnot(is.zero.or.positive.number(seasonsCount))
+  seasonsCount <- as.integer(seasonsCount)
+  if (seasonsCount < 2 && any(maxParams[4:6] != 0))
+    stop("Invalid 'maxParams' argument. Seasonal part (at indices 4:6) must be zero for non-seasonal model.")
 
-  endTime <- Sys.time()
+  stopifnot(is.zero.or.positive.number(maxHorizon))
+  maxHorizon <- as.integer(maxHorizon)
+  if (items$type1 && maxHorizon == 0)
+    stop("If 'items$type1' is TRUE, 'maxHorizon' argument cannot be zero.")
+  if (maxHorizon > 0)
+    modelChecks$prediction = TRUE # should I warn?
 
-  res$info$startTime <- startTime
-  res$info$endTime <- endTime
+  stopifnot(is.logical(simUsePreviousEstim) && length(simUsePreviousEstim) == 1)
+  stopifnot(is.positive.number(olsStdMultiplier))
 
-  res$info$startFrequency <- attr(y, "ldtf")
+  if (is.null(lbfgsOptions))
+    lbfgsOptions = get.options.lbfgs()
+  else
+    stopifnot(is.list(lbfgsOptions))
 
-  res
+
+  if (is.list(combinations$sizes)){ # use steps
+    # steps will re-call this function with modified combinations in which sizes is no longer a list
+    res <- search.steps("varma", innerIsExogenous = TRUE, data = data, combinations = combinations,
+                        metrics = metrics, modelChecks = modelChecks, items = items, options = options,
+                        maxParams = maxParams,
+                        seasonsCount = seasonsCount,
+                        maxHorizon = maxHorizon,
+                        simUsePreviousEstim = simUsePreviousEstim,
+                        olsStdMultiplier = olsStdMultiplier,
+                        lbfgsOptions = lbfgsOptions)
+    res
+  }
+  else {
+    startTime <- Sys.time()
+    res <- .SearchVarma(data, combinations, metrics, modelChecks, items, options,
+                        maxParams,
+                        seasonsCount, maxHorizon,
+                        simUsePreviousEstim,
+                        olsStdMultiplier, lbfgsOptions)
+    endTime <- Sys.time()
+
+    res$info$data <- data
+    res$info$combinations <- combinations
+    res$info$metrics <- metrics
+    res$info$options <- options
+    res$info$modelChecks <- modelChecks
+    res$info$items <- items
+    res$info$startTime <- startTime
+    res$info$endTime <- endTime
+
+    res$info$maxParams = maxParams
+    res$info$seasonsCount = seasonsCount
+    res$info$maxHorizon = maxHorizon
+    res$info$simUsePreviousEstim = simUsePreviousEstim
+    res$info$olsStdMultiplier = olsStdMultiplier
+    res$info$lbfgsOptions = lbfgsOptions
+
+    #res$info$startFrequency <- attr(y, "ldtf") ???? move to data
+
+    class(res) <- c("ldt.search.varma", "ldt.search", "list")
+    attr(res, "method") <- "VARMA"
+    res
+  }
 }
 
 #' Estimate a VARMA Model
@@ -168,101 +202,111 @@ search.varma <- function(y, x = NULL, numTargets = 1,
 #' @export
 #' @example man-roxygen/ex-estim.varma.R
 #' @seealso [search.varma], [search.varma.stepwise]
-estim.varma <- function(y, x = NULL, params = NULL,
-                        seasonsCount = 0, addIntercept = TRUE,
-                        lbfgsOptions = get.options.lbfgs(), olsStdMultiplier = 2,
-                        pcaOptionsY = NULL, pcaOptionsX = NULL,
-                        maxHorizon = 0, newX = NULL, simFixSize = 0,
-                        simHorizons = NULL, simUsePreviousEstim = TRUE,
-                        simMaxConditionNumber = Inf, simTransform = NULL,
-                        printMsg = FALSE){
+estim.varma <- function(data,
+                        params = NULL,
+                        seasonsCount = 0,
+                        lbfgsOptions = get.options.lbfgs(),
+                        olsStdMultiplier = 2,
+                        pcaOptionsY = NULL,
+                        pcaOptionsX = NULL,
+                        maxHorizon = 0,
+                        simFixSize = 0,
+                        simHorizons = NULL,
+                        simUsePreviousEstim = FALSE,
+                        simMaxConditionNumber = Inf){
 
-  y = as.matrix(y)
-  x = if (is.null(x)) NULL else as.matrix(x)
-  params = if (is.null(params)) c(1L,0L,0L,0L,0L,0L) else as.integer(params)
+  if (data$hasWeight)
+    stop("VARMA estimation does not support weighted observations.")
+
+  data <- get.data.append.newX(data, maxHorizon = maxHorizon)
+
+
+  stopifnot(is.numeric(params) && length(params) <= 6)
+  if (length(params) < 6)
+    params <- c(params, rep(0, 6 - length(params)))
+  params <- as.integer(params)
+  stopifnot(all(params>=0)) #handles NA case
+
+  stopifnot(is.zero.or.positive.number(seasonsCount))
   seasonsCount = as.integer(seasonsCount)
-  addIntercept = as.logical(addIntercept)
-  olsStdMultiplier = as.numeric(olsStdMultiplier)
-  maxHorizon = as.integer(maxHorizon)
-  newX = if (is.null(newX)) NULL else as.matrix(newX)
-  simFixSize = as.integer(simFixSize)
-  simHorizons = if (is.null(simHorizons)) NULL else as.integer(simHorizons)
-  simUsePreviousEstim = as.logical(simUsePreviousEstim)
-  simMaxConditionNumber = as.numeric(simMaxConditionNumber)
-  printMsg = as.logical(printMsg)
+  if (seasonsCount < 2 && any(params[4:6] != 0))
+    stop("Invalid 'params' argument. Seasonal part (at indices 4:6) must be zero for non-seasonal model.")
 
-  if (is.null(simTransform) == FALSE && is.character(simTransform) == FALSE && is.function(simTransform) == FALSE)
-    stop("Invalid 'simTransform'. It should be a character string or a function.")
+  stopifnot(is.zero.or.positive.number(maxHorizon))
+  maxHorizon <- as.integer(maxHorizon)
+  stopifnot(is.logical(simUsePreviousEstim) && length(simUsePreviousEstim) == 1)
+  stopifnot(is.positive.number(olsStdMultiplier))
+
+  stopifnot(is.zero.or.positive.number(simFixSize))
+  simFixSize <- as.integer(simFixSize)
+  stopifnot(is.number(simMaxConditionNumber))
+  if (!is.null(simHorizons)){
+    stopifnot(is.numeric(simHorizons) && all(simHorizons >= 1))
+    simHorizons <- as.integer(simHorizons)
+  }
 
   if (is.null(lbfgsOptions))
     lbfgsOptions = get.options.lbfgs()
   else
-    lbfgsOptions = CheckLbfgsOptions(lbfgsOptions)
+    stopifnot(is.list(lbfgsOptions))
 
-  if (is.null(pcaOptionsY) == FALSE)
-    pcaOptionsY = CheckPcaOptions(as.list(pcaOptionsY))
-  if (is.null(pcaOptionsX) == FALSE)
-    pcaOptionsX = CheckPcaOptions(as.list(pcaOptionsX))
+  if (!is.null(pcaOptionsX))
+    stopifnot(is.list(pcaOptionsX))
+  if (!is.null(pcaOptionsY))
+    stopifnot(is.list(pcaOptionsY))
 
-  res <- .EstimVarma(y, x, params, seasonsCount, addIntercept,
+  res <- .EstimVarma(data, params, seasonsCount,
                      lbfgsOptions, olsStdMultiplier,
                      pcaOptionsY, pcaOptionsX,
-                     maxHorizon, newX, simFixSize, simHorizons,
-                     simUsePreviousEstim, simMaxConditionNumber, simTransform, printMsg)
+                     maxHorizon, simFixSize, simHorizons,
+                     simUsePreviousEstim, simMaxConditionNumber)
 
-  # other information
+  res$info$data = data
+  res$info$params = params
+  res$info$seasonsCount = seasonsCount
+  res$info$lbfgsOptions = lbfgsOptions
+  res$info$olsStdMultiplier = olsStdMultiplier
+  res$info$pcaOptionsY = pcaOptionsY
+  res$info$pcaOptionsX = pcaOptionsX
+  res$info$maxHorizon = maxHorizon
+  res$info$simFixSize = simFixSize
+  res$info$simHorizons = simHorizons
+  res$info$simUsePreviousEstim = simUsePreviousEstim
+  res$info$ simMaxConditionNumber = simMaxConditionNumber
 
-  res$info$startFrequency <- attr(y, "ldtf")
-
-
-  if (is.null(res$prediction$means) == FALSE &&
-      is.null(res$info$startFrequency) == FALSE){   # update predictions
-
-    hasVar = is.null(res$prediction$vars) == FALSE
-    predStart = tdata::next.freq(res$info$startFrequency, res$counts$obs - res$prediction$startIndex + 1)
-    labs <- tdata::get.seq0(predStart, ncol(res$prediction$means), by = 1)
-    colnames(res$prediction$means) <- labs
-    if (hasVar)
-      colnames(res$prediction$vars) <- labs
-  }
+  class(res) <- c("ldt.estim.varma", "ldt.estim", "list")
+  attr(res, "method") <- "VARMA"
 
   res
 }
 
+estim.varma.from.search <- function(searchResult, endogenous, exogenous, extra, ...){
+  search_data <- searchResult$info$data
+  data <- get.data(search_data$data[,c(endogenous, exogenous), drop = FALSE],
+                   endogenous = length(endogenous),
+                   newData = searchResult$info$data$newX,
+                   weights = NULL,
+                   lambdas = search_data$lambdas,
+                   addIntercept = FALSE,...)
 
-# get estimation from search result
-GetEstim_varma <- function(searchRes, endoIndices,
-                           exogenous, y, x, printMsg,
-                           params, newX = NULL, ...) {
-  M <- estim.varma(y[, endoIndices, drop = FALSE],
-                   x = if (is.null(exogenous) || is.null(x)) {
-                     NULL
-                   } else {
-                     x[, exogenous, drop = FALSE]
-                   },
-                   params = params,
-                   seasonsCount = searchRes$info$seasonsCount,
-                   addIntercept = FALSE,
-                   lbfgsOptions = searchRes$info$lbfgsOptions,
-                   olsStdMultiplier = searchRes$info$olsStdMultiplier,
-                   pcaOptionsY = NULL,
-                   pcaOptionsX = NULL,
-                   maxHorizon = searchRes$info$maxHorizon,
-                   newX = if (is.null(exogenous) || is.null(newX)) {
-                     NULL
-                   } else {
-                     as.matrix(newX[, exogenous])
-                   },
-                   simFixSize = searchRes$info$metrics$simFixSize,
-                   simHorizons = searchRes$info$metrics$simHorizons,
-                   simUsePreviousEstim = searchRes$info$simUsePreviousEstim,
-                   simMaxConditionNumber = searchRes$info$modelChecks$maxConditionNumber,
-                   simTransform = searchRes$info$metrics$transform,
-                   printMsg = printMsg
+
+  estim.varma(
+    data = data,
+    params = extra,
+    seasonsCount = searchResult$info$seasonsCount,
+    lbfgsOptions = searchResult$info$lbfgsOptions,
+    olsStdMultiplier = searchResult$info$olsStdMultiplier,
+    pcaOptionsY = NULL,
+    pcaOptionsX = NULL,
+    maxHorizon = searchResult$info$maxHorizon,
+    simFixSize = searchResult$info$metrics$simFixSize,
+    simHorizons = searchResult$info$metrics$horizons,
+    simUsePreviousEstim = searchResult$info$simUsePreviousEstim,
+    simMaxConditionNumber = searchResult$info$modelChecks$maxConditionNumber
   )
-
-  return(M)
 }
+
+
 
 
 #' Step-wise Search for Best VARMA Models
@@ -357,9 +401,9 @@ varma.to.latex.mat <- function(sigma, arList, int, exoCoef, maList, d, D, s, num
 
     # Add the lagged dependent variable vector
     latex_str <- paste0(latex_str,
-      " \\begin{bmatrix}",
-      paste(paste0(delta, " Y_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
-      "\\end{bmatrix}"
+                        " \\begin{bmatrix}",
+                        paste(paste0(delta, " Y_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
+                        "\\end{bmatrix}"
     )
 
     # Add a plus sign if there are more terms
@@ -538,9 +582,9 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
   if (p != 0 || P != 0){
     for (i in seq_len(p))
       ar_poly[[i]] = 1
-  if (numS > 1 && P > 0)
-    for (i in seq(numS, numS*P, numS))
-      ar_poly[[i]] = 1
+    if (numS > 1 && P > 0)
+      for (i in seq(numS, numS*P, numS))
+        ar_poly[[i]] = 1
   }
 
   ma_poly <- integer(max(q,Q)*numS)

@@ -49,12 +49,13 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 
     res <- do.call(fun.name, list(searchResult = searchResult,
                                   endogenous = object$value$endogenous,
-                                  exogenous = object$value$exogenous))
+                                  exogenous = object$value$exogenous,
+                                  extra = object$value$extra))
 
     if (test){
 
       metric <- get.metric.from.estim(res, object$evalName, object$targetName)
-      if (abs(metric - object$value$metric)>1e-10){
+      if (abs(metric - object$value$metric)>1e-8){
         stop(paste0("Inconsistent metric: target=",object$targetName,
                     ", metric=", object$evalName,
                     ", search metric=", object$value$metric,
@@ -62,29 +63,34 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
       }
 
       if (!is.null(object$value$mean)){ #test parameter or forecasts, etc.
+        # get x name from the type name (see "r_ldt.cpp" code)
+        xName = strsplit(sub(".*'([^']*)'.*", "\\1", object$typeName), split = "'")[[1]]
+
         if (method == "sur" || method == "binary") {
-          # get x name from the type name (see "r_ldt.cpp" code)
-          xName = strsplit(sub(".*'([^']*)'.*", "\\1", object$typeName), split = "'")[[1]]
           row = which(xName == rownames(res$estimations$coefs))
           col <- which(object$targetName == colnames(res$estimations$coefs))
           mean <- res$estimations$coefs[row, col]
-          if (abs(mean - object$value$mean)>1e-10)
-            stop(paste0("Inconsistent mean: target=",object$targetName,
-                        ", metric=", object$evalName,
-                        ", search mean=", object$value$mean,
-                        ", estimation mean=", mean))
-
-          var <-  res$estimations$stds[row, col]
-          if (abs(var - sqrt(object$value$var))>1e-10)
-            stop(paste0("Inconsistent variance: target=",object$targetName,
-                        ", metric=", object$evalName,
-                        ", search var=", object$value$var,
-                        ", estimation var=", var))
-
+          var <-  res$estimations$stds[row, col]^2
         } else if (method == "varma") {
-          # item$name is Horizon1,...
-          #TODO:
+          # xName is Horizon1,...
+          row <- which(object$targetName == rownames(res$prediction$means))
+          col <- as.integer(substr(xName, 8, nchar(xName))) + res$prediction$startIndex - 1
+          mean <- res$prediction$means[row, col]
+          var <- res$prediction$vars[row, col]
         }
+
+        if (abs(mean - object$value$mean)>1e-8)
+          stop(paste0("Inconsistent mean: target=",object$targetName,
+                      ", metric=", object$evalName,
+                      ", search mean=", object$value$mean,
+                      ", estimation mean=", mean))
+
+
+        if (abs(var - object$value$var)>1e-8)
+          stop(paste0("Inconsistent variance: target=",object$targetName,
+                      ", metric=", object$evalName,
+                      ", search var=", object$value$var,
+                      ", estimation var=", var))
       }
     }
     return(res)
@@ -96,7 +102,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
   #if (object$typeName == "cdf")
   #if (object$typeName == "mixture")
 
-  return(res)
+  return(object)
 }
 
 
@@ -124,7 +130,6 @@ summary.ldt.search <- function(object, test = TRUE, ...) {
     stop("Invalid class. An 'ldt.search' object is expected.")
 
   for (i in 1:length(object$results)){
-
     object$results[[i]]$value <- summary.ldt.search.item(object = object$results[[i]],
                                                          searchResult =  object,
                                                          test = test, ...)

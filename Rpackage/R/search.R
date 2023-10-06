@@ -100,6 +100,7 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
   stopifnot(is.number(maxAic))
   stopifnot(is.number(maxSic))
 
+
   res = list(
     estimation = estimation,
     maxConditionNumber = maxConditionNumber,
@@ -243,7 +244,7 @@ get.search.metrics <- function(typesIn = c("aic"),
     trainRatio = trainRatio,
     trainFixSize = trainFixSize,
     seed = seed,
-    horizons = horizons,
+    horizons = c(horizons),
     weightedEval = weightedEval,
     minMetrics = minMetrics)
   class(res) <- c("ldt.list", "list")

@@ -376,6 +376,8 @@ public:
   Matrix<Tv> Y;
   Matrix<Tv> X;
 
+  VarmaRestriction Restriction;
+
   DatasetTs<false> Data;
 
   /// @brief It might be different from the given 'sizes' in the constructor,
@@ -554,12 +556,10 @@ public:
   VarmaModelset(const SearchData &data, const SearchCombinations &combinations,
                 SearchOptions &options, SearchItems &items,
                 SearchMetricOptions &metrics, SearchModelChecks &checks,
-                const std::vector<Ti> &sizes,
-                std::vector<std::vector<Ti>> &groupIndexMap,
                 DatasetTs<true> &source, std::vector<Ti> varmaMaxParameters6,
-                Ti seasonCount, const std::vector<std::vector<Ti>> &exoIndexes,
-                bool usePreviousEstim, LimitedMemoryBfgsbOptions *optimOptions,
-                Tv stdMultiplier, Ti maxHorizonCheck);
+                Ti seasonCount, bool usePreviousEstim,
+                LimitedMemoryBfgsbOptions *optimOptions, Tv stdMultiplier,
+                Ti maxHorizonCheck);
 
   ~VarmaModelset() {
     for (auto s : Searchers)

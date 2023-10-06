@@ -190,7 +190,7 @@ void SurSimulation::Calculate(Matrix<Tv> &data, Ti m, Tv *storage, Tv *work,
       }
 
       if (mDoForecastVar) { // transform STDs for CRPS too
-        for (int i = 0; i < len; i++) {
+        for (Ti j = 0; j < m; j++) {
           Array<Tv>::BoxCoxInv(Model.Projections.Variances.ColBegin(j),
                                Model.Projections.Variances.RowsCount,
                                boxCoxLambdas->at(j));

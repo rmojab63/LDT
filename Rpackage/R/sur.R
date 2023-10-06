@@ -23,7 +23,7 @@
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{Results reported separately for each metric, then for each target variable, then for each requested type of output. This part of the output is highly nested and items are reported based on the arguments of the search.}
+#' \item{...}{A list of results.}
 #' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
 #'
 #' Note that the output does not contain any estimation results,
@@ -33,7 +33,7 @@
 #'
 #' @example man-roxygen/ex-search.sur.R
 #'
-#' @seealso [estim.sur], [search.sur.stepwise]
+#' @seealso [estim.sur]
 search.sur <- function(data = get.data(),
                        combinations = get.combinations(),
                        metrics = get.search.metrics(),
@@ -47,19 +47,31 @@ search.sur <- function(data = get.data(),
 
   combinations <- get.indexation(combinations, data, FALSE) # it also check for inconsistencies, etc.
 
+  if (is.null(metrics))
+    metrics = get.search.metrics()
+  else
+    stopifnot(is.list(metrics))
+  if (is.null(modelChecks))
+    modelChecks = get.search.modelchecks()
+  else
+    stopifnot(is.list(modelChecks))
+  if (is.null(items))
+    items = get.search.items()
+  else
+    stopifnot(is.list(items))
+  if (is.null(options))
+    options = get.search.options()
+  else
+    stopifnot(is.list(options))
+
+
   stopifnot(is.zero.or.positive.number(searchSigMaxIter))
+  searchSigMaxIter <- as.integer(searchSigMaxIter)
   stopifnot(is.positive.number(searchSigMaxProb) && searchSigMaxProb < 1)
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
     stop("searchSigMaxProb cannot be zero when search is enabled.")
 
-  if (is.null(metrics))
-    metrics = get.search.metrics()
-  if (is.null(modelChecks))
-    modelChecks = get.search.modelchecks()
-  if (is.null(items))
-    items = get.search.items()
-  if (is.null(options))
-    options = get.search.options()
+
 
   if (is.list(combinations$sizes)){ # use steps
     # steps will re-call this function with modified combinations in which sizes is no longer a list
@@ -72,7 +84,7 @@ search.sur <- function(data = get.data(),
 
     startTime <- Sys.time()
     res <- .SearchSur(data, combinations, metrics, modelChecks, items, options,
-                      as.integer(searchSigMaxIter), searchSigMaxProb)
+                      searchSigMaxIter, searchSigMaxProb)
     endTime <- Sys.time()
 
     res$info$data <- data
@@ -164,8 +176,12 @@ estim.sur <- function(data, searchSigMaxIter = 0,
                       simTrainRatio = 0.75,
                       simSeed = 0,
                       simMaxConditionNumber = Inf){
+  if (data$hasWeight)
+    stop("SUR estimation does not support weighted observations.")
+
   data <- get.data.keep.complete(data)
   stopifnot(is.zero.or.positive.number(searchSigMaxIter))
+  searchSigMaxIter <- as.integer(searchSigMaxIter)
   stopifnot(is.positive.number(searchSigMaxProb) && searchSigMaxProb < 1)
   if (searchSigMaxIter > 0 && searchSigMaxProb == 0)
     stop("searchSigMaxProb cannot be zero when search is enabled.")
@@ -176,9 +192,12 @@ estim.sur <- function(data, searchSigMaxIter = 0,
     stopifnot(is.matrix(restriction))
 
   stopifnot(is.zero.or.positive.number(simFixSize))
+  simFixSize <- as.integer(simFixSize)
   stopifnot(is.zero.or.positive.number(simTrainRatio) && simTrainRatio <= 1)
   stopifnot(is.zero.or.positive.number(simTrainFixSize))
+  simTrainFixSize <- as.integer(simTrainFixSize)
   stopifnot(is.zero.or.positive.number(simSeed))
+  simSeed <- as.integer(simSeed)
   if (simSeed == 0)
     simSeed = runif(1,10,10e4) # set it here such that it is reported in the info section
   stopifnot(is.number(simMaxConditionNumber))
@@ -188,10 +207,10 @@ estim.sur <- function(data, searchSigMaxIter = 0,
   if (!is.null(pcaOptionsY))
     stopifnot(is.list(pcaOptionsY))
 
-  res <- .EstimSur(data, as.integer(searchSigMaxIter), searchSigMaxProb,
+  res <- .EstimSur(data, searchSigMaxIter, searchSigMaxProb,
                    restriction, pcaOptionsY, pcaOptionsX,
-                   as.integer(simFixSize), simTrainRatio,
-                   as.integer(simTrainFixSize), as.integer(simSeed),
+                   simFixSize, simTrainRatio,
+                   simTrainFixSize, simSeed,
                    simMaxConditionNumber)
 
 
@@ -212,7 +231,7 @@ estim.sur <- function(data, searchSigMaxIter = 0,
 }
 
 
-estim.sur.from.search <- function(searchResult, endogenous, exogenous, ...){
+estim.sur.from.search <- function(searchResult, endogenous, exogenous, extra, ...){
   search_data <- searchResult$info$data
   data <- get.data(search_data$data[,c(endogenous, exogenous), drop = FALSE],
                    endogenous = length(endogenous),
