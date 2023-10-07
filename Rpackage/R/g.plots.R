@@ -1,15 +1,20 @@
 
-expand_lim <- function(data, percentage = 0.15, fix_min = NA, fix_max = NA){
-  if (is.na(fix_min)){
-    min_data <- min(data, na.rm = TRUE)
+expand_lim0 <- function(min_data, max_data, percentage = 0.15, fix_min = NA, fix_max = NA){
+  if (is.na(fix_min))
     fix_min <- min_data - percentage*abs(min_data)
-  }
-  if (is.na(fix_max)){
-    max_data <- max(data, na.rm = TRUE)
+  if (is.na(fix_max))
     fix_max <- max_data + percentage * abs(max_data)
-  }
   c(fix_min, fix_max)
 }
+
+expand_lim <- function(data, percentage = 0.15, fix_min = NA, fix_max = NA){
+  if (is.na(fix_min))
+    min_data <- min(data, na.rm = TRUE)
+  if (is.na(fix_max))max_data <- max(data, na.rm = TRUE)
+  expand_lim0(min_data, max_data, percentage, fix_min, fix_max)
+}
+
+
 
 #' Plot Diagnostics for \code{ldt.estim} Object
 #'
@@ -141,7 +146,260 @@ plot.ldt.estim <- function(x,
     print("Invalid 'type' argument.")
   }
 
-
   return(list(x = x_data, y = y_data))
 }
+
+
+
+#' Fan Plot Function
+#'
+#' This function creates a fan plot.
+#'
+#' @param data A matrix where columns represent the parameters of distributions.
+#' E.g., for normal distribution, the columns will be \code{mean} and \code{variance}.
+#' The first rows can be actual values given in the first column.
+#' @param dist A string indicating the type of distribution. Currently, it can be either "normal" or "log-normal". Default is "normal".
+#' @param lambda A numeric value for Box-Cox transformation. If \code{NA}, no transformation is applied. Default is \code{NULL}.
+#' @param quantiles A numeric vector of quantiles for shading. Default is c(0.05, 0.1, 0.25, 0.75, 0.9, 0.95).
+#' @param gradient A logical value indicating whether to create a gradient fan plot. If FALSE, a standard fan plot is created. Default is FALSE.
+#' @param ylimSuggest A numeric vector of length 2 indicating the suggested y-axis limits. Use \code{NA} for automatic calculation. Default is c(NA, NA).
+#' @param ylimExpand A numeric value indicating the proportion to expand the y-axis limits. Default is 0.1.
+#' @param newPlot A logical value indicating whether to create a new plot. If FALSE, the fan plot is added to the existing plot. Default is TRUE.
+#' @param boundColor A string indicating the color of the boundary of the fan plot. Default is "blue".
+#' @param plotArgs A list of additional arguments passed to the plot function when creating a new plot.
+#' @param actualArgs A list of additional arguments passed to the lines function when plotting actual values.
+#' @param medianArgs A list of additional arguments passed to the lines function when plotting median values.
+#' @param polygonArgs A list of additional arguments passed to the polygon function when creating the fan plot.
+#'
+#' @return This function does not return a value but creates a fan plot as a side effect.
+#' @export
+#' @importFrom graphics points lines polygon axis
+#' @importFrom grDevices colorRampPalette
+#' @importFrom stats qlnorm qnorm
+fan.plot <- function (data,
+                      dist = "normal",
+                      lambda = NA,
+                      quantiles = c(0.05, 0.1, 0.25, 0.75, 0.9, 0.95),
+                      gradient = FALSE,
+                      ylimSuggest = c(NA,NA), # c(#,#) use it to reserve space for further plots
+                      ylimExpand = 0.1,
+                      newPlot = TRUE,
+                      boundColor = "blue",
+                      plotArgs = list(), # for plotting the main plot if newPlot is true
+                      actualArgs = list(),
+                      medianArgs = list(),
+                      polygonArgs = list(border = NA))
+{
+  startInd = 1 #where fan starts
+
+  if (dist == "normal") {
+    if (ncol(data) != 2) {
+      stop("For normal distribution, the matrix must have two columns: mean and variance.")
+    }
+    means <- data[, 1]
+    sds <- sqrt(data[, 2])
+    startInd <- which(sds!=0)
+    startInd <- ifelse(length(startInd) == 0, length(sds), startInd[[1]])
+    medians <- means
+    quants <- t(apply(data, 1, function(x) qnorm(quantiles,
+                                                 x[1], sqrt(x[2]))))
+  }
+  else if (dist == "log-normal") {
+    if (ncol(data) != 2) {
+      stop("For log-normal distribution, the matrix must have two columns: meanlog and sdlog.")
+    }
+    meanlogs <- data[, 1]
+    sdlogs <- data[, 2]
+    startInd <- which(sdlogs!=0)
+    startInd <- ifelse(length(startInd) == 0, length(sdlogs), startInd[[1]])
+    medians <- exp(meanlogs + sdlogs^2/2)
+    quants <- t(apply(data, 1, function(x) qlnorm(quantiles,
+                                                  x[1], x[2])))
+  }
+  else {
+    stop(paste("Distribution", dist, "is not supported."))
+  }
+
+  quants <- cbind(quants[, quantiles <= 0.5], medians, quants[, quantiles > 0.5])
+
+  if (!is.null(lambda) && !is.na(lambda)){
+
+    inverse_boxcox <- function(y, lambda) {
+      if (lambda == 0)
+        exp(y)
+      else
+        (lambda * y + 1)^(1 / lambda)
+    }
+    medians <- inverse_boxcox(medians, lambda)
+    quants <- apply(quants, c(1,2), inverse_boxcox, lambda = lambda)
+  }
+
+  ymin <- min(quants)
+  ymax <- max(quants)
+  if (!is.null(ylimSuggest)){
+    stopifnot(length(ylimSuggest) == 2)
+    ymin <- ifelse(is.na(ylimSuggest[[1]]), ymin, min(ymin, ylimSuggest[[1]]))
+    ymax <- ifelse(is.na(ylimSuggest[[2]]), ymax, max(ymax, ylimSuggest[[2]]))
+  }
+  if (!is.na(ylimExpand)) {
+    e <- expand_lim0(ymin, ymax, ylimExpand, NA, NA)
+    ymin <- e[1]
+    ymax <- e[2]
+  }
+
+  if (newPlot){
+    plotArgs <- modifyList(list(ylab = NA, ylim = c(ymin, ymax)), plotArgs)
+    do.call(plot, c(list(medians, type = "n"), plotArgs))
+  }
+  if (startInd > 1)
+    do.call(lines, c(list(medians[1:startInd]), actualArgs))
+
+  if (startInd == length(medians))
+    return() # no fan to plot
+
+  cols <- colorRampPalette(c("white", boundColor, "white"),
+                           alpha = TRUE)(ncol(quants) + 1)
+  cols <- cols[2:(length(cols) - 1)]
+
+  if (!gradient) {
+    for (i in seq_len(ncol(quants) - 1)) {
+      do.call(polygon, c(list(c(seq_along(medians), rev(seq_along(medians))),
+                              c(quants[, i], rev(quants[, i + 1])), col = cols[i]), polygonArgs))
+    }
+  }
+  else {
+    gradient_cols <- colorRampPalette(c(boundColor, "white"),
+                                      alpha = TRUE)(100)
+    for (i in c((startInd+1):length(medians))) {
+      x <- c(i - 0.4, i + 0.4)
+      y1 <- seq(medians[i], quants[i, ncol(quants)], length.out = 100)
+      y2 <- seq(medians[i], quants[i, 1], length.out = 100)
+      for (j in c(1:(length(y1)-1))) {
+        do.call(polygon, c(list(x = c(x[1], x[2], x[2], x[1]),
+                                y = c(y1[j], y1[j], y1[j + 1], y1[j + 1]),
+                                col = gradient_cols[j]), polygonArgs))
+
+        do.call(polygon, c(list(x = c(x[1], x[2], x[2], x[1]),
+                                y = c(y2[j], y2[j], y2[j + 1], y2[j + 1]),
+                                col = gradient_cols[j]), polygonArgs))
+
+      }
+    }
+  }
+  do.call(lines,c(list(c(numeric(startInd-1)*NA,tail(medians, length(medians)-startInd+1))), medianArgs))
+}
+
+
+
+#' Plot Predictions from a VARMA model
+#'
+#' @param x An object of class \code{ldt.varma.prediction}, which is the output of [predict.ldt.estim.varma] function.
+#' @param variable Index or name of the variable to be plotted.
+#' @param xAxisArgs Arguments to pass to \code{axis} function
+#' @param fanPlotArgs Additional arguments for the [fan.plot] function.
+#' @param simMetric Name of metric to plot its details, provided that simulation details are available. If \code{NULL}, simulation details are not plotted.
+#' @param simLineArgs Arguments to pass to \code{line} function for simulation lines (if available).
+#' @param simPointsArgs Arguments to pass to \code{points} function for simulation points (if available).
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot.ldt.varma.prediction <- function(x,
+                                      variable = 1,
+                                      xAxisArgs = list(),
+                                      fanPlotArgs = list(),
+                                      simMetric = NULL,
+                                      simLineArgs = list(),
+                                      simPointsArgs = list()){
+
+  if (is.null(x))
+    stop("argument is null.")
+  if (!is(x, "ldt.varma.prediction"))
+    stop("Invalid class. An 'ldt.varma.prediction' object is expected.")
+  if (is.null(x$means))
+    stop("Invalid data. Predictions are not available.")
+
+  max_horizon <- nrow(x$means) - x$actualCount
+  if (max_horizon <= 0) # user might edit the matrix to decrease the maximum horizon
+    stop("Predictions are not available. Make sure you did not omit the predictions.")
+
+  stopifnot(is.number(variable) || is.character(variable))
+  if (is.character(variable)){
+    variable <- match(variable, colnames(x$info$y))
+    if (is.na(variable))
+      stop("Invalid variable name.")
+  }
+  if (variable > ncol(x$means))
+    stop("Invalid variable.")
+
+  var_name <- colnames(x$means)[variable]
+  mat <- cbind(x$means[, variable, drop=FALSE], x$vars[, variable, drop=FALSE])
+  colnames(mat) <- c("means", "vars")
+
+  v_name <- colnames(x$means)[variable]
+  attr(mat, "variable name") <- v_name
+  lambda <- ifelse(is.null(x$lambdas), NA, x$lambdas[variable])
+
+  if (is.null(fanPlotArgs))
+    fanPlotArgs <- list()
+  plotArgs <- fanPlotArgs$plotArgs
+  if (is.null(plotArgs))
+    plotArgs <- list()
+  plotArgs <- modifyList(list(xaxt = "n"), plotArgs)
+  fanPlotArgs$plotArgs <- plotArgs
+
+  ylimSuggest <- c(NA,NA) # forecasts in evaluation might need more vertical space
+
+  if (!is.null(simMetric) && !is.null(x$simulation)){ # plot evaluations:
+
+    stopifnot(is.character(simMetric))
+    simMetric <- tolower(simMetric)
+
+    details <- x$simulation$details[x$simulation$details[,"metric"] == simMetric &
+                                      x$simulation$details[,"target"] == var_name,]
+
+    #ldt does the transformation in details
+    #what if forecasts are not transformed?!
+
+    ylimSuggest <- c(min(details[,"prediction"]),max(details[,"prediction"]))
+  }
+
+  do.call(fan.plot, c(list(mat, dist = "normal", lambda = lambda, ylimSuggest = ylimSuggest), fanPlotArgs))
+
+  freqs <- rownames(mat)
+  # there should also be a "at"
+  if (is.null(xAxisArgs))
+    xAxisArgs = list()
+  if (is.null(xAxisArgs$at))
+    xAxisArgs$at <- c(1:length(freqs))
+  if (length(xAxisArgs$at) > length(freqs))
+    xAxisArgs$at <- xAxisArgs$at[1:length(freqs)]
+  do.call(axis, c(list(1, labels = freqs[xAxisArgs$at]), xAxisArgs))
+
+  if (is.null(simMetric) == FALSE){
+
+    simLineArgs <- modifyList(list(lty = 2, col = "gray", lwd = 0.5), simLineArgs)
+    simPointsArgs <- modifyList(list(pch = 19, col = "red", cex = 0.5), simPointsArgs)
+
+    # for each sampleEnd, there are at most h predictions. plot them on a line
+    usends <- unique(details[,"sampleEnd"])
+
+    for (p in usends){
+      det <- details[details[,"sampleEnd"]==p,, drop = FALSE]
+      det <- det[order(det[,"horizon"]),, drop = FALSE]
+      #if (x$actualCount - p < 1)  shouldn't the plot handle it?
+      xs <- c((x$actualCount - p): (x$actualCount - p + max(det[,"horizon"])))
+      ys <- c(det[1,"last"], det[,"prediction"]) # last value & forecasts
+      do.call(lines, c(list(x = xs, y = ys), simLineArgs))
+      do.call(points, c(list(x = xs, y = ys), simPointsArgs))
+
+      # for checking:
+      # points(x = c(x$actualCount - sampleEnd + horizon), y = c(actual), col = "red")
+
+    }
+  }
+}
+
+
 

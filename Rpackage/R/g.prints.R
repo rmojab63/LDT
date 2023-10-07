@@ -101,7 +101,7 @@ print.ldt.search <- function(x, ...) {
     stop("Invalid class. An 'ldt.search' object is expected.")
 
   is_summary = is(x, "ldt.search.summary")
-
+  method <- tolower(attr(x, "method"))
   cat("LDT search result:\n")
   cat(" Method in the search process:", attr(x, "method"), "\n")
   cat(" Expected number of models: ", prettyNum(x$counts$expectedCount, big.mark = ","),
@@ -259,7 +259,9 @@ print.ldt.estim <- function(x, ...) {
   if (!is(x, "ldt.estim"))
     stop("Invalid class. An 'ldt.estim' object is expected.")
 
-  cat("LDT '", attr(x, "method") ,"' estimation result\n")
+  method <- tolower(attr(x, "method"))
+  cat("LDT '", attr(x, "method") ,"' estimation result\n", sep = "")
+  cat("Model: ", do.call(paste0("estim.", method, ".model.string"), list(obj = x)), "\n")
 
   coefs <- x$estimations$coefs
   stds <- x$estimations$std
@@ -287,31 +289,36 @@ print.ldt.estim <- function(x, ...) {
     ms <- max(ifelse(df[,4] < .001, 3,
                             ifelse(df[,4] < .01, 2,
                                    ifelse(df[,4] < .1, 1, 0))), na.rm = TRUE)
+    stars <- logical(nrow(df))
+    for (i in seq_len(nrow(df))){
+      if (!is.null(x$estimations$isRestricted) && x$estimations$isRestricted[i,dep_var] == 1)
+        stars[[i]] <- paste0("r", strrep(" ", ms - 1))
+      else if (df[i,4] < .001)
+        stars[[i]] <- "***"
+      else if(df[i,4] < .01)
+        stars[[i]] <- paste0("**", strrep(" ", ms - 2))
+      else if(df[i,4] < .05)
+        stars[[i]] <- paste0("*", strrep(" ", ms - 1))
+      else if(df[i,4] < .1)
+        stars[[i]] <- paste0(".", strrep(" ", ms - 1))
+      else
+        stars[[i]] <- strrep(" ", ms)
+    }
 
     colnames(df) <- c("Estimate", "Std. Error", "t value", paste0("Pr(>|t|)", strrep(" ", ms+1)))
-    stars <- ifelse(res$estimations$isRestricted[,dep_var] == 1, paste0("r", strrep(" ", ms - 1)),
-                    ifelse(df[,4] < .001, "***",
-                           ifelse(df[,4] < .01, paste0("**", strrep(" ", ms - 2)),
-                                  ifelse(df[,4] < .05, paste0("*", strrep(" ", ms - 1)),
-                                         ifelse(df[,4] < .1, paste0(".", strrep(" ", ms - 1)),
-                                                strrep(" ", ms))))))
 
     formatted_df <- format(df, digits = 4, nsmall = 4, justify = "left")
     formatted_df[,4] =  paste0(format(df[,4], digits = 4, nsmall = 4), " " , stars)
-    formatted_df[res$estimations$isRestricted[,dep_var] == 1, 3:4] <- gsub("NaN", "  -", formatted_df[df[, 2] == 0, 3:4])
+    formatted_df[df$estimations$isRestricted[,dep_var] == 1, 3:4] <- gsub("NaN", "  -", formatted_df[df[, 2] == 0, 3:4])
     print(formatted_df)
 
     cat("---\n")
     cat("Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n r restricted\n\n")
 
-    cat("Number of observations: ", nrow(x$estimations$Y), "\n")
-    omitted_dp <- nrow(x$info$data$data) - nrow(x$estimations$Y)
-    if (omitted_dp != 0)
-      cat("Number of data-points omitted: ", omitted_dp, "\n")
-    cat("Number of equations in the system: ", x$info$data$numEndo, "(current equation: ", j, ")\n")
-    numRes <-  - ifelse (is.null(x$estimations$isRestricted), 0, sum(x$estimations$isRestricted[,dep_var]))
+
+    numRes <- ifelse (is.null(x$estimations$isRestricted), 0, sum(x$estimations$isRestricted[,dep_var]))
     cat("Number of restrictions in the equation: ", numRes,  "\n")
-    cat("Number of estimated coefficients in the equation: ", x$info$data$numExo - numRes,  "\n")
+    cat("Number of estimated coefficients in the equation: ", nrow(x$estimations$coefs) - numRes,  "\n")
     if ("r2" %in% rownames(x$metrics))
       cat("R-squared: ", x$metrics["r2",dep_var], "\n")
     #cat("F-statistic: ", x$metrics["f",dep_var], " on ", x$counts$fProbD1, "and", x$counts$fProbD2, " DF,  p-value: ", x$metrics["fProb",dep_var]) #TODO: check its validity, esp. the degrees of freedom in multivariate case
@@ -320,11 +327,19 @@ print.ldt.estim <- function(x, ...) {
   }
   cat("\n")
 
+  cat("----------------------------------------------------\n")
+
+  cat("Number of observations: ", nrow(x$estimations$Y), "\n")
+  omitted_dp <- nrow(x$info$data$data) - nrow(x$estimations$Y)
+  if (omitted_dp != 0)
+    cat("Number of omitted data-points: ", omitted_dp, "\n")
+  cat("Number of equations in the system: ", x$info$data$numEndo, "\n")
+
   if (!is.null(x$projection)){
     cat(" ** Projection results are available.\n")
   }
   if (!is.null(x$simulation)){
-    cat(" ** Simulation results are available. Number of out-of-sample simulations: ", x$simulation$validCounts,"\n")
+    cat(" ** Simulation results are available (number of out-of-sample simulations: ", x$simulation$validCounts,")\n")
   }
   if (!is.null(x$info$pcaOptionsY)){
     cat(" ** Principle components are used for endogenous data.\n")
@@ -352,16 +367,17 @@ print.ldt.varma.prediction <- function(x, ...) {
     stop("argument is null.")
   if (!is(x, "ldt.varma.prediction"))
     stop("Invalid class. An 'ldt.varma.prediction' object is expected.")
-  if (nrow(x$means) == x$startIndex)
-    stop("Invalid data. Prediction is not available.")
+  if (is.null(x$means))
+    stop("Invalid data. Predictions are not available.")
 
   cat("LDT VARMA prediction:\n")
   rec.print.list(list(
-    `Maximum horizon` = nrow(x$means) - x$startIndex,
+    `Maximum horizon` = nrow(x$means) - x$actualCount,
     `Number of variables` = ncol(x$means),
     `Has variance` = !is.null(x$vars),
-    `Prediction at horizon 1` = x$means[x$startIndex,],
-    `Variance at horizon 1` = if (is.null(x$vars)) {NULL} else {x$vars[x$startIndex,]}
+    `Horizon 1 at` = rownames(x$means)[x$actualCount+1],
+    `Prediction at horizon 1` = x$means[x$actualCount+1,],
+    `Variance at horizon 1` = if (is.null(x$vars)) {NULL} else {x$vars[x$actualCount+1,]}
   ), "  ")
 }
 

@@ -306,263 +306,107 @@ estim.varma.from.search <- function(searchResult, endogenous, exogenous, extra, 
   )
 }
 
-
-
-
-#' Step-wise Search for Best VARMA Models
+#' Get the Specification of an \code{ldt.estim.varma} Model
 #'
-#' For a large model set, use this function to find the best Vector Autoregressive Moving Average models.
-#' It selects a subset of variables from smaller models and moves to the bigger ones.
+#' Use this function to get the name of a VARMA model, such that:
+#' If It is multivariate, it will be VAR, otherwise AR;
+#' If moving average terms are present, it will be ARMA or VARMA;
+#' If it is seasonal, it will be S-ARMA or S-VARMA;
+#' If it is integrated, it will be S-ARMA (D=?,d=?); ..., and any possible combination.
+#' Parameters will be reported in parenthesis after the name of the model.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param ySizeSteps A list of model dimensions to be estimated in each step.
-#' Its size determines the number of steps.
-#' @param countSteps An integer vector to determine the number of variables to be used in each step.
-#' \code{NA} means all variables. Variables are selected based on best estimations.
-#' All variables in the best models (all metrics and targets) are selected until the corresponding suggested number is reached.
-#' Select an appropriate value for \code{bestK} in the options.
-#' @param savePre A directory for saving and loading the progress.
-#' Each step's result is saved in a file (name=\code{paste0(savePre,i)} where \code{i} is the index of the step.
-#' @param ... other arguments to pass to [search.varma] function such as the \code{x} argument.
-#' Note that \code{ySizes} is ineffective here.
+#' @param obj AN object of class \code{ldt.estim.varma}.
 #'
-#' @return Similar to [search.varma] function.
+#' @return A character string representing the specification of the model.
 #' @export
-#'
-#' @examples
-#' # See the example in the 'search.varma' function.
-#'
-#' @seealso [search.varma], [estim.varma]
-search.varma.stepwise <- function(y, ySizeSteps = list(c(1,2), c(3)),
-                                  countSteps = c(NA, 10),
-                                  savePre = NULL, ...) {
+estim.varma.model.string <- function(obj){
+  if (is.null(obj))
+    stop("argument is null.")
+  if (!is(obj, "ldt.estim.varma"))
+    stop("Invalid class. An 'ldt.estim.varma' object is expected.")
 
-  if (length(ySizeSteps[[1]]) == 1)
-    stop("First element in 'ySizeSteps' must contain at lease two elements.")
+  y <- obj$info$data$data[,1:obj$info$data$numEndo, drop = FALSE]
+  nms <- paste(colnames(y), collapse = ", ")
+  params <- obj$info$params[1:6]
 
-  # or it will never find another potential variables to move to the next step
-  # this is specific to VARMA, because targets are in this list.
-  #TODO: check for the relationship between the length of this first element and the number of targets
+  ar <- params[1]
+  d <- params[2]
+  ma <- params[3]
+  sar <- params[4]
+  D <- params[5]
+  sma <- params[6]
 
-  Search_s("varma", y, ySizeSteps, countSteps, savePre, ...)
-}
-
-
-varma.to.latex.mat <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
-
-  #TODO: add breaks based on the number of equations and lags
-  #TODO: add three vertical dots for large vectors similar to SUR
-
-  numEq <- nrow(sigma)
-  numAR <- ifelse(is.null(arList), 0 , length(arList))
-  numMA <- ifelse(is.null(maList), 0 , length(maList))
-  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
-
-  # Initialize the LaTeX string
-  latex_str <- ""
-
-  delta <- ""
-  if (d == 1)
-    delta <- paste0(delta, "\\Delta")
-  else if (d > 1)
-    delta <- paste0(delta, "\\Delta^", d)
-  if (D == 1)
-    delta <- paste0(delta, "\\Delta_", s)
-  else if (D > 1)
-    delta <- paste0(delta, "\\Delta_", s, "^", D)
-
-  # Add the dependent variable vector
-  latex_str <- paste0(latex_str, " \\begin{bmatrix}", paste(paste0(delta, " Y_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
-
-  # Add the equal sign
-  latex_str <- paste0(latex_str, " = ")
-
-  # Add the intercept vector
-  if (!is.null(int) && any(as.numeric(int) != 0)) {
-    latex_str <- paste0(latex_str, "\\begin{bmatrix}", paste(sprintf(numFormat, int), collapse = "\\\\"), "\\end{bmatrix}")
-
-    # Add a plus sign if there are more terms
-    if (numAR > 0 || numExo > 0 || numMA > 0) {
-      latex_str <- paste0(latex_str, " + ")
+  if (ar == 0 && ma == 0 && sar == 0 && sma == 0){# ordinary linear model
+    if (d == 0 && D == 0){
+      if (ncol(y) == 1)
+        paste0("OLM")
+      else
+        paste0("OLM: ", nms)
+    }
+    else if (D == 0){
+      if (ncol(y) == 1)
+        paste0("OLM (d=",d,")")
+      else
+        paste0("OLM (d=",d,"): ", nms)
+    }
+    else if (d == 0){
+      if (ncol(y) == 1)
+        paste0("OLM (D=",D,")")
+      else
+        paste0("OLM (D=",D,"): ", nms)
+    }
+    else {
+      if (ncol(y) == 1)
+        paste0("OLM (d=",d,"D=",D,")")
+      else
+        paste0("OLM (d=",d,"D=",D,"): ", nms)
     }
   }
-
-  # Add the AR matrices
-  for (lag in seq_len(numAR)) {
-    if (all(as.numeric(arList[[lag]])== 0))
-      next
-    ar_mat <- matrix(sprintf(numFormat, arList[[lag]]), nrow = nrow(arList[[lag]]), ncol = ncol(arList[[lag]]))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(ar_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the lagged dependent variable vector
-    latex_str <- paste0(latex_str,
-                        " \\begin{bmatrix}",
-                        paste(paste0(delta, " Y_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
-                        "\\end{bmatrix}"
-    )
-
-    # Add a plus sign if there are more terms
-    if (lag < numAR || numExo > 0 || numMA > 0) {
-      latex_str <- paste0(latex_str, " + ") #break
+  else if (ncol(y) == 1){
+    if (sar == 0 && D == 0 && sma == 0){
+      if (d == 0){
+        if (ma == 0){
+          paste0("AR", "(", ar, ")")
+        }
+        else if (ar == 0){
+          paste0("MA", "(", ma, ")")
+        }
+        else{
+          paste0("ARMA", "(", paste(c(ar,ma), collapse = ", "), ")")
+        }
+      }
+      else{ # write full params
+        paste0("ARIMA", "(", paste(c(ar,d,ma), collapse = ", "), ")")
+      }
+    } else{ # seasonal
+      paste0("S-ARIMA", "(", paste(params, collapse = ", "), ")")
     }
   }
-
-  if (numExo > 1){
-    latex_str <- paste0(latex_str, "\\\\") #break
-  }
-
-  # Add the exogenous matrix
-  if (numExo > 0 && any(as.numeric(exoCoef) != 0)) {
-    exo_mat <- matrix(sprintf(numFormat, exoCoef), nrow = nrow(exoCoef), ncol = ncol(exoCoef))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(exo_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the exogenous variable vector
-    if (numExo > 0){
-      latex_str <- paste0(
-        latex_str,
-        "\\begin{bmatrix}",
-        paste(paste0("X_", seq_len(numExo)), collapse = "\\\\"),
-        "\\end{bmatrix}"
-      )
-    }
-
-    # Add a plus sign if there are more terms
-    if (numMA > 0) {
-      latex_str <- paste0(latex_str, "+ ")
-    }
-  }
-
-  if (numMA > 0){
-    latex_str <- paste0(latex_str, "\\\\") #break
-  }
-
-  # Add the MA matrices
-  for (lag in seq_len(numMA)) {
-    if (all(as.numeric(maList[[lag]])== 0))
-      next
-    ma_mat <- matrix(sprintf(numFormat, maList[[lag]]), nrow = nrow(maList[[lag]]), ncol = ncol(maList[[lag]]))
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(apply(ma_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add the lagged error vector
-    latex_str <- paste0(
-      latex_str,
-      "\\begin{bmatrix}",
-      paste(paste0("E_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
-      "\\end{bmatrix}"
-    )
-
-    # Add a plus sign if there are more terms
-    if (lag < numMA) {
-      latex_str <- paste0(latex_str, " + ")
-    }
-  }
-
-  # Add the error vector
-  latex_str <- paste0(latex_str, " + \\begin{bmatrix}", paste(paste0("E_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
-
-  s_mat <- latex.matrix(mat = sigma, numFormat = numFormat)
-  latex_str <- paste0(latex_str, ",\\\\ \\Sigma = ", s_mat)
-
-  return(latex_str)
-}
-
-varma.to.latex.eqs <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
-
-  #TODO: handle zero coefficients
-
-  numEq <- nrow(sigma)
-  numAR <- ifelse(is.null(arList), 0 , length(arList))
-  numMA <- ifelse(is.null(maList), 0 , length(maList))
-  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
-
-  # Initialize the LaTeX string
-  latex_str <- ""
-
-  delta <- ""
-  if (d == 1)
-    delta <- paste0(delta, "\\Delta")
-  else if (d > 1)
-    delta <- paste0(delta, "\\Delta^", d)
-  if (D == 1)
-    delta <- paste0(delta, "\\Delta_", s)
-  else if (D > 1)
-    delta <- paste0(delta, "\\Delta_", s, "^", D)
-
-  # Add the equations
-  for (eq in seq_len(numEq)) {
-    # Add the dependent variable
-    latex_str <- paste0(latex_str, delta," Y_{", eq, "t}")
-
-    # Add the intercept
-    if (!is.null(int) && int[eq] != 0) {
-      latex_str <- paste0(latex_str, " = ", sprintf0(numFormat, int[eq]))
-    }
-
-    # Add the AR terms
-    for (lag in seq_len(numAR)) {
-      coefs <- arList[[lag]][eq, ]
-      if (all(as.numeric(coefs) == 0))
-        next
-      signs <- ifelse(coefs >= 0, " + ", " - ")
-      coefs <- sprintf0(numFormat, abs(coefs))
-
-      terms <- paste0(signs, coefs, delta, " Y_{", seq_len(numEq), "t-", lag, "}")
-      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
-    }
-
-    # Add the exogenous terms
-    if (numExo > 0){
-      for (exo in seq_len(numExo)) {
-        coef <- exoCoef[eq, exo]
-        if (all(as.numeric(coefs) == 0))
-          next
-        sign <- ifelse(coef >= 0, " + ", " - ")
-        coef <- sprintf0(numFormat, abs(coef))
-        term <- paste0(sign, coef, " X_", exo)
-        latex_str <- paste0(latex_str, term)
+  else {
+    if (sar == 0 && D == 0 && sma == 0){
+      if (d == 0){
+        if (ma == 0){
+          paste0("VAR", "(", ar, "): ", nms)
+        }
+        else if (ar == 0){
+          paste0("VMA", "(", ma, "): ", nms)
+        }
+        else{
+          paste0("VARMA", "(", paste(c(ar,ma), collapse = ", "), "): ", nms)
+        }
+      }
+      else{ # write full params
+        paste0("VARIMA", "(", paste(c(ar,d,ma), collapse = ", "), "): ", nms)
       }
     }
-
-    # Add break
-    latex_str <- paste0(latex_str, "\\\\")
-
-    # Add the MA terms
-    for (lag in seq_len(numMA)) {
-      coefs <- maList[[lag]][eq, ]
-      if (all(as.numeric(coefs) == 0))
-        next
-      signs <- ifelse(coefs >= 0, " + ", " - ")
-      coefs <- sprintf0(numFormat, abs(coefs))
-      terms <- paste0(signs, coefs, " E_{", seq_len(numEq), "t-", lag, "}")
-      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
+    else { # seasonal
+      paste0("S-VARIMA",
+             "(", paste(params, collapse = ", "), "): ", nms)
     }
-
-    # Add the error term
-    latex_str <- paste0(latex_str, " + E_{", eq, "t},\\quad \\sigma_", eq,"^2 = ",
-                        sprintf0(numFormat, sigma[[eq,eq]]))
-
-    # Add a line break if this is not the last equation
-    if (eq < numEq)
-      latex_str <- paste0(latex_str, "\\\\")
   }
 
-  return(latex_str)
 }
+
 
 seasonal_cumsum_row <- function(x, n_seasons) {
   n <- nrow(x)

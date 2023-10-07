@@ -107,9 +107,9 @@ test_that("VAR forecast works", {
 
   prediction <- predict(res)
 
-  expect_equal(as.numeric(t(prediction$means)[,3:5]), prd, tolerance = 1e-8)
+  expect_equal(as.numeric(t(prediction$means)[,1:3]), prd, tolerance = 1e-8)
   #variance
-  expect_equal(as.numeric(sqrt(t(prediction$vars)[,3:5])), prs, tolerance = 1e-8)
+  expect_equal(as.numeric(sqrt(t(prediction$vars)[,1:3])), prs, tolerance = 1e-8)
 })
 
 test_that("VAR forecast works with NA", {
@@ -127,9 +127,9 @@ test_that("VAR forecast works with NA", {
 
   prediction <- predict(res)
 
-  expect_equal(as.numeric(t(prediction$means[3:5,])), ms1, tolerance = 1e-8)
+  expect_equal(as.numeric(t(prediction$means[1:3,])), ms1, tolerance = 1e-8)
   #variance
-  expect_equal(as.numeric(sqrt(t(prediction$vars[3:5,]))), vs1, tolerance = 1e-8)
+  expect_equal(as.numeric(sqrt(t(prediction$vars[1:3,]))), vs1, tolerance = 1e-8)
 })
 
 test_that("MA estimation works", {
@@ -148,7 +148,7 @@ test_that("MA forecast works", {
                transform.pars = FALSE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
 
-  prediction <- predict(res)
+  prediction <- predict(res, actualCount = 0)
 
   expect_equal(as.numeric(forR$pred), as.numeric(prediction$means), tolerance = 1e-6)
   #variance
@@ -162,11 +162,11 @@ test_that("ARMA forecast works", {
                transform.pars = FALSE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
 
-  prediction <- predict(res)
+  prediction <- predict(res, actualCount = 0)
 
-  expect_equal(as.numeric(forR$pred), as.numeric(prediction$means[2:4]), tolerance = 1e-3)
+  expect_equal(as.numeric(forR$pred), as.numeric(prediction$means), tolerance = 1e-3)
   #variance
-  expect_equal(as.numeric(forR$se), sqrt(as.numeric(prediction$vars[2:4])), tolerance = 1e-3)
+  expect_equal(as.numeric(forR$se), sqrt(as.numeric(prediction$vars)), tolerance = 1e-3)
 })
 
 test_that("ARIMA forecast works", {
@@ -176,11 +176,11 @@ test_that("ARIMA forecast works", {
                transform.pars = TRUE, include.mean = TRUE)
   forR <- predict(resR, n.ahead = 3)
 
-  prediction <- predict(res)
+  prediction <- predict(res, actualCount = 0)
 
-  expect_equal(as.numeric(forR$pred), as.numeric(prediction$means[3:5]), tolerance = 1e-3)
+  expect_equal(as.numeric(forR$pred), as.numeric(prediction$means), tolerance = 1e-3)
   #variance
-  expect_equal(as.numeric(forR$se), sqrt(as.numeric(prediction$vars[3:5])), tolerance = 1e-3)
+  expect_equal(as.numeric(forR$se), sqrt(as.numeric(prediction$vars)), tolerance = 1e-3)
 })
 
 test_that("VAR forecast works with PCA for endogenous", {

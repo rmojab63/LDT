@@ -424,3 +424,222 @@ sur.to.latex.mat <- function(sigma, coef, intercept = TRUE, numFormat = "%.2f",
 
   return(eq_latex)
 }
+
+
+
+
+varma.to.latex.mat <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
+
+  #TODO: add breaks based on the number of equations and lags
+  #TODO: add three vertical dots for large vectors similar to SUR
+
+  numEq <- nrow(sigma)
+  numAR <- ifelse(is.null(arList), 0 , length(arList))
+  numMA <- ifelse(is.null(maList), 0 , length(maList))
+  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
+
+  # Initialize the LaTeX string
+  latex_str <- ""
+
+  delta <- ""
+  if (d == 1)
+    delta <- paste0(delta, "\\Delta")
+  else if (d > 1)
+    delta <- paste0(delta, "\\Delta^", d)
+  if (D == 1)
+    delta <- paste0(delta, "\\Delta_", s)
+  else if (D > 1)
+    delta <- paste0(delta, "\\Delta_", s, "^", D)
+
+  # Add the dependent variable vector
+  latex_str <- paste0(latex_str, " \\begin{bmatrix}", paste(paste0(delta, " Y_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
+
+  # Add the equal sign
+  latex_str <- paste0(latex_str, " = ")
+
+  # Add the intercept vector
+  if (!is.null(int) && any(as.numeric(int) != 0)) {
+    latex_str <- paste0(latex_str, "\\begin{bmatrix}", paste(sprintf(numFormat, int), collapse = "\\\\"), "\\end{bmatrix}")
+
+    # Add a plus sign if there are more terms
+    if (numAR > 0 || numExo > 0 || numMA > 0) {
+      latex_str <- paste0(latex_str, " + ")
+    }
+  }
+
+  # Add the AR matrices
+  for (lag in seq_len(numAR)) {
+    if (all(as.numeric(arList[[lag]])== 0))
+      next
+    ar_mat <- matrix(sprintf(numFormat, arList[[lag]]), nrow = nrow(arList[[lag]]), ncol = ncol(arList[[lag]]))
+    latex_str <- paste0(
+      latex_str,
+      "\\begin{bmatrix}",
+      paste(apply(ar_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
+      "\\end{bmatrix}"
+    )
+
+    # Add the lagged dependent variable vector
+    latex_str <- paste0(latex_str,
+                        " \\begin{bmatrix}",
+                        paste(paste0(delta, " Y_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
+                        "\\end{bmatrix}"
+    )
+
+    # Add a plus sign if there are more terms
+    if (lag < numAR || numExo > 0 || numMA > 0) {
+      latex_str <- paste0(latex_str, " + ") #break
+    }
+  }
+
+  if (numExo > 1){
+    latex_str <- paste0(latex_str, "\\\\") #break
+  }
+
+  # Add the exogenous matrix
+  if (numExo > 0 && any(as.numeric(exoCoef) != 0)) {
+    exo_mat <- matrix(sprintf(numFormat, exoCoef), nrow = nrow(exoCoef), ncol = ncol(exoCoef))
+    latex_str <- paste0(
+      latex_str,
+      "\\begin{bmatrix}",
+      paste(apply(exo_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
+      "\\end{bmatrix}"
+    )
+
+    # Add the exogenous variable vector
+    if (numExo > 0){
+      latex_str <- paste0(
+        latex_str,
+        "\\begin{bmatrix}",
+        paste(paste0("X_", seq_len(numExo)), collapse = "\\\\"),
+        "\\end{bmatrix}"
+      )
+    }
+
+    # Add a plus sign if there are more terms
+    if (numMA > 0) {
+      latex_str <- paste0(latex_str, "+ ")
+    }
+  }
+
+  if (numMA > 0){
+    latex_str <- paste0(latex_str, "\\\\") #break
+  }
+
+  # Add the MA matrices
+  for (lag in seq_len(numMA)) {
+    if (all(as.numeric(maList[[lag]])== 0))
+      next
+    ma_mat <- matrix(sprintf(numFormat, maList[[lag]]), nrow = nrow(maList[[lag]]), ncol = ncol(maList[[lag]]))
+    latex_str <- paste0(
+      latex_str,
+      "\\begin{bmatrix}",
+      paste(apply(ma_mat, 1, paste, collapse = " & "), collapse = "\\\\"),
+      "\\end{bmatrix}"
+    )
+
+    # Add the lagged error vector
+    latex_str <- paste0(
+      latex_str,
+      "\\begin{bmatrix}",
+      paste(paste0("E_{", seq_len(numEq), "t-", lag, "}"), collapse = "\\\\"),
+      "\\end{bmatrix}"
+    )
+
+    # Add a plus sign if there are more terms
+    if (lag < numMA) {
+      latex_str <- paste0(latex_str, " + ")
+    }
+  }
+
+  # Add the error vector
+  latex_str <- paste0(latex_str, " + \\begin{bmatrix}", paste(paste0("E_{", seq_len(numEq),"t}"), collapse = "\\\\"), "\\end{bmatrix}")
+
+  s_mat <- latex.matrix(mat = sigma, numFormat = numFormat)
+  latex_str <- paste0(latex_str, ",\\\\ \\Sigma = ", s_mat)
+
+  return(latex_str)
+}
+
+varma.to.latex.eqs <- function(sigma, arList, int, exoCoef, maList, d, D, s, numFormat = "%.2f") {
+
+  #TODO: handle zero coefficients
+
+  numEq <- nrow(sigma)
+  numAR <- ifelse(is.null(arList), 0 , length(arList))
+  numMA <- ifelse(is.null(maList), 0 , length(maList))
+  numExo <- ifelse(is.null(exoCoef), 0 , ncol(exoCoef))
+
+  # Initialize the LaTeX string
+  latex_str <- ""
+
+  delta <- ""
+  if (d == 1)
+    delta <- paste0(delta, "\\Delta")
+  else if (d > 1)
+    delta <- paste0(delta, "\\Delta^", d)
+  if (D == 1)
+    delta <- paste0(delta, "\\Delta_", s)
+  else if (D > 1)
+    delta <- paste0(delta, "\\Delta_", s, "^", D)
+
+  # Add the equations
+  for (eq in seq_len(numEq)) {
+    # Add the dependent variable
+    latex_str <- paste0(latex_str, delta," Y_{", eq, "t}")
+
+    # Add the intercept
+    if (!is.null(int) && int[eq] != 0) {
+      latex_str <- paste0(latex_str, " = ", sprintf0(numFormat, int[eq]))
+    }
+
+    # Add the AR terms
+    for (lag in seq_len(numAR)) {
+      coefs <- arList[[lag]][eq, ]
+      if (all(as.numeric(coefs) == 0))
+        next
+      signs <- ifelse(coefs >= 0, " + ", " - ")
+      coefs <- sprintf0(numFormat, abs(coefs))
+
+      terms <- paste0(signs, coefs, delta, " Y_{", seq_len(numEq), "t-", lag, "}")
+      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
+    }
+
+    # Add the exogenous terms
+    if (numExo > 0){
+      for (exo in seq_len(numExo)) {
+        coef <- exoCoef[eq, exo]
+        if (all(as.numeric(coefs) == 0))
+          next
+        sign <- ifelse(coef >= 0, " + ", " - ")
+        coef <- sprintf0(numFormat, abs(coef))
+        term <- paste0(sign, coef, " X_", exo)
+        latex_str <- paste0(latex_str, term)
+      }
+    }
+
+    # Add break
+    latex_str <- paste0(latex_str, "\\\\")
+
+    # Add the MA terms
+    for (lag in seq_len(numMA)) {
+      coefs <- maList[[lag]][eq, ]
+      if (all(as.numeric(coefs) == 0))
+        next
+      signs <- ifelse(coefs >= 0, " + ", " - ")
+      coefs <- sprintf0(numFormat, abs(coefs))
+      terms <- paste0(signs, coefs, " E_{", seq_len(numEq), "t-", lag, "}")
+      latex_str <- paste0(latex_str, paste(terms, collapse = ""))
+    }
+
+    # Add the error term
+    latex_str <- paste0(latex_str, " + E_{", eq, "t},\\quad \\sigma_", eq,"^2 = ",
+                        sprintf0(numFormat, sigma[[eq,eq]]))
+
+    # Add a line break if this is not the last equation
+    if (eq < numEq)
+      latex_str <- paste0(latex_str, "\\\\")
+  }
+
+  return(latex_str)
+}

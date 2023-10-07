@@ -231,28 +231,37 @@ SEXP EstimVarma(List data, IntegerVector params, int seasonsCount,
   }
 
   // Simulation Details
-  NumericMatrix simDetails(0, 9);
-  colnames(simDetails) = CharacterVector::create(
-      "sampleEnd", "metricIndex", "horizon", "targetIndex", "last", "actual",
-      "forecast", "error", "std");
+  DataFrame simDetails;
 
   if (simFixSize > 0) {
-    simDetails = NumericMatrix(simModel.Details.size(), 9);
+    int n = simModel.Details.size();
 
-    int h = -1;
+    CharacterVector metric(n), target(n);
+    IntegerVector sampleEnd(n), horizon(n);
+    NumericVector last(n), actual(n), prediction(n), error(n), std(n);
 
-    for (const auto &a : simModel.Details) {
-      h++;
-      simDetails(h, 0) = std::get<0>(a);
-      simDetails(h, 1) = std::get<1>(a);
-      simDetails(h, 2) = std::get<2>(a);
-      simDetails(h, 3) = std::get<3>(a);
-      simDetails(h, 4) = std::get<4>(a);
-      simDetails(h, 5) = std::get<5>(a);
-      simDetails(h, 6) = std::get<6>(a);
-      simDetails(h, 7) = std::get<7>(a);
-      simDetails(h, 8) = std::get<8>(a);
+    for (int i = 0; i < n; ++i) {
+
+      // The items are: sample end, metric index, horizon, target index, last
+      // value, actual value, prediction, prediction error, std
+
+      sampleEnd[i] = std::get<0>(simModel.Details[i]);
+      metric[i] = metricNames.at(std::get<1>(simModel.Details[i]));
+      horizon[i] = std::get<2>(simModel.Details[i]);
+      target[i] = endoNames.at(std::get<3>(simModel.Details[i]));
+      last[i] = std::get<4>(simModel.Details[i]);
+      actual[i] = std::get<5>(simModel.Details[i]);
+      prediction[i] = std::get<6>(simModel.Details[i]);
+      error[i] = std::get<7>(simModel.Details[i]);
+      std[i] = std::get<8>(simModel.Details[i]);
     }
+
+    simDetails = DataFrame::create(
+        Named("metric") = metric, Named("target") = target,
+        Named("sampleEnd") = sampleEnd, Named("horizon") = horizon,
+        Named("last") = last, Named("actual") = actual,
+        Named("prediction") = prediction, Named("error") = error,
+        Named("std") = std);
   }
 
   // Simulation Failures

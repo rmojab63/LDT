@@ -253,6 +253,22 @@ estim.sur.from.search <- function(searchResult, endogenous, exogenous, extra, ..
 }
 
 
+estim.sur.model.string <- function(obj){
+  if (is.null(obj))
+    stop("argument is null.")
+  if (!is(obj, "ldt.estim.sur"))
+    stop("Invalid class. An 'ldt.estim.sur' object is expected.")
+
+  y <- obj$info$data$data[,1:obj$info$data$numEndo, drop = FALSE]
+  nms <- paste(colnames(y), collapse = ", ")
+  if (ncol(y) == 1)
+    paste0("Linear Model")
+  if (sum(obj$estimations$isRestricted) == 0)
+      paste0("Unrestricted SUR: ", nms)
+  else
+    paste0("SUR: ", nms)
+}
+
 #' Generate Random Sample from an SUR Model
 #'
 #' This function generates a random sample from an Seemingly Unrelated Regression model.

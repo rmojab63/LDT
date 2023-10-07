@@ -264,32 +264,68 @@ predict.ldt.estim <- function(object, ...){
 #' @return An object of class \code{ldt.varma.prediction}, which is a list with predicted \code{means} and (if available) \code{variances}.
 #'
 #' @export
-predict.ldt.estim.varma <- function(object, startFrequency = NULL, ...){
+predict.ldt.estim.varma <- function(object,
+                                    actualCount = 0,
+                                    startFrequency = NULL,
+                                    ...){
+  if (is.null(object))
+    stop("object is null.")
+  if (!is(object, "ldt.estim"))
+    stop("Invalid class. An 'ldt.estim.varma' object is expected.")
   if (is.null(object$prediction) || is.null(object$prediction$means))
     stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")
+
+  if (is.na(actualCount))
+    actualCount <- nrow(object$estimations$Y)
+
   hasVar = !is.null(object$prediction$vars)
   if (is.null(startFrequency))
     startFrequency = object$info$startFrequency
   if (is.null(startFrequency))
     startFrequency = tdata::f.cross.section(1)
 
-  predStart = tdata::next.freq(startFrequency,
-                               object$info$data$obsCount - object$prediction$startIndex + 1)
-  labs <- tdata::get.seq0(predStart, ncol(object$prediction$means), by = 1)
-
-  means <- t(object$prediction$means)
-  vars <- NULL
-  rownames(means) <- labs
-  if (hasVar){
-    vars <- t(object$prediction$vars)
-    rownames(vars) <- labs
+  # get predictions:
+  if (object$prediction$startIndex > 1)
+    preds <- t(object$prediction$means[,-(seq_len(object$prediction$startIndex-1)), drop = FALSE])
+  else
+    preds <- t(object$prediction$means)
+  # get actual
+  if (actualCount > 0){
+    actuals <- tail(object$estimations$Y, actualCount)
+    preds <- rbind(actuals, preds)
   }
-  res <- list(means = means,
+  preds_var <- NULL
+  if (hasVar){
+    if (object$prediction$startIndex > 1)
+      vars <- t(object$prediction$vars[,-(1:(object$prediction$startIndex-1)), drop = FALSE])
+    else
+      vars <- t(object$prediction$vars)
+    if (actualCount > 0)
+      vars <- rbind(matrix(0,nrow = actualCount, ncol = ncol(preds)), # use 0 for plotting
+                    vars)
+  }
+
+  dstart <- tdata::next.freq(startFrequency, nrow(object$estimations$Y) - actualCount)
+  freqs <- tdata::get.seq0(dstart, nrow(preds))
+
+  rownames(preds) <- freqs
+  rownames(vars) <- freqs
+
+  attr(preds, "ldtf") <- dstart
+  attr(vars, "ldtf") <- dstart
+
+  res <- list(means = preds,
               vars = vars,
-              startIndex = object$prediction$startIndex)
+              actualCount = actualCount)
+
+  if (!is.null(object$simulation))
+    res$simulation <- object$simulation
+  res$lambda <- object$info$data$lambdas
+
+  # We should not use use Box-cox lambdas in this function for transforming variances
+  # In plotting, there will be an option to transform the intervals
 
   class(res) <- c("ldt.varma.prediction", "list")
-  attr(res, "ldtf") <- predStart
   res
 }
 

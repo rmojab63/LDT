@@ -191,21 +191,21 @@ get.data <- function(data, endogenous = 1, equations = NULL,
 #'
 #' @return The input \code{data} with updated data matrix
 get.data.append.newX <- function(data, maxHorizon = NA){
+  added <- attr(data, "ldt.new.appended")
+  if (!is.null(added) && added)
+    return(data)
+
   if (is.null(data$newX)){
-    if (is.na(maxHorizon))
-      return(data)
+    if (is.na(maxHorizon)){ }
     else if (data$hasIntercept && data$numExo == 1){
       new_rows <- cbind(matrix(NA,
                                ncol = data$numEndo + ifelse(data$hasWeight,1,0),
                                nrow = maxHorizon), rep(1,maxHorizon))
       colnames(new_rows) <- colnames(data$data)
       data$data <- rbind(data$data, new_rows)
-      return(data)
     }
     else if (maxHorizon > 0 && data$numExo != 0)
         stop("Number of new data points (=0) is less than the required maximum horizon (=", maxHorizon,").")
-    else
-      return(data)
   }
   else{
     if (!is.na(maxHorizon) && maxHorizon > 0 && nrow(data$newX) < maxHorizon)
@@ -217,8 +217,10 @@ get.data.append.newX <- function(data, maxHorizon = NA){
                              nrow = nrow(data$newX)), data$newX)
     colnames(new_rows) <- colnames(data$data)
     data$data <- rbind(data$data, new_rows)
-    return(data)
   }
+
+  attr(data, "ldt.new.appended") <- TRUE
+  return(data)
 }
 
 #' Remove Rows with Missing Observations from Data
