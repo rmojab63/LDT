@@ -643,3 +643,34 @@ varma.to.latex.eqs <- function(sigma, arList, int, exoCoef, maList, d, D, s, num
 
   return(latex_str)
 }
+
+
+
+bin.to.latex.eq <- function(coef, probit, numFormat = "%.2f") {
+
+  xNames <- paste0("X_",c(1:length(coef)))
+
+  terms <- character(length(coef))
+  terms[1] <- sprintf0(numFormat, coef[1])
+  for (i in seq_along(coef)[-1]) {
+    # avoid +- signs
+    if (coef[i] >= 0) {
+      sign <- " + "
+    } else {
+      sign <- " - "
+    }
+    terms[i] <- paste0(sign, sprintf(numFormat, abs(coef[i])), " ", xNames[i])
+  }
+
+  formula_str <- paste(terms, collapse = "")
+
+  cond_str = ifelse(length(xNames) == 4, paste(xNames[-1], collapse = ", "), paste(c(xNames[2], "...",xNames[length(xNames)]), collapse = ", "))
+
+  if (probit) {
+    formula_str <- paste0("P(Y = 1 | ", cond_str, ") = \\Phi(", formula_str, ")")
+  } else {
+    formula_str <- paste0("P(Y = 1 | ", cond_str, ") = \\frac{1}{1 + e^{-(", formula_str, ")}}")
+  }
+
+  return(formula_str)
+}

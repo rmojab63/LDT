@@ -263,13 +263,17 @@ print.ldt.estim <- function(x, ...) {
   cat("LDT '", attr(x, "method") ,"' estimation result\n", sep = "")
   cat("Model: ", do.call(paste0("estim.", method, ".model.string"), list(obj = x)), "\n")
 
+  dist <- "t"
+  if (method == "binary")
+    dist <- "z"
+
   coefs <- x$estimations$coefs
   stds <- x$estimations$std
-  tstats <- x$estimations$tstats
+  tzstats <- x$estimations[[paste0(dist, "stats")]]
   pValues <- x$estimations$pValues
 
   max_chars <- max(nchar(rownames(coefs)))
-  max_widths <- sapply(list(coefs, stds, tstats, pValues), function(mat) max(nchar(format(mat))))
+  max_widths <- sapply(list(coefs, stds, tzstats, pValues), function(mat) max(nchar(format(mat))))
 
   dep_vars <- colnames(coefs)
 
@@ -278,12 +282,14 @@ print.ldt.estim <- function(x, ...) {
     j <- j + 1
     cat(paste0("\nDependent variable: ", dep_var, "\n"))
     cat("----------------------------------------------------\n")
-    cat("Residuals:\n")
-    residuals_summary <- summary(x$estimations$resid[,dep_var])
-    print(residuals_summary)
-    cat("\n")
+    if (!is.null(x$estimations$resid)){
+      cat("Residuals:\n")
+      residuals_summary <- summary(x$estimations$resid[,dep_var])
+      print(residuals_summary)
+      cat("\n")
+    }
 
-    df <- data.frame(coefs[,dep_var], stds[,dep_var], tstats[,dep_var], pValues[,dep_var])
+    df <- data.frame(coefs[,dep_var], stds[,dep_var], tzstats[,dep_var], pValues[,dep_var])
     rownames(df) <- rownames(coefs)
 
     ms <- max(ifelse(df[,4] < .001, 3,
@@ -305,7 +311,7 @@ print.ldt.estim <- function(x, ...) {
         stars[[i]] <- strrep(" ", ms)
     }
 
-    colnames(df) <- c("Estimate", "Std. Error", "t value", paste0("Pr(>|t|)", strrep(" ", ms+1)))
+    colnames(df) <- c("Estimate", "Std. Error", paste(dist, "stats"), paste0("Pr(>|t|)", strrep(" ", ms+1)))
 
     formatted_df <- format(df, digits = 4, nsmall = 4, justify = "left")
     formatted_df[,4] =  paste0(format(df[,4], digits = 4, nsmall = 4), " " , stars)
@@ -378,6 +384,34 @@ print.ldt.varma.prediction <- function(x, ...) {
     `Horizon 1 at` = rownames(x$means)[x$actualCount+1],
     `Prediction at horizon 1` = x$means[x$actualCount+1,],
     `Variance at horizon 1` = if (is.null(x$vars)) {NULL} else {x$vars[x$actualCount+1,]}
+  ), "  ")
+}
+
+#' Prints an \code{ldt.estim.projection} object
+#'
+#' An \code{ldt.estim.projection} object is the output of [predict.ldt.estim()] function.
+#'
+#' @param x An object of class \code{ldt.estim.projection}
+#' @param ... Additional arguments
+#'
+#' @return This function has no output.
+#' @export
+print.ldt.estim.projection <- function(x, ...) {
+  if (is.null(x))
+    stop("argument is null.")
+  if (!is(x, "ldt.estim.projection"))
+    stop("Invalid class. An 'ldt.estim.projection' object is expected.")
+  if (is.null(x$means) || nrow(x$means) == 0)
+    stop("Invalid data. Predictions are not available.")
+
+  cat("LDT ", x$method," model projection:\n")
+  rec.print.list(list(
+    `Length` = nrow(x$means),
+    `Number of variables` = ncol(x$means),
+    `Has variance` = !is.null(x$vars),
+    `First exogenous observation` = x$newX[1,],
+    `First prediction` = x$means[1,],
+    `First variance` = if (is.null(x$vars)) {NULL} else {x$vars[1,]}
   ), "  ")
 }
 

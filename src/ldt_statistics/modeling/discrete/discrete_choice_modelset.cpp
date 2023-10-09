@@ -23,15 +23,18 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     : Searcher::Searcher(data, options, items, metrics, checks, SizeG,
                          groupIndexMap, fixFirstG, 0) {
 
+  if (fixFirstG == 0)
+    throw LdtException(
+        ErrorType::kLogic, "dc-modelset",
+        "first partition must be fixed for intercept in binomial regression.");
+
   pCostMatrixes = &costMatrixes;
-  pSource =
-      &source; // 1st is endogenous, second is intercept, 3rd (can be) weight
+  pSource = &source;
   mNumChoices = numChoices;
   Ti numObs = source.RowsCount;
-  Ti numExo = SizeG + 1; // intercept
+  Ti numExo = this->SizeG;
   Ti cols = numExo + (hasWeight ? 2 : 1);
-  Data =
-      Dataset<Tv>(numObs, cols, true); // size + endogenous, intercept, weight
+  Data = Dataset<Tv>(numObs, cols, true);
 
   pAucOptions = &aucOptions;
 
@@ -44,7 +47,8 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     DModel.Optim.UseLineSearch = newtonOptions.UseLineSearch;
   }
 
-  if (metrics.SimFixSize > 0) { // we estimate a simulation model
+  if (metrics.SimFixSize > 0 &&
+      metrics.MetricsOut.size() > 0) { // we estimate a simulation model
     Model = DiscreteChoiceSim<hasWeight, modelType, distType>(
         numObs, cols, this->mNumChoices, metrics.TrainRatio,
         (Ti)metrics.TrainFixSize, (Ti)costMatrixes.size(),
@@ -66,13 +70,12 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
           DModel.WorkSize,
           Model.WorkSize); // don't share storage size. we will use beta, etc.
 
-  ExoIndexes = Matrix<Ti>(this->SizeG + 1, 1);
-  this->WorkSizeI += this->SizeG + 1;
+  ExoIndexes = Matrix<Ti>(this->SizeG, 1);
+  this->WorkSizeI += this->SizeG;
 
-  Indexes.push_back(0);
-  Indexes.push_back(1);
+  Indexes.push_back(0); // dependent
   if constexpr (hasWeight) {
-    Indexes.push_back(2);
+    Indexes.push_back(1);
   }
   for (Ti i = 0; i < this->SizeG; i++)
     Indexes.push_back(0);
@@ -116,16 +119,16 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
                                                                     Ti *workI) {
   auto metrics = *this->pMetrics;
 
-  ExoIndexes.SetData(workI);
-  ExoIndexes.Data[0] = 1;
   // update Indexes
-  Ti j = 2;
-  if constexpr (hasWeight) {
-    j = 3;
-  }
+  ExoIndexes.SetData(workI);
   for (Ti i = 0; i < this->SizeG; i++) {
-    Indexes.at(j + i) = j + this->CurrentIndices.Data[i];
-    ExoIndexes.Data[i + 1] = this->CurrentIndices.Data[i] + 2;
+    if constexpr (hasWeight) {
+      Indexes.at(i + 2) = 1 + this->CurrentIndices.Data[i];
+      ExoIndexes.Data[i] = 1 + this->CurrentIndices.Data[i];
+    } else if constexpr (true) {
+      Indexes.at(i + 1) = this->CurrentIndices.Data[i];
+      ExoIndexes.Data[i] = this->CurrentIndices.Data[i];
+    }
   }
 
   Ti s = 0;
@@ -141,16 +144,17 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     return "";
 
   Ti count = Data.Result.RowsCount;
-  Ti numExo = this->SizeG + 1;
+  Ti numExo = this->SizeG;
   Tv *d = Data.Result.Data;
 
   Y.SetData(d, count,
             1); // You cannot set y in the constructor due to NAN existence
+
   if constexpr (hasWeight) {
     W.SetData(&d[count], count, 1);
-    X.SetData(&d[2 * count], count, numExo); // +1 for intercept
+    X.SetData(&d[2 * count], count, numExo);
   } else if constexpr (true) {
-    X.SetData(&d[count], count, numExo); // +1 for intercept
+    X.SetData(&d[count], count, numExo);
   }
 
   // there is just one endogenous and one target
@@ -194,13 +198,13 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     }
   }
 
-  if (metrics.SimFixSize > 0) {
+  if (metrics.SimFixSize > 0 && metrics.MetricsOut.size() > 0) {
 
     if (this->pOptions->RequestCancel)
       return "";
 
     Model.Calculate(Data.Result, pCostMatrixes, &work[s],
-                    &work[s + Model.StorageSize], &workI[this->SizeG + 1],
+                    &work[s + Model.StorageSize], &workI[this->SizeG],
                     this->pOptions->RequestCancel, *pAucOptions,
                     this->pMetrics->SimFixSize - this->pChecks->MinOutSim,
                     nullptr, INT32_MAX);
@@ -281,7 +285,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
     }
   }
 
-  if (metrics.SimFixSize > 0) {
+  if (metrics.SimFixSize > 0 && metrics.MetricsOut.size() > 0) {
     Ti cc = (Ti)metrics.MetricsIn.size();
     if (metrics.mIndexOfCostMatrixOut != -1) {
       auto mmdt = Model.CostRatios.Mean();
@@ -324,22 +328,16 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOne(Tv *work,
 
     if (this->pItems->KeepModelEvaluations) // Add Model evaluation
     {
-      auto ek =
-          new EstimationKeep(metric, weight, &this->CurrentIndices, &extra);
+      auto ek = new EstimationKeep(metric, weight, &ExoIndexes, &extra);
       this->Push0(*ek, i, 0, &ExoIndexes);
     }
 
     if (this->pItems->Length1 > 0) { // Add intercept, coefficients, thresholds
-      for (Ti t = 0; t < this->SizeG + 1 + this->mNumChoices - 2; t++) {
-        auto ek = new EstimationKeep(metric, weight, &this->CurrentIndices,
-                                     &extra, nullptr, DModel.Beta.Data[t],
-                                     DModel.BetaVar.Get0(t, t));
-        if (t == 0) // intercept
-          this->Push1(*ek, i, 0, 0);
-        else if (t <= this->SizeG) // beta parameter
-          this->Push1(*ek, i, 0, this->CurrentIndices.Data[t - 1] + 1);
-        else // threshold
-          this->Push1(*ek, i, 0, t);
+      for (Ti t = 0; t < this->SizeG + this->mNumChoices - 2; t++) {
+        auto ek =
+            new EstimationKeep(metric, weight, &ExoIndexes, &extra, nullptr,
+                               DModel.Beta.Data[t], DModel.BetaVar.Get0(t, t));
+        this->Push1(*ek, i, 0, t);
       }
     }
 
@@ -365,38 +363,33 @@ DiscreteChoiceModelsetBase *DiscreteChoiceModelsetBase::GetFromTypes(
     bool isBinary, bool hasWeight, const SearchData &data,
     const SearchCombinations &combinations, SearchOptions &options,
     SearchItems &items, SearchMetricOptions &metrics, SearchModelChecks &checks,
-    const std::vector<Ti> &sizes, const Matrix<Tv> &source,
-    std::vector<Matrix<Tv>> &costMatrixes,
-    std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit, bool addProbit,
-    Newton &newtonOptions, RocOptions &aucOptions) {
+    const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
+    bool addLogit, bool addProbit, Newton &newtonOptions,
+    RocOptions &aucOptions) {
   DiscreteChoiceModelsetBase *modelset;
   if (isBinary) {
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kBinary>(
-              data, combinations, options, items, metrics, checks, sizes,
-              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
-              addLogit, addProbit);
+              data, combinations, options, items, metrics, checks, source,
+              costMatrixes, newtonOptions, aucOptions, addLogit, addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kBinary>(
-              data, combinations, options, items, metrics, checks, sizes,
-              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
-              addLogit, addProbit);
+              data, combinations, options, items, metrics, checks, source,
+              costMatrixes, newtonOptions, aucOptions, addLogit, addProbit);
     }
   } else {
     if (hasWeight) {
       modelset =
           new DiscreteChoiceModelset<true, DiscreteChoiceModelType::kOrdered>(
-              data, combinations, options, items, metrics, checks, sizes,
-              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
-              addLogit, addProbit);
+              data, combinations, options, items, metrics, checks, source,
+              costMatrixes, newtonOptions, aucOptions, addLogit, addProbit);
     } else {
       modelset =
           new DiscreteChoiceModelset<false, DiscreteChoiceModelType::kOrdered>(
-              data, combinations, options, items, metrics, checks, sizes,
-              source, costMatrixes, groupIndexMaps, newtonOptions, aucOptions,
-              addLogit, addProbit);
+              data, combinations, options, items, metrics, checks, source,
+              costMatrixes, newtonOptions, aucOptions, addLogit, addProbit);
     }
   }
   return modelset;
@@ -412,9 +405,8 @@ template <bool hasWeight, DiscreteChoiceModelType modelType>
 DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     const SearchData &data, const SearchCombinations &combinations,
     SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
-    SearchModelChecks &checks, const std::vector<Ti> &sizes,
-    const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
-    std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
+    SearchModelChecks &checks, const Matrix<Tv> &source,
+    std::vector<Matrix<Tv>> &costMatrixes, Newton &newtonOptions,
     RocOptions &aucOptions, bool addLogit, bool addProbit) {
 
   // find numChoices
@@ -453,7 +445,6 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
 
   this->pSource = &source;
   this->pCostMatrixes = &costMatrixes;
-  this->pGroupIndexMap = &groupIndexMaps;
 
   // Check intercept
   if constexpr (hasWeight) {
@@ -470,7 +461,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   }
 
   // check group indexes and create sizes array
-  for (auto const &b : groupIndexMaps) {
+  for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
       if (a > items.LengthExogenouses)
         throw LdtException(
@@ -504,7 +495,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   }
 
   Ti co = 0;
-  for (auto const s : sizes) {
+  for (auto const s : combinations.Sizes) {
     if (s <= 0)
       throw LdtException(
           ErrorType::kLogic, "dc-modelset",
@@ -520,17 +511,17 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kLogit>(
-              data, options, items, metrics, checks, s, groupIndexMaps, 0,
-              source, this->mNumChoices, costMatrixes, seed, newtonOptions,
-              aucOptions));
+              data, options, items, metrics, checks, s, combinations.Partitions,
+              combinations.NumFixPartitions, source, this->mNumChoices,
+              costMatrixes, seed, newtonOptions, aucOptions));
     }
     if (addProbit) {
       this->Searchers.push_back(
           new DiscreteChoiceSearcher<hasWeight, modelType,
                                      DiscreteChoiceDistType::kProbit>(
-              data, options, items, metrics, checks, s, groupIndexMaps, 0,
-              source, this->mNumChoices, costMatrixes, seed, newtonOptions,
-              aucOptions));
+              data, options, items, metrics, checks, s, combinations.Partitions,
+              combinations.NumFixPartitions, source, this->mNumChoices,
+              costMatrixes, seed, newtonOptions, aucOptions));
     }
   }
 

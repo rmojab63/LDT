@@ -56,6 +56,8 @@ search.varma <- function(data = get.data(),
                          simUsePreviousEstim = FALSE,
                          olsStdMultiplier = 2.0,
                          lbfgsOptions = get.options.lbfgs()){
+  stopifnot(is.list(data))
+  stopifnot(is.list(combinations))
 
   if (data$hasWeight)
     stop("VARMA search does not support weighted observations.")
@@ -214,6 +216,8 @@ estim.varma <- function(data,
                         simHorizons = NULL,
                         simUsePreviousEstim = FALSE,
                         simMaxConditionNumber = Inf){
+  stopifnot(is.list(data))
+  stopifnot(is.list(combinations))
 
   if (data$hasWeight)
     stop("VARMA estimation does not support weighted observations.")

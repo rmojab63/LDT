@@ -252,13 +252,7 @@ void UpdateOptions(List &itemsR, List &metricsR, List &checksR,
   items.LengthExogenouses = exoCount;
 }
 
-// Update Options:
-
-void UpdateRocOptions(bool printMsg, List &rocOptionsR, RocOptions &options,
-                      const char *startMsg) {
-
-  if (printMsg)
-    Rprintf("%s:\n", startMsg);
+void UpdateRocOptions(List &rocOptionsR, RocOptions &options) {
 
   options.NormalizePoints = true;
   options.LowerThreshold = as<double>(rocOptionsR["lowerThreshold"]);
@@ -270,19 +264,6 @@ void UpdateRocOptions(bool printMsg, List &rocOptionsR, RocOptions &options,
     auto costMatrix0 = as<NumericMatrix>(rocOptionsR["costMatrix"]);
     options.Costs.SetData(&costs0[0], costs0.length(), 1);
     options.CostMatrix.SetData(&costMatrix0[0], 2, 2);
-  }
-
-  if (printMsg) {
-    if ((std::isnan(options.LowerThreshold) || options.LowerThreshold == 0) &&
-        (std::isnan(options.UpperThreshold) || options.UpperThreshold == 1))
-      Rprintf("    - Not Partial\n");
-    else
-      Rprintf("    - Partial (%f, %f):\n", options.LowerThreshold,
-              options.UpperThreshold);
-    Rprintf("    - Epsilon = %f\n", options.Epsilon);
-    if (options.Costs.Data) {
-      Rprintf("    - Varing Cost\n");
-    }
   }
 }
 
@@ -302,23 +283,11 @@ void UpdateLbfgsOptions(List &optionsR, LimitedMemoryBfgsbOptions &options) {
   options.mMaxCorrections = as<int>(optionsR["maxCorrections"]);
 }
 
-void UpdateNewtonOptions(bool printMsg, List &newtonR, Newton &newton) {
-
-  if (printMsg)
-    Rprintf("Newton Optimization Parameters:\n");
-
+void UpdateNewtonOptions(List &newtonR, Newton &newton) {
   newton.IterationMax = as<int>(newtonR["maxIterations"]);
   newton.TolFunction = as<double>(newtonR["functionTol"]);
   newton.TolGradient = as<double>(newtonR["gradientTol"]);
   newton.UseLineSearch = as<bool>(newtonR["useLineSearch"]);
-
-  if (printMsg) {
-    Rprintf("    - Iterations (Maximum)=%i\n", newton.IterationMax);
-    Rprintf("    - Function Tolerance=%f\n", newton.TolFunction);
-    Rprintf("    - Gradient Tolerance=%f\n", newton.TolGradient);
-    Rprintf("    - Use Line Search=%s\n",
-            newton.UseLineSearch ? "TRUE" : "FALSE");
-  }
 }
 
 NumericMatrix as_matrix(const ldt::Matrix<double> &mat,
@@ -487,6 +456,10 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
     names.push_back(std::string("endogenous"));
 
     if (b->Exogenouses.Data) {
+      Rcout << "..."
+            << VectorToCsv(b->Exogenouses.Data, b->Exogenouses.length())
+            << "\n";
+      Rcout << "..." << VectorToCsv(colNames) << "\n";
       value.push_back(wrap(extractElements(colNames, b->Exogenouses)));
       names.push_back(std::string("exogenous"));
     }

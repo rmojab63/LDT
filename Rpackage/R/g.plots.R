@@ -49,6 +49,7 @@ plot.ldt.estim <- function(x,
                            ablineArgs = list(col = "lightblue"),
                            textArgs = list(pos = 3, cex = 0.7, col = "red"),
                            ...) {
+  method <- tolower(attr(x, "method"))
   equation <- checkEquation(x, equation, TRUE)
   stopifnot(is.numeric(type))
   if (length(type) > 1)
@@ -56,10 +57,11 @@ plot.ldt.estim <- function(x,
   stopifnot(type %in% c(1, 2, 3, 4, 5, 6))
 
   fitted <- fitted(x, equation = equation)
+  fitted <- fitted - min(fitted)
   if (type == 1)
-    residuals <- resid(x, equation = equation, standardized = FALSE)
+    residuals <- resid(x, equation = equation, standardized = FALSE, pearson = TRUE)
   else
-    residuals <- resid(x, equation = equation, standardized = TRUE)
+    residuals <- resid(x, equation = equation, standardized = TRUE, pearson = TRUE)
 
   args <- list(...)
 
@@ -68,7 +70,10 @@ plot.ldt.estim <- function(x,
   if (type == 1) { # Residuals vs Fitted
     x_data <- fitted
     y_data <- residuals
-    args <- modifyList(list(main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals",
+    ylab = "Residulas"
+    #if (method == "binary")
+    #  ylab = "Pearson Residulas"
+    args <- modifyList(list(main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = ylab,
                             ylim = expand_lim(y_data)), args)
 
     do.call(plot, c(list(x=x_data, y = y_data), args))

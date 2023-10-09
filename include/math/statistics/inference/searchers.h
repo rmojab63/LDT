@@ -394,7 +394,7 @@ public:
   /// @param overrideIncExo If not null, it overrides the exogenous inclusion
   /// indices
   void Push(EstimationKeep &estimation, bool isModel,
-            Matrix<Ti> *overrideIncExo = nullptr);
+            const Matrix<Ti> *overrideIncExo = nullptr);
 };
 
 /// @brief A searcher class with 3 types of summaries: Model, Type1, Type2.
@@ -440,7 +440,7 @@ protected:
   /// @param overrideIncExo If not null, it overrides the exogenous inclusion
   /// indices
   void Push0(EstimationKeep &estimation, Ti evalIndex, Ti targetIndex,
-             Matrix<Ti> *overrideIncExo = nullptr);
+             const Matrix<Ti> *overrideIncExo = nullptr);
 
   /// @brief Pushes information to \ref Summaries1
   /// @param estimation The information

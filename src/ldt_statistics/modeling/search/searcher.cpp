@@ -108,7 +108,7 @@ void Searcher::AddState(std::string state) {
 }
 
 void Searcher::Push0(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
-                     Matrix<Ti> *overrideInclusioExo) {
+                     const Matrix<Ti> *overrideInclusioExo) {
   Summaries0.at(evalIndex)
       .at(targetIndex)
       .Push(coef, true, overrideInclusioExo);

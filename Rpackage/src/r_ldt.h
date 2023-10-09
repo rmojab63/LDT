@@ -78,12 +78,11 @@ IntegerVector
 as_ivector(const ldt::Matrix<int> &vec,
            const std::vector<std::string> &names = std::vector<std::string>());
 
-void UpdateRocOptions(bool printMsg, List &rocOptionsR,
-                      ldt::RocOptions &options, const char *startMsg);
+void UpdateRocOptions(List &rocOptionsR, ldt::RocOptions &options);
 
 void UpdateLbfgsOptions(List &optionsR, LimitedMemoryBfgsbOptions &options);
 
-void UpdateNewtonOptions(bool printMsg, List &newtonR, ldt::Newton &newton);
+void UpdateNewtonOptions(List &newtonR, ldt::Newton &newton);
 
 List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                         const std::vector<std::string> &metricNames,

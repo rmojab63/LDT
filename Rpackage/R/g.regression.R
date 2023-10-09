@@ -138,6 +138,7 @@ cooks.distance0 <- function(object, equation, addNA = TRUE){
 #' @param object An object of class \code{ldt.estim}.
 #' @param equation A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
 #' @param standardized If \code{TRUE}, standardized residuals are returned. See details.
+#' @param pearson If \code{TRUE}, it returns (or uses) Pearson residuals for binomial regression.
 #' @param ...
 #'
 #' @details
@@ -147,11 +148,15 @@ cooks.distance0 <- function(object, equation, addNA = TRUE){
 #'
 #' @return A matrix containing the residuals data.
 #' @export
-residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, ...){
+residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, pearson = TRUE, ...){
   method <- tolower(attr(object, "method"))
   stopifnot(is.logical(standardized))
   equations <- checkEquation(object, equations, FALSE)
-  resid <- object$estimations$resid[, equations, drop=FALSE]
+
+  if (method == "binary" && pearson)
+    resid <- object$estimations$residPearson[, equations, drop=FALSE]
+  else
+    resid <- object$estimations$resid[, equations, drop=FALSE]
 
   if (standardized) {
     for (i in equations){
@@ -188,7 +193,7 @@ residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, 
 #' @export
 fitted.ldt.estim <- function(object, equations = NULL, ...){
   equations <- checkEquation(object, equations, FALSE)
-  resid <- residuals.ldt.estim(object, equations = equations, standardized = FALSE)
+  resid <- residuals.ldt.estim(object, equations = equations, standardized = FALSE, pearson = FALSE)
   y <- object$info$data$data[, equations, drop=FALSE]
   y - resid
 }
@@ -248,7 +253,18 @@ BIC.ldt.estim <- function(object, ...){
 #' @return A list containing the predicted (projected) means and variances.
 #' @export
 predict.ldt.estim <- function(object, ...){
-  object$projection
+  if (is.null(object))
+    stop("object is null.")
+  if (!is(object, "ldt.estim"))
+    stop("Invalid class. An 'ldt.estim' object is expected.")
+
+  res <- list()
+  res$means <- object$projection
+
+  res$method <- attr(object, "method")
+  res$newX <- object$info$data$newX
+  class(res) <- c("ldt.estim.projection", "list")
+  res
 }
 
 #' Extract Prediction Results from a \code{ldt.estim.varma} Object
@@ -270,7 +286,7 @@ predict.ldt.estim.varma <- function(object,
                                     ...){
   if (is.null(object))
     stop("object is null.")
-  if (!is(object, "ldt.estim"))
+  if (!is(object, "ldt.estim.varma"))
     stop("Invalid class. An 'ldt.estim.varma' object is expected.")
   if (is.null(object$prediction) || is.null(object$prediction$means))
     stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")

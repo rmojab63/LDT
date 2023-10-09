@@ -611,9 +611,6 @@ public:
   /// @brief Inner model set
   ModelSet Modelset;
 
-  /// @brief Pointer to the given groups
-  std::vector<std::vector<Ti>> *pGroupIndexMap = nullptr;
-
   /// @brief List of searchers. This is passed to the \ref Modelset and it will
   /// be the owner
   std::vector<Searcher *> Searchers;
@@ -627,9 +624,8 @@ public:
   GetFromTypes(bool isBinary, bool hasWeight, const SearchData &data,
                const SearchCombinations &combinations, SearchOptions &options,
                SearchItems &items, SearchMetricOptions &metrics,
-               SearchModelChecks &checks, const std::vector<Ti> &sizes,
-               const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
-               std::vector<std::vector<Ti>> &groupIndexMaps, bool addLogit,
+               SearchModelChecks &checks, const Matrix<Tv> &source,
+               std::vector<Matrix<Tv>> &costMatrixes, bool addLogit,
                bool addProbit, Newton &newtonOptions, RocOptions &aucOptions);
 
   /// @brief It checks inputs and calls 'ModelSet.Start(...)'
@@ -651,23 +647,20 @@ public:
   /// @param items It is passed to the base class
   /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
-  /// @param sizes Determines the number of exogenous data in different
-  /// searchers
   /// @param source Source of data
   /// @param costMatrixes List of cost matrices
-  /// @param groupIndexMaps A group for the exogenous data. It is passed to the
-  /// base class
   /// @param newtonOptions Optimization options
   /// @param aucOptions Options for calculating AUC
   /// @param addLogit If true, logit models are included in the model set
   /// @param addProbit If true, probit models are included in the model set
-  DiscreteChoiceModelset(
-      const SearchData &data, const SearchCombinations &combinations,
-      SearchOptions &options, SearchItems &items, SearchMetricOptions &metrics,
-      SearchModelChecks &checks, const std::vector<Ti> &sizes,
-      const Matrix<Tv> &source, std::vector<Matrix<Tv>> &costMatrixes,
-      std::vector<std::vector<Ti>> &groupIndexMaps, Newton &newtonOptions,
-      RocOptions &aucOptions, bool addLogit = true, bool addProbit = false);
+  DiscreteChoiceModelset(const SearchData &data,
+                         const SearchCombinations &combinations,
+                         SearchOptions &options, SearchItems &items,
+                         SearchMetricOptions &metrics,
+                         SearchModelChecks &checks, const Matrix<Tv> &source,
+                         std::vector<Matrix<Tv>> &costMatrixes,
+                         Newton &newtonOptions, RocOptions &aucOptions,
+                         bool addLogit = true, bool addProbit = false);
 
   virtual ~DiscreteChoiceModelset();
 };

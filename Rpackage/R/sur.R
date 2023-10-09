@@ -42,6 +42,9 @@ search.sur <- function(data = get.data(),
                        options = get.search.options(),
                        searchSigMaxIter = 0,
                        searchSigMaxProb = 0.1){
+  stopifnot(is.list(data))
+  stopifnot(is.list(combinations))
+
   if (data$hasWeight)
     stop("SUR search does not support weighted observations.")
 
@@ -176,6 +179,9 @@ estim.sur <- function(data, searchSigMaxIter = 0,
                       simTrainRatio = 0.75,
                       simSeed = 0,
                       simMaxConditionNumber = Inf){
+  stopifnot(is.list(data))
+  stopifnot(is.list(combinations))
+
   if (data$hasWeight)
     stop("SUR estimation does not support weighted observations.")
 
@@ -238,7 +244,6 @@ estim.sur.from.search <- function(searchResult, endogenous, exogenous, extra, ..
                    weights = NULL,
                    lambdas = search_data$lambdas,
                    addIntercept = FALSE,...)
-
 
   estim.sur(
     data = data,

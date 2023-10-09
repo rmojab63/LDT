@@ -58,6 +58,8 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   startFreq <- attr(data, "ldtf")
   if (is.null(equations)) { # use endogenous
     data <- as.matrix(data)
+    if (ncol(data) > 2 && get.data.check.intercept(data[,2:ncol(data)]) != -1 && addIntercept)
+      stop("Data already contains intercept. 'addIntercept' argument cannot be TRUE.")
 
     stopifnot(is.number(endogenous) || is.character(endogenous))
     numEndo <- ifelse(is.numeric(endogenous), as.integer(endogenous), length(endogenous))
@@ -135,9 +137,9 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   }
 
   # make sure data and newData are numeric matrices
-  data <- matrix(as.numeric(data), ncol = ncol(data), dimnames = list(NULL, colnames(data)))
+  data <- matrix(as.numeric(as.matrix(data)), ncol = ncol(data), dimnames = list(NULL, colnames(data)))
   if (!is.null(newData))
-    newData <- matrix(as.numeric(newData), ncol = ncol(newData), dimnames = list(NULL, colnames(newData)))
+    newData <- matrix(as.numeric(as.matrix(newData)), ncol = ncol(newData), dimnames = list(NULL, colnames(newData)))
   obsCount <- nrow(data)
 
   if (!is.null(lambdas)) {
@@ -149,10 +151,11 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   if(!is.null(weights)){
     if ("(Weights)" %in% colnames(data))
       stop("Invalid column name in 'data'. '(Weights)' is reserved.")
+    stopifnot(all(weights != 0))
     stopifnot(is.numeric(weights) || (is.matrix(weights) && ncol(weights) == 1))
     stopifnot(length(weights) == nrow(data))
     data <- cbind(data[,1:numEndo,drop=FALSE], weights, data[,(numEndo+1):ncol(data),drop=FALSE])
-    colnames(data)[numEndo+1] <- "(weights)"
+    colnames(data)[numEndo+1] <- "(Weights)"
   }
 
   if (!is.null(newData)) {
@@ -205,7 +208,7 @@ get.data.append.newX <- function(data, maxHorizon = NA){
       data$data <- rbind(data$data, new_rows)
     }
     else if (maxHorizon > 0 && data$numExo != 0)
-        stop("Number of new data points (=0) is less than the required maximum horizon (=", maxHorizon,").")
+      stop("Number of new data points (=0) is less than the required maximum horizon (=", maxHorizon,").")
   }
   else{
     if (!is.na(maxHorizon) && maxHorizon > 0 && nrow(data$newX) < maxHorizon)
@@ -240,6 +243,42 @@ get.data.keep.complete <- function(data, warn = TRUE){
   }
   data
 }
+
+#' Check if a column is discrete
+#'
+#' For example, it checks if the dependent variable in binary model is 0 and 1 (number of choices is 2)
+#'
+#' @param data Output of [get.data] function
+#' @param colIndex The index of column to be checked.
+#'
+#' @return Number of choices in the model, if no error occured.
+#' This means, the maximum value for the discrete data will be the output minus one.
+get.data.check.discrete <- function(data, colIndex = 1){
+  column <- data$data[, colIndex]
+  k <- as.integer(max(column))
+  if (all(floor(column) == column)) {
+    if (all(column >= 0)) {
+      return(k+1)
+    }
+  }
+  stop("First column of data must contain discrete numbers with minimum of zero.")
+}
+
+#' Check for an intercept in a matrix
+#'
+#' This function checks if any column in the matrix is intercept.
+#'
+#' @return The index of the intercept. '-1' in intercept is not found.
+#'
+#' @examples
+get.data.check.intercept <- function(matrix) {
+  for (i in seq_len(ncol(matrix))) {
+    if (all(matrix[, i] == 1))
+      return(i)
+  }
+  return(-1)
+}
+
 
 #' Convert a List of Equations to a Matrix
 #'
@@ -613,6 +652,30 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
     if (innerIsExogenous)
       combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] + data$numEndo
   }
+
+  # finally, sort and check for intersection values
+  for(i in 1:length(combinations$partitions)) {
+    for(j in i:length(combinations$partitions)) {
+      if(i != j) {
+        commons <- intersect(combinations$partitions[[i]], combinations$partitions[[j]])
+        if(length(commons) > 0)
+          stop("At least two members of 'combinations$partitions' have common elements.")
+      }
+    }
+  }
+  combinations$partitions <- lapply(combinations$partitions, sort)
+
+  # inner groups
+  for(i in 1:length(combinations$innerGroups)) {
+    for(j in i:length(combinations$innerGroups)) {
+      if(i != j) {
+        commons <- intersect(combinations$innerGroups[[i]], combinations$innerGroups[[j]])
+        if(length(commons) > 0)
+          stop("At least two members of 'combinations$innerGroups' have common elements.")
+      }
+    }
+  }
+  combinations$innerGroups <- lapply(combinations$innerGroups, sort)
 
   return(combinations)
 }

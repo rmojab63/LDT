@@ -211,10 +211,14 @@ get.search.metrics <- function(typesIn = c("aic"),
 
   if (length(typesOut) > 0) {
     stopifnot(is.numeric(horizons) && all(horizons >= 1))
+    horizons <- as.integer(horizons)
     stopifnot(is.positive.number(simFixSize))
+    simFixSize <- as.integer(simFixSize)
     stopifnot(is.zero.or.positive.number(trainRatio) && trainRatio <= 1)
     stopifnot(is.zero.or.positive.number(trainFixSize))
+    trainFixSize <- as.integer(trainFixSize)
     stopifnot(is.number(seed)) # It can be negative for similar distribution of the seeds in the searchers
+    seed <- as.integer(seed)
     if (seed == 0)
       seed = runif(1,10,10e4) # set it here such that it is reported in the info section
     stopifnot(trainRatio != 0 || trainFixSize != 0)

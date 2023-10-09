@@ -191,7 +191,7 @@ SearcherSummary::~SearcherSummary() {
 }
 
 void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
-                           Matrix<Ti> *overrideInclusioExo) {
+                           const Matrix<Ti> *overrideInclusioExo) {
   if (pItems->KeepBestCount != 0) {
     Bests.insert(&coef);
     if (Bests.size() > pItems->KeepBestCount) {

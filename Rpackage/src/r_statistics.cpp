@@ -109,7 +109,7 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                        "maximum in 'y' vector must be 1");
 
   ldt::RocOptions options_;
-  UpdateRocOptions(printMsg, options, options_, "Options: ");
+  UpdateRocOptions(options, options_);
 
   std::unique_ptr<RocBase> auc0;
   if (hasWeight) {

@@ -139,7 +139,7 @@ if(COMPILE_R)
 		 Rpackage/src/r_ldt.cpp
 		 Rpackage/src/r_sur.cpp
 		 Rpackage/src/r_varma.cpp
-		 #Rpackage/src/r_dc.cpp
+		 Rpackage/src/r_dc.cpp
     )
   
 	# currently, I hard code the paths:  
