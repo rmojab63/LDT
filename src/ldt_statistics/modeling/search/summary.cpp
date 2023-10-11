@@ -59,25 +59,18 @@ void SearchMetricOptions::Update(bool isOutOfSampleRandom, bool isTimeSeries) {
   }
 
   // indexes
-  mIndexOfAic = IndexOf(MetricsIn, GoodnessOfFitType::kAic);
-  mIndexOfSic = IndexOf(MetricsIn, GoodnessOfFitType::kSic);
+  for (auto m : std::vector<GoodnessOfFitType>(
+           {GoodnessOfFitType::kAic, GoodnessOfFitType::kAuc,
+            GoodnessOfFitType::kBrier, GoodnessOfFitType::kFrequencyCost,
+            GoodnessOfFitType::kSic}))
+    MetricInIndices.insert(std::make_pair(m, IndexOf(MetricsIn, m)));
 
-  mIndexOfDirection = IndexOf(MetricsOut, ScoringType::kDirection);
-  mIndexOfSign = IndexOf(MetricsOut, ScoringType::kSign);
-  mIndexOfMae = IndexOf(MetricsOut, ScoringType::kMae);
-  mIndexOfMaeSc = IndexOf(MetricsOut, ScoringType::kMape);
-  mIndexOfRmse = IndexOf(MetricsOut, ScoringType::kRmse);
-  mIndexOfRmseSc = IndexOf(MetricsOut, ScoringType::kRmspe);
-  mIndexOfCrps = IndexOf(MetricsOut, ScoringType::kCrps);
-
-  // discrete choice
-  mIndexOfCostMatrixIn = IndexOf(MetricsIn, GoodnessOfFitType::kFrequencyCost);
-  mIndexOfAucIn = IndexOf(MetricsIn, GoodnessOfFitType::kAuc);
-  mIndexOfBrierIn = IndexOf(MetricsIn, GoodnessOfFitType::kBrier);
-
-  mIndexOfCostMatrixOut = IndexOf(MetricsOut, ScoringType::kFrequencyCost);
-  mIndexOfAucOut = IndexOf(MetricsOut, ScoringType::kAuc);
-  mIndexOfBrierOut = IndexOf(MetricsOut, ScoringType::kBrier);
+  for (auto m : std::vector<ScoringType>(
+           {ScoringType::kAuc, ScoringType::kBrier, ScoringType::kCrps,
+            ScoringType::kDirection, ScoringType::kFrequencyCost,
+            ScoringType::kMae, ScoringType::kMape, ScoringType::kRmse,
+            ScoringType::kRmspe, ScoringType::kSign}))
+    MetricOutIndices.insert(std::make_pair(m, IndexOf(MetricsOut, m)));
 }
 
 void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
@@ -119,41 +112,12 @@ void SearchModelChecks::Update(const SearchMetricOptions &metrics) {
 // #pragma region EstimationKeep
 
 EstimationKeep::EstimationKeep(Tv metric, Tv weight,
-                               const Matrix<Ti> *exogenouses,
-                               const Matrix<Ti> *extra,
-                               const Matrix<Ti> *dependents, Tv mean,
-                               Tv variance) {
-  Mean = mean;
-  Variance = variance;
-  Metric = metric;
-  Weight = weight;
-
-  if (dependents) {
-    Dependents =
-        Matrix<Ti>(new Ti[dependents->length()], dependents->length(), (Ti)1);
-    dependents->CopyTo00(Dependents);
-  }
-
-  if (exogenouses) {
-    Exogenouses =
-        Matrix<Ti>(new Ti[exogenouses->length()], exogenouses->length(), (Ti)1);
-    exogenouses->CopyTo00(Exogenouses);
-  }
-
-  if (extra) {
-    Extra = Matrix<Ti>(new Ti[extra->length()], extra->length(), (Ti)1);
-    extra->CopyTo00(Extra);
-  }
-}
-
-EstimationKeep::~EstimationKeep() {
-  if (Dependents.Data)
-    delete[] Dependents.Data;
-  if (Exogenouses.Data)
-    delete[] Exogenouses.Data;
-  if (Extra.Data)
-    delete[] Extra.Data;
-}
+                               const std::vector<Ti> &exogenous,
+                               const std::vector<Ti> &extra,
+                               const std::vector<Ti> &endogenous, Tv mean,
+                               Tv variance)
+    : Mean(mean), Variance(variance), Metric(metric), Weight(weight),
+      Endogenous(endogenous), Exogenouses(exogenous), Extra(extra) {}
 
 // #pragma endregion
 
@@ -161,19 +125,21 @@ EstimationKeep::~EstimationKeep() {
 
 SearcherSummary::SearcherSummary(Ti Index1, Ti Index2, Ti Index3,
                                  const SearchItems *option,
-                                 bool isPositiveOriented)
+                                 bool isPositiveOriented,
+                                 const SearchData *data)
     : Bests(EstimationKeepComp(isPositiveOriented)) {
   this->Index1 = Index1;
   this->Index2 = Index2;
   this->Index3 = Index3;
   pItems = option;
+  pData = data;
 
   if (pItems->ExtremeBoundsMultiplier > 0)
     ExtremeBounds = std::vector<Tv>(
         {std::numeric_limits<Tv>::max(), std::numeric_limits<Tv>::min()});
   if (pItems->KeepInclusionWeights) {
-    Ti max_inc = pItems->LengthDependents + pItems->LengthExogenouses;
-    InclusionsInfo = std::vector<RunningMoments<1, true, false, Tv>>(max_inc);
+    InclusionsInfo = std::vector<RunningMoments<1, true, false, Tv>>(
+        data->NumEndo + data->NumExo);
   }
   if (pItems->CdfsAt.size() > 0)
     Cdfs =
@@ -190,8 +156,7 @@ SearcherSummary::~SearcherSummary() {
   }
 }
 
-void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
-                           const Matrix<Ti> *overrideInclusioExo) {
+void SearcherSummary::Push(EstimationKeep &coef, bool isModel) {
   if (pItems->KeepBestCount != 0) {
     Bests.insert(&coef);
     if (Bests.size() > pItems->KeepBestCount) {
@@ -208,22 +173,14 @@ void SearcherSummary::Push(EstimationKeep &coef, bool isModel,
       All.push_back(&coef);
     }
 
-    if (pItems->KeepInclusionWeights) { // we keep the inclusion weights in
-                                        // the model
-      // Ti max_inc = pItems->LengthDependents + pItems->LengthExogenouses;
+    if (pItems->KeepInclusionWeights) {
+      Ti adj = pData->HasWeight ? -1 : 0;
       Tv w = 1;
-      if (coef.Dependents.Data)
-        for (Ti i = 0; i < coef.Dependents.length(); i++)
-          InclusionsInfo.at(coef.Dependents.Data[i]).PushNew(coef.Weight, w);
-      else // a univariate case
-        InclusionsInfo.at(0).PushNew(coef.Weight, w);
-      if (overrideInclusioExo)
-        for (Ti i = 0; i < overrideInclusioExo->length(); i++)
-          InclusionsInfo.at(overrideInclusioExo->Data[i])
-              .PushNew(coef.Weight, w);
-      else if (coef.Exogenouses.Data)
-        for (Ti i = 0; i < coef.Exogenouses.length(); i++)
-          InclusionsInfo.at(coef.Exogenouses.Data[i]).PushNew(coef.Weight, w);
+
+      for (auto &i : coef.Endogenous)
+        InclusionsInfo.at(i).PushNew(coef.Weight, w);
+      for (auto &i : coef.Exogenouses)
+        InclusionsInfo.at(i + adj).PushNew(coef.Weight, w);
     }
 
     return; // the rest is based on mean and variances which is not

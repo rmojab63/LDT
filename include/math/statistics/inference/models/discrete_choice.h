@@ -541,39 +541,45 @@ extern template class ldt::DiscreteChoiceSim<
 template <bool hasWeight,
           DiscreteChoiceModelType modelType = DiscreteChoiceModelType::kBinary,
           DiscreteChoiceDistType distType = DiscreteChoiceDistType::kLogit>
-class LDT_EXPORT DiscreteChoiceSearcher : public Searcher {
+class LDT_EXPORT DiscreteChoiceSearcher : public SearcherReg {
 
   const std::vector<Matrix<Tv>> *pCostMatrixes = nullptr;
+
   const Matrix<Tv> *pSource = nullptr;
+
+  RocOptions *pAucOptions = nullptr;
+
+  Dataset<Tv> Data;
 
   Matrix<Tv> Y;
   Matrix<Tv> X;
   Matrix<Tv> W;
-  Dataset<Tv> Data;
+
   DiscreteChoiceSim<hasWeight, modelType, distType> Model;
   DiscreteChoice<modelType, distType> DModel;
   Ti mNumChoices = 0;
 
-  std::string EstimateOne(Tv *work, Ti *workI) override;
+  std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                             VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
+                             VMatrix<Ti> &extra) override;
 
-  std::vector<Ti> Indexes;
-  Matrix<Ti> ExoIndexes;
   Matrix<Tv> Weights;
-  Matrix<Tv> Metrics;
+
   std::unique_ptr<FrequencyCostBase> CostIn;
+
   Matrix<Tv> Probs;
+
   std::unique_ptr<RocBase> AucIn;
-  RocOptions *pAucOptions;
 
 public:
   /// @brief Initializes a new instance of the class
+  /// @param data It is passed to the base class
+  /// @param combinations It is passed to the base class
   /// @param options It is passed to the base class
   /// @param items It is passed to the base class
   /// @param metrics It is passed to the base class
   /// @param checks It is passed to the base class
-  /// @param SizeG It is passed to the base class
-  /// @param groupIndexMap It is passed to the base class
-  /// @param fixFirstG It is passed to the base class
+  /// @param numPartitions It is passed to the base class
   /// @param source Data with variables in the columns
   /// @param numChoices Number of unique labels
   /// @param costMatrixes List of cost matrices
@@ -581,15 +587,13 @@ public:
   /// the results
   /// @param newtonOptions Optimization options
   /// @param aucOptions Options for calculating AUC
-  DiscreteChoiceSearcher(const SearchData &data, SearchOptions &options,
-                         const SearchItems &items,
-                         const SearchMetricOptions &metrics,
-                         const SearchModelChecks &checks, Ti SizeG,
-                         const std::vector<std::vector<Ti>> &groupIndexMap,
-                         Ti fixFirstG, const Matrix<Tv> &source, Ti numChoices,
-                         const std::vector<Matrix<Tv>> &costMatrixes,
-                         unsigned int seed, Newton &newtonOptions,
-                         RocOptions &aucOptions);
+  DiscreteChoiceSearcher(
+      const SearchData &data, const SearchCombinations &combinations,
+      SearchOptions &options, const SearchItems &items,
+      const SearchMetricOptions &metrics, const SearchModelChecks &checks,
+      const Ti &numPartitions, const Matrix<Tv> &source, const Ti &numChoices,
+      const std::vector<Matrix<Tv>> &costMatrixes, const unsigned int &seed,
+      const Newton &newtonOptions, RocOptions &aucOptions);
 };
 
 /// @brief A base class for a model set for discrete choice

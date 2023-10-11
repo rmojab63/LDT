@@ -374,17 +374,17 @@ public:
 };
 
 /// @brief A searcher class for SUR
-class LDT_EXPORT SurSearcher : public Searcher {
-  Tv SigSearchMaxProb = 0.05;
-  Ti SigSearchMaxIter = 0;
+class LDT_EXPORT SurSearcher : public SearcherReg {
+  const Tv SigSearchMaxProb = 0.05;
+  const Ti SigSearchMaxIter = 0;
 
   /// @brief It might be different from \ref pMetrics->Seed
-  unsigned int Seed;
+  const unsigned int Seed;
 
-  Matrix<Ti> EndoIndexes;
   const Matrix<Tv> *pSource = nullptr;
 
   Dataset<Tv> Data;
+
   SurExtended DModel;
   SurSimulation Model;
 
@@ -394,31 +394,35 @@ class LDT_EXPORT SurSearcher : public Searcher {
   Matrix<Tv> R;
   std::unique_ptr<Tv[]> R_d;
 
-  std::string EstimateOne(Tv *work, Ti *workI) override;
+  std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                             VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
+                             VMatrix<Ti> &extra) override;
 
   std::vector<Ti> Indexes;
   std::vector<Ti> TargetsPositions;
 
 public:
   /// @brief Initializes a new instance of this method
+  /// @param data Passed to the base constructor
   /// @param options Passed to the base constructor
+  /// @param combinations Passed to the base constructor
   /// @param items Passed to the base constructor
   /// @param metrics Passed to the base constructor
   /// @param checks Passed to the base constructor
-  /// @param sizeG Passed to the base constructor
-  /// @param groupIndexMap Passed to the base constructor
-  /// @param fixFirstG Passed to the base constructor
+  /// @param numPartitions Passed to the base constructor
+  /// @param endoIndices Endogenous indices in this searcher. Passed to the base
+  /// constructor as inner indices.
   /// @param source Data with variables in columns
-  /// @param endoIndices Endogenous indices in this searcher
   /// @param sigSearchMaxIter Maximum iterations for significant search
   /// @param sigSearchMaxProb p-value for significant search
   /// @param seed A seed for RNG
-  SurSearcher(const SearchData &data, SearchOptions &options,
-              const SearchItems &items, const SearchMetricOptions &metrics,
-              const SearchModelChecks &checks, Ti sizeG,
-              const std::vector<std::vector<Ti>> &groupIndexMap, Ti fixFirstG,
-              const Matrix<Tv> &source, const std::vector<Ti> &endoIndexes,
-              Ti sigSearchMaxIter, Tv sigSearchMaxProb, unsigned int seed);
+  SurSearcher(const SearchData &data, const SearchCombinations &combinations,
+              SearchOptions &options, const SearchItems &items,
+              const SearchMetricOptions &metrics,
+              const SearchModelChecks &checks, const Ti &numPartitions,
+              const std::vector<Ti> &endoIndexes, const Matrix<Tv> &source,
+              const Ti &sigSearchMaxIter, const Tv &sigSearchMaxProb,
+              const unsigned int &seed);
 };
 
 /// @brief A model set for SUR

@@ -60,6 +60,7 @@ file(GLOB SOURCES
 
  src/ldt_statistics/modeling/search/modelset.cpp
  src/ldt_statistics/modeling/search/searcher.cpp
+ src/ldt_statistics/modeling/search/searcher_reg.cpp
  src/ldt_statistics/modeling/search/summary.cpp
 
  src/ldt_statistics/clustering/HCluster.cpp
@@ -107,6 +108,7 @@ file(GLOB SOURCES
  src/matrix/matrix_sym.cpp
  src/matrix/dataset.cpp 
  src/matrix/decompositions.cpp
+ src/matrix/vmatrix.cpp
 
  src/variable/variables.cpp
  src/variable/variable.cpp
@@ -140,6 +142,7 @@ if(COMPILE_R)
 		 Rpackage/src/r_sur.cpp
 		 Rpackage/src/r_varma.cpp
 		 Rpackage/src/r_dc.cpp
+		 Rpackage/src/r_gen.cpp
     )
   
 	# currently, I hard code the paths:  

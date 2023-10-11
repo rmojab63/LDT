@@ -8,48 +8,22 @@
 
 using namespace ldt;
 
-Searcher::Searcher(const SearchData &data, SearchOptions &options,
-                   const SearchItems &items, const SearchMetricOptions &metrics,
-                   const SearchModelChecks &checks, Ti SizeG,
-                   const std::vector<std::vector<Ti>> &groupIndexMap,
-                   Ti fixFirstGroups, Ti fixFirstItems) {
+Searcher::Searcher(const SearchData &data,
+                   const SearchCombinations &combinations,
+                   SearchOptions &options, const SearchItems &items,
+                   const SearchMetricOptions &metrics,
+                   const SearchModelChecks &checks, Ti numPartitions,
+                   bool checkForEmpty) {
 
-  if (fixFirstGroups > SizeG)
-    throw LdtException(
-        ErrorType::kLogic, "searcher",
-        "fixed number of groups cannot be larger than Size in the searcher");
-
-  pData = &data;
-  pOptions = &options;
-  pItems = &items;
-  pChecks = &checks;
-  pMetrics = &metrics;
-
-  this->SizeG = SizeG;
-  this->mFixFirstGroups = fixFirstGroups;
-  this->mFixFirstItems = fixFirstItems;
-  this->pGroupIndexMap = &groupIndexMap;
-
-  for (auto i = 0; i < (int)this->pGroupIndexMap->size(); i++)
-    this->GroupSizes.push_back(this->pGroupIndexMap->at(i).size());
-
-  GroupIndexes = Matrix<Ti>(new Ti[SizeG], SizeG, (Ti)1);
-  InnerIndexes = Matrix<Ti>(new Ti[SizeG], SizeG, (Ti)1);
-
-  CurrentIndicesV = std::vector<Ti>(SizeG);
-  CurrentIndices = Matrix<Ti>(&CurrentIndicesV[0], SizeG, 1);
-
-  mIsFinished = false;
-  States.clear();
-
-  CurrentIndices.SetValue(0);
-
-  GroupIndexes.SetSequence(0, 1);
-  InnerIndexes.SetValue(0);
+  if (combinations.NumFixPartitions > NumPartitions)
+    throw LdtException(ErrorType::kLogic, "searcher",
+                       "fixed number of partitions cannot be larger than of "
+                       "the array in the searcher");
 
   if (items.LengthEvals == 0 || items.LengthTargets == 0)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "no evaluation or target is given");
+
   if (items.LengthEvals != metrics.EvalIsPosOrientation.size())
     throw LdtException(ErrorType::kLogic, "searcher",
                        "metric orientations are not provided.");
@@ -58,6 +32,30 @@ Searcher::Searcher(const SearchData &data, SearchOptions &options,
       items.Length2 == 0)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "nothing is saved in the searcher. Check the items");
+
+  pData = &data;
+  pCombinations = &combinations;
+  pOptions = &options;
+  pItems = &items;
+  pChecks = &checks;
+  pMetrics = &metrics;
+  this->NumPartitions = numPartitions;
+
+  CheckForEmpty = checkForEmpty;
+
+  mIsFinished = false;
+  States.clear();
+
+  CurrentIndices = VMatrix<Ti>(NumPartitions, 1);
+  PartitionIndices = VMatrix<Ti>(NumPartitions, 1);
+  InnerIndices = VMatrix<Ti>(NumPartitions, 1);
+
+  CurrentIndices.Mat.SetValue(0);
+  PartitionIndices.Mat.SetSequence(0, 1);
+  InnerIndices.Mat.SetValue(0);
+
+  for (Ti i = 0; i < combinations.Partitions.size(); i++)
+    partitionSizes.push_back(combinations.Partitions.at(i).size());
 
   Summaries0 = std::vector<std::vector<SearcherSummary>>(items.LengthEvals);
   Summaries1 =
@@ -73,27 +71,20 @@ Searcher::Searcher(const SearchData &data, SearchOptions &options,
         std::vector<std::vector<SearcherSummary>>(items.LengthTargets);
 
     for (int k = 0; k < items.LengthTargets; k++) { // targets
-
-      Summaries0.at(i).at(k) =
-          SearcherSummary(i, k, 0, pItems, metrics.EvalIsPosOrientation.at(i));
-
+      Summaries0.at(i).at(k) = SearcherSummary(
+          i, k, 0, pItems, metrics.EvalIsPosOrientation.at(i), pData);
       Summaries1.at(i).at(k) = std::vector<SearcherSummary>(items.Length1);
       Summaries2.at(i).at(k) = std::vector<SearcherSummary>(items.Length2);
 
       for (int j = 0; j < items.Length1; j++)
         Summaries1.at(i).at(k).at(j) = SearcherSummary(
-            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
+            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i), pData);
 
       for (int j = 0; j < items.Length2; j++)
         Summaries2.at(i).at(k).at(j) = SearcherSummary(
-            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i));
+            i, k, j, pItems, metrics.EvalIsPosOrientation.at(i), pData);
     }
   }
-}
-
-Searcher::~Searcher() {
-  delete[] GroupIndexes.Data;
-  delete[] InnerIndexes.Data;
 }
 
 void Searcher::AddState(std::string state) {
@@ -107,11 +98,8 @@ void Searcher::AddState(std::string state) {
   }
 }
 
-void Searcher::Push0(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
-                     const Matrix<Ti> *overrideInclusioExo) {
-  Summaries0.at(evalIndex)
-      .at(targetIndex)
-      .Push(coef, true, overrideInclusioExo);
+void Searcher::Push0(EstimationKeep &coef, Ti evalIndex, Ti targetIndex) {
+  Summaries0.at(evalIndex).at(targetIndex).Push(coef, true);
 }
 
 void Searcher::Push1(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
@@ -125,9 +113,11 @@ void Searcher::Push2(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
 }
 
 void Searcher::UpdateCurrent() {
-  for (Ti i = 0; i < SizeG; i++) {
-    CurrentIndices.Data[i] =
-        pGroupIndexMap->at(GroupIndexes.Data[i]).at(InnerIndexes.Data[i]);
+  for (Ti i = 0; i < NumPartitions; i++) {
+    CurrentIndices.Mat.Data[i] =
+        pCombinations->Partitions.at(PartitionIndices.Mat.Data[i])
+            .at(InnerIndices.Mat.Data[i]) +
+        IndicesOffset;
   }
 }
 
@@ -135,20 +125,20 @@ void Searcher::CheckStart() {
   if (mIsFinished)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "you cannot reuse this class: search is finished");
-  if ((Ti)pGroupIndexMap->size() < SizeG)
+  if ((Ti)pCombinations->Partitions.size() < NumPartitions)
     throw LdtException(
         ErrorType::kLogic, "searcher",
         std::string("number of groups is not enough to build the "
                     "model with the given size. Size of model=") +
-            std::to_string(SizeG) + std::string(", Number of groups=") +
-            std::to_string((Ti)pGroupIndexMap->size()));
+            std::to_string(NumPartitions) + std::string(", Number of groups=") +
+            std::to_string((Ti)pCombinations->Partitions.size()));
 }
 
 std::string Searcher::Start(Tv *work, Ti *workI) {
   CheckStart(); // separated because if you want to run it in async function,
                 // you cannot leave exceptions unhandled
 
-  if (GroupIndexes.length() == 0)
+  if (PartitionIndices.Mat.length() == 0)
     return "";
   if (pOptions->RequestCancel == true)
     return "";
@@ -199,35 +189,36 @@ std::string Searcher::Start(Tv *work, Ti *workI) {
   return "";
 }
 
-bool next(Ti *g_data, const Ti &SizeG, const Ti &maxCountG,
-          const Ti &mFixFirstGroups, Ti &c, Ti &T, Ti &free) {
+bool next(Ti *g_data, const Ti &numPartitions, const Ti &maxCountG,
+          const Ti &mFixFirstPartitions, Ti &c, Ti &T, Ti &free) {
   c = 0;
 
-  for (free = SizeG; free > mFixFirstGroups; free--) {
+  for (free = numPartitions; free > mFixFirstPartitions; free--) {
     T = maxCountG - c - 1;
     if (g_data[free - 1] < T)
       break;
     c++;
   }
-  if (free == mFixFirstGroups)
+  if (free == mFixFirstPartitions)
     return false;
   else {
     g_data[free - 1]++;
-    for (Ti i = free; i < SizeG; i++)
+    for (Ti i = free; i < numPartitions; i++)
       g_data[i] = g_data[i - 1] + 1;
   }
   return true;
 }
 
 static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
-                      Matrix<Ti> &groupIndexes, const Ti &sizeG,
-                      const std::vector<Ti> &groupSizes,
-                      const std::vector<std::vector<Ti>> &groupIndexMap,
+                      Matrix<Ti> &partitionIndices, const Ti &numPartitions,
+                      const std::vector<Ti> &partitionSizes,
+                      const std::vector<std::vector<Ti>> &partitions,
                       const Ti &fixFirstG, const Ti &fixFirstI) {
   // move the inner indexes
-  auto g = &groupIndexMap.at(groupIndexes.Data[0]);
-  for (Ti i = 0; i < sizeG; i++) {
-    if (innerIndexes.Data[i] < groupSizes.at(groupIndexes.Data[i]) - 1) {
+  auto g = &partitions.at(partitionIndices.Data[0]);
+  for (Ti i = 0; i < numPartitions; i++) {
+    if (innerIndexes.Data[i] <
+        partitionSizes.at(partitionIndices.Data[i]) - 1) {
       innerIndexes.Data[i]++;
 
       if (fixFirstI == 0)
@@ -244,13 +235,13 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
   innerIndexes.SetValue(0);
 
   // move groups
-  if (next(groupIndexes.Data, sizeG, (Ti)groupIndexMap.size(), fixFirstG, c, T,
-           free)) {
+  if (next(partitionIndices.Data, numPartitions, (Ti)partitions.size(),
+           fixFirstG, c, T, free)) {
 
     if (fixFirstI == 0)
       return true;
     else { // does it contain any fixed items?
-      auto g = &groupIndexMap.at(groupIndexes.Data[0]);
+      auto g = &partitions.at(partitionIndices.Data[0]);
       if ((Ti)g->size() > innerIndexes.Data[0] &&
           g->at(innerIndexes.Data[0]) < fixFirstI)
         return true;
@@ -260,66 +251,76 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
 }
 
 bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
-  return move_next(c, T, free, InnerIndexes, GroupIndexes, SizeG, GroupSizes,
-                   *pGroupIndexMap, mFixFirstGroups, mFixFirstItems);
+  return move_next(c, T, free, InnerIndices.Mat, PartitionIndices.Mat,
+                   NumPartitions, partitionSizes, pCombinations->Partitions,
+                   mFixFirstPartitions, mFixFirstItems);
 }
 
 Ti Searcher::GetCount(bool effective) const {
-  // auto r = SizeG - mFixFirstGroups;
-  // auto n = pGroupIndexMap->size() - mFixFirstGroups;
+  // auto r = NumPartitions - mFixFirstPartitions;
+  // auto n = pGroupIndexMap->size() - mFixFirstPartitions;
   // auto countG = choose((Ti)n, (Ti)r); // use boost 'binomial_coefficient'
 
   // simulate indexation in groups and multiply sizes
 
-  if ((Ti)pGroupIndexMap->size() < SizeG)
+  if ((Ti)pCombinations->Partitions.size() < NumPartitions)
     throw LdtException(
         ErrorType::kLogic, "searcher",
         std::string("invalid number of groups. It is not enough to build the "
                     "model with the given size. Size of model=") +
-            std::to_string(SizeG) + std::string(", Number of groups=") +
-            std::to_string((Ti)pGroupIndexMap->size()));
+            std::to_string(NumPartitions) + std::string(", Number of groups=") +
+            std::to_string((Ti)pCombinations->Partitions.size()));
 
   Ti count;
   if (mFixFirstItems == 0) {
     count = 0;
-    auto td = std::unique_ptr<Ti[]>(new Ti[SizeG]);
-    auto t = Matrix<Ti>(td.get(), SizeG, (Ti)1);
+    auto td = std::unique_ptr<Ti[]>(new Ti[NumPartitions]);
+    auto t = Matrix<Ti>(td.get(), NumPartitions, (Ti)1);
     t.SetSequence(0, 1);
 
     // first
     Ti mul = 1;
-    for (Ti i = 0; i < SizeG; i++)
-      mul *= GroupSizes.at(i);
+    for (Ti i = 0; i < NumPartitions; i++)
+      mul *= partitionSizes.at(i);
     count += mul;
 
     Ti c, T, free;
-    while (next(t.Data, SizeG, (Ti)pGroupIndexMap->size(), mFixFirstGroups, c,
-                T, free)) {
+    while (next(t.Data, NumPartitions, (Ti)pCombinations->Partitions.size(),
+                mFixFirstPartitions, c, T, free)) {
       mul = 1;
-      for (Ti i = 0; i < SizeG; i++)
-        mul *= GroupSizes.at(t.Data[i]);
+      for (Ti i = 0; i < NumPartitions; i++)
+        mul *= partitionSizes.at(t.Data[i]);
       count += mul;
     }
   } else {
 
-    auto grpd = std::unique_ptr<Ti[]>(new Ti[SizeG]);
-    auto grp = Matrix<Ti>(grpd.get(), SizeG, (Ti)1);
-    grp.SetSequence(0, 1);
-    auto indd = std::unique_ptr<Ti[]>(new Ti[SizeG]);
-    auto ind = Matrix<Ti>(indd.get(), SizeG, (Ti)1);
-    ind.SetValue(0);
+    auto grp = VMatrix<Ti>(NumPartitions, 1);
+    grp.Mat.SetSequence(0, 1);
+    auto ind = VMatrix<Ti>(NumPartitions, 1);
+    ind.Mat.SetValue(0);
+    auto cur = VMatrix<Ti>(NumPartitions, 1);
 
     Ti c, T, free;
     count = 1;
-    while (move_next(c, T, free, ind, grp, SizeG, GroupSizes, *pGroupIndexMap,
-                     mFixFirstGroups, mFixFirstItems)) {
+    while (move_next(c, T, free, ind.Mat, grp.Mat, NumPartitions,
+                     partitionSizes, pCombinations->Partitions,
+                     mFixFirstPartitions, mFixFirstItems)) {
+      if (CheckForEmpty) {
+        for (Ti i = 0; i < NumPartitions; i++) {
+          cur.Mat.Data[i] = pCombinations->Partitions.at(grp.Mat.Data[i])
+                                .at(ind.Mat.Data[i]) +
+                            IndicesOffset;
+        }
+        if (cur.Mat.Data[0] >= this->pItems->LengthTargets)
+          continue;
+      }
       count++;
     }
   }
 
   // multiply
   if (effective)
-    return (Ti)(count * std::pow((Tv)SizeG, (Tv)2)); // consider 'size'
+    return (Ti)(count * std::pow((Tv)NumPartitions, (Tv)2)); // consider 'size'
   else
     return (Ti)(count);
 }
@@ -327,8 +328,9 @@ Ti Searcher::GetCount(bool effective) const {
 // #pragma region Test
 
 std::string SearcherTest::EstimateOne(Tv *work, Ti *workI) {
-  this->Push0(*new EstimationKeep(1, {}, {}, &this->CurrentIndices, 0, 0), 0,
-              0);
+  this->Push0(*new EstimationKeep(1, NAN, std::vector<Ti>(), std::vector<Ti>(),
+                                  this->CurrentIndices.Vec, 0, 0),
+              0, 0);
   return "";
 }
 

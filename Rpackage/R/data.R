@@ -529,6 +529,7 @@ get.combinations <- function(sizes = c(1),
 #'
 get.indexation <- function(combinations, data, innerIsExogenous) {
 
+  stopifnot(is.logical(innerIsExogenous))
   stopifnot(!is.null(data))
   if (!(is(data, "ldt.search.data")))
     stop("Invalid class. Use 'get.data()' function to generate 'data'.")
