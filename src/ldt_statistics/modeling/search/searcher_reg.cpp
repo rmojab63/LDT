@@ -14,43 +14,34 @@ SearcherReg::SearcherReg(const SearchData &data,
                          const SearchMetricOptions &metrics,
                          const SearchModelChecks &checks,
                          const Ti &numPartitions, const bool &isInnerExogenous,
-                         const std::vector<Ti> &zInnerIndices,
+                         const std::vector<Ti> &innerIndices,
                          const Ti extraLength, bool checkForEmpty)
     : Searcher::Searcher(data, combinations, options, items, metrics, checks,
                          numPartitions, checkForEmpty) {
   IsInnerExogenous = isInnerExogenous;
   mExtraLength = extraLength;
   auto w = data.HasWeight ? 1 : 0;
+  InnerIndices = innerIndices;
   ColIndices = std::vector<Ti>(
       numPartitions + w +
-      zInnerIndices.size()); // it gets updated in EstimateOne method
+      innerIndices.size()); // it gets updated in EstimateOne method
 
   if (data.HasWeight)
     ColIndices.at(numPartitions) = data.NumEndo;
 
   if (isInnerExogenous) {
-    // zInnerIndices is zero-based. Move InnerIndices
-    // Also note that this set is unchanged in the main loop
-    for (auto &i : zInnerIndices)
-      InnerIndices.push_back(i + numPartitions + w);
-
     // the second part of ColIndices is constant:
-    for (Ti i = 0; i < zInnerIndices.size(); i++)
-      ColIndices.at(i + numPartitions + w) = zInnerIndices.at(i);
+    for (Ti i = 0; i < (Ti)innerIndices.size(); i++)
+      ColIndices.at(i + numPartitions + w) = InnerIndices.at(i);
 
     // targets are in current indices and should be updated in the main loop
   } else {
-    // inner is endogenous, we should move outer which is given by
-    // CurrentIndices. Note that this set changes in the main loop.
-    this->IndicesOffset = zInnerIndices.size();
-    InnerIndices = zInnerIndices;
-
     // put it in the first part of column indices
-    for (Ti i = 0; i < zInnerIndices.size(); i++)
-      ColIndices.at(i) = zInnerIndices.at(i);
+    for (Ti i = 0; i < (Ti)innerIndices.size(); i++)
+      ColIndices.at(i) = innerIndices.at(i);
 
     // we can set targets here
-    for (auto &a : zInnerIndices) {
+    for (auto &a : innerIndices) {
       if (a < items.LengthTargets)
         TargetsPositions.push_back(a);
     }
@@ -61,11 +52,16 @@ SearcherReg::SearcherReg(const SearchData &data,
 }
 
 std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
+  if (this->CheckForEmpty &&
+      this->CurrentIndices.Mat.Data[0] >= this->pItems->LengthTargets)
+    return ""; // it is empty and we did not count it in the searcher. See
+               // CheckForEmpty member.
+
   // update column and inner indices based on current indices
 
   if (IsInnerExogenous) {
     // update the first part of column indices
-    for (Ti i = 0; i < CurrentIndices.Vec.size(); i++)
+    for (Ti i = 0; i < (Ti)CurrentIndices.Vec.size(); i++)
       ColIndices.at(i) = CurrentIndices.Vec.at(i);
 
     // update target indices
@@ -76,8 +72,13 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
   } else {
     auto w = pData->HasWeight ? 1 : 0;
     // update the second part of column indices
-    for (Ti i = 0; i < CurrentIndices.Vec.size(); i++)
-      ColIndices.at(i + NumPartitions + w) = CurrentIndices.Vec.at(i);
+    try {
+      for (Ti i = 0; i < (Ti)CurrentIndices.Vec.size(); i++)
+        ColIndices.at(i + InnerIndices.size() + w) = CurrentIndices.Vec.at(i);
+
+    } catch (...) {
+      throw std::logic_error("UUUU");
+    }
   }
 
   auto numMeas = (Ti)(this->pMetrics->MetricsIn.size() +
@@ -92,9 +93,15 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
   auto type1_var =
       VMatrix<Tv>(this->pItems->Length1, (Ti)TargetsPositions.size());
 
+  if (this->pOptions->RequestCancel)
+    return "cancel";
+
   auto res = EstimateOneReg(work, workI, metrics, type1_mean, type1_var, extra);
   if (res.length() != 0)
     return res;
+
+  if (this->pOptions->RequestCancel)
+    return "cancel";
 
   // push:
   Ti i, j;
@@ -111,14 +118,15 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
       allNan = false;
 
       Tv weight = NAN;
-      if (i < this->pMetrics->MetricsIn.size())
+      if (i < (Ti)this->pMetrics->MetricsIn.size()) {
+        auto gf = pMetrics->MetricsIn.at(i);
         weight = GoodnessOfFit::ToWeight(
-            pMetrics->MetricsIn.at(i), metric,
-            this->pMetrics->MinMetrics.Mat.Get(i, t_pos));
-      else
+            gf, metric, this->pMetrics->MinMetricIn.at(gf).at(t_pos));
+      } else {
+        auto sr = pMetrics->MetricsOut.at(i - this->pMetrics->MetricsIn.size());
         weight = Scoring::ToWeight(
-            pMetrics->MetricsOut.at(i - this->pMetrics->MetricsIn.size()),
-            metric, this->pMetrics->MinMetrics.Mat.Get(i, t_pos));
+            sr, metric, this->pMetrics->MinMetricOut.at(sr).at(t_pos));
+      }
 
       // add model information:
       if (this->pItems->KeepModelEvaluations) {

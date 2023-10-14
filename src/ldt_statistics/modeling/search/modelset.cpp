@@ -45,10 +45,13 @@ ModelSet::ModelSet(std::vector<Searcher *> &searchers, const SearchData &data,
 }
 
 void ModelSet::Start(Tv *work, Ti *workI) {
-  // Shuffle (in order to distribute sizes)
-  std::random_device rdev{};
-  std::mt19937 eng = std::mt19937(rdev());
-  std::shuffle(this->pSearchers->begin(), this->pSearchers->end(), eng);
+
+  if (ShuffleSearchers) {
+    // Shuffle (in order to distribute sizes)
+    std::random_device rdev{};
+    std::mt19937 eng = std::mt19937(rdev());
+    std::shuffle(this->pSearchers->begin(), this->pSearchers->end(), eng);
+  }
 
   // loop
   if (pOptions->Parallel) {
@@ -103,6 +106,7 @@ Ti ModelSet::GetNumberOfEstimatedModels() const {
 }
 
 Ti ModelSet::GetExpectedNumberOfModels() const {
+
   Ti c = 0;
   for (auto &a : *pSearchers) {
     c += a->GetCount();

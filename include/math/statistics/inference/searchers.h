@@ -191,7 +191,10 @@ struct LDT_EXPORT SearchMetricOptions {
   /// formula: exp(-0.5*(metric-minMetric)). Size of vectors must equal the
   /// number of target variables. Number of rows is equal to the number of
   /// metrics. Each column belongs to a target variable.
-  VMatrix<Tv> MinMetrics;
+  std::map<GoodnessOfFitType, std::vector<Tv>> MinMetricIn;
+
+  /// @brief Similar to \ref MinMetricIn
+  std::map<ScoringType, std::vector<Tv>> MinMetricOut;
 };
 
 /// @brief Different options for checking models in the search
@@ -414,16 +417,7 @@ private:
 
 protected:
   /// @brief An integer for adjusting the value of \ref CurrentIndices
-  Ti IndicesOffset;
-
-  /// @brief An integer for adjusting the value of \ref CurrentIndices
   bool CheckForEmpty;
-
-  /// @brief Number of fixed partitions
-  Ti mFixFirstPartitions;
-
-  /// @brief Number of fixed first items in partitions
-  Ti mFixFirstItems;
 
   /// @brief Number of selected partitions
   Ti NumPartitions = 0;
@@ -536,6 +530,12 @@ public:
            const SearchMetricOptions &metrics, const SearchModelChecks &checks,
            Ti numPartitions, bool checkForEmpty);
 
+  /// @brief
+  /// @remark in order to avoid the following warning: Deleting object of
+  /// abstract class type ‘ldt::Searcher’ which has non-virtual destructor will
+  /// cause undefined behavior
+  virtual ~Searcher() {}
+
   /// @brief Call this function before using 'Start' in an async function
   void CheckStart();
 
@@ -612,15 +612,14 @@ public:
   /// @param checks
   /// @param numPartitions
   /// @param isInnerExogenous
-  /// @param zInnerIndices
+  /// @param innerIndices
   /// @param extraLength Length of extra information to be kept
   SearcherReg(const SearchData &data, const SearchCombinations &combinations,
               SearchOptions &options, const SearchItems &items,
               const SearchMetricOptions &metrics,
               const SearchModelChecks &checks, const Ti &numPartitions,
-              const bool &isInnerExogenous,
-              const std::vector<Ti> &zInnerIndices, const Ti extraLength,
-              bool checkForEmpty);
+              const bool &isInnerExogenous, const std::vector<Ti> &innerIndices,
+              const Ti extraLength, bool checkForEmpty);
 };
 
 /// @brief A set of \ref Searcher
@@ -648,6 +647,10 @@ public:
   /// class becomes the owner and deletes them
   /// @remark Don't use 'const' for shuffle
   std::vector<Searcher *> *pSearchers = nullptr;
+
+  /// @brief If true, if shuffles the items in \ref pSearchers randomly for a
+  /// better estimation of remaining time
+  bool ShuffleSearchers = true;
 
   /// @brief Required size of the work array (Tv)
   Ti WorkSize = 0;

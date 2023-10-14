@@ -501,15 +501,13 @@ public:
 
 class LDT_EXPORT VarmaSearcher : public SearcherReg {
   const bool UsePreviousEstim = false;
-
-  const Matrix<Tv> *pForLowerBounds = nullptr;
-  const Matrix<Tv> *pForUpperBounds = nullptr;
-
   const Tv StdMultiplier = 2.0;
   const Ti mMaxHorizonCheck = 0;
-
-  DatasetTs<true> Source;
+  const Matrix<Tv> *pForLowerBounds = nullptr;
+  const Matrix<Tv> *pForUpperBounds = nullptr;
   const VarmaSizes Sizes;
+  DatasetTs<true> Source;
+
   Varma DModel;
   VarmaForecast FModel;
   VarmaSimulation Model;

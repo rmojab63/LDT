@@ -27,7 +27,7 @@ VMatrix<Tw>::VMatrix(const std::vector<Tw> &data, Ti m, Ti n) : Vec(data) {
   }
   Mat = Matrix<Tw>(m, n);
   Mat.Data = &Vec[0];
-  if (Vec.size() != m * n)
+  if ((Ti)Vec.size() != m * n)
     throw LdtException(ErrorType::kLogic, "matrix",
                        "Inconsistent arguments. Size of vector must be m*n");
 }
@@ -44,7 +44,7 @@ VMatrix<Tw>::VMatrix(std::initializer_list<Tw> initList, Ti m, Ti n)
   }
   Mat = Matrix<Tw>(m, n);
   Mat.Data = &Vec[0];
-  if (Vec.size() != m * n)
+  if ((Ti)Vec.size() != m * n)
     throw LdtException(ErrorType::kLogic, "matrix",
                        "Inconsistent arguments. Size of vector must be m*n");
 }

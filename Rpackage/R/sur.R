@@ -78,7 +78,7 @@ search.sur <- function(data = get.data(),
 
   if (is.list(combinations$sizes)){ # use steps
     # steps will re-call this function with modified combinations in which sizes is no longer a list
-    res <- search.steps("sur", innerIsExogenous = FALSE, data = data, combinations = combinations,
+    res <- search.steps("sur", isInnerExogenous = FALSE, data = data, combinations = combinations,
                         metrics = metrics, modelChecks = modelChecks, items = items, options = options,
                         searchSigMaxIter = searchSigMaxIter, searchSigMaxProb = searchSigMaxProb)
     res

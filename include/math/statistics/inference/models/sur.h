@@ -375,11 +375,10 @@ public:
 
 /// @brief A searcher class for SUR
 class LDT_EXPORT SurSearcher : public SearcherReg {
-  const Tv SigSearchMaxProb = 0.05;
-  const Ti SigSearchMaxIter = 0;
-
   /// @brief It might be different from \ref pMetrics->Seed
   const unsigned int Seed;
+  const Ti SigSearchMaxIter = 0;
+  const Tv SigSearchMaxProb = 0.05;
 
   const Matrix<Tv> *pSource = nullptr;
 
@@ -398,7 +397,6 @@ class LDT_EXPORT SurSearcher : public SearcherReg {
                              VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
                              VMatrix<Ti> &extra) override;
 
-  std::vector<Ti> Indexes;
   std::vector<Ti> TargetsPositions;
 
 public:

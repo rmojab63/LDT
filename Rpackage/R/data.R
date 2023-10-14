@@ -522,14 +522,14 @@ get.combinations <- function(sizes = c(1),
 #'
 #' @param combinations A list returned by the [get.combinations] function.
 #' @param data A list returned by [get.data] function.
-#' @param innerIsExogenous Use \code{TRUE} if outer loop is defined over the endogenous variables and \code{FALSE} if it is for exogenous.
+#' @param isInnerExogenous Use \code{TRUE} if outer loop is defined over the endogenous variables and \code{FALSE} if it is for exogenous.
 #'
 #' @return A list similar to the input \code{combinations}, but with all character vectors in \code{innerGroups} or \code{partitions} converted to numeric vectors based on the index of the columns in the \code{data} matrix.
 #' It sums the exogenous indexes with the number of endogenous variables and returns zero-based indexation for C code.
 #'
-get.indexation <- function(combinations, data, innerIsExogenous) {
+get.indexation <- function(combinations, data, isInnerExogenous) {
 
-  stopifnot(is.logical(innerIsExogenous))
+  stopifnot(is.logical(isInnerExogenous))
   stopifnot(!is.null(data))
   if (!(is(data, "ldt.search.data")))
     stop("Invalid class. Use 'get.data()' function to generate 'data'.")
@@ -542,7 +542,7 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
   if (dup_cols > 0)
     stop("'data' has duplicate column names.")
 
-  if (innerIsExogenous == FALSE && data$numExo == 0)
+  if (isInnerExogenous == FALSE && data$numExo == 0)
     stop("Number of exogenous variables cannot be zero.") #TODO: check for intercept
   # we check for non-zero number of endogenous variables in 'get.data'
 
@@ -563,9 +563,9 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
       j <- sort(as.integer(x))
       if (any(j < 1))
         stop("Zero or negative index in sizes.")
-      if (innerIsExogenous == FALSE && any(j > data$numExo))
+      if (isInnerExogenous == FALSE && any(j > data$numExo))
         stop("Invalid value in sizes. Make sure they are less than the number of exogenous variables.")
-      if (innerIsExogenous && any(j > data$numEndo))
+      if (isInnerExogenous && any(j > data$numEndo))
         stop("Invalid index in sizes. Make sure they are less than the number of endogenous variables.")
       j
     })
@@ -587,9 +587,9 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
     combinations$sizes = sort(as.integer(combinations$sizes))
     if (any(combinations$sizes < 1))
       stop("Zero or negative index in sizes.")
-    if (innerIsExogenous == FALSE && any(combinations$sizes > data$numExo))
+    if (isInnerExogenous == FALSE && any(combinations$sizes > data$numExo))
       stop("Invalid value in sizes. Make sure they are less than the number of exogenous variables.")
-    if (innerIsExogenous && any(combinations$sizes > data$numEndo))
+    if (isInnerExogenous && any(combinations$sizes > data$numEndo))
       stop("Invalid index in sizes. Make sure they are less than the number of endogenous variables.")
   }
 
@@ -602,16 +602,16 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
                else {sort(as.integer(x))}
                if (any(j) < 1)
                  stop("Zero or negative index in partitions.")
-               if (innerIsExogenous && any(j > data$numEndo))
+               if (isInnerExogenous && any(j > data$numEndo))
                  stop("Invalid index in partitions(=", j,"). Make sure they are less than the number of endogenous variables (=", data$numEndo, ").")
-               if (innerIsExogenous == FALSE && any(j > data$numExo))
+               if (isInnerExogenous == FALSE && any(j > data$numExo))
                  stop("Invalid index in partitions (=", j,"). Make sure they are less than the number of exogenous variables (=", data$numExo, ").")
                j
              })
   }
   else{ # put each variable in its own partition
     combinations$partitions <-
-      lapply(1:ifelse(innerIsExogenous, data$numEndo, data$numExo),
+      lapply(1:ifelse(isInnerExogenous, data$numEndo, data$numExo),
              function(x)c(x))
   }
 
@@ -624,9 +624,9 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
              {sort(as.integer(x))}
              if (any(j < 1))
                stop("Zero or negative index in innerGroups.")
-             if (innerIsExogenous && any(j > data$numExo))
+             if (isInnerExogenous && any(j > data$numExo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of exogenous variables.")
-             if (innerIsExogenous  == FALSE && any(j > data$numEndo))
+             if (isInnerExogenous  == FALSE && any(j > data$numEndo))
                stop("Invalid index in innerGroups. Make sure they are less than the number of endogenous variables.")
              j
            })
@@ -634,7 +634,7 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
 
   combinations$innerGroups <- unique(combinations$innerGroups)
 
-  if (innerIsExogenous == FALSE){ # inner is endogenous
+  if (isInnerExogenous == FALSE){ # inner is endogenous
     inner_group_values <- unique(unlist(combinations$innerGroups))
     for (t in 1:combinations$numTargets)
       if (!(t %in% inner_group_values))
@@ -645,12 +645,12 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
   # zero-based indexation and moving exogenous indices:
   for (i in seq_along(combinations$partitions)){
     combinations$partitions[[i]] <- combinations$partitions[[i]] - 1
-    if (innerIsExogenous == FALSE)
+    if (isInnerExogenous == FALSE)
       combinations$partitions[[i]] <- combinations$partitions[[i]] + data$numEndo
   }
   for (i in seq_along(combinations$innerGroups)){
     combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] - 1
-    if (innerIsExogenous)
+    if (isInnerExogenous)
       combinations$innerGroups[[i]] <- combinations$innerGroups[[i]] + data$numEndo
   }
 
@@ -666,17 +666,18 @@ get.indexation <- function(combinations, data, innerIsExogenous) {
   }
   combinations$partitions <- lapply(combinations$partitions, sort)
 
-  # inner groups
-  for(i in 1:length(combinations$innerGroups)) {
-    for(j in i:length(combinations$innerGroups)) {
-      if(i != j) {
-        commons <- intersect(combinations$innerGroups[[i]], combinations$innerGroups[[j]])
-        if(length(commons) > 0)
-          stop("At least two members of 'combinations$innerGroups' have common elements.")
-      }
-    }
-  }
+  # sort inner groups
+  # (it's OK for inner groups to have common elements, unless some partitions are fixed (TODO))
   combinations$innerGroups <- lapply(combinations$innerGroups, sort)
+  if (isInnerExogenous == FALSE)
+    for(i in combinations$innerGroups){
+      if (i[1] >= combinations$numTargets)
+        stop("At least one item in an inner group (index=",i,") contains no target variable.")
+    }
+
+  for (size in unlist(combinations$sizes))
+    if (size > length(combinations$partitions))
+      stop("Invalid number of partitions. With the given number of partitions (=", length(combinations$partitions), "), it is not possible to estimate a model with size =",size,".")
 
   return(combinations)
 }

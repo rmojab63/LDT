@@ -55,6 +55,14 @@ public:
     auto mV = Matrix<Tw>(&V, (Ti)2, (Ti)2);
     V[1] = (Tw)100;
     ASSERT_EQ(mV.Data[1], (Tw)100);
+
+    // VMatrix
+    auto vmat = VMatrix<Tw>(2, 2);
+    vmat.Mat.Set(0, 0, 2);
+    ASSERT_EQ(2, vmat.Vec.at(0));
+
+    vmat = VMatrix<Tw>({1, 2, 3, 4}, 4);
+    ASSERT_EQ(3, vmat.Mat.Get(2, 0));
   }
 
   template <class Tw> static void iterators0() {

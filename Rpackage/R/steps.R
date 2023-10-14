@@ -278,14 +278,15 @@ adjust_indices_after_remove <- function(indicesList, removedIndices){
 #' @param ... Additional arguments for the search function.
 #'
 #' @return the result
-search.steps <- function(method, innerIsExogenous, ...) {
+search.steps <- function(method, isInnerExogenous, ...) {
+  dots <- unserialize(serialize(list(...), NULL))
 
-  sizes = combinations$sizes
-  counts = combinations$stepsNumVariables
-  fixedNames = combinations$stepsFixedNames
-  savePre = combinations$stepsSavePre
+  sizes = dots$combinations$sizes
+  counts = dots$combinations$stepsNumVariables
+  fixedNames = dots$combinations$stepsFixedNames
+  savePre = dots$combinations$stepsSavePre
 
-  dots <- list(...)
+
   printMsg = dots$options$reportInterval > 0
   if (is.null(printMsg))
     printMsg = FALSE
@@ -411,7 +412,7 @@ search.steps <- function(method, innerIsExogenous, ...) {
     }
 
     combinations_i$sizes <- size_i
-    if (innerIsExogenous){
+    if (isInnerExogenous){
       combinations_i$innerGroups <- adjust_indices_after_remove(combinations_i$innerGroups, exo_indices_removed_i-1)
       combinations_i$partitions <- adjust_indices_after_remove(combinations_i$partitions, endo_indices_removed_i - 1)
     }else{
@@ -423,12 +424,12 @@ search.steps <- function(method, innerIsExogenous, ...) {
     # see the end of get.indexation function
     for (j in c(1:length(combinations_i$partitions))){
       combinations_i$partitions[[j]] <- combinations_i$partitions[[j]] + 1
-      if (innerIsExogenous == FALSE)
+      if (isInnerExogenous == FALSE)
         combinations_i$partitions[[j]] <- combinations_i$partitions[[j]] - data_i$numEndo
     }
     for (j in c(1:length(combinations_i$innerGroups))){
       combinations_i$innerGroups[[j]] <- combinations_i$innerGroups[[j]] + 1
-      if (innerIsExogenous)
+      if (isInnerExogenous)
         combinations_i$innerGroups[[j]] <- combinations_i$innerGroups[[j]] - data_i$numEndo
     }
 
@@ -443,6 +444,8 @@ search.steps <- function(method, innerIsExogenous, ...) {
         `removed exogenous` = exo_names_removed_i
       ), "        ")
     }
+    if (method == "rfunc")
+      dots$isInnerExogenous <- isInnerExogenous
     estims[[i]] <- do.call(paste0("search.", method), c(dots))
 
     lastStep = i == length(sizes)

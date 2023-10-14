@@ -116,7 +116,6 @@ std::string VarmaSearcher::EstimateOneReg(Tv *work, Ti *workI,
 
   auto R = Restriction.R;
   // auto r = Restriction.r;
-  Tv weight, metric;
 
   auto S_e = &work[s];
   s += DModel.Result.StorageSize;

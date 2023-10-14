@@ -114,7 +114,7 @@ search.bin <- function(data,
 
   if (is.list(combinations$sizes)){ # use steps
     # steps will re-call this function with modified combinations in which sizes is no longer a list
-    res <- search.steps("bin", innerIsExogenous = FALSE, data = data, combinations = combinations,
+    res <- search.steps("bin", isInnerExogenous = FALSE, data = data, combinations = combinations,
                         metrics = metrics, modelChecks = modelChecks, items = items, options = options,
                         costMatrices = costMatrices, searchLogit = searchLogit,
                         searchProbit = searchProbit, optimOptions = optimOptions,

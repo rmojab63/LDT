@@ -38,6 +38,8 @@ file(GLOB SOURCES
  #src/ldt_statistics/modeling/time_series/expsmoothing.cpp
  #src/ldt_statistics/modeling/time_series/tsfilter.cpp 
  
+ src/ldt_statistics/modeling/r/rfunc_modelset.cpp
+
  src/ldt_statistics/modeling/linear/sur.cpp
  src/ldt_statistics/modeling/linear/sur_projection.cpp
  src/ldt_statistics/modeling/linear/sur_extended.cpp
@@ -142,7 +144,7 @@ if(COMPILE_R)
 		 Rpackage/src/r_sur.cpp
 		 Rpackage/src/r_varma.cpp
 		 Rpackage/src/r_dc.cpp
-		 Rpackage/src/r_gen.cpp
+		 Rpackage/src/r_func.cpp
     )
   
 	# currently, I hard code the paths:  
@@ -355,8 +357,8 @@ if(BUILD_TEST)
  
 	 target_link_libraries(testsldt ldt GTest::gtest GTest::gtest_main)
 	 
-	 #include_directories(${GTEST_INCLUDE_DIRS})
-	 #message(STATUS "GTest Include Directory: ${GTEST_INCLUDE_DIRS}")
+	 include_directories(${GTEST_INCLUDE_DIRS})
+	 message(STATUS "GTest Include Directory: ${GTEST_INCLUDE_DIRS}")
 
      if (USE_MKL)
         target_link_libraries(testsldt ${MKL_IMPORTED_TARGETS})
@@ -365,6 +367,11 @@ if(BUILD_TEST)
         target_link_libraries(testsldt ${BLAS_LIBRARIES}) 
      endif(USE_MKL) 
  	 
+	 if(COMPILE_R) 
+	 target_link_libraries(testsldt "${R_PATH}/bin/x64/R.dll")
+	 target_link_libraries(testsldt "${R_CPP_PATH}/libs/x64/Rcpp.dll")
+   endif()
+
 	 add_test(TESTS testsldt)
 
 endif(BUILD_TEST)

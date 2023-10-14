@@ -69,7 +69,7 @@ std::string SurSearcher::EstimateOneReg(Tv *work, Ti *workI,
                                         VMatrix<Ti> &extra) {
 
   Ti s = 0;
-  Data.Calculate(*pSource, &Indexes, &work[s]);
+  Data.Calculate(*pSource, &ColIndices, &work[s]);
   s += Data.StorageSize;
 
   if (this->pChecks->Estimation) { // estimate with all data

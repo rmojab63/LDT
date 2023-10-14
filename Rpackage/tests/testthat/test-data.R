@@ -170,56 +170,56 @@ test_that("get.indexation handles out-of-indices", {
 
     # check sizes
     combinations <- get.combinations(sizes = c(1,2), numTargets = 2)
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
     combinations <- get.combinations(sizes = c(1,2, 3), numTargets = 2)
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
     combinations <- get.combinations(sizes = c(1,2,4), numTargets = 2, innerGroups = list(c(1,2)))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = c(1,2,5), numTargets = 2)
-    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = c(1,2), numTargets = 3)
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
 
     # check sizes as a list (and stepsNumVariables)
     expect_error(get.combinations(sizes = list(c(1,2)), numTargets = 2, stepsNumVariables = c(NA, 6)))
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 7))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
 
     combinations <- get.combinations(sizes = list(c(1,2), c(3)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = list(c(1,2), c(4)), numTargets = 2, stepsNumVariables = c(NA, 6), innerGroups = list(c(1,2)))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = list(c(1,2), c(5)), numTargets = 2, stepsNumVariables = c(NA, 6))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
 
     # check innerGroups
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
                                      innerGroups = list(c(1,2), c(3,4)))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
                                      innerGroups = list(c(1,2), c(3,5)))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
 
 
     # check partitions
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
                                      partitions = list(c(1),c(2)), innerGroups = list(c(1,2)))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
                                      partitions = list(c(1),c(3)), innerGroups = list(c(1,2)))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
-    expect_no_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
+    expect_no_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
     combinations <- get.combinations(sizes = list(c(1), c(2)), numTargets = 2, stepsNumVariables = c(NA, 6),
                                      partitions = list(c(1),c(5)))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = TRUE))
-    expect_error(get.indexation(combinations, data, innerIsExogenous = FALSE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = TRUE))
+    expect_error(get.indexation(combinations, data, isInnerExogenous = FALSE))
 
   }
 

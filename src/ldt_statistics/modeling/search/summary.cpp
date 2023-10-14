@@ -159,7 +159,7 @@ SearcherSummary::~SearcherSummary() {
 void SearcherSummary::Push(EstimationKeep &coef, bool isModel) {
   if (pItems->KeepBestCount != 0) {
     Bests.insert(&coef);
-    if (Bests.size() > pItems->KeepBestCount) {
+    if ((Ti)Bests.size() > pItems->KeepBestCount) {
       auto it = std::prev(Bests.end());
       if (isModel == false || pItems->KeepAll == false) {
         delete *it;

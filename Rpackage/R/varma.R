@@ -113,7 +113,7 @@ search.varma <- function(data = get.data(),
 
   if (is.list(combinations$sizes)){ # use steps
     # steps will re-call this function with modified combinations in which sizes is no longer a list
-    res <- search.steps("varma", innerIsExogenous = TRUE, data = data, combinations = combinations,
+    res <- search.steps("varma", isInnerExogenous = TRUE, data = data, combinations = combinations,
                         metrics = metrics, modelChecks = modelChecks, items = items, options = options,
                         maxParams = maxParams,
                         seasonsCount = seasonsCount,

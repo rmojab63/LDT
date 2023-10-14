@@ -15,16 +15,17 @@ Searcher::Searcher(const SearchData &data,
                    const SearchModelChecks &checks, Ti numPartitions,
                    bool checkForEmpty) {
 
-  if (combinations.NumFixPartitions > NumPartitions)
-    throw LdtException(ErrorType::kLogic, "searcher",
-                       "fixed number of partitions cannot be larger than of "
-                       "the array in the searcher");
+  if (combinations.NumFixPartitions > numPartitions)
+    throw LdtException(
+        ErrorType::kLogic, "searcher",
+        "fixed number of partitions cannot be larger than length of "
+        "the array in the searcher");
 
   if (items.LengthEvals == 0 || items.LengthTargets == 0)
     throw LdtException(ErrorType::kLogic, "searcher",
                        "no evaluation or target is given");
 
-  if (items.LengthEvals != metrics.EvalIsPosOrientation.size())
+  if (items.LengthEvals != (Ti)metrics.EvalIsPosOrientation.size())
     throw LdtException(ErrorType::kLogic, "searcher",
                        "metric orientations are not provided.");
 
@@ -54,7 +55,7 @@ Searcher::Searcher(const SearchData &data,
   PartitionIndices.Mat.SetSequence(0, 1);
   InnerIndices.Mat.SetValue(0);
 
-  for (Ti i = 0; i < combinations.Partitions.size(); i++)
+  for (Ti i = 0; i < (Ti)combinations.Partitions.size(); i++)
     partitionSizes.push_back(combinations.Partitions.at(i).size());
 
   Summaries0 = std::vector<std::vector<SearcherSummary>>(items.LengthEvals);
@@ -114,10 +115,13 @@ void Searcher::Push2(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
 
 void Searcher::UpdateCurrent() {
   for (Ti i = 0; i < NumPartitions; i++) {
-    CurrentIndices.Mat.Data[i] =
-        pCombinations->Partitions.at(PartitionIndices.Mat.Data[i])
-            .at(InnerIndices.Mat.Data[i]) +
-        IndicesOffset;
+    try {
+      CurrentIndices.Mat.Data[i] =
+          pCombinations->Partitions.at(PartitionIndices.Mat.Data[i])
+              .at(InnerIndices.Mat.Data[i]);
+    } catch (...) {
+      throw std::logic_error("AAAA");
+    }
   }
 }
 
@@ -209,51 +213,68 @@ bool next(Ti *g_data, const Ti &numPartitions, const Ti &maxCountG,
   return true;
 }
 
-static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndexes,
+static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndices,
                       Matrix<Ti> &partitionIndices, const Ti &numPartitions,
                       const std::vector<Ti> &partitionSizes,
                       const std::vector<std::vector<Ti>> &partitions,
                       const Ti &fixFirstG, const Ti &fixFirstI) {
   // move the inner indexes
+  if ((Ti)partitions.size() <= partitionIndices.Data[0])
+    throw std::logic_error("error 1");
+
   auto g = &partitions.at(partitionIndices.Data[0]);
+
   for (Ti i = 0; i < numPartitions; i++) {
-    if (innerIndexes.Data[i] <
+
+    if ((Ti)partitionSizes.size() <= partitionIndices.Data[i])
+      throw std::logic_error("error 4");
+
+    if (innerIndices.Data[i] <
         partitionSizes.at(partitionIndices.Data[i]) - 1) {
-      innerIndexes.Data[i]++;
+      innerIndices.Data[i]++;
 
       if (fixFirstI == 0)
         return true;
       // does it contain any fixed items?
-      else if ((int)g->size() > innerIndexes.Data[0] &&
-               g->at(innerIndexes.Data[0]) < fixFirstI)
+      else if ((int)g->size() > innerIndices.Data[0] &&
+               g->at(innerIndices.Data[0]) < fixFirstI)
         return true;
     }
-    innerIndexes.Data[i] = 0;
+
+    innerIndices.Data[i] = 0;
   }
 
   // reset inner indexes
-  innerIndexes.SetValue(0);
+  innerIndices.SetValue(0);
 
   // move groups
   if (next(partitionIndices.Data, numPartitions, (Ti)partitions.size(),
            fixFirstG, c, T, free)) {
-
     if (fixFirstI == 0)
       return true;
     else { // does it contain any fixed items?
-      auto g = &partitions.at(partitionIndices.Data[0]);
-      if ((Ti)g->size() > innerIndexes.Data[0] &&
-          g->at(innerIndexes.Data[0]) < fixFirstI)
+
+      if ((Ti)partitions.size() <= partitionIndices.Data[0])
+        throw std::logic_error("error 2");
+
+      g = &partitions.at(partitionIndices.Data[0]);
+
+      if ((Ti)g->size() <= innerIndices.Data[0])
+        throw std::logic_error("error 3");
+
+      if ((Ti)g->size() > innerIndices.Data[0] &&
+          g->at(innerIndices.Data[0]) < fixFirstI)
         return true;
     }
   }
+
   return false;
 }
 
 bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
   return move_next(c, T, free, InnerIndices.Mat, PartitionIndices.Mat,
                    NumPartitions, partitionSizes, pCombinations->Partitions,
-                   mFixFirstPartitions, mFixFirstItems);
+                   pCombinations->NumFixPartitions, pCombinations->NumFixItems);
 }
 
 Ti Searcher::GetCount(bool effective) const {
@@ -266,17 +287,19 @@ Ti Searcher::GetCount(bool effective) const {
   if ((Ti)pCombinations->Partitions.size() < NumPartitions)
     throw LdtException(
         ErrorType::kLogic, "searcher",
-        std::string("invalid number of groups. It is not enough to build the "
-                    "model with the given size. Size of model=") +
-            std::to_string(NumPartitions) + std::string(", Number of groups=") +
+        std::string(
+            "invalid number of partitions. It is not enough to build the "
+            "model with the given size. Size of model=") +
+            std::to_string(NumPartitions) +
+            std::string(", Number of partitions=") +
             std::to_string((Ti)pCombinations->Partitions.size()));
 
   Ti count;
-  if (mFixFirstItems == 0) {
+  if (pCombinations->NumFixItems == 0 && CheckForEmpty == false) {
+
     count = 0;
-    auto td = std::unique_ptr<Ti[]>(new Ti[NumPartitions]);
-    auto t = Matrix<Ti>(td.get(), NumPartitions, (Ti)1);
-    t.SetSequence(0, 1);
+    auto partition_indices = VMatrix<Ti>(NumPartitions, 1);
+    partition_indices.Mat.SetSequence(0, 1);
 
     // first
     Ti mul = 1;
@@ -285,33 +308,36 @@ Ti Searcher::GetCount(bool effective) const {
     count += mul;
 
     Ti c, T, free;
-    while (next(t.Data, NumPartitions, (Ti)pCombinations->Partitions.size(),
-                mFixFirstPartitions, c, T, free)) {
+    while (next(partition_indices.Mat.Data, NumPartitions,
+                (Ti)pCombinations->Partitions.size(),
+                pCombinations->NumFixPartitions, c, T, free)) {
       mul = 1;
+
       for (Ti i = 0; i < NumPartitions; i++)
-        mul *= partitionSizes.at(t.Data[i]);
+        mul *= partitionSizes.at(partition_indices.Mat.Data[i]);
+
       count += mul;
     }
   } else {
 
-    auto grp = VMatrix<Ti>(NumPartitions, 1);
-    grp.Mat.SetSequence(0, 1);
-    auto ind = VMatrix<Ti>(NumPartitions, 1);
-    ind.Mat.SetValue(0);
-    auto cur = VMatrix<Ti>(NumPartitions, 1);
+    auto partition_indices = VMatrix<Ti>(NumPartitions, 1);
+    partition_indices.Mat.SetSequence(0, 1);
+    auto inner_indices = VMatrix<Ti>(NumPartitions, 1);
+    inner_indices.Mat.SetValue(0);
 
     Ti c, T, free;
     count = 1;
-    while (move_next(c, T, free, ind.Mat, grp.Mat, NumPartitions,
-                     partitionSizes, pCombinations->Partitions,
-                     mFixFirstPartitions, mFixFirstItems)) {
+    while (move_next(c, T, free, inner_indices.Mat, partition_indices.Mat,
+                     NumPartitions, partitionSizes, pCombinations->Partitions,
+                     pCombinations->NumFixPartitions,
+                     pCombinations->NumFixItems)) {
+
       if (CheckForEmpty) {
-        for (Ti i = 0; i < NumPartitions; i++) {
-          cur.Mat.Data[i] = pCombinations->Partitions.at(grp.Mat.Data[i])
-                                .at(ind.Mat.Data[i]) +
-                            IndicesOffset;
-        }
-        if (cur.Mat.Data[0] >= this->pItems->LengthTargets)
+
+        auto c0 = pCombinations->Partitions.at(partition_indices.Mat.Data[0])
+                      .at(inner_indices.Mat.Data[0]);
+
+        if (c0 >= this->pItems->LengthTargets)
           continue;
       }
       count++;

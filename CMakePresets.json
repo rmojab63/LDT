@@ -1,126 +1,133 @@
-﻿{
-  "version": 3,
-  "configurePresets": [
-    {
-      "name": "windows-base",
-      "hidden": true,
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}",
-      "cacheVariables": {
-        "BUILD_TEST": "ON",
-        "BUILD_COMPLETE": "ON",
-        "CMAKEPRESETS": "ON",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
-        "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/mingw32-make.exe"
-      }
-    },
-    {
-      "name": "mingw64-x64-debug",
-      "displayName": "MINGW64-x64 Debug",
-      "inherits": "windows-base",
-      "generator": "MinGW Makefiles",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cmakeExecutable": "C:/msys64/mingw64/bin/cmake.exe",
-      "cacheVariables": {
-        "MINGW_ARCH": "mingw64",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
-        "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/mingw32-make.exe"
-      }
-    },
-    {
-      "name": "mingw64-x64-release",
-      "displayName": "MINGW64-x64 Release",
-      "inherits": "mingw64-x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "mingw32-i686-debug",
-      "displayName": "MINGW32-i686 Debug",
-      "inherits": "mingw64-x64-debug",
-      "architecture": {
-        "value": "i686",
-        "strategy": "external"
-      },
-      "cmakeExecutable": "C:/msys64/mingw32/bin/cmake.exe",
-      "cacheVariables": {
-        "MINGW_ARCH": "mingw32",
-        "CMAKE_C_COMPILER": "C:/msys64/mingw32/bin/gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/mingw32/bin/g++.exe",
-        "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw32/bin/mingw32-make.exe"
-      }
-    },
-    {
-      "name": "mingw32-i686-release",
-      "displayName": "MINGW32-i686 Release",
-      "inherits": "mingw32-i686-debug",
-      "architecture": {
-        "value": "i686",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "clang64-x64-debug",
-      "displayName": "CLANG64-x64 Debug",
-      "inherits": "windows-base",
-      "generator": "MinGW Makefiles",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cmakeExecutable": "C:/msys64/clang64/bin/cmake.exe",
-      "cacheVariables": {
-        "MINGW_ARCH": "clang64",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/clang64/bin/clang++.exe"
-      }
-    },
-    {
-      "name": "clang64-x64-release",
-      "displayName": "CLANG64-x64 Release",
-      "inherits": "clang64-x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "ucrt64-x64-debug",
-      "displayName": "UCRT64-x64 Debug",
-      "inherits": "windows-base",
-      "generator": "Ninja",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cmakeExecutable": "C:/msys64/ucrt64/bin/cmake.exe",
-      "cacheVariables": {
-        "BUILD_TEST": "OFF",
-        "MINGW_ARCH": "ucrt64",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "C:/msys64/usr/bin/gcc.exe",
-        "CMAKE_CXX_COMPILER": "C:/msys64/usr/bin/g++.exe",
-        "CMAKE_MAKE_PROGRAM": "C:/msys64/ucrt64/bin/ninja.exe"
-      }
-    },
-    {
-      "name": "ucrt64-x64-release",
-      "displayName": "UCRT64-x64 Release",
-      "inherits": "ucrt64-x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    }
-  ]
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "windows-base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "BUILD_TEST": "ON",
+                "BUILD_COMPLETE": "ON",
+                "CMAKEPRESETS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/mingw32-make.exe"
+            }
+        },
+        {
+            "name": "mingw64-x64-debug",
+            "displayName": "MINGW64-x64 Debug",
+            "inherits": "windows-base",
+            "generator": "MinGW Makefiles",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cmakeExecutable": "C:/msys64/mingw64/bin/cmake.exe",
+            "cacheVariables": {
+                "MINGW_ARCH": "mingw64",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw64/bin/mingw32-make.exe"
+            }
+        },
+        {
+            "name": "mingw64-x64-release",
+            "displayName": "MINGW64-x64 Release",
+            "inherits": "mingw64-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "mingw32-i686-debug",
+            "displayName": "MINGW32-i686 Debug",
+            "inherits": "mingw64-x64-debug",
+            "architecture": {
+                "value": "i686",
+                "strategy": "external"
+            },
+            "cmakeExecutable": "C:/msys64/mingw32/bin/cmake.exe",
+            "cacheVariables": {
+                "MINGW_ARCH": "mingw32",
+                "CMAKE_C_COMPILER": "C:/msys64/mingw32/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/mingw32/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/msys64/mingw32/bin/mingw32-make.exe"
+            }
+        },
+        {
+            "name": "mingw32-i686-release",
+            "displayName": "MINGW32-i686 Release",
+            "inherits": "mingw32-i686-debug",
+            "architecture": {
+                "value": "i686",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang64-x64-debug",
+            "displayName": "CLANG64-x64 Debug",
+            "inherits": "windows-base",
+            "generator": "MinGW Makefiles",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cmakeExecutable": "C:/msys64/clang64/bin/cmake.exe",
+            "cacheVariables": {
+                "MINGW_ARCH": "clang64",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/clang64/bin/clang++.exe"
+            }
+        },
+        {
+            "name": "clang64-x64-release",
+            "displayName": "CLANG64-x64 Release",
+            "inherits": "clang64-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "ucrt64-x64-debug",
+            "displayName": "UCRT64-x64 Debug",
+            "inherits": "windows-base",
+            "generator": "Ninja",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cmakeExecutable": "C:/msys64/ucrt64/bin/cmake.exe",
+            "cacheVariables": {
+                "BUILD_TEST": "OFF",
+                "MINGW_ARCH": "ucrt64",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "C:/msys64/usr/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:/msys64/usr/bin/g++.exe",
+                "CMAKE_MAKE_PROGRAM": "C:/msys64/ucrt64/bin/ninja.exe"
+            }
+        },
+        {
+            "name": "ucrt64-x64-release",
+            "displayName": "UCRT64-x64 Release",
+            "inherits": "ucrt64-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "TESTS",
+            "description": "",
+            "displayName": ""
+        }
+    ]
 }
