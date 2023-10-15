@@ -49,11 +49,11 @@ Searcher::Searcher(const SearchData &data,
 
   CurrentIndices = VMatrix<Ti>(NumPartitions, 1);
   PartitionIndices = VMatrix<Ti>(NumPartitions, 1);
-  InnerIndices = VMatrix<Ti>(NumPartitions, 1);
+  ItemIndices = VMatrix<Ti>(NumPartitions, 1);
 
   CurrentIndices.Mat.SetValue(0);
   PartitionIndices.Mat.SetSequence(0, 1);
-  InnerIndices.Mat.SetValue(0);
+  ItemIndices.Mat.SetValue(0);
 
   for (Ti i = 0; i < (Ti)combinations.Partitions.size(); i++)
     partitionSizes.push_back(combinations.Partitions.at(i).size());
@@ -115,13 +115,9 @@ void Searcher::Push2(EstimationKeep &coef, Ti evalIndex, Ti targetIndex,
 
 void Searcher::UpdateCurrent() {
   for (Ti i = 0; i < NumPartitions; i++) {
-    try {
-      CurrentIndices.Mat.Data[i] =
-          pCombinations->Partitions.at(PartitionIndices.Mat.Data[i])
-              .at(InnerIndices.Mat.Data[i]);
-    } catch (...) {
-      throw std::logic_error("AAAA");
-    }
+    CurrentIndices.Mat.Data[i] =
+        pCombinations->Partitions.at(PartitionIndices.Mat.Data[i])
+            .at(ItemIndices.Mat.Data[i]);
   }
 }
 
@@ -171,6 +167,12 @@ std::string Searcher::Start(Tv *work, Ti *workI) {
 
       try {
         UpdateCurrent();
+
+        if (CheckForEmpty &&
+            CurrentIndices.Vec.at(0) >= this->pItems->LengthTargets)
+          continue; // it is empty and we did not count it in the searcher. See
+                    // CheckForEmpty member.
+
         AddState(EstimateOne(work, workI));
       } catch (std::exception &ex) {
         AddState(std::string(ex.what()));
@@ -272,7 +274,7 @@ static bool move_next(Ti &c, Ti &T, Ti &free, Matrix<Ti> &innerIndices,
 }
 
 bool Searcher::MoveNext(Ti &c, Ti &T, Ti &free) {
-  return move_next(c, T, free, InnerIndices.Mat, PartitionIndices.Mat,
+  return move_next(c, T, free, ItemIndices.Mat, PartitionIndices.Mat,
                    NumPartitions, partitionSizes, pCombinations->Partitions,
                    pCombinations->NumFixPartitions, pCombinations->NumFixItems);
 }
@@ -312,31 +314,26 @@ Ti Searcher::GetCount(bool effective) const {
                 (Ti)pCombinations->Partitions.size(),
                 pCombinations->NumFixPartitions, c, T, free)) {
       mul = 1;
-
       for (Ti i = 0; i < NumPartitions; i++)
         mul *= partitionSizes.at(partition_indices.Mat.Data[i]);
-
       count += mul;
     }
   } else {
 
     auto partition_indices = VMatrix<Ti>(NumPartitions, 1);
     partition_indices.Mat.SetSequence(0, 1);
-    auto inner_indices = VMatrix<Ti>(NumPartitions, 1);
-    inner_indices.Mat.SetValue(0);
+    auto item_indices = VMatrix<Ti>(NumPartitions, 1);
+    item_indices.Mat.SetValue(0);
 
     Ti c, T, free;
     count = 1;
-    while (move_next(c, T, free, inner_indices.Mat, partition_indices.Mat,
+    while (move_next(c, T, free, item_indices.Mat, partition_indices.Mat,
                      NumPartitions, partitionSizes, pCombinations->Partitions,
                      pCombinations->NumFixPartitions,
                      pCombinations->NumFixItems)) {
-
       if (CheckForEmpty) {
-
         auto c0 = pCombinations->Partitions.at(partition_indices.Mat.Data[0])
-                      .at(inner_indices.Mat.Data[0]);
-
+                      .at(item_indices.Mat.Data[0]);
         if (c0 >= this->pItems->LengthTargets)
           continue;
       }

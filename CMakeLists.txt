@@ -37,9 +37,7 @@ file(GLOB SOURCES
  
  #src/ldt_statistics/modeling/time_series/expsmoothing.cpp
  #src/ldt_statistics/modeling/time_series/tsfilter.cpp 
- 
- src/ldt_statistics/modeling/r/rfunc_modelset.cpp
-
+  
  src/ldt_statistics/modeling/linear/sur.cpp
  src/ldt_statistics/modeling/linear/sur_projection.cpp
  src/ldt_statistics/modeling/linear/sur_extended.cpp

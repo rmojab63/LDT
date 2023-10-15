@@ -22,7 +22,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::DiscreteChoiceSearcher(
     const Newton &newtonOptions, RocOptions &aucOptions)
     : SearcherReg::SearcherReg(data, combinations, options, items, metrics,
                                checks, numPartitions, false,
-                               std::vector<Ti>({0}), 1, false) {
+                               std::vector<Ti>({0}), 1) {
 
   if (combinations.NumFixPartitions == 0)
     throw LdtException(

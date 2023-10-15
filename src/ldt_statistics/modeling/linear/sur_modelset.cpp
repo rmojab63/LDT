@@ -21,8 +21,7 @@ SurSearcher::SurSearcher(const SearchData &data,
                          const Matrix<Tv> &source, const Ti &sigSearchMaxIter,
                          const Tv &sigSearchMaxProb, const unsigned int &seed)
     : SearcherReg::SearcherReg(data, combinations, options, items, metrics,
-                               checks, numPartitions, false, endoIndexes, 0,
-                               false),
+                               checks, numPartitions, false, endoIndexes, 0),
       Seed(seed), SigSearchMaxIter(sigSearchMaxIter),
       SigSearchMaxProb(sigSearchMaxProb) {
 

@@ -396,51 +396,56 @@ IntegerVector as_ivector(const ldt::Matrix<int> &vec,
   }
   return res;
 }
-
-void ReportProgress(ModelSet &model, bool &estimating, SearchOptions &options,
-                    int allCount) {
-  auto printMsg = options.ReportInterval > 0;
-  auto start = std::chrono::system_clock::now();
-  if (printMsg)
-    Rprintf("Calculations Started ...\n");
-  int c = 0;
-  if (printMsg)
-    Rprintf("Expected Number of Models = %i\n", allCount);
-  double all = (double)allCount;
-  int i = 0;
-  while (estimating) {
-
+void ReportProgressInner(
+    const ModelSet &model, SearchOptions &options, const int &allCount,
+    double &prePecentage, int &i,
+    const std::chrono::time_point<std::chrono::system_clock> &start,
+    const bool &printMsg, const bool &sleep1) {
+  if (sleep1)
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 
-    try {
-      Rcpp::checkUserInterrupt();
-    } catch (...) {
-      options.RequestCancel = true;
-      throw;
-    }
-
-    i++;
-    if (options.ReportInterval == 0 || i <= options.ReportInterval)
-      continue;
-    i = 0;
-
-    auto now = std::chrono::system_clock::now();
-    double prePecentage = -1;
-
-    c = model.GetNumberOfEstimatedModels();
-    double percentage = std::round((c / all) * 10000) / 100;
-    if (percentage != prePecentage) {
-      std::chrono::duration<double> elapsed_mins = (now - start) / 60.0;
-      double remains_mins = (all - c) * elapsed_mins.count() / c;
-      if (printMsg)
-        Rprintf("    Searched=%i, All=%i  (%.2f%%, %.1f minutes remains)\n", c,
-                allCount, percentage > 100 || percentage < 0 ? NAN : percentage,
-                remains_mins < 0 ? NAN : remains_mins);
-      prePecentage = percentage;
-    }
+  try {
+    Rcpp::checkUserInterrupt();
+  } catch (...) {
+    options.RequestCancel = true;
+    throw;
   }
 
+  i++;
+  if (options.ReportInterval == 0 || i <= options.ReportInterval)
+    return;
+  i = 0;
+
+  auto now = std::chrono::system_clock::now();
+
+  int c = model.GetNumberOfEstimatedModels();
+  double all = (double)allCount;
+  double percentage = std::round((c / all) * 10000) / 100;
+  if (percentage != prePecentage) {
+    std::chrono::duration<double> elapsed_mins = (now - start) / 60.0;
+    double remains_mins = (all - c) * elapsed_mins.count() / c;
+    if (printMsg)
+      Rprintf("    Searched=%i, All=%i  (%.2f%%, %.1f minutes remains)\n", c,
+              allCount, percentage > 100 || percentage < 0 ? NAN : percentage,
+              remains_mins < 0 ? NAN : remains_mins);
+    prePecentage = percentage;
+  }
+}
+
+void ReportProgress(const ldt::ModelSet &model, bool &estimating,
+                    ldt::SearchOptions &options, const int &allCount) {
+  auto printMsg = options.ReportInterval > 0;
+  auto start = std::chrono::system_clock::now();
+  if (printMsg) {
+    Rprintf("Calculations Started ...\n");
+    Rprintf("Expected Number of Models = %i\n", allCount);
+  }
+  double prePecentage = -1;
+  int i = 0;
+  while (estimating) {
+    ReportProgressInner(model, options, allCount, prePecentage, i, start,
+                        printMsg);
+  }
   if (options.RequestCancel)
     throw LdtException(ErrorType::kLogic, "R-ldt", "calculations is canceled");
   else if (printMsg)

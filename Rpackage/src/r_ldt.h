@@ -27,6 +27,58 @@
 using namespace Rcpp;
 using namespace ldt;
 
+/// @brief A searcher class for general R functions
+class LDT_EXPORT RFuncSearcher : public SearcherReg {
+
+  Nullable<Function> mFunc = R_NilValue;
+
+  std::string EstimateOneReg(Tv *work, Ti *workI, VMatrix<Tv> &metrics,
+                             VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
+                             VMatrix<Ti> &extra) override;
+
+public:
+  RFuncSearcher(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, const SearchItems &items,
+                const SearchMetricOptions &metrics,
+                const SearchModelChecks &checks, const Ti &numPartitions,
+                const std::vector<Ti> &innerIndices,
+                const bool &isInnerExogenous, const std::string &rFuncName);
+
+  std::function<void()> ReportProgress;
+
+  SEXP DataR = R_NilValue;
+
+  SEXP MetricsR = R_NilValue;
+
+  SEXP ItemsR = R_NilValue;
+
+  SEXP ModelChecksR = R_NilValue;
+};
+
+/// @brief A model set with no estimation (for R)
+class LDT_EXPORT RFuncModelset {
+public:
+  /// @brief The inner model set
+  ModelSet Modelset;
+
+  /// @brief List of searchers
+  std::vector<Searcher *> Searchers;
+
+  /// @brief Initializes a new instance of this class
+  RFuncModelset(){};
+
+  RFuncModelset(const SearchData &data, const SearchCombinations &combinations,
+                SearchOptions &options, SearchItems &items,
+                SearchMetricOptions &metrics, SearchModelChecks &checks,
+                bool isTimeSeries, bool isOutOfSampleRandom,
+                const bool &isInnerExogenous, const std::string &rFuncName);
+
+  ~RFuncModelset() {
+    for (auto s : Searchers)
+      delete s;
+  }
+};
+
 void UpdateSearchData(List &dataR, ldt::SearchData &data);
 
 void UpdateSearchCombinations(List combinationsR,
@@ -57,8 +109,13 @@ void UpdateOptions(List &itemsR, List &metricsR, List &modelChecksR,
 
 void UpdatePcaOptions(List optionsR, ldt::PcaAnalysisOptions &options);
 
-void ReportProgress(ldt::ModelSet &model, bool &estimating,
-                    ldt::SearchOptions &options, int allCount);
+void ReportProgressInner(
+    const ModelSet &model, SearchOptions &options, const int &allCount,
+    double &prePecentage, int &i,
+    const std::chrono::time_point<std::chrono::system_clock> &start,
+    const bool &printMsg, const bool &sleep1 = true);
+void ReportProgress(const ldt::ModelSet &model, bool &estimating,
+                    ldt::SearchOptions &options, const int &allCount);
 
 NumericMatrix as_matrix(
     const ldt::Matrix<double> &mat,

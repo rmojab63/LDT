@@ -410,7 +410,7 @@ private:
 
   /// @brief Indices of items in the selected partitions given by \ref
   /// PartitionIndices
-  VMatrix<Ti> InnerIndices;
+  VMatrix<Ti> ItemIndices;
 
   /// @brief A storage for the size of different partitions
   std::vector<Ti> partitionSizes;
@@ -619,7 +619,7 @@ public:
               const SearchMetricOptions &metrics,
               const SearchModelChecks &checks, const Ti &numPartitions,
               const bool &isInnerExogenous, const std::vector<Ti> &innerIndices,
-              const Ti extraLength, bool checkForEmpty);
+              const Ti extraLength);
 };
 
 /// @brief A set of \ref Searcher

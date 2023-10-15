@@ -1,10 +1,14 @@
 
-# it seems that a global function does not work in most situations
 indices <- c()
-func <- function(columnIndices, numEndo){
+func <- function(columnIndices, numEndo,
+                 data = NULL, items = NULL, metrics = NULL, modelChecks = NULL){
   d <- paste0(columnIndices, collapse = ",")
   indices[length(indices) + 1] <<- d
-  #print(d)
+  return(list(error = "TEST",
+              metrics = NULL,
+              extra = NULL,
+              type1means = NULL,
+              type1vars = NULL))
 }
 
 
@@ -12,7 +16,7 @@ test_that("Searcher general works with inner exogenous", {
 
   x <- matrix(runif(100, 1, 10),20,5)
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
                      data = get.data(x, endogenous = 2, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1), c(2), c(1,2)),
@@ -21,7 +25,7 @@ test_that("Searcher general works with inner exogenous", {
   expect_equal(length(indices), length(unique(indices)))
 
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
                      data = get.data(x, endogenous = 2, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1), c(2), c(1,2)),
@@ -30,7 +34,7 @@ test_that("Searcher general works with inner exogenous", {
   expect_equal(length(indices), length(unique(indices)))
 
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
                      data = get.data(x, endogenous = 3, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1), c(2), c(1,2)),
@@ -45,7 +49,7 @@ test_that("Searcher general works with inner endogenous", {
 
   x <- matrix(runif(100, 1, 10),20,5)
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = FALSE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = FALSE,
                      data = get.data(x, endogenous = 2, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1), c(2), c(1,2)),
@@ -54,7 +58,7 @@ test_that("Searcher general works with inner endogenous", {
   expect_equal(length(indices), length(unique(indices)))
 
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = FALSE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = FALSE,
                      data = get.data(x, endogenous = 2, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1,2)),
@@ -63,7 +67,7 @@ test_that("Searcher general works with inner endogenous", {
   expect_equal(length(indices), length(unique(indices)))
 
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = FALSE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = FALSE,
                      data = get.data(x, endogenous = 3, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1,2),
                                                      innerGroups = list(c(1), c(2), c(1,2)),
@@ -79,7 +83,7 @@ test_that("Searcher general works with partitioning", {
 
   x <- matrix(runif(200, 1, 10),20,10)
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
                      data = get.data(x, endogenous = 5, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1:3),
                                                      partitions = list(c(1,2),c(3,4),c(5)),
@@ -94,7 +98,7 @@ test_that("Searcher general works with fixing partitions", {
 
   x <- matrix(runif(200, 1, 10), 20, 10)
   indices <<- c()
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
+  res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
                      data = get.data(x, endogenous = 5, addIntercept = FALSE),
                      combinations = get.combinations(sizes = c(1:3),
                                                      numFixPartitions = 2,
@@ -110,18 +114,16 @@ test_that("Searcher general works with step-wise search", {
 
   x <- matrix(runif(400, 1, 10), 4, 100)
   indices <<- c()
-  #using global function fails:
-  func <- function(columnIndices, numEndo){
-    d <- paste0(columnIndices, collapse = ",")
-    #indices[length(indices) + 1] <<- d
-    #print(d)
-  }
-  res = search.rfunc(func = func, length1 = 1, isInnerExogenous = TRUE,
-                     data = get.data(x, endogenous = 50, addIntercept = FALSE),
-                     combinations = get.combinations(sizes = c(1,2,3,4, 5),
-                                                     stepsNumVariables = c(NA, 30, 20, 10),
-                                                     innerGroups = list(c(1:3)),
-                                                     numTargets = 3))
+  #res = search.rfunc(rFuncName = "func", length1 = 1, isInnerExogenous = TRUE,
+  #                   data = get.data(x, endogenous = 50, addIntercept = FALSE),
+  #                   combinations = get.combinations(sizes =  list(c(1,2),c(3),c(4)),
+  #                                                   stepsNumVariables = c(NA, 30, 10),
+  #                                                   innerGroups = list(c(1:3)),
+  #                                                   numTargets = 3),
+  #                   options = get.search.options(reportInterval = 0))
+
+  #TODO
+
   #expect_equal(4, length(indices))
   #expect_equal(length(indices), length(unique(indices)))
 

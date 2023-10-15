@@ -15,9 +15,9 @@ SearcherReg::SearcherReg(const SearchData &data,
                          const SearchModelChecks &checks,
                          const Ti &numPartitions, const bool &isInnerExogenous,
                          const std::vector<Ti> &innerIndices,
-                         const Ti extraLength, bool checkForEmpty)
+                         const Ti extraLength)
     : Searcher::Searcher(data, combinations, options, items, metrics, checks,
-                         numPartitions, checkForEmpty) {
+                         numPartitions, isInnerExogenous) {
   IsInnerExogenous = isInnerExogenous;
   mExtraLength = extraLength;
   auto w = data.HasWeight ? 1 : 0;
@@ -52,10 +52,6 @@ SearcherReg::SearcherReg(const SearchData &data,
 }
 
 std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
-  if (this->CheckForEmpty &&
-      this->CurrentIndices.Mat.Data[0] >= this->pItems->LengthTargets)
-    return ""; // it is empty and we did not count it in the searcher. See
-               // CheckForEmpty member.
 
   // update column and inner indices based on current indices
 

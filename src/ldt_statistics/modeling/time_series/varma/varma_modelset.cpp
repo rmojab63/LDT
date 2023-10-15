@@ -21,8 +21,7 @@ VarmaSearcher::VarmaSearcher(
     LimitedMemoryBfgsbOptions *optimOptions, const Tv &stdMultiplier,
     const bool &usePreviousEstim, const Ti &maxHorizonCheck)
     : SearcherReg::SearcherReg(data, combinations, options, items, metrics,
-                               checks, numPartitions, true, exoIndexes, 6,
-                               true),
+                               checks, numPartitions, true, exoIndexes, 6),
       UsePreviousEstim(usePreviousEstim), StdMultiplier(stdMultiplier),
       mMaxHorizonCheck(maxHorizonCheck), pForLowerBounds(forLowerBounds),
       pForUpperBounds(forUpperBounds), Sizes(sizes), Source(source) {
