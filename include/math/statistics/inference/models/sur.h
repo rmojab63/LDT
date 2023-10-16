@@ -397,8 +397,6 @@ class LDT_EXPORT SurSearcher : public SearcherReg {
                              VMatrix<Tv> &type1Mean, VMatrix<Tv> &type1Var,
                              VMatrix<Ti> &extra) override;
 
-  std::vector<Ti> TargetsPositions;
-
 public:
   /// @brief Initializes a new instance of this method
   /// @param data Passed to the base constructor

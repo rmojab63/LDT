@@ -127,21 +127,6 @@ void UpdateSearchItems(List &itemsR, SearchItems &items, int length1,
     throw LdtException(ErrorType::kLogic, "R-ldt", "no goal is set");
 }
 
-static std::vector<double> helper_convertMinMetrics(NumericVector lst, int k) {
-
-  std::vector<double> vec(k);
-  if (lst.size() == 1) {
-    std::fill(vec.begin(), vec.end(), lst[0]);
-  } else if (lst.size() == k) {
-    for (int i = 0; i < k; i++) {
-      vec[i] = lst[i];
-    }
-  } else {
-    throw std::logic_error("Invalid length for a member of 'minMetrics'.");
-  }
-  return vec;
-}
-
 void UpdatemetricOptions(List &metricsR, SearchMetricOptions &metrics,
                          std::vector<std::string> &metricNames,
                          bool isTimeSeries, bool isDc, int numTargets) {
@@ -197,46 +182,25 @@ void UpdatemetricOptions(List &metricsR, SearchMetricOptions &metrics,
   // set minimum value for metrics with AIC weight formula
   auto minMetrics = as<List>(metricsR["minMetrics"]);
 
-  metrics.MinMetricIn.insert(
-      std::make_pair(GoodnessOfFitType::kAic,
-                     helper_convertMinMetrics(minMetrics["aic"], numTargets)));
+  std::map<GoodnessOfFitType, std::string> mNsIn = {
+      {GoodnessOfFitType::kAic, "aic"},
+      {GoodnessOfFitType::kSic, "sic"},
+      {GoodnessOfFitType::kBrier, "brierIn"}};
 
-  metrics.MinMetricIn.insert(
-      std::make_pair(GoodnessOfFitType::kSic,
-                     helper_convertMinMetrics(minMetrics["sic"], numTargets)));
+  for (const auto &mm : mNsIn) {
+    metrics.MinMetricIn.insert(std::make_pair(
+        mm.first, as<std::vector<double>>(minMetrics[mm.second])));
+  }
 
-  metrics.MinMetricIn.insert(std::make_pair(
-      GoodnessOfFitType::kBrier,
-      helper_convertMinMetrics(minMetrics["brierIn"], numTargets)));
+  std::map<ScoringType, std::string> mNsOut = {
+      {ScoringType::kBrier, "brierOut"}, {ScoringType::kRmse, "rmse"},
+      {ScoringType::kRmspe, "rmspe"},    {ScoringType::kMae, "mae"},
+      {ScoringType::kMape, "mape"},      {ScoringType::kCrps, "crps"}};
 
-  metrics.MinMetricIn.insert(
-      std::make_pair(GoodnessOfFitType::kAic,
-                     helper_convertMinMetrics(minMetrics["aic"], numTargets)));
-
-  // out:
-  metrics.MinMetricOut.insert(std::make_pair(
-      ScoringType::kBrier,
-      helper_convertMinMetrics(minMetrics["brierOut"], numTargets)));
-
-  metrics.MinMetricOut.insert(
-      std::make_pair(ScoringType::kRmse,
-                     helper_convertMinMetrics(minMetrics["rmse"], numTargets)));
-
-  metrics.MinMetricOut.insert(std::make_pair(
-      ScoringType::kRmspe,
-      helper_convertMinMetrics(minMetrics["rmspe"], numTargets)));
-
-  metrics.MinMetricOut.insert(
-      std::make_pair(ScoringType::kMae,
-                     helper_convertMinMetrics(minMetrics["mae"], numTargets)));
-
-  metrics.MinMetricOut.insert(
-      std::make_pair(ScoringType::kMape,
-                     helper_convertMinMetrics(minMetrics["mape"], numTargets)));
-
-  metrics.MinMetricOut.insert(
-      std::make_pair(ScoringType::kCrps,
-                     helper_convertMinMetrics(minMetrics["crps"], numTargets)));
+  for (const auto &mm : mNsOut) {
+    metrics.MinMetricOut.insert(std::make_pair(
+        mm.first, as<std::vector<double>>(minMetrics[mm.second])));
+  }
 
   metrics.Update(isOutOfSampleRandom,
                  isTimeSeries); // update after filling metric vectors
@@ -456,9 +420,8 @@ static std::vector<std::string>
 extractElements(const std::vector<std::string> &vec,
                 const std::vector<int> &indices) {
   std::vector<std::string> extractedElements;
-  for (Ti i = 0; i < (Ti)indices.size(); ++i) {
+  for (Ti i = 0; i < (Ti)indices.size(); i++)
     extractedElements.push_back(vec[indices.at(i)]);
-  }
   return extractedElements;
 }
 
@@ -486,8 +449,6 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
     value.push_back(wrap(extractElements(colNames, b->Endogenous)));
     names.push_back(std::string("endogenous"));
 
-    Rcout << "..." << VectorToCsv(b->Exogenouses) << "\n";
-    Rcout << "..." << VectorToCsv(colNames) << "\n";
     value.push_back(wrap(extractElements(colNames, b->Exogenouses)));
     names.push_back(std::string("exogenous"));
 
@@ -528,11 +489,11 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
                         const std::vector<std::string> &extra1Names) {
 
   if (items.KeepBestCount > 0) {
+
     for (auto i = 0; i < items.Length1; i++) {
 
       auto typeName = std::string("best item for '") + length1Names.at(i) +
                       std::string("'");
-
       auto bests = std::vector<EstimationKeep *>();
       model.CombineBests(eIndex, tIndex, i, list, bests);
 

@@ -87,7 +87,7 @@ std::string SurSearcher::EstimateOneReg(Tv *work, Ti *workI,
     ind = this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kSic);
     if (ind >= 0)
       for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
-        metrics.Mat.Set0(ind, t, DModel.Model.Aic);
+        metrics.Mat.Set0(ind, t, DModel.Model.Sic);
   }
 
   if (this->pOptions->RequestCancel)
@@ -143,11 +143,19 @@ std::string SurSearcher::EstimateOneReg(Tv *work, Ti *workI,
   // no extra
   if (DModel.WorkSize > 0 && this->pItems->Length1 > 0) {
     for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++) {
-      type1Mean.Mat.SetColumnFromColumn(t, DModel.Model.beta, t);
-      type1Var.Mat.SetColumnFromColumn(t, DModel.Model.e_beta_std, t);
+      // we should skip those coefficients that are not present in the current
+      // estimation.
+      Ti i = -1;
+      for (const auto &b : this->CurrentIndices.Vec) {
+        i++;
+        Ti a = b - this->pData->NumEndo;
+        type1Mean.Mat.Set0(a, t, DModel.Model.beta.Get0(i, t));
+        type1Var.Mat.Set0(a, t,
+                          std::pow(DModel.Model.e_beta_std.Get0(i, t), 2));
+      }
     }
-    type1Var.Mat.Power_in(2); // convert to variance
   }
+
   return "";
 }
 

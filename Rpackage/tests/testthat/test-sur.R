@@ -496,7 +496,7 @@ test_that("search.sur works with inclusion weights", {
 test_that("search.sur works with coefficients (bests)", {
   skip_on_cran()
 
-  res = search.sur(data = get.data(x[,1:7, drop = FALSE], endogenous = 3),
+  res = search.sur(data = get.data(x[,1:5, drop = FALSE], endogenous = 3),
                    combinations = get.combinations(sizes = c(1, 2),
                                                    innerGroups = list(c(2),c(1,3),c(1,2,3)),
                                                    numTargets = 2),

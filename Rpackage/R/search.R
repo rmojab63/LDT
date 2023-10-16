@@ -57,7 +57,7 @@ get.search.options <- function(parallel = FALSE, reportInterval = 0){
   stopifnot(is.zero.or.positive.number(reportInterval))
 
   res = list(parallel = parallel,
-           reportInterval = reportInterval)
+             reportInterval = reportInterval)
   class(res) <- c("ldt.list", "list")
   res
 }
@@ -84,9 +84,9 @@ get.search.options <- function(parallel = FALSE, reportInterval = 0){
 #'
 #' @export
 get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
-                                  minObsCount = 0, minDof = 0, minOutSim = 0,
-                                  minR2 = -Inf, maxAic = Inf, maxSic = Inf,
-                                  prediction = FALSE, predictionBoundMultiplier = 4){
+                                    minObsCount = 0, minDof = 0, minOutSim = 0,
+                                    minR2 = -Inf, maxAic = Inf, maxSic = Inf,
+                                    prediction = FALSE, predictionBoundMultiplier = 4){
 
   stopifnot(is.logical(estimation) && length(estimation) == 1)
   stopifnot(is.logical(prediction) && length(prediction) == 1)
@@ -253,5 +253,21 @@ get.search.metrics <- function(typesIn = c("aic"),
     minMetrics = minMetrics)
   class(res) <- c("ldt.list", "list")
   res
+}
+
+get.search.metrics.update <- function(metrics, numTargets){
+  min_metrics <- list()
+  nms <- names(metrics$minMetrics)
+  for (n in nms){
+    ln <- length(metrics$minMetrics[n])
+    if (ln == 1)
+      min_metrics[[n]] <- rep(metrics$minMetrics[[n]], numTargets)
+    else if (ln != numTargets)
+      stop("An element in 'metrics$minMetrics' has invalid length. name:", n)
+    else
+      min_metrics[n] <- metrics$minMetrics[n]
+  }
+  metrics$minMetrics <- min_metrics
+  metrics
 }
 

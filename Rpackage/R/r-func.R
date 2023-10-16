@@ -37,7 +37,7 @@
 #' \item \code{error} (Character string or NULL): It not \code{NULL} or empty, it is considered as a failed estimation with the given message.
 #' \item \code{metrics} (Numeric Matrix): Model performance for each target variable. Available target variables must be in the columns and metrics in the rows.
 #' \item \code{extra} (Numeric Vector or NULL): Extra information in form of integers, which defines the current model.
-#' \item \code{type1means} (Numeric Matrix or NULL): Means of \code{type1} (coefficients or predictions) for each target variable. Target variables must be in the columns.
+#' \item \code{type1means} (Numeric Matrix or NULL): Means of \code{type1} (coefficients or predictions) for each target variable. Target variables must be in the columns. Make sure to skip the rows which the model does not present any information.
 #' \item \code{type1vars} (Numeric Matrix or NULL): similar to \code{type1means} but for reporting the variances.
 #' }
 #'
@@ -86,6 +86,8 @@ search.rfunc <- function(data = get.data(),
     metrics = get.search.metrics()
   else
     stopifnot(is.list(metrics))
+  metrics <- get.search.metrics.update(metrics, combinations$numTargets)
+
   if (is.null(modelChecks))
     modelChecks = get.search.modelchecks()
   else

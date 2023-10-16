@@ -61,6 +61,7 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
       ColIndices.at(i) = CurrentIndices.Vec.at(i);
 
     // update target indices
+    TargetsPositions.clear();
     for (auto &a : CurrentIndices.Vec) {
       if (a < pItems->LengthTargets)
         TargetsPositions.push_back(a);
@@ -68,13 +69,8 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
   } else {
     auto w = pData->HasWeight ? 1 : 0;
     // update the second part of column indices
-    try {
-      for (Ti i = 0; i < (Ti)CurrentIndices.Vec.size(); i++)
-        ColIndices.at(i + InnerIndices.size() + w) = CurrentIndices.Vec.at(i);
-
-    } catch (...) {
-      throw std::logic_error("UUUU");
-    }
+    for (Ti i = 0; i < (Ti)CurrentIndices.Vec.size(); i++)
+      ColIndices.at(i + InnerIndices.size() + w) = CurrentIndices.Vec.at(i);
   }
 
   auto numMeas = (Ti)(this->pMetrics->MetricsIn.size() +
@@ -88,6 +84,10 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
       VMatrix<Tv>(this->pItems->Length1, (Ti)TargetsPositions.size());
   auto type1_var =
       VMatrix<Tv>(this->pItems->Length1, (Ti)TargetsPositions.size());
+  // some length1 information are not present in the model, let the default
+  // value be NAN. Its the derived class responsibility to handle length1
+  // information order.
+  type1_mean.Mat.SetValue(NAN);
 
   if (this->pOptions->RequestCancel)
     return "cancel";
@@ -113,15 +113,19 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
         continue;
       allNan = false;
 
-      Tv weight = NAN;
+      Tv weight = NAN, min_metric = 0;
       if (i < (Ti)this->pMetrics->MetricsIn.size()) {
         auto gf = pMetrics->MetricsIn.at(i);
-        weight = GoodnessOfFit::ToWeight(
-            gf, metric, this->pMetrics->MinMetricIn.at(gf).at(t_pos));
+        if (this->pMetrics->MinMetricIn.find(gf) !=
+            this->pMetrics->MinMetricIn.end())
+          min_metric = this->pMetrics->MinMetricIn.at(gf).at(t_pos);
+        weight = GoodnessOfFit::ToWeight(gf, metric, min_metric);
       } else {
         auto sr = pMetrics->MetricsOut.at(i - this->pMetrics->MetricsIn.size());
-        weight = Scoring::ToWeight(
-            sr, metric, this->pMetrics->MinMetricOut.at(sr).at(t_pos));
+        if (this->pMetrics->MinMetricOut.find(sr) !=
+            this->pMetrics->MinMetricOut.end())
+          min_metric = this->pMetrics->MinMetricOut.at(sr).at(t_pos);
+        weight = Scoring::ToWeight(sr, metric, min_metric);
       }
 
       // add model information:
@@ -140,17 +144,17 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
         for (Ti i1 = 0; i1 < type1_mean.Mat.RowsCount; i1++) {
 
           EstimationKeep *ek = nullptr;
+          auto m = type1_mean.Mat.Get(i1, j);
+          if (std::isnan(m))
+            continue;
+          auto v = type1_var.Mat.Get(i1, j);
 
           if (IsInnerExogenous)
             ek = new EstimationKeep(metric, weight, InnerIndices, extra.Vec,
-                                    this->CurrentIndices.Vec,
-                                    type1_mean.Mat.Get(i1, j),
-                                    type1_var.Mat.Get(i1, j));
+                                    this->CurrentIndices.Vec, m, v);
           else
             ek = new EstimationKeep(metric, weight, this->CurrentIndices.Vec,
-                                    extra.Vec, InnerIndices,
-                                    type1_mean.Mat.Get(i1, j),
-                                    type1_var.Mat.Get(i1, j));
+                                    extra.Vec, InnerIndices, m, v);
 
           this->Push1(*ek, i, t_pos, i1);
         }

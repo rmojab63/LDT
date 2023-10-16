@@ -259,7 +259,8 @@ predict.ldt.estim <- function(object, ...){
     stop("Invalid class. An 'ldt.estim' object is expected.")
 
   res <- list()
-  res$means <- object$projection
+  res$means <- object$projection$means
+  res$vars <- object$projection$vars
 
   res$method <- attr(object, "method")
   res$newX <- object$info$data$newX

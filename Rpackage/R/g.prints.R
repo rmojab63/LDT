@@ -124,119 +124,125 @@ print.ldt.search <- function(x, ...) {
     }
     cat("--------\n")
   }
+  if (x$counts$failedCount == x$counts$searchedCount){
+    cat("All Failed!\n")
+  }
+  else{
 
-  evalNames <- unique(sapply(x$results, function(y)y$evalName))
-  targNames <- unique(sapply(x$results, function(y)y$targetName))
+    evalNames <- unique(sapply(x$results, function(y)y$evalName))
+    targNames <- unique(sapply(x$results, function(y)y$targetName))
 
-  for (tName in targNames){
-    cat(" Target (", tName, "):\n" ,sep = "")
-    for (eName in evalNames){
+    for (tName in targNames){
+      cat(" Target (", tName, "):\n" ,sep = "")
+      for (eName in evalNames){
 
-      values <- x$results[which(sapply(x$results, function(y)
+        values <- x$results[which(sapply(x$results, function(y)
         {y$targetName == tName && y$evalName == eName}))]
 
-      cat("   Evaluation (", eName , "):\n" ,sep = "")
-      indent = "     "
-      if (x$info$items$model){
-        if (x$info$items$bestK > 0){
+        cat("   Evaluation (", eName , "):\n" ,sep = "")
+        indent = "     "
+        if (x$info$items$model){
+          if (x$info$items$bestK > 0){
 
-          best <- values[which(sapply(values, function(y){y$typeName == "best model" && y$info == 0}))][[1]]
-          cat(indent, "Best model:\n")
-          if (is_summary){
-            cat("\n+++++++++++++++ MODEL SUMMARY +++++++++++++++++\n")
-            print(best$value)
-            cat("\n+++++++++++++++      END      +++++++++++++++++\n")
+            best <- values[which(sapply(values, function(y){y$typeName == "best model" && y$info == 0}))][[1]]
+            cat(indent, "Best model:\n")
+            if (is_summary){
+              cat("\n+++++++++++++++ MODEL SUMMARY +++++++++++++++++\n")
+              print(best$value)
+              cat("\n+++++++++++++++      END      +++++++++++++++++\n")
+            }
+            else{
+              rec.print.list(list(
+                endogenous = best$value$endogenous,
+                exogenous = best$value$exogenous,
+                metric = best$value$metric
+              ), indent = c(indent, "  "))
+            }
+
           }
-          else{
+
+          if (x$info$items$inclusion){
+            inclusion <- values[which(sapply(values, function(y){y$typeName == "inclusion"}))][[1]]
+            cat(indent, "Inclusion weights average:\n")
+            mi <- which.max(inclusion$value[,1])
             rec.print.list(list(
-              endogenous = best$value$endogenous,
-              exogenous = best$value$exogenous,
-              metric = best$value$metric
+              "maximum value" = max(inclusion$value[,1]),
+              "name" = rownames(inclusion$value)[mi],
+              "count" = inclusion$value[,2][mi]
             ), indent = c(indent, "  "))
           }
 
         }
 
-        if (x$info$items$inclusion){
-          inclusion <- values[which(sapply(values, function(y){y$typeName == "inclusion"}))][[1]]
-          cat(indent, "Inclusion weights average:\n")
-          mi <- which.max(inclusion$value[,1])
-          rec.print.list(list(
-            "maximum value" = max(inclusion$value[,1]),
-            "name" = rownames(inclusion$value)[mi],
-            "count" = inclusion$value[,2][mi]
-          ), indent = c(indent, "  "))
-        }
+        if (x$info$items$type1){
 
-      }
-
-      if (x$info$items$type1){
-
-        if (x$info$items$bestK){
-          best_coefs <- values[which(sapply(values, function(y){y$info == 0 && startsWith(y$typeName, "best item for")}))]
-          cat(indent, "Best significant coeffiecients [mean-1.95*std, mean, mean+1.95*std]:\n")
-          lst <- lapply(best_coefs, function(b)c(b$value$mean - 1.95 * sqrt(b$value$var),
-                                                 b$value$mean,
-                                                 b$value$mean + 1.95 * sqrt(b$value$var)))
-          names(lst) <- sapply(best_coefs, function(b)strsplit(sub(".*'([^']*)'.*", "\\1", b$typeName), split = "'")[[1]])
-          lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
-          rec.print.list(lst, indent = c(indent, "  "))
-        }
-
-        if (x$info$items$extremeMultiplier > 0){
-          extremeB <- values[which(sapply(values, function(y){startsWith(y$typeName, "extreme")}))]
-          cat(indent, "Extreme bounds (significant):\n")
-          sig <- extremeB$value[which(extremeB$value[,1]>0 | extremeB$value[,2]<0),,drop=FALSE]
-          if (!is.null(sig)  && nrow(sig) > 0){
-            lst <- lapply(1:nrow(sig), function(e)c(sig[e,1],sig[e,2]))
-            names(lst) <- rownames(sig)
+          if (x$info$items$bestK){
+            best_coefs <- values[which(sapply(values, function(y){y$info == 0 && startsWith(y$typeName, "best item for")}))]
+            cat(indent, "Best significant coeffiecients [mean-1.95*std, mean, mean+1.95*std]:\n")
+            lst <- lapply(best_coefs, function(b)c(b$value$mean - 1.95 * sqrt(b$value$var),
+                                                   b$value$mean,
+                                                   b$value$mean + 1.95 * sqrt(b$value$var)))
+            names(lst) <- sapply(best_coefs, function(b)strsplit(sub(".*'([^']*)'.*", "\\1", b$typeName), split = "'")[[1]])
+            lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
             rec.print.list(lst, indent = c(indent, "  "))
           }
-          else
-            cat(c(indent, "  "), "(none)\n")
-        }
 
-        if (length(x$info$items$cdfs) > 0){
-          cdfs <- values[which(sapply(values, function(y){ y$info == 0 && startsWith(y$typeName, "cdf")}))]
-          cat(indent, "CDF (significant):\n")
-          if (length(cdfs) == 0)
-            cat(c(indent, "  "), "CDF at 0 is not available.")
-          else{
-            cdfs <- cdfs[[1]]
-            sig <- cdfs$value[which(cdfs$value[,1]<0.1 | cdfs$value[,1]>0.9),,drop=FALSE]
-            if (!is.null(sig) && nrow(sig) > 0){
-              lst <- lapply(1:nrow(sig), function(e)c(sig[e,1]))
+          if (x$info$items$extremeMultiplier > 0){
+            extremeB <- values[which(sapply(values, function(y){startsWith(y$typeName, "extreme")}))]
+            cat(indent, "Extreme bounds (significant):\n")
+            sig <- extremeB$value[which(extremeB$value[,1]>0 | extremeB$value[,2]<0),,drop=FALSE]
+            if (!is.null(sig)  && nrow(sig) > 0){
+              lst <- lapply(1:nrow(sig), function(e)c(sig[e,1],sig[e,2]))
               names(lst) <- rownames(sig)
               rec.print.list(lst, indent = c(indent, "  "))
             }
             else
               cat(c(indent, "  "), "(none)\n")
           }
-        }
 
-        if (x$info$items$mixture4){
-          mixture <- values[which(sapply(values, function(y){startsWith(y$typeName, "mixture")}))][[1]]
-          cat(indent, "Mixture significant [mean-1.95*std, mean, mean+1.95*std]:\n")
-          lst <- lapply(1:nrow(mixture$value), function(i)c(mixture$value[i,1] - 1.95 * sqrt(mixture$value[i,2]),
-                                                      mixture$value[i,1],
-                                                      mixture$value[i,1] + 1.95 * sqrt(mixture$value[i,2])))
-          names(lst) <- rownames(mixture$value)
-          lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
-          rec.print.list(lst, indent = c(indent, "  "))
+          if (length(x$info$items$cdfs) > 0){
+            cdfs <- values[which(sapply(values, function(y){ y$info == 0 && startsWith(y$typeName, "cdf")}))]
+            cat(indent, "CDF (significant):\n")
+            if (length(cdfs) == 0)
+              cat(c(indent, "  "), "CDF at 0 is not available.")
+            else{
+              cdfs <- cdfs[[1]]
+              sig <- cdfs$value[which(cdfs$value[,1]<0.1 | cdfs$value[,1]>0.9),,drop=FALSE]
+              if (!is.null(sig) && nrow(sig) > 0){
+                lst <- lapply(1:nrow(sig), function(e)c(sig[e,1]))
+                names(lst) <- rownames(sig)
+                rec.print.list(lst, indent = c(indent, "  "))
+              }
+              else
+                cat(c(indent, "  "), "(none)\n")
+            }
+          }
+
+          if (x$info$items$mixture4){
+            mixture <- values[which(sapply(values, function(y){startsWith(y$typeName, "mixture")}))][[1]]
+            cat(indent, "Mixture significant [mean-1.95*std, mean, mean+1.95*std]:\n")
+            lst <- lapply(1:nrow(mixture$value), function(i)c(mixture$value[i,1] - 1.95 * sqrt(mixture$value[i,2]),
+                                                              mixture$value[i,1],
+                                                              mixture$value[i,1] + 1.95 * sqrt(mixture$value[i,2])))
+            names(lst) <- rownames(mixture$value)
+            lst <- lst[which(sapply(lst,function(b)b[1]>0 || b[3]<0))]
+            rec.print.list(lst, indent = c(indent, "  "))
+          }
+
         }
 
       }
 
+
+      cat("--------\n")
     }
 
+    if (x$info$items$bestK > 1)
+      cat(" ** results for ", x$info$items$bestK, " best model(s) are saved\n", sep="")
+    if (x$info$items$all)
+      cat(" ** results for all estimated models are saved\n")
 
-    cat("--------\n")
   }
-
-  if (x$info$items$bestK > 1)
-    cat(" ** results for ", x$info$items$bestK, " best model(s) are saved\n", sep="")
-  if (x$info$items$all)
-    cat(" ** results for all estimated models are saved\n")
 }
 
 #' Prints an \code{ldt.estim} object
@@ -293,8 +299,8 @@ print.ldt.estim <- function(x, ...) {
     rownames(df) <- rownames(coefs)
 
     ms <- max(ifelse(df[,4] < .001, 3,
-                            ifelse(df[,4] < .01, 2,
-                                   ifelse(df[,4] < .1, 1, 0))), na.rm = TRUE)
+                     ifelse(df[,4] < .01, 2,
+                            ifelse(df[,4] < .1, 1, 0))), na.rm = TRUE)
     stars <- logical(nrow(df))
     for (i in seq_len(nrow(df))){
       if (!is.null(x$estimations$isRestricted) && x$estimations$isRestricted[i,dep_var] == 1)

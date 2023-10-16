@@ -70,6 +70,8 @@ search.varma <- function(data = get.data(),
     metrics = get.search.metrics()
   else
     stopifnot(is.list(metrics))
+  metrics <- get.search.metrics.update(metrics, combinations$numTargets)
+
   if (is.null(modelChecks))
     modelChecks = get.search.modelchecks()
   else

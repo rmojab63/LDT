@@ -54,6 +54,8 @@ search.sur <- function(data = get.data(),
     metrics = get.search.metrics()
   else
     stopifnot(is.list(metrics))
+  metrics <- get.search.metrics.update(metrics, combinations$numTargets)
+
   if (is.null(modelChecks))
     modelChecks = get.search.modelchecks()
   else
@@ -180,7 +182,6 @@ estim.sur <- function(data, searchSigMaxIter = 0,
                       simSeed = 0,
                       simMaxConditionNumber = Inf){
   stopifnot(is.list(data))
-  stopifnot(is.list(combinations))
 
   if (data$hasWeight)
     stop("SUR estimation does not support weighted observations.")
