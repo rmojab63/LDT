@@ -195,7 +195,7 @@ combine.search <- function(list, method) {
           current_best_coefs <- result$results[ids]
           result$results[ids] <- NA
           bms <- append(current_best_coefs, nbm)
-          nbms <- bms[order(sapply(bms, function(b) b$value$metric), decreasing = is_pos_oriented)][1:length(ids)]
+          nbms <- bms[order(sapply(bms, function(b) b$value$metric), decreasing = is_pos_oriented)][1:min(list[[1]]$info$items$bestK,length(bms))]
           for (k in 1:length(nbms)) #update info
             nbms[[k]]$info <- k-1
           to_be_added[[length(to_be_added) + 1]] <- nbms

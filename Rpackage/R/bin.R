@@ -120,7 +120,7 @@ search.bin <- function(data,
                         metrics = metrics, modelChecks = modelChecks, items = items, options = options,
                         costMatrices = costMatrices, searchLogit = searchLogit,
                         searchProbit = searchProbit, optimOptions = optimOptions,
-                        aucOptions = aucOptions, numChoices)
+                        aucOptions = aucOptions)
     res
   }
   else {
@@ -287,7 +287,7 @@ estim.binary.from.search <- function(searchResult, endogenous, exogenous, extra,
   search_data <- searchResult$info$data
   weights <- NULL
   if (search_data$hasWeight){
-    weights <- search_data$data[,data$numEndo+1]
+    weights <- search_data$data[,search_data$numEndo+1]
     search_data$data <- search_data$data[,-c(which(colnames(search_data$data)=="(Weights)"))]
   }
 

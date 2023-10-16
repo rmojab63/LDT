@@ -418,10 +418,10 @@ void ReportProgress(const ldt::ModelSet &model, bool &estimating,
 
 static std::vector<std::string>
 extractElements(const std::vector<std::string> &vec,
-                const std::vector<int> &indices) {
+                const std::vector<int> &indices, int skipWeight) {
   std::vector<std::string> extractedElements;
   for (Ti i = 0; i < (Ti)indices.size(); i++)
-    extractedElements.push_back(vec[indices.at(i)]);
+    extractedElements.push_back(vec[indices.at(i) + skipWeight]);
   return extractedElements;
 }
 
@@ -431,7 +431,7 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
                          std::vector<List> &results,
                          const std::vector<EstimationKeep *> &list,
                          const std::vector<std::string> &extra1Names,
-                         const bool &addCoefs) {
+                         const bool &addCoefs, const bool &hasWeight) {
 
   int j = -1;
   for (auto &b : list) {
@@ -446,10 +446,15 @@ static void add_CoefInfo(const std::string &eName, const std::string &tName,
     value.push_back(wrap(b->Weight));
     names.push_back(std::string("weight"));
 
-    value.push_back(wrap(extractElements(colNames, b->Endogenous)));
+    value.push_back(wrap(extractElements(colNames, b->Endogenous, 0)));
     names.push_back(std::string("endogenous"));
 
-    value.push_back(wrap(extractElements(colNames, b->Exogenouses)));
+    // print(wrap("-----"));
+    // print(wrap(b->Exogenouses));
+    // print(wrap(colNames));
+    // print(wrap(extractElements(colNames, b->Exogenouses, hasWeight)));
+
+    value.push_back(wrap(extractElements(colNames, b->Exogenouses, hasWeight)));
     names.push_back(std::string("exogenous"));
 
     if (addCoefs) {
@@ -494,12 +499,21 @@ static void add_Lengthi(const int &eIndex, const std::string &eName,
 
       auto typeName = std::string("best item for '") + length1Names.at(i) +
                       std::string("'");
+      // print(wrap("-------"));
+      // print(wrap(i));
+      // print(wrap(typeName));
+
       auto bests = std::vector<EstimationKeep *>();
       model.CombineBests(eIndex, tIndex, i, list, bests);
 
-      if (bests.size() != 0)
+      if (bests.size() != 0) {
         add_CoefInfo(eName, tName, typeName, colNames, results, bests,
-                     extra1Names, true);
+                     extra1Names, true, model.pData->HasWeight);
+
+        // auto last = results.at(results.size() - 1);
+        // print(last);
+      }
+      // print(wrap("-------"));
     }
   }
 
@@ -641,7 +655,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           model.CombineBests(eIndex, tIndex, 0, list0, bests);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, bests,
-                       extra1Names, false);
+                       extra1Names, false, model.pData->HasWeight);
         }
 
         if (items.KeepAll) {
@@ -651,7 +665,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
           model.CombineAll(eIndex, tIndex, 0, list0, all);
 
           add_CoefInfo(eName, tName, typeName, colNames, results, all,
-                       extra1Names, false);
+                       extra1Names, false, model.pData->HasWeight);
         }
 
         if (items.KeepInclusionWeights) {

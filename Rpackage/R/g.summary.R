@@ -56,6 +56,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
 
       metric <- get.metric.from.estim(res, object$evalName, object$targetName)
       if (abs(metric - object$value$metric)>1e-8){
+        print(object)
         stop(paste0("Inconsistent metric: target=",object$targetName,
                     ", metric=", object$evalName,
                     ", search metric=", object$value$metric,

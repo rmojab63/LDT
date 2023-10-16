@@ -189,13 +189,11 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOneReg(
   if (this->pChecks->Estimation) {
     auto ind = this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kAic);
     if (ind >= 0)
-      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
-        metrics.Mat.Set0(ind, t, DModel.Aic);
+      metrics.Mat.Set0(ind, 0, DModel.Aic);
 
     ind = this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kSic);
     if (ind >= 0)
-      for (Ti t = 0; t < (Ti)this->TargetsPositions.size(); t++)
-        metrics.Mat.Set0(ind, t, DModel.Sic);
+      metrics.Mat.Set0(ind, 0, DModel.Sic);
 
     auto costInd =
         this->pMetrics->MetricInIndices.at(GoodnessOfFitType::kFrequencyCost);
@@ -264,7 +262,7 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOneReg(
 
     ind = this->pMetrics->MetricOutIndices.at(ScoringType::kBrier);
     if (ind >= 0)
-      metrics.Mat.Set0(j + ind, 0, Model.Auc);
+      metrics.Mat.Set0(j + ind, 0, Model.BrierScore);
   }
 
   if (this->pOptions->RequestCancel)
@@ -274,8 +272,16 @@ DiscreteChoiceSearcher<hasWeight, modelType, distType>::EstimateOneReg(
   extra.Mat.Data[0] = (Ti)distType;
 
   if (DModel.WorkSize > 0 && this->pItems->Length1 > 0) {
-    type1Mean.Mat.SetColumnFromColumn(0, DModel.Beta, 0);
-    type1Var.Mat.SetColumnFromDiag(0, DModel.BetaVar);
+
+    // we should skip those coefficients that are not present in the current
+    // estimation.
+    Ti i = -1;
+    for (const auto &b : this->CurrentIndices.Vec) {
+      i++;
+      Ti a = b - (this->pData->HasWeight ? 2 : 1);
+      type1Mean.Mat.Data[a] = DModel.Beta.Data[i];
+      type1Var.Mat.Data[a] = DModel.BetaVar.Get0(i, i);
+    }
   }
 
   return "";

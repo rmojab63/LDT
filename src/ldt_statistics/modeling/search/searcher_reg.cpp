@@ -26,19 +26,24 @@ SearcherReg::SearcherReg(const SearchData &data,
       numPartitions + w +
       innerIndices.size()); // it gets updated in EstimateOne method
 
-  if (data.HasWeight)
-    ColIndices.at(numPartitions) = data.NumEndo;
-
   if (isInnerExogenous) {
     // the second part of ColIndices is constant:
     for (Ti i = 0; i < (Ti)innerIndices.size(); i++)
-      ColIndices.at(i + numPartitions + w) = InnerIndices.at(i);
+      ColIndices.at(i + numPartitions + w) =
+          InnerIndices.at(i) + w; //? check +w
 
+    // weights are after endogenous:
+    if (data.HasWeight)
+      ColIndices.at(numPartitions) = data.NumEndo;
     // targets are in current indices and should be updated in the main loop
   } else {
     // put it in the first part of column indices
     for (Ti i = 0; i < (Ti)innerIndices.size(); i++)
       ColIndices.at(i) = innerIndices.at(i);
+
+    // weights are after endogenous:
+    if (this->pData->HasWeight)
+      ColIndices.at(InnerIndices.size()) = this->pData->NumEndo;
 
     // we can set targets here
     for (auto &a : innerIndices) {
@@ -67,10 +72,10 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
         TargetsPositions.push_back(a);
     }
   } else {
-    auto w = pData->HasWeight ? 1 : 0;
+    Ti w = pData->HasWeight ? 1 : 0;
     // update the second part of column indices
     for (Ti i = 0; i < (Ti)CurrentIndices.Vec.size(); i++)
-      ColIndices.at(i + InnerIndices.size() + w) = CurrentIndices.Vec.at(i);
+      ColIndices.at(i + InnerIndices.size() + w) = CurrentIndices.Vec.at(i) + w;
   }
 
   auto numMeas = (Ti)(this->pMetrics->MetricsIn.size() +

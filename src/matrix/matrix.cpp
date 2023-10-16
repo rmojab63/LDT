@@ -215,7 +215,9 @@ void Matrix<Tw>::TranslateIndex(Ti index, Ti &rowIndex, Ti &colIndex) const {
 
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i, Ti j) const {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception");
+    throw std::out_of_range(format(
+        "index out-of-range in get function: (i, j)=({}, {}), Dim=({}, {})", i,
+        j, RowsCount, ColsCount));
   return Get0(i, j);
 }
 
@@ -225,9 +227,9 @@ template <typename Tw> Tw Matrix<Tw>::Get0(Ti i, Ti j) const {
 
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i) const {
   if (i < 0 || i >= length())
-    throw std::out_of_range("index out-of-range exception");
+    throw std::out_of_range(format(
+        "index out-of-range in get function: i={}, Length={}", i, length()));
   return Data[i];
-  ;
 }
 
 template <typename Tw> Tw Matrix<Tw>::GetVector(Ti i) const {
@@ -240,7 +242,9 @@ template <typename Tw> Tw Matrix<Tw>::GetVector(Ti i) const {
 
 template <typename Tw> void Matrix<Tw>::Set(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception");
+    throw std::out_of_range(format(
+        "index out-of-range in set function: (i, j)=({}, {}), Dim=({}, {})", i,
+        j, RowsCount, ColsCount));
   Set0(i, j, value);
 }
 
@@ -250,7 +254,8 @@ template <typename Tw> void Matrix<Tw>::Set0(Ti i, Ti j, Tw value) {
 
 template <typename Tw> void Matrix<Tw>::Set_Plus(Ti i, Ti j, Tw value) {
   if (i >= RowsCount || j >= ColsCount || i < 0 || j < 0)
-    throw std::out_of_range("index out-of-range exception");
+    throw std::out_of_range(format(
+        "index out-of-range in set function: i={}, Length={}", i, length()));
   Set_Plus0(i, j, value);
 }
 

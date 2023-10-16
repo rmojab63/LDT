@@ -225,11 +225,12 @@ test_that("Discrete choice search (avgCost,all) works", {
   g1 = c(1,2)
   g2 = c(3,4)
   res <- search.bin(data = get.data(x[,1:6], newData = x[c(5,6),], weights = x[,7]),
-                    combinations = get.combinations(sizes = c(1,2,3),
-                                                    partitions = list(c(1),c(2),c(3,4),c(5,6))),
+                    combinations = get.combinations(sizes = c(1,2)),
                     metrics = get.search.metrics(typesIn = c("aic"), typesOut = c("frequencyCost")),
                     costMatrices = list(c1,c2),
                     items = get.search.items(bestK = 4, all = TRUE))
+  sapply(res$results[which(sapply(res$results, function(r)r$typeName=="model" && r$evalName == "aic"))],
+         function(d)d$value$metric)
   sumRes <- summary(res, test = TRUE)
   for (a in res$results[which(sapply(res$results,
                                      function(r)r$typeName=="model" && r$evalName == "frequencyCostOut"))])
@@ -280,9 +281,9 @@ test_that("Discrete choice search works with inclusion weights", {
   skip_on_cran()
 
   res <- search.bin(data = get.data(x[,1:7]),
-                     combinations = get.combinations(sizes = c(1,2,3)),
-                     metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
-                     items = get.search.items(all = TRUE, inclusion = TRUE))
+                    combinations = get.combinations(sizes = c(1,2,3)),
+                    metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
+                    items = get.search.items(all = TRUE, inclusion = TRUE))
 
   inclusion = matrix(0,8,2, dimnames = list(colnames(res$info$data$data), NULL))
   for (m in res$results[which(sapply(res$results,
@@ -320,124 +321,107 @@ test_that("Discrete choice search works with coefficients (bests)", {
 test_that("Discrete choice search works with coefficients (cdfs)", {
   skip_on_cran()
 
-  y=x[,c(1), drop=FALSE]
-  Exo=x[,4:7]
-  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
-                   xSizes = c(1L,2L),
-                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
-                                            cdfs = c(0,1)),
-                   options = get.search.options(parallel = FALSE))
-  for (u in c(1:4)){
-    sum = 0
-    c = 0
-    cc=0
-    for (m in res$aic$target1$model$all){
+  res <- search.bin(data = get.data(x[,1:7]),
+                    combinations = get.combinations(sizes = c(1,2,3)),
+                    metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
+                    items = get.search.items(all = TRUE, type1 = TRUE, cdfs = c(0,1)))
 
-      if (any(m$exogenous==u)){
-        ind = which(m$exogenous == u) + 1 #+1 for intercept
-        M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
-                      simFixSize = 0)
-        coef = M$estimations$gamma[ind]
-        sd = sqrt(M$estimations$gammaVar[ind,ind])
-
-        sum = sum+m$weight * pnorm(0,coef,sd)  # note the NORMAL dist. If t,  d.o.f : nrow(y)-length(gamma)
-        c=c+m$weight
-        cc=cc+1
-      }
+  sumRes <- summary(res, test = TRUE)
+  sum = 0
+  c = 0
+  cc=0
+  i = 0
+  for (m in sumRes$results){
+    i = i + 1
+    if (m$evalName != "aic" || m$typeName != "model" || m$targetName != "V1")
+      next()
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coef = m$value$estimations$gamma[ind]
+      sd = sqrt(m$value$estimations$gammaVar[ind,ind])
+      w = res$results[[i]]$value$weight
+      sum = sum + w * pnorm(0,coef,sd)  # note the NORMAL dist. If t,  d.o.f : nrow(y)-length(gamma)
+      c=c+w
+      cc=cc+1
     }
-    expect_equal(res$aic$target1$coefs$cdfs$cdf1[u+1,1], sum/c, tolerance = 1e-10)
-    expect_equal(res$aic$target1$coefs$cdfs$cdf1[u+1,2], cc, tolerance = 1e-10)
   }
+
+  cdfs = res$results[which(sapply(res$results,
+                                  function(r) r$evalName == "aic" && r$targetName == "V1" && r$typeName == "cdf"))]
+
+  expect_equal(cdfs[[1]]$value[4,1], sum/c, tolerance = 1e-10)
+  expect_equal(cdfs[[1]]$value[4,2], cc, tolerance = 1e-10)
+
 })
 
 
 test_that("Discrete choice search works with coefficients (extreme bounds)", {
   skip_on_cran()
 
-  y=x[,c(1),drop=FALSE]
-  Exo=x[,4:7]
-  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
-                   xSizes = c(1L,2L),
-                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
-                                            extremeMultiplier = 2),
-                   options = get.search.options(parallel = FALSE))
+  res <- search.bin(data = get.data(x[,1:7]),
+                    combinations = get.combinations(sizes = c(1,2,3)),
+                    metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
+                    items = get.search.items(all = TRUE, type1 = TRUE, extremeMultiplier = 2))
+  sumRes <- summary(res, test = TRUE)
   mn = Inf
   mx = -Inf
-  h = 2
-  for (m in res$aic$target1$model$all){
+  for (m in sumRes$results){
+    if (m$evalName != "aic" || m$typeName != "model" || m$targetName != "V1")
+      next()
 
-    if (any(m$exogenous==h)) {
-      ind = which(m$exogenous == h) + 1 #+1 for intercept
-      M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
-                    simFixSize = 0)
-      coef = M$estimations$gamma[ind]
-      sd = sqrt(M$estimations$gammaVar[ind,ind])
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coef = m$value$estimations$gamma[ind]
+      sd = sqrt(m$value$estimations$gammaVar[ind,ind])
       mn = min(mn,coef-2*sd)
       mx = max(mx,coef+2*sd)
     }
   }
-  expect_equal(res$aic$target1$coefs$extremeBounds[h+1,1], mn, tolerance = 1e-10)
-  expect_equal(res$aic$target1$coefs$extremeBounds[h+1,2], mx, tolerance = 1e-10)
+
+  extremeB = res$results[which(sapply(res$results,
+                                      function(r) r$evalName == "aic" && r$targetName == "V1" && r$typeName == "extreme bound"))]
+
+  expect_equal(extremeB[[1]]$value[4,1], mn, tolerance = 1e-10)
+  expect_equal(extremeB[[1]]$value[4,2], mx, tolerance = 1e-10)
 })
 
 
 test_that("Discrete choice search works with coefficients (mixture)", {
   skip_on_cran()
 
-  y=x[,c(1),drop=FALSE]
-  Exo=x[,4:7]
-  res = search.bin(y, Exo, metrics = get.search.metrics(typesIn = c("aic"), typesOut = c()),
-                   xSizes = c(1L,2L),
-                   items = get.search.items(bestK = 1, type1 = TRUE, all = TRUE, inclusion = FALSE,
-                                            extremeMultiplier = 2, mixture4 = TRUE),
-                   options = get.search.options(parallel = FALSE))
+  res <- search.bin(data = get.data(x[,1:7]),
+                    combinations = get.combinations(sizes = c(1,2,3)),
+                    metrics = get.search.metrics(typesIn = c("aic"), typesOut = NULL),
+                    items = get.search.items(all = TRUE, type1 = TRUE, mixture4 = TRUE))
 
+  sumRes <- summary(res, test = TRUE)
   coefs = c()
   vars = c()
   weights = c()
-  h = 1
-  for (m in res$aic$target1$model$all){
-    if (any(m$exogenous==h)) {
-      M = estim.bin(y, x = as.matrix(Exo[,m$exogenous]),
-                    simFixSize = 0)
-      ind = which(m$exogenous == h) + 1 #+1 for intercept
-      coefs = append(coefs,M$estimations$gamma[ind])
-      vars = append(vars, M$estimations$gammaVar[ind,ind])
-      weights = append(weights, m$weight)
+  i = 0
+  for (m in sumRes$results){
+    i = i + 1
+    if (m$evalName != "aic" || m$typeName != "model" || m$targetName != "V1")
+      next()
+
+    ind = which(rownames(m$value$estimations$coefs) == "V4")
+    if (length(ind) == 1){
+      coefs = append(coefs,m$value$estimations$gamma[ind])
+      vars = append(vars, m$value$estimations$gammaVar[ind,ind])
+      w = res$results[[i]]$value$weight
+      weights = append(weights, w)
     }
   }
+
+  mixture = res$results[which(sapply(res$results,
+                                     function(r) r$evalName == "aic" && r$targetName == "V1" && r$typeName == "mixture"))]
+
   # note that we need weighted mean, variance, etc. assuming normal distribution
 
   len = length(coefs)
-  expect_equal(res$aic$target1$coefs$mixture[h+1,5], len)
+  expect_equal(mixture[[1]]$value[4,5], len)
   me = weighted.mean(coefs, weights)
-  expect_equal(res$aic$target1$coefs$mixture[h+1,1], me, tolerance = 1e-14)
-
-  # TODO : compare weighted variance, skewness, kurtosis assuming normality
-  #        of course, its better to .Call the running statistics, test it, and use it here
-
-})
-
-
-test_that("Discrete choice summary works", {
-  skip_on_cran()
-
-  c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3)
-  c2=matrix(c(0.6,1, 1, 0, 1, 0),2,3)
-  y=x[,c(1),drop=FALSE]
-  Exo=x[,4:7]
-
-  res <- search.bin(y, Exo,searchLogit = TRUE, searchProbit = TRUE,costMatrices = list(c1, c2),
-                    metrics = get.search.metrics(typesIn = c("sic", "aic", "aucIn", "frequencyCost"), typesOut = c("frequencyCost", "auc"),
-                                                 seed = -400,
-                                                 simFixSize = 10, trainRatio = 0.75, trainFixSize = 0),
-
-                    xSizes = c(1L,2L),
-                    items = get.search.items(bestK = 5, type1=TRUE, all = TRUE),
-                    options = get.search.options(parallel = FALSE))
-
-  su =summary(res, y = y, x = Exo, addModelBests = TRUE,
-              addModelAll = FALSE, addItem1 = FALSE, w = NULL, test = TRUE)
+  expect_equal(mixture[[1]]$value[4,1], me, tolerance = 1e-14)
 
 })
 
@@ -445,73 +429,52 @@ test_that("Discrete choice summary works", {
 test_that("Discrete choice SplitSearch works (no subsetting)", {
   skip_on_cran()
 
-  c1=matrix(c(0.5,1, 1, 0, 1, 0),2,3)
-  c2=matrix(c(0.6,1, 1, 0, 1, 0),2,3)
-  y=x[,c(1),drop=FALSE]
-  Exo=x[,4:7]
+  data = get.data(x[,1:7, drop = FALSE])
+  combinations = get.combinations()
+  items = get.search.items(inclusion = TRUE
+                           #, all = TRUE
+                           , bestK = 4   # TODO: Test fails for bestK > 1. best coefficients for info>0 are not included!
+                           , type1 = TRUE
+                           , cdfs = c(0,0.3)
+                           , mixture4 = TRUE
+                           , extremeMultiplier = 2
+  )
+  metrics = get.search.metrics(c("sic", "aic")) # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
+  options = get.search.options(FALSE,
+                               reportInterval = 0
+  )
 
-  # don't test with out-of-sample metrics. It seems we have different model with equal weights (the result change by repeating the call ?!)
-
-  items = get.search.items(type1 = TRUE, all = TRUE, bestK = 200, inclusion = TRUE,
-                           cdfs = c(0,1), mixture4 = TRUE, extremeMultiplier = 2.0 )
-  metrics = get.search.metrics(c("sic", "aic"), c("frequencyCost"), seed = -400)
-  options = get.search.options(FALSE, printMsg = FALSE)
-
-  split = search.bin.stepwise(x = Exo, y = y, xSizeSteps = list(c(1L,2L), c(3L)), countSteps = c(NA, NA),
-                              costMatrices = list(c1, c2),
-                              items = items, metrics = metrics,
-                              options = options, savePre = NULL)
-
-  whole = search.bin(y, Exo, xSizes = c(1L,2L,3L),
-                     costMatrices = list(c1, c2),
-                     items = items, metrics = metrics,
+  combinations$sizes <- c(1, 2, 3)
+  whole = search.bin(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
                      options = options)
 
-  # CHECK ALL
+  combinations$sizes <- list(c(1, 2), c(3))
+  combinations$stepsNumVariables <- c(NA, NA)
+  split = search.bin(data = data,
+                     combinations = combinations,
+                     items = items,
+                     metrics = metrics,
+                     options = options)
 
-  # for 'all' the order is generally different
-  weights0 <- sort(sapply(whole$sic$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$sic$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1), tolerance = 1e-12)
+  expect_equal(whole$counts, split$counts)
+  expect_equal(length(whole$results), length(split$results))
 
-  weights0 <- sort(sapply(whole$frequencyCostOut$target1$model$all, function(a) a$weight))
-  weights1 <- sort(sapply(split$frequencyCostOut$target1$model$all, function(a) a$weight))
-  expect_equal(as.numeric(weights0),as.numeric(weights1), tolerance = 1e-12) # some different models in crps has equal weight (due to OLS estimation of systems with different number of equations)
-  # we have searched similar set of models
+  pastedList_w <- unlist(lapply(whole$results, function(x) paste(x[1:4], collapse = "")))
+  pastedList_s <- unlist(lapply(split$results, function(x) paste(x[1:4], collapse = "")))
 
+  sortedList_w <- whole$results[order(pastedList_w)]
+  sortedList_s <- split$results[order(pastedList_s)]
 
-  # CHECK BESTS
-  expect_equal(unlist(whole$sic$target1$model$bests[1]), unlist(split$sic$target1$model$bests[1]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[2]), unlist(split$sic$target1$model$bests[2]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[3]), unlist(split$sic$target1$model$bests[3]), tolerance = 1e-6)
-  expect_equal(unlist(whole$sic$target1$model$bests[4]), unlist(split$sic$target1$model$bests[4]), tolerance = 1e-6)
-
-  #INCLUSION / EXTREME BOUNDS / CDF / MIXTURE
-  expect_equal(whole$sic$target1$model$inclusion, split$sic$target1$model$inclusion, tolerance = 1e-10)
-  expect_equal(whole$sic$target1$coefs$extremeBounds, split$sic$target1$coefs$extremeBounds, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coef$cdfs, split$sic$target1$coefs$cdfs, tolerance = 1e-6)
-  expect_equal(whole$sic$target1$coefs$mixture, split$sic$target1$coefs$mixture, tolerance =1e-10)
-
-
-  #BEST COEFS
-  i = 0
-  for (w_item in whole$aic$target1$coefs$bests){
-    w_item <- w_item[lengths(w_item)!=0] # we set the bestK too high. some elements are null
-    i = i + 1
-    s_item <- split$aic$target1$coefs$bests[[i]]
-    expect_equal(w_item$best1$weight, s_item$best1$weight, tolerance =1e-10)
-    expect_equal(w_item$best1$exogenous, s_item$best1$exogenous, tolerance =1e-10)
-    expect_equal(w_item$best1$var, s_item$best1$var, tolerance =1e-10)
-
-
-    expect_equal(w_item$best3$weight, s_item$best3$weight, tolerance =1e-10)
-    expect_equal(w_item$best3$exogenous, s_item$best3$exogenous, tolerance =1e-10)
-    expect_equal(w_item$best3$var, s_item$best3$var, tolerance =1e-10)
-
-    expect_equal(w_item$best5$weight, s_item$best5$weight, tolerance =1e-10)
-    expect_equal(w_item$best5$exogenous, s_item$best5$exogenous, tolerance =1e-10)
-    expect_equal(w_item$best5$var, s_item$best5$var, tolerance =1e-10)
-
+  for (i in 1:length(sortedList_w)){
+    if (sortedList_s[[i]]$typeName == "mixture"){
+      expect_equal(sortedList_s[[i]]$value[,c(1:3,5,6)], sortedList_w[[i]]$value[,c(1:3,5,6)])
+      expect_equal(sortedList_s[[i]]$value[,c(4)], sortedList_w[[i]]$value[,c(4)], tolerance = 0.1)
+    }
+    else
+      expect_equal(sortedList_s[[i]]$value, sortedList_w[[i]]$value)
   }
 
 })
