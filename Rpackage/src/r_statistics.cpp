@@ -63,7 +63,7 @@ SEXP GetMetricFromWeight(SEXP value, SEXP metricName, SEXP minValue) {
 }
 
 // [[Rcpp::export(.GetRoc)]]
-List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
+List GetRoc(SEXP y, SEXP scores, SEXP weights, List options) {
   if (y == R_NilValue || is<NumericVector>(y) == FALSE)
     throw LdtException(ErrorType::kLogic, "R-statistics",
                        "'y' should be a numeric vector");
@@ -72,8 +72,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                        "'scores' should be a numeric vector");
   NumericVector y0 = as<NumericVector>(y);
   auto N = y0.length();
-  if (printMsg)
-    Rprintf("Number of observations = %i\n", N);
 
   NumericVector scores0 = as<NumericVector>(scores);
   if (N != scores0.length())
@@ -96,8 +94,6 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
                          "unequal number of observations in 'y' and 'weights'");
     mweights.SetData(&weights0[0]);
   }
-  if (printMsg)
-    Rprintf("Is Weighted = %s\n", hasWeight ? "TRUE" : "FALSE");
 
   auto min_y = min(y0);
   if (min_y != 0)
@@ -148,14 +144,7 @@ List GetRoc(SEXP y, SEXP scores, SEXP weights, List options, bool printMsg) {
 // [[Rcpp::export(.GetGldFromMoments)]]
 NumericVector GetGldFromMoments(double mean, double variance, double skewness,
                                 double excessKurtosis, int type, double s1,
-                                double s2, List nelderMeadOptions,
-                                bool printMsg) {
-  if (printMsg) {
-    Rprintf("Moments=%f, %f, %f, %f\n", mean, variance, skewness,
-            excessKurtosis);
-    Rprintf("Type=%i\n", type); // TODO: convert to string
-    Rprintf("Start (L3, L4)=(%f, %f)\n", s1, s2);
-  }
+                                double s2, List nelderMeadOptions) {
 
   auto optim = NelderMead(2);
   optim.ParamContraction = nelderMeadOptions["contraction"];
@@ -170,14 +159,6 @@ NumericVector GetGldFromMoments(double mean, double variance, double skewness,
 
   if (optim.Iter == optim.MaxIteration)
     Rf_warning("Maximum number of iteration reached in GLD estimation");
-
-  if (printMsg) {
-    Rprintf("....\n");
-    Rprintf("Iteration=%i\n", optim.Iter);
-    Rprintf("Objective Minimum=%i\n", optim.Min);
-    Rprintf("Parameters=%f, %f, %f, %f\n", std::get<0>(ps), std::get<1>(ps),
-            std::get<2>(ps), std::get<3>(ps));
-  }
 
   NumericVector result = {std::get<0>(ps), std::get<1>(ps), std::get<2>(ps),
                           std::get<3>(ps), (double)optim.Iter};

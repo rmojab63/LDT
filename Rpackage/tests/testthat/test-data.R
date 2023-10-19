@@ -16,10 +16,10 @@ test_that("get.data handles matrix without name correctly", {
   expect_equal(result$numExo, ncol(data) - 1) # + intercept
 
   result <- get.data(data, endogenous = 2, addIntercept = TRUE, weights = c(1:4))
-  expect_equal(colnames(result$data), c("Y1", "Y2", "(weights)", "(Intercept)", "X1","X2","X3","X4"))
+  expect_equal(colnames(result$data), c("Y1", "Y2", "(Weights)", "(Intercept)", "X1","X2","X3","X4"))
 
   result <- get.data(data, endogenous = 2, addIntercept = FALSE, weights = c(1:4))
-  expect_equal(colnames(result$data), c("Y1", "Y2", "(weights)", "X1","X2","X3","X4"))
+  expect_equal(colnames(result$data), c("Y1", "Y2", "(Weights)", "X1","X2","X3","X4"))
 
   result <- get.data(data, endogenous = 2, addIntercept = TRUE, weights = c(1:4), lambdas = NA)
   expect_equal(length(result$lambdas), 2)
@@ -92,7 +92,7 @@ test_that("get.data handles matrix with name correctly", {
   expect_equal(result$numExo, ncol(data) - 1) # + intercept
 
   result <- get.data(data, endogenous = c("V6", "V1"), addIntercept = TRUE, weights = c(1:4))
-  expect_equal(colnames(result$data), c("V6","V1", "(weights)", "(Intercept)", "V2","V3","V4","V5"))
+  expect_equal(colnames(result$data), c("V6","V1", "(Weights)", "(Intercept)", "V2","V3","V4","V5"))
 
   newX <- matrix(51:62, ncol = 4, dimnames = list(NULL, c("V2","V3","V4","V5")))
   result <- get.data(data, endogenous = c("V6", "V1"), newData = newX, addIntercept = FALSE)

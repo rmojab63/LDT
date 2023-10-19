@@ -1198,7 +1198,7 @@ void Matrix<Tw>::GetSub(Ti rowstart, Ti colstart, Ti rowcount, Ti colcount,
   auto storreqcol = colcount + storaecolstart;
 
   if (storage.RowsCount > storreqrow || storage.ColsCount > storreqcol)
-    throw std::invalid_argument("inconsistent size: 'storage'");
+    throw std::invalid_argument("inconsistent size in get sub (1). ");
 
   GetSub0(rowstart, colstart, rowcount, colcount, storage, storagerowstart,
           storaecolstart);
@@ -1220,30 +1220,58 @@ void Matrix<Tw>::GetSub(Ti firststart, Ti firstcount,
   if (exclude) {
     if (firstIsRow) {
       if (storage.RowsCount != firstcount + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(
+            format("index out-of-range in get sub function: storage rows={}, "
+                   "row count={}, storage row start={}",
+                   storage.RowsCount, firstcount, storagerowstart));
       if (storage.ColsCount !=
           ColsCount - (Ti)secondindexes.size() + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(format(
+            "index out-of-range in get sub function: storage columns={}, "
+            "columns count={}"
+            "column indices size={}, storage column start={}",
+            storage.ColsCount, ColsCount, secondindexes.size(),
+            storaecolstart));
     }
     if (firstIsRow == false) {
       if (storage.ColsCount != firstcount + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(format(
+            "index out-of-range in get sub function: storage columns={}, "
+            "columns count={}, storage column start={}",
+            storage.ColsCount, firstcount, storaecolstart));
       if (storage.RowsCount !=
           RowsCount - (Ti)secondindexes.size() + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(
+            format("index out-of-range in get sub function: storage rows={}, "
+                   "rows count={}"
+                   "row indices size={}, storage row start={}",
+                   storage.RowsCount, RowsCount, secondindexes.size(),
+                   storagerowstart));
     }
   } else {
     if (firstIsRow) {
       if (storage.RowsCount != firstcount + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(
+            format("index out-of-range in get sub function: storage rows={}, "
+                   "rows count={}, storage row start={}",
+                   storage.RowsCount, firstcount, storagerowstart));
       if (storage.ColsCount != (Ti)secondindexes.size() + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(format(
+            "index out-of-range in get sub function: storage columns={}, "
+            "column indices size={}, storage column start={}",
+            storage.ColsCount, secondindexes.size(), storaecolstart));
     }
     if (firstIsRow == false) {
       if (storage.ColsCount != firstcount + storaecolstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(format(
+            "index out-of-range in get sub function: storage columns={}, "
+            "columns count={}, storage row start={}",
+            storage.ColsCount, firstcount, storaecolstart));
       if (storage.RowsCount != (Ti)secondindexes.size() + storagerowstart)
-        throw std::invalid_argument("inconsistent size: 'storage'");
+        throw std::out_of_range(
+            format("index out-of-range in get sub function: storage rows={}, "
+                   "row indices size={}, storage row start={}",
+                   storage.RowsCount, secondindexes.size(), storagerowstart));
     }
   }
   GetSub0(firststart, firstcount, secondindexes, firstIsRow, storage,

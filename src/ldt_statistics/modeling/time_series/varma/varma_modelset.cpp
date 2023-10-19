@@ -79,13 +79,8 @@ std::string VarmaSearcher::EstimateOneReg(Tv *work, Ti *workI,
                                           VMatrix<Tv> &type1Mean,
                                           VMatrix<Tv> &type1Var,
                                           VMatrix<Ti> &extra) {
-
-  if (this->CurrentIndices.Mat.Data[0] >= this->pItems->LengthTargets)
-    return ""; // it is empty and we did not count it in the searcher. See
-               // CheckForEmpty member.
-
   Ti ycount;
-  bool num_exo = InnerIndices.size();
+  Ti num_exo = InnerIndices.size();
 
   Source.Update(&ColIndices, nullptr); // update indexes
 
@@ -105,6 +100,7 @@ std::string VarmaSearcher::EstimateOneReg(Tv *work, Ti *workI,
   if (num_exo > 0) { // get out of sample data too
     auto xcount = Source.pData->ColsCount - Source.Start;
     X.SetData(&work[s], num_exo, xcount);
+
     s += num_exo * xcount;
     Source.pData->GetSub(Source.Start, xcount, InnerIndices, false, X, 0, 0,
                          false);

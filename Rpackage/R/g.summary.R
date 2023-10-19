@@ -129,8 +129,10 @@ summary.ldt.search <- function(object, test = TRUE, ...) {
     stop("argument is null.")
   if (!is(object, "ldt.search"))
     stop("Invalid class. An 'ldt.search' object is expected.")
+  if (length(object$results) == 0)
+    warning("Result list is empty. Check failed estimations.")
 
-  for (i in 1:length(object$results)){
+  for (i in seq_along(object$results)){
     object$results[[i]]$value <- summary.ldt.search.item(object = object$results[[i]],
                                                          searchResult =  object,
                                                          test = test, ...)

@@ -76,7 +76,6 @@ s.metric.from.weight <- function(value, metricName, minValue = 0)
 #' @param weights A numeric vector (\code{Nx1}) representing the weights of the observations.
 #' Use \code{NULL} for equal weights.
 #' @param options A list from \code{\link{get.options.roc}} function for more options.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @details
 #' This is generally a statistics helper method in this package and it shows the inner calculations.
@@ -93,13 +92,13 @@ s.metric.from.weight <- function(value, metricName, minValue = 0)
 #' @examples
 #' y <- c(1, 0, 1, 0, 1, 1, 0, 0, 1, 0)
 #' scores <- c(0.1, 0.2, 0.3, 0.5, 0.5, 0.5, 0.7, 0.8, 0.9, 1)
-#' res1 <- s.roc(y,scores, printMsg = FALSE)
+#' res1 <- s.roc(y,scores)
 #' costs <- c(1,2,1,4,1,5,1,1,0.5,1)
 #' costMatrix <- matrix(c(0.02,-1,-3,3),2,2)
 #' opt <- get.options.roc(costs = costs, costMatrix = costMatrix)
-#' res2 <- s.roc(y,scores,NULL,options = opt, printMsg = FALSE)
+#' res2 <- s.roc(y,scores,NULL,options = opt)
 s.roc <- function(y, scores, weights = NULL,
-                  options = get.options.roc(), printMsg = FALSE)
+                  options = get.options.roc())
 {
   y <- as.numeric(y)
   scores <- as.numeric(scores)
@@ -113,9 +112,8 @@ s.roc <- function(y, scores, weights = NULL,
   if (is.null(options))
     options <- get.options.roc()
   options <-as.list(options)
-  printMsg <- as.logical(printMsg)
 
-  res <- .GetRoc(y, scores, weights, options, printMsg)
+  res <- .GetRoc(y, scores, weights, options)
   res
 }
 
@@ -131,7 +129,6 @@ s.roc <- function(y, scores, weights = NULL,
 #' @param type An integer to restrict the shape of the distribution. See details section.
 #' @param start A numeric vector of size 2 for the starting value.
 #' @param nelderMeadOptions A list of options for Nelder-Mead algorithm. Use [get.options.neldermead] for initialization.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
 #'
 #' @details
 #' The type of the distribution is determined by one or two restrictions:
@@ -166,8 +163,7 @@ s.roc <- function(y, scores, weights = NULL,
 s.gld.from.moments <- function(mean = 0, variance = 1,
                                skewness = 0, excessKurtosis = 0,
                                type = 0, start = NULL,
-                               nelderMeadOptions = get.options.neldermead(),
-                               printMsg = FALSE)
+                               nelderMeadOptions = get.options.neldermead())
 {
   mean <- as.numeric(mean)
   variance <- as.numeric(variance)
@@ -182,12 +178,10 @@ s.gld.from.moments <- function(mean = 0, variance = 1,
   if (is.null(nelderMeadOptions))
     nelderMeadOptions <- get.options.neldermead()
   else
-    nelderMeadOptions <- as.list(nelderMeadOptions)
-  CheckNelderMeadOptions(nelderMeadOptions)
-  printMsg <- as.logical(printMsg)
+    stopifnot(is.list(nelderMeadOptions))
 
   res <- .GetGldFromMoments(mean, variance, skewness, excessKurtosis,
-                            type, start[[1]], start[[2]], nelderMeadOptions, printMsg)
+                            type, start[[1]], start[[2]], nelderMeadOptions)
   res
 }
 

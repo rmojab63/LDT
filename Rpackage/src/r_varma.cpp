@@ -25,7 +25,7 @@ SEXP SearchVarma(List data, List combinations, List metrics, List modelChecks,
   auto dataset0 =
       new DatasetTs<true>(data_use.RowsCount, data_use.ColsCount, true, true);
   auto dataset = std::unique_ptr<ldt::DatasetTs<true>>(dataset0);
-  // dataset0->Data(data_use);
+  dataset0->Data(data_use);
   if (dataset0->HasMissingData)
     throw LdtException(ErrorType::kLogic, "R-varma",
                        "missing observation exists");

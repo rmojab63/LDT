@@ -219,7 +219,6 @@ estim.varma <- function(data,
                         simUsePreviousEstim = FALSE,
                         simMaxConditionNumber = Inf){
   stopifnot(is.list(data))
-  stopifnot(is.list(combinations))
 
   if (data$hasWeight)
     stop("VARMA estimation does not support weighted observations.")

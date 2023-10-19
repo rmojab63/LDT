@@ -18,6 +18,7 @@ SearcherReg::SearcherReg(const SearchData &data,
                          const Ti extraLength)
     : Searcher::Searcher(data, combinations, options, items, metrics, checks,
                          numPartitions, isInnerExogenous) {
+
   IsInnerExogenous = isInnerExogenous;
   mExtraLength = extraLength;
   auto w = data.HasWeight ? 1 : 0;
