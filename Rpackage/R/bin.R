@@ -1,25 +1,16 @@
 
-
-
-#' Search for Best Binary Choice Models
+#' Create a Model Set for Binary Choice Models
 #'
 #' Use this function to create a binary choice model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
 #' @param data A list that determines data and other required information for the search process.
 #' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
-#' This function is designed to help you specify endogenous and exogenous variables by a list of equations.
-#' It also helps to add intercept or define Box-Cox transformations for the endogenous variables.
-#' @param combinations A list that determines the combinations of endogenous and exogenous variables in the search process.
+#' @param combinations A list that determines the combinations of the exogenous variables in the search process.
 #' Use [get.combinations()] function to define it.
-#' This is a two-level nested loop and in this function, the outer loop is defined over the exogenous variables.
-#' @param metrics A list of options for measuring performance.
-#' Use [get.search.metrics] function to get them.
-#' @param modelChecks A list of options for excluding a subset of the model set.
-#' See and use [get.search.modelchecks] function to get them.
-#' @param items A list of options for specifying the purpose of the search.
-#' See and use [get.search.items] function to get them.
-#' @param options A list of extra options for performing the search.
-#' See and use [get.search.options] function to get them.
+#' @param metrics A list of options for measuring performance. Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set. Use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search. Use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search. Use [get.search.options] function to get them.
 #' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities.
 #' Given the number of choices \code{n}, a frequency cost matrix is an \code{m x n+1} matrix.
 #' The first column determines the thresholds.
@@ -32,13 +23,19 @@
 #' @param aucOptions A list for AUC calculation options.
 #' Use [get.options.roc] function to get the options.
 #'
+#' @return A nested list with the following members:
+#' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
+#' \item{results}{A data frame with requested information in \code{items} list.}
+#' \item{info}{The arguments and some general information about the search process such as the elapsed time.}
+#'
+#' Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
 #' @importFrom stats glm
 #'
 #' @example man-roxygen/ex-search.bin.R
 #'
-#' @seealso [estim.bin], [search.bin.stepwise]
+#' @seealso [estim.bin]
 search.bin <- function(data,
                        combinations,
                        metrics = get.search.metrics(),
@@ -158,28 +155,19 @@ search.bin <- function(data,
 #'
 #' Use this function to estimate a binary choice model.
 #'
-#' @param y A matrix of endogenous data with variable in the column.
-#' @param x A matrix of exogenous data with variables in the columns.
-#' @param w Weights of the observations in \code{y}.
-#' \code{NULL} means equal weights for all observations.
+#' @param data A list that determines data and other required information for the model search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
 #' @param linkFunc A character string that shows the probability assumption. It can be \code{logit} or \code{probit}.
-#' @param newX A numeric matrix where for each row in it, probabilities are projected and reported. It can be \code{NULL}.
 #' @param pcaOptionsX A list of options to use principal components of the \code{x}, instead of the actual values. Set \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param costMatrices A list of numeric matrices where each one determines how to score the calculated probabilities. See and use [search.bin] for more information and initialization.
+#' @param optimOptions A list for Newton optimization options. Use [get.options.newton] function to get the options.
 #' @param aucOptions A list of options for AUC calculation. See and use \code{[get.options.roc()]} for more information and initialization.
 #' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable the simulation.
 #' @param simTrainFixSize An integer representing the number of data points in the training sample in the out-of-sample simulation. If zero, \code{trainRatio} will be used.
 #' @param simTrainRatio A number representing the size of the training sample relative to the available size, in the out-of-sample simulation. It is effective if \code{trainFixSize} is zero.
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param weightedEval If \code{TRUE}, weights will be used in evaluations.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
-#'
-#' @return A nested list with the following items:
-#' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
-#' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-#' \item{metrics}{Value of different goodness of fit and out-of-sample performance metrics.}
-#' \item{projections}{Information on the projected values, if \code{newX} is provided.}
-#' \item{info}{Some other general information.}
+#' @param simMaxConditionNumber A number for the maximum value for the condition number in the simulation.
 #'
 #' @details
 #' As documented in chapter 12 in \insertCite{greene2010modeling;textual}{ldt}, binary regression is a statistical technique used to estimate the probability of one of two possible outcomes for a variable such as \eqn{y}, i.e., \eqn{p=P(y=1)} and \eqn{q=P(y=0)}. The most commonly used binary regression models are the logit and probit models. In general, a binary regression model can be written as \eqn{f(p) = z'\gamma+v}, where the first element in \eqn{\gamma} is the intercept and \eqn{f(p)} is a link function. For logit and probit models we have \eqn{f(p) = \ln{\frac{p}{1-p}}} and \eqn{f(p) = \Phi^{-1}(p)} respectively, where \eqn{\Phi^{-1}} is the inverse cumulative distribution function of the standard normal distribution.
@@ -200,7 +188,7 @@ search.bin <- function(data,
 #'
 #' @export
 #' @example man-roxygen/ex-estim.bin.R
-#' @seealso [search.bin], [search.bin.stepwise]
+#' @seealso [search.bin]
 estim.bin <- function(data,
                       linkFunc = c("logit", "probit"),
                       pcaOptionsX = NULL,
@@ -329,26 +317,23 @@ estim.binary.from.search <- function(searchResult, endogenous, exogenous, extra,
 #' If \code{1}, observations are not weighted.
 #' If larger than \code{1}, a vector of weights is generated and included in the return list. The weights are drawn from a discrete uniform distribution with a maximum value determined by \code{maxWeight}.
 #' If weighted, a larger sample is created (\code{nObs * sampleFactor * maxWeight}) and a subset of them is randomly selected, where the probability of selection is determined by the weight.
-#' @param pPos The percentage of positive observations (\code{y=1}) in the dependent variable y.
+#' @param pPos The percentage of positive observations (\code{y=1}) in the endogenous variable y.
 #'   Must be between 0 and 1.
 #'   In the current implementation, this is independent of the weights, if \code{maxWeight} is larger than 1.
 #' @param sampleFactor The factor used to control the size of the initial sample.
 #'   A larger value generates a larger initial sample, which can increase the accuracy
 #'   of the generated sample but also takes more time and memory.
-#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-#' If \code{NULL}, conversion to latex or html representations are disabled.
 #' @param toNumeric If \code{TRUE}, \code{y} and \code{w} are transformed to have numeric vector.
 #' Otherwise, they contain an integer vector.
 #'
 #' @return A list with the following items:
-#'   \item{y}{The dependent variable.}
-#'   \item{x}{The independent variables.}
-#'   \item{w}{The weights of the observations. It is null if \code{weighted} is \code{FALSE}.}
+#'   \item{y}{The endogenous variable.}
+#'   \item{x}{The exogenous variables.}
+#'   \item{w}{The weights of the observations. It is \code{NULL} if \code{weighted} is \code{FALSE}.}
 #'   \item{p1}{Prob(Y=1)}
 #'   \item{coef}{The coefficients of the regression.}
 #'   \item{probit}{Logical value indicating whether data was generated from a probit model.}
 #'   \item{pPos}{The percentage of negative observations in y.}
-#'   \item{eqLatex}{Latex representation of the model formula.}
 #'
 #' @export
 #' @importFrom stats pnorm rnorm rbinom
@@ -357,7 +342,7 @@ estim.binary.from.search <- function(searchResult, endogenous, exogenous, extra,
 #' @seealso [estim.bin], [search.bin]
 sim.bin <- function(coef = 2L, nObs = 100, probit = FALSE,
                     maxWeight = 1, pPos = 0.5,
-                    sampleFactor = 4, numFormat = "%.2f", toNumeric = TRUE) {
+                    sampleFactor = 4, toNumeric = TRUE) {
 
   if (nObs <= 0)
     stop("nObs must be a positive integer")
@@ -384,7 +369,7 @@ sim.bin <- function(coef = 2L, nObs = 100, probit = FALSE,
     nVar <- length(coef)
   }
 
-  # Generate the independent variables
+  # Generate the exogenous variables
   if (nVar == 0) {
     x <- matrix(1, ncol = 1, nrow = nObs * sampleFactor)
     colnames(x) <- c("Intercept")
@@ -400,7 +385,7 @@ sim.bin <- function(coef = 2L, nObs = 100, probit = FALSE,
     p1 <- 1 / (1 + exp(-x %*% coef))
   }
 
-  # Generate the dependent variable
+  # Generate the endogenous variable
   y <- matrix(rbinom(n = nObs * sampleFactor, size = 1, prob = p1), ncol = 1)
 
   if (maxWeight > 1){
@@ -458,14 +443,18 @@ sim.bin <- function(coef = 2L, nObs = 100, probit = FALSE,
 
   # Return the results as a list
   list(y = y, x = x, w = w, p1 = p1, coef = coef,
-       probit = probit, pPos = pPos,
-       eqLatex = bin.to.latex.eq(coef, probit, numFormat))
+       probit = probit, pPos = pPos)
 }
 
+#' Get Model Name
+#'
+#' @param object A \code{estim.bin} object
+#'
+#' @return model string
 estim.binary.model.string <- function(object){
   if (is.null(object))
     stop("argument is null.")
-  if (!is(object, "ldt.estim.bin"))
+  if (!inherits(object, "ldt.estim.bin"))
     stop("Invalid class. An 'ldt.estim.bin' object is expected.")
 
 

@@ -47,7 +47,6 @@ get.search.items <- function(model = TRUE, type1 = FALSE, type2 = FALSE,
 #'
 #' @param parallel If \code{TRUE}, a parallel search algorithm is used. This generally changes the speed and memory usage.
 #' @param reportInterval An integer representing the time interval (in seconds) for reporting progress (if any significant change has occurred). Set to zero to disable reporting.
-#' @param printMsg Set to \code{TRUE} to enable printing details.
 #'
 #' @return A list with the given options.
 #'
@@ -135,7 +134,7 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
 #'
 #'
 #' @section AIC and SIC:
-#' According to \insertCite{burnham2002model;textual}{ldt} or \insertCite{greene2020econometric;textual}{ldt}, AIC and SIC are two commonly used metrics for comparing and choosing among different models with the same dependent variable(s). Given \eqn{L^*} as the maximum value of the likelihood function in a regression analysis with \eqn{k} estimated parameters and \eqn{N} observations, AIC is calculated by \eqn{2k-2\ln L^*} and SIC is calculated by \eqn{k\ln N-2\ln L^*}. SIC includes a stronger penalty for increasing the number of estimated parameters in the model.
+#' According to \insertCite{burnham2002model;textual}{ldt} or \insertCite{greene2020econometric;textual}{ldt}, AIC and SIC are two commonly used metrics for comparing and choosing among different models with the same endogenous variable(s). Given \eqn{L^*} as the maximum value of the likelihood function in a regression analysis with \eqn{k} estimated parameters and \eqn{N} observations, AIC is calculated by \eqn{2k-2\ln L^*} and SIC is calculated by \eqn{k\ln N-2\ln L^*}. SIC includes a stronger penalty for increasing the number of estimated parameters in the model.
 #'
 #' These metrics can be converted into weights using the formula \eqn{w=\exp (-0.5x)}, where \eqn{x} is the value of the metric. When divided by the sum of all weights, \eqn{w} can be interpreted as the probability that a given model is the best model among all members of the model set (see section 2.9 in \insertCite{burnham2002model;textual}{ldt}). Compared to the \insertCite{burnham2002model;textual}{ldt} discussion and since \eqn{f(x)=exp(-0.5x)} transformation is invariant to translation, the minimum AIC part is removed in the screening process. This is an important property because it enables the use of running statistics and parallel computation.
 #'
@@ -143,12 +142,16 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
 #' According to \insertCite{hyndman2018forecasting;textual}{ldt}, MSE and RMSE are two commonly used scale-dependent metrics, while MAPE is a commonly used unit-free metric. \code{ldt} also calculates the less common RMSPE metric. If there are \eqn{n} predictions and \eqn{e_i=y_i-\hat{y}_i} for \eqn{i=1\ldots n} is the prediction error, i.e., the distance between actual values (\eqn{y_i}) and predictions (\eqn{\hat{y}_i}), these metrics can be expressed analytically by the following formulas:
 #'
 #' \deqn{
-#' \begin{aligned}
-#' &\text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|e_i|,
-#' &&\text{MAPE} = \frac{1}{n}\sum_{i=1}^{n}\left|\frac{e_i}{y_i}\right|\times 100 \\
-#' &\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(e_i)^2},\quad\quad
-#' &&\text{RMSPE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{e_i}{y_i}\right)^2}\times 100.
-#' \end{aligned}
+#' \mathrm{MAE} = \frac{1}{n}\sum_{i=1}^{n}|e_i|
+#' }
+#' \deqn{
+#' \mathrm{MAPE} = \frac{1}{n}\sum_{i=1}^{n}\left|\frac{e_i}{y_i}\right|\times 100
+#' }
+#' \deqn{
+#' \mathrm{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(e_i)^2}
+#' }
+#' \deqn{
+#' \mathrm{RMSPE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{e_i}{y_i}\right)^2}\times 100
 #' }
 #'
 #' Note that, first MAPE and RMSPE are not defined if \eqn{y_i} is zero and may not be meaningful or useful if it is near zero or negative. Second, although these metrics cannot be directly interpreted as weights, they are treated in a manner similar to AIC in the \code{ldt} package.. Third, caution is required when target variables are transformed, for example to a logarithmic scale. \code{ldt} provides an option to transform the data back when calculating these metrics.
@@ -157,7 +160,7 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
 #' The Brier score measures the accuracy of probabilistic predictions for binary outcomes. It is calculated as the mean squared difference between the actual values (\eqn{y_i}) and the predicted probabilities (\eqn{p_i}). Assuming that there are \eqn{n} predictions, its formula is given by:
 #'
 #' \eqn{
-#' \text{Brier} = \frac{\sum (y_i-\hat{p}_i)^2}{n},
+#' \mathrm{Brier} = \frac{\sum (y_i-\hat{p}_i)^2}{n},
 #' }
 #'
 #' where \eqn{p_i} is the predicted probability that the \eqn{i}-th observation is positive. The value of this metric ranges from 0 to 1, with lower values indicating better predictions. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC.
@@ -166,13 +169,13 @@ get.search.modelchecks <- function( estimation = TRUE, maxConditionNumber = Inf,
 #' As described by \insertCite{fawcett2006introduction;textual}{ldt}, the receiver operating characteristic curve (ROC) plots the true positive rate (sensitivity) against the false positive rate (1-specificity) at different classification thresholds. The area under this curve is known as the AUC. Its value ranges from 0 to 1, with higher values indicating that the model is better at distinguishing between the two classes \insertCite{fawcett2006introduction,fawcett2006roc;textual}{ldt}. In the screening process in \code{ldt}, both in-sample and out-of-sample observations can be used to calculate this metric. There is also an option to calculate the pessimistic or an instance-varying costs version of this metric. Although this metric does not have a direct interpretation as weights, in \code{ldt} its value is considered as weight.
 #'
 #' @section CRPS:
-#' According to \insertCite{gneiting2005calibrated;textual}{ldt}, the continuous ranked probability score (CRPS) is a metric used to measure the accuracy of probabilistic predictions. Unlike MAE, RMSE, etc., CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution. For \eqn{n} normally distributed predictions with mean \eqn{\hat{y}_i} and variance \eqn{\operatorname{var}(\hat{y}_i)}, this metric can be expressed analytically as:
+#' According to \insertCite{gneiting2005calibrated;textual}{ldt}, the continuous ranked probability score (CRPS) is a metric used to measure the accuracy of probabilistic predictions. Unlike MAE, RMSE, etc., CRPS takes into account the entire distribution of the prediction, rather than focusing on a specific point of the probability distribution. For \eqn{n} normally distributed predictions with mean \eqn{\hat{y}_i} and variance \eqn{\mathrm{var}(\hat{y}_i)}, this metric can be expressed analytically as:
 #'
 #' \eqn{
-#' \text{CRPS}=\sum_{i=1}^{n} \sigma \left(\frac{1}{\sqrt{\pi}} - 2\Phi(z_i) + z_i (2\phi(z_i)-1)\right),
+#' \mathrm{CRPS}=\sum_{i=1}^{n} \sigma \left(\frac{1}{\sqrt{\pi}} - 2\Phi(z_i) + z_i (2\phi(z_i)-1)\right),
 #' }
 #'
-#' where \eqn{z_i=(y_i-\hat{y}_i)/\sqrt{\operatorname{var}(\hat{y}_i)}}, and \eqn{\Phi} and \eqn{\phi} are CDF and density functions of standard normal distribution. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC in the \code{ldt} package.
+#' where \eqn{z_i=(y_i-\hat{y}_i)/\sqrt{\mathrm{var}(\hat{y}_i)}}, and \eqn{\Phi} and \eqn{\phi} are CDF and density functions of standard normal distribution. Although this metric cannot be directly interpreted as a weight, it is treated in a manner similar to AIC in the \code{ldt} package.
 #'
 #' @section Other metrics:
 #' There are some other metrics in \code{ldt}. One is ``directional prediction accuracy'', which is calculated as the proportion of predictions that correctly predict the direction of change relative to the previous observation. Its value ranges from 0 to 1, with higher values indicating better performance of the model. Its value is used as the weight of a model. Note that this is applicable only to time-series data.

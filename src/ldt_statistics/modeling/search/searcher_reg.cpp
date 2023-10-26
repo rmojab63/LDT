@@ -82,6 +82,10 @@ std::string SearcherReg::EstimateOne(Tv *work, Ti *workI) {
   auto numMeas = (Ti)(this->pMetrics->MetricsIn.size() +
                       this->pMetrics->MetricsOut.size());
 
+  if (numMeas == 0)
+    throw LdtException(ErrorType::kLogic, "searcher-reg", "No measures!");
+  if (TargetsPositions.size() == 0)
+    throw LdtException(ErrorType::kLogic, "searcher-reg", "No targets!");
   auto metrics = VMatrix<Tv>(numMeas, (Ti)TargetsPositions.size());
 
   auto extra = VMatrix<Ti>(mExtraLength);

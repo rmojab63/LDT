@@ -97,10 +97,10 @@ print.ldt.list <- function(x, ...) {
 print.ldt.search <- function(x, ...) {
   if (is.null(x))
     stop("argument is null.")
-  if (!is(x, "ldt.search"))
+  if (!inherits(x, "ldt.search"))
     stop("Invalid class. An 'ldt.search' object is expected.")
 
-  is_summary = is(x, "ldt.search.summary")
+  is_summary = inherits(x, "ldt.search.summary")
   method <- tolower(attr(x, "method"))
   cat("LDT search result:\n")
   cat(" Method in the search process:", attr(x, "method"), "\n")
@@ -262,11 +262,11 @@ print.ldt.estim <- function(x, ...) {
 
   if (is.null(x))
     stop("argument is null.")
-  if (!is(x, "ldt.estim"))
+  if (!inherits(x, "ldt.estim"))
     stop("Invalid class. An 'ldt.estim' object is expected.")
 
   method <- tolower(attr(x, "method"))
-  cat("LDT '", attr(x, "method") ,"' estimation result\n", sep = "")
+  #cat("LDT '", attr(x, "method") ,"' estimation result\n", sep = "")
   cat("Model: ", do.call(paste0("estim.", method, ".model.string"), list(obj = x)), "\n")
 
   dist <- "t"
@@ -286,7 +286,7 @@ print.ldt.estim <- function(x, ...) {
   j <- 0
   for (dep_var in dep_vars) {
     j <- j + 1
-    cat(paste0("\nDependent variable: ", dep_var, "\n"))
+    cat(paste0("Endogenous variable: ", dep_var, "\n"))
     cat("----------------------------------------------------\n")
     if (!is.null(x$estimations$resid)){
       cat("Residuals:\n")
@@ -377,7 +377,7 @@ print.ldt.estim <- function(x, ...) {
 print.ldt.varma.prediction <- function(x, ...) {
   if (is.null(x))
     stop("argument is null.")
-  if (!is(x, "ldt.varma.prediction"))
+  if (!inherits(x, "ldt.varma.prediction"))
     stop("Invalid class. An 'ldt.varma.prediction' object is expected.")
   if (is.null(x$means))
     stop("Invalid data. Predictions are not available.")
@@ -405,7 +405,7 @@ print.ldt.varma.prediction <- function(x, ...) {
 print.ldt.estim.projection <- function(x, ...) {
   if (is.null(x))
     stop("argument is null.")
-  if (!is(x, "ldt.estim.projection"))
+  if (!inherits(x, "ldt.estim.projection"))
     stop("Invalid class. An 'ldt.estim.projection' object is expected.")
   if (is.null(x$means) || nrow(x$means) == 0)
     stop("Invalid data. Predictions are not available.")
@@ -420,4 +420,307 @@ print.ldt.estim.projection <- function(x, ...) {
     `First variance` = if (is.null(x$vars)) {NULL} else {x$vars[1,]}
   ), "  ")
 }
+
+
+
+
+
+
+get_coef_stars <- function(pvalue, formatLatex) {
+  if (is.nan(pvalue)) { # e.g., restricted to zero
+    return(if (formatLatex) "\\textsuperscript{(r)}" else "<sup>(r)</sup>")
+  }
+  paste0(
+    (if (formatLatex) "\\textsuperscript{" else "<sup>"),
+    if (pvalue <= 0.01) {
+      "***"
+    } else if (pvalue <= 0.05) {
+      "**"
+    } else if (pvalue <= 0.1) {
+      "*"
+    } else {
+      ""
+    }, (if (formatLatex) "}" else "</sup>")
+  )
+}
+
+get_coef_func <- function(tableFun, formatNumFun, formatLatex){
+
+  if (is.function(tableFun)){
+    # no action
+  }
+  else if (tableFun == "sign") {
+    tableFun <- function(j, coef, std, pvalue) {
+      if (coef > 0) {
+        "+"
+      } else if (coef < 0) {
+        "-"
+      } else {
+        "0"
+      }
+    }
+  }
+  else if (tableFun == "sign_star") {
+    tableFun <- function(j, coef, std, pvalue) {
+      paste0(if (coef > 0) {
+        "+"
+      } else if (coef < 0) {
+        "-"
+      } else {
+        "0"
+      }, get_coef_stars(pvalue, formatLatex))
+    }
+  }
+  else if (tableFun == "coef") {
+    tableFun <- function(j, coef, std, pvalue) {
+      formatNumFun(j, coef)
+    }
+  }
+  else if (tableFun == "coef_star") {
+    tableFun <- function(j, coef, std, pvalue) {
+      paste0(formatNumFun(j, coef), get_coef_stars(pvalue, formatLatex))
+    }
+  }
+  else if (tableFun == "coef_star_std") {
+    tableFun <- function(j, coef, std, pvalue) {
+      paste0(formatNumFun(j, coef), get_coef_stars(pvalue, formatLatex), " (", formatNumFun(j, std), ")")
+    }
+  }
+  else
+    stop("tableFun must be a function or a valid character string.")
+
+  tableFun
+}
+
+#' Create Table of Coefficients
+#'
+#' This function summarizes a list of estimated models (output of \code{estim.?} functions) and creates
+#' a table of coefficients.
+#'
+#' @param estimList A named list where each element is output from a \code{estim.?} function, all belonging to a common analysis.
+#' @param depList List of endogenous variable name to be included in the columns of the table. If \code{NULL}, everything is added.
+#' @param tableFun Function with arguments \code{coef}, \code{std}, \code{pvalue}, \code{minInColm}, \code{maxInCol} for formatting estimated coefficients.
+#' Can also use one of the following character strings for predefined formatting: \code{sign}, \code{sign_star}, \code{coef}, \code{coef_star}, \code{coef_star_std}.
+#' @param formatNumFun Function to format numbers if \code{tableFun} uses predefined formatting. It takes two arguments: \code{colIndex} (determines the column index) and \code{x} (determines the value).
+#' @param regInfo List of keys (such as \code{num_eq}, \code{num_dep}, ...) to determine information at bottom of table. Use "" (empty) for empty rows.
+#' A list of available options is given in the details section.
+#' @param textFun Function to change any text in columns or rows of the table to a more informative text.
+#' It has two arguments: \code{text} and \code{type}.
+#' @param textFun_sub List for replacing special characters. If \code{NULL}, 'list(c("%", "\\\\%"), c("_", "\\\\_"))' is used.
+#' @param textFun_max Maximum length for texts in the table.
+#' @param expList Determines the name of the explanatory variables to insert in table.
+#' If \code{NA}, it inserts all coefficients.
+#' If it is an integer, it insert that number of explanatory variables in the table.
+#' It can be a list of available explanatory variables.
+#' Use \code{...} for empty rows.
+#' @param formatLatex If \code{TRUE}, default options are for 'latex', otherwise, 'html'.
+#' @param numFormat default formatting for the numbers.
+#'
+#' @details
+#' The first part of the table is the header, followed by the coefficients. At the bottom, you can insert
+#' the following items by specifying \code{regInfo}:
+#' \itemize{
+#' \item An empty character string (i.e., "") for inserting empty line.
+#' \item \code{"sigma2"} for the covariance of regression, if it is available.
+#' \item An available metric name in the row names of \code{estimList[[...]]$metrics}.
+#' }
+#'
+#' Furthermore, second argument in \code{textFun} can be:
+#' \itemize{
+#' \item \code{hname}: shows that the text is a header name from the \code{estimList} elements.
+#' \item \code{dname}: shows that the text is an endogenous variable name from the columns of \code{coefs} matrix.
+#' \item \code{rname}: shows that the text is a key given in \code{regInfo}.
+#' \item \code{ename}: shows that the text is an explanatory variable name from the rows of \code{coefs} matrix.
+#' \item \code{NULL}: shows that the text is a specific code or something else.
+#' }
+#'
+#' @return A data frame with (formatted) requested information.
+#' @export
+#' @examples
+#' # See 'search.?' or 'estim.?' functions for some examples.
+#'
+coefs.table <- function(estimList, depList = NULL, tableFun = "coef_star", formatNumFun  = NULL,
+                        regInfo = NULL, textFun = NULL,
+                        textFun_sub = NULL, textFun_max = 20,
+                        expList = NA, formatLatex = TRUE,
+                        numFormat = "%.2f") {
+
+  if (is.null(estimList$counts) == FALSE)
+    estimList <- list(m = estimList)
+
+
+  if (is.null(regInfo))
+    regInfo <- c("", "obs")
+
+  # there are some functions that format the inputs:
+  # Function to change or truncate the text:
+  if (is.null(textFun))
+    textFun <- function(text, type) text
+  textFunCopy = textFun
+  textFun <- function(text, type){
+    text <- textFunCopy(text, type)
+    if (nchar(text) > textFun_max)
+      text <- paste0(substr(text, 1, textFun_max - 3), "...")
+    text
+  }
+
+  # Function to format the numbers
+
+  if (is.null(formatNumFun))
+    formatNumFun = function(colIndex, x) {
+      if (is.integer(x))
+        x
+      else
+        sprintf0(numFormat, x)
+    }
+
+
+  # Function to replace special characters
+  if(is.null(textFun_sub))
+    textFun_sub = list(c("%", "\\\\%"), c("_", "\\\\_"))
+  textFun_sub <- as.list(textFun_sub)
+  textSubFun = function(text){
+    for (sg in textFun_sub)
+      text <- gsub(sg[[1]], sg[[2]], text, fixed = TRUE)
+    text
+  }
+
+  # Function to format the coefficients:
+  tableFun <- get_coef_func(tableFun, formatNumFun, formatLatex)
+
+  # Create column names
+  col_names <- names(estimList)
+  if (is.null(col_names))
+    col_names <- paste0("m", rep(1:length(estimList)))
+  col_names <- lapply(col_names, function(n) textFun(n, "hname"))
+
+  if (is.null(depList)) # get all names
+    depList <- unique(unlist(lapply(estimList, function(e) colnames(e$estimations$coefs))))
+  else
+    depList <- as.character(depList)
+  depList <- lapply(depList, function(n) textFun(n, "dname"))
+
+  col_names <- unlist(lapply(seq_along(col_names), function(i) {
+    rep(col_names[i], sum(colnames(estimList[[i]]$estimations$coefs) %in% depList))
+  }))
+
+  # Create row names
+  if (is.character(expList))
+    row_names <- expList
+  else{
+    row_names <- unique(unlist(lapply(estimList, function(e) row.names(e$estimations$coefs)))) # get all names
+    if (length(expList) == 1 && is.numeric(expList))
+      row_names <- unlist(c(row_names[1:expList], "..."))
+  }
+  row_names0 <- row_names # without formatting
+  last_x_ind <- length(row_names)
+  #    include other rows:
+  dep_cel_code <- "dep."
+  row_names <- unlist(c(textFun(dep_cel_code, NULL),
+                        lapply(row_names, function(n) textFun(n, "ename")),
+                        lapply(regInfo, function(n) textFun(n, "rname"))))
+  row_names0 <- unlist(c(dep_cel_code, row_names0, regInfo))
+
+
+  # Create the table
+  r_table <- matrix("", length(row_names), length(col_names))
+  rownames(r_table) <- row_names
+  colnames(r_table) <- col_names
+
+  # start the loop
+  j <- 0
+  for (e in estimList) {
+    for (d in depList){
+      if (!d %in% colnames(e$estimations$coefs)) next
+      j <- j + 1
+      r_table[1, j] <- d
+
+      ns <- row.names(e$estimations$coefs)
+      i <- 0
+
+      # Insert coefficients:
+      for (v in ns) {
+        i <- i + 1
+
+        ind <- which(row_names0 == v)
+        if (length(ind) == 0) # not found in the table
+          next
+        if (ind[[1]] > last_x_ind+1) # it's a regInfo name
+          next
+        if (length(ind) > 1)
+          warning(paste0("Multiple name exists (name= ", v ,"estim. index = ", j, ")"))
+
+        if (v == "...") # allow it
+          next
+
+        coef <- e$estimations$coefs[i, d]
+        std <- e$estimations$stds[i, d]
+        pv <- e$estimations$pValues[i, d]
+        r <- tableFun(j, coef, std, pv)
+        r_table[ind[[1]], j] <- r
+      }
+
+      # Insert regression information:
+      i <- last_x_ind + 1 # because of the first row
+      for (rn in regInfo) {
+        i <- i + 1
+        v <- NULL
+        r <- rn[[1]]
+
+        if (r == "")
+          v <- "" # for an empty cell/line
+        else if (r == "sigma2")
+          v <- formatNumFun(j, e$estimations$sigma[d, d])
+        else{
+          # check and see if it is a metric
+          ind <- which(r == rownames(e$metrics))
+          if (length(ind) != 0) {
+            v <- formatNumFun(j, e$metrics[ind, d])
+
+            if (r == "f") {
+              ind0 <- which("fProb" == rownames(e$metrics))
+              fp <- e$metrics[ind0, d]
+              if (is.na(fp)) {
+                warning("p-value of 'F' statistics is NA.")
+              }
+              v <- paste0(v, get_coef_stars(fp))
+            }
+
+          }
+          else{
+
+            # check and see if it is a count metric
+            ind <- which(r == names(e$counts))
+            if (length(ind) != 0) {
+              v <- formatNumFun(j, e$counts[[ind]])
+            }
+
+          }
+        }
+
+        if (is.null(v) || length(v) == 0) {
+          warning(paste0("Invalid 'regInfo' member is requested. 'NA' is used. code=", r))
+          v <- NA
+        }
+        if (ncol(r_table) < j) {
+          d <- 0
+        }
+
+        r_table[i, j] <- v
+
+      }
+    }
+  }
+
+  if (length(estimList) == 1){ # header is the same for all
+    colnames(r_table) <- r_table[1,]
+    r_table <- r_table[2:nrow(r_table),,drop=FALSE]
+  }
+  else if (length(depList) == 1){
+    r_table <- r_table[2:nrow(r_table),,drop=FALSE]
+  }
+
+  return(r_table)
+}
+
 

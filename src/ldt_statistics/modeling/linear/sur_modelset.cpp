@@ -171,11 +171,11 @@ SurModelset::SurModelset(const SearchData &data,
                          Tv sigSearchMaxProb) {
   metrics.Update(true, false);
   checks.Update(metrics);
-  items.Update(metrics, items.LengthTargets, items.LengthDependents,
-               items.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthEndogenous,
+               items.LengthExogenous);
 
   // check items.Length1 with the number of exogenous variables ?!
-  if (items.Length1 != 0 && items.Length1 != items.LengthExogenouses)
+  if (items.Length1 != 0 && items.Length1 != items.LengthExogenous)
     throw LdtException(ErrorType::kLogic, "sur-modelset",
                        "inconsistent number of exogenous variables");
   if (items.Length1 != 0 && checks.Estimation == false)
@@ -185,11 +185,11 @@ SurModelset::SurModelset(const SearchData &data,
   // check group indexes and create sizes array
   for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a < items.LengthDependents)
+      if (a < items.LengthEndogenous)
         throw LdtException(ErrorType::kLogic, "sur-modelset",
                            "invalid exogenous group element (it is less that "
                            "the index of the first exogenous variable)");
-      if (a >= items.LengthDependents + items.LengthExogenouses)
+      if (a >= items.LengthEndogenous + items.LengthExogenous)
         throw LdtException(
             ErrorType::kLogic, "sur-modelset",
             "invalid exogenous group element (it is larger than the number "

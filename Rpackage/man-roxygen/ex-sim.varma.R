@@ -11,3 +11,5 @@ sample2 <- sim.varma(Sigma, list(ar1, ar2), list(ma1), exoCoef = B ,
 
 # Plot the y series
 matplot(sample2$y,type = "l")
+
+# see the examples in 'estim.varma' or 'search.varma' functions

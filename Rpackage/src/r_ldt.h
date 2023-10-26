@@ -103,7 +103,7 @@ void UpdateOptions(List &itemsR, List &metricsR, List &modelChecksR,
                    SearchMetricOptions &res_metric, SearchItems &res_items,
                    SearchModelChecks &res_checks,
                    std::vector<std::string> &metricsNames, int length1,
-                   int exoCount, int numTargets, int numDependents,
+                   int exoCount, int numTargets, int numEndogenous,
                    bool isTimeSeries, bool type1NeedsModelEstim,
                    const char *length1Informtion, bool isDc);
 

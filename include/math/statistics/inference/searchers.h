@@ -268,7 +268,7 @@ struct LDT_EXPORT SearchItems {
   bool KeepModelEvaluations = true;
 
   /// @brief If true, a vector of inclusion weights are calculated. The length
-  /// of the vector is \ref LengthDependents + \ref LengthExogenuoses
+  /// of the vector is \ref LengthEndogenous + \ref LengthExogenous
   bool KeepInclusionWeights = false;
 
   /// @brief Length of type 1
@@ -279,11 +279,11 @@ struct LDT_EXPORT SearchItems {
 
   /// @brief Number of the dependent variable (might be overridden internally,
   /// given the data)
-  Ti LengthDependents = 0;
+  Ti LengthEndogenous = 0;
 
   /// @brief Number of the exogenous variables (might be overridden internally,
   /// given the data)
-  Ti LengthExogenouses = 0;
+  Ti LengthExogenous = 0;
 
   /// @brief If larger than zero, it keeps the data regarding the first K count
   /// models

@@ -20,9 +20,9 @@ checkEquation <- function(object, equations, justOne){
   equations
 }
 
-#' Extract Dependent Variable(s) Data
+#' Extract Endogenous Variable(s) Data
 #'
-#' This function extracts data of a dependent variable(s) from an estimated model.
+#' This function extracts data of a endogenous variable(s) from an estimated model.
 #'
 #' @param object An object of class \code{ldt.estim}.
 #' @param equations A number, a numeric array or a string array specifying the indices or names of the endogenous variables in the equations. \code{NULL} means all equations.
@@ -113,12 +113,12 @@ cooks.distance0 <- function(object, equation, addNA = TRUE){
     omit_obs <- object$info$data$obsCount - nrow(object$estimations$resid)
 
   h <- hatvalues0(object, equation, FALSE)
-  r <- resid(object, equation)
+  r <- residuals.ldt.estim(object, equation)
   if (omit_obs > 0)
     r <- r[(omit_obs+1):length(r)]
 
   mse <- sum(r^2)/length(r)
-  c <- coef(object, equations = equation, removeZeroRest = TRUE)
+  c <- coef.ldt.estim(object, equations = equation, removeZeroRest = TRUE)
   p <- length(c[1])
   if (object$info$data$hasWeight){
     stop("Cook's distance is not implemented for weighted observations.") # couldn't find a reference
@@ -136,10 +136,10 @@ cooks.distance0 <- function(object, equation, addNA = TRUE){
 #' This function returns residuals from or calculates the standardized residuals for an \code{ldt.estim} object.
 #'
 #' @param object An object of class \code{ldt.estim}.
-#' @param equation A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
+#' @param equations A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
 #' @param standardized If \code{TRUE}, standardized residuals are returned. See details.
-#' @param pearson If \code{TRUE}, it returns (or uses) Pearson residuals for binomial regression.
-#' @param ...
+#' @param pearson If \code{TRUE}, it returns (or uses) Pearson residuals for binary choice regression.
+#' @param ... Additional arguments.
 #'
 #' @details
 #' The standardized residuals have identical variance.
@@ -185,7 +185,7 @@ residuals.ldt.estim <- function(object, equations = NULL, standardized = FALSE, 
 #' This function calculates and returns fitted values for an \code{ldt.estim} object.
 #'
 #' @param object An object of class \code{ldt.estim}.
-#' @param equation A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
+#' @param equations A number, a numeric array or a string array specifying the equations with residual data. If \code{NULL}, residuals in all equations are returned.
 #' @param ... Additional arguments.
 #'
 #' @return A matrix containing the exogenous data.
@@ -218,10 +218,12 @@ logLik.ldt.estim <- function(object, ...){
 #'
 #' @param object An object of class \code{ldt.estim}
 #' @param ... Additional arguments.
+#' @param k Unused parameter.
 #'
 #' @return The value of AIC for the whole system.
+#' #' @importFrom stats AIC
 #' @export
-AIC.ldt.estim <- function(object, ...){
+AIC.ldt.estim <- function(object, ..., k = NA){
   #equation <- checkEquation(object, equation, TRUE) It is not equation-specific
   object$metrics["aic", 1]
 }
@@ -234,6 +236,7 @@ AIC.ldt.estim <- function(object, ...){
 #' @param ... Additional arguments.
 #'
 #' @return The value of BIC for the whole system.
+#' @importFrom stats BIC
 #' @export
 BIC.ldt.estim <- function(object, ...){
   #equation <- checkEquation(object, equation, TRUE) It is not equation-specific
@@ -255,7 +258,7 @@ BIC.ldt.estim <- function(object, ...){
 predict.ldt.estim <- function(object, ...){
   if (is.null(object))
     stop("object is null.")
-  if (!is(object, "ldt.estim"))
+  if (!inherits(object, "ldt.estim"))
     stop("Invalid class. An 'ldt.estim' object is expected.")
 
   res <- list()
@@ -274,6 +277,7 @@ predict.ldt.estim <- function(object, ...){
 #' new data must be provided while estimating the model.
 #'
 #' @param object An object of class \code{ldt.estim.varma}
+#' @param actualCount Number of actual observations to be included in the result.
 #' @param startFrequency Frequency of the first observation used in the estimation.
 #' This is object of class \code{ldtf}.
 #' @param ... Additional arguments.
@@ -287,7 +291,7 @@ predict.ldt.estim.varma <- function(object,
                                     ...){
   if (is.null(object))
     stop("object is null.")
-  if (!is(object, "ldt.estim.varma"))
+  if (!inherits(object, "ldt.estim.varma"))
     stop("Invalid class. An 'ldt.estim.varma' object is expected.")
   if (is.null(object$prediction) || is.null(object$prediction$means))
     stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")

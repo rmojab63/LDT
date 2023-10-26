@@ -1,8 +1,8 @@
 
 
-#' Search a Model set for a General R Function
+#' Create a Model Set for an R Function
 #'
-#' Use this model to create a model set for a general R function.
+#' Use this model to create a model set for an R function.
 #'
 #' @param data A list that determines data and other required information for the search process.
 #' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
@@ -41,7 +41,12 @@
 #' \item \code{type1vars} (Numeric Matrix or NULL): similar to \code{type1means} but for reporting the variances.
 #' }
 #'
-#' @return
+#' @return A nested list with the following members:
+#' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
+#' \item{results}{A data frame with requested information in \code{items} list.}
+#' \item{info}{The arguments and some general information about the search process such as the elapsed time.}
+#'
+#' Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 search.rfunc <- function(data = get.data(),
                          combinations = get.combinations(),

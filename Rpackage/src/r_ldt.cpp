@@ -228,7 +228,7 @@ void UpdateOptions(List &itemsR, List &metricsR, List &checksR,
                    SearchMetricOptions &metrics, SearchItems &items,
                    SearchModelChecks &checks,
                    std::vector<std::string> &metricsNames, int length1,
-                   int exoCount, int numTargets, int numDependents,
+                   int exoCount, int numTargets, int numEndogenous,
                    bool isTimeSeries, bool type1NeedsModelEstim,
                    const char *length1Informtion, bool isDc) {
 
@@ -241,8 +241,8 @@ void UpdateOptions(List &itemsR, List &metricsR, List &checksR,
   UpdateModelCheckItems(checksR, checks, metrics, items);
 
   items.LengthTargets = numTargets; // Modelset will use it
-  items.LengthDependents = numDependents;
-  items.LengthExogenouses = exoCount;
+  items.LengthEndogenous = numEndogenous;
+  items.LengthExogenous = exoCount;
 }
 
 void UpdateRocOptions(List &rocOptionsR, RocOptions &options) {
@@ -629,7 +629,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
                              _["searchedCount"] = wrap(result.SearchedCount),
                              _["failedCount"] = wrap(fcount),
                              _["failedDetails"] = wrap(failDetails));
-  if (fcount > 0 & printMsg)
+  if (fcount > 0 && printMsg)
     Rprintf("** Search process ended successfully. However, there are some "
             "failed estimations. See 'result$counts' for more details.");
 
@@ -671,7 +671,7 @@ List GetModelSetResults(const ModelSet &model, const SearchItems &items,
         if (items.KeepInclusionWeights) {
           auto typeName = std::string("inclusion");
 
-          auto covars = items.LengthDependents + items.LengthExogenouses;
+          auto covars = items.LengthEndogenous + items.LengthExogenous;
           auto incweights = RunningMoments<1, true, false, Tv>();
           auto mat_d = std::unique_ptr<double[]>(new double[covars * 2]);
           auto mat = ldt::Matrix<double>(mat_d.get(), covars, 2);

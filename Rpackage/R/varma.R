@@ -1,45 +1,29 @@
 
-#' Search for Best VARMA Models
+#' Create Model Set for VARMA Models
 #'
 #' Use this function to create a Vector Autoregressive Moving Average model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns. It can be \code{NULL}.
-#' @param numTargets An integer representing the number of target variables.
-#' For example, if 2, the first two variables in the first columns of \code{y} will be targets.
-#' Information is saved just for the target variables.
-#' It must be positive and cannot be larger than the number of endogenous variables.
-#' @param ySizes An integer vector specifying the number of endogenous variables in the regressions.
-#' For example, \code{c(1,2)} means the model set contains all regressions with 1 and 2 endogenous variables.
-#' If \code{NULL}, \code{c(1)} is used.
-#' @param yPartitions A list of integer vectors that partition the indexes of the endogenous variables.
-#' No regression is estimated with two variables in the same partition.
-#' If \code{NULL}, each variable is placed in its own partition, and the size of the model set is maximized.
-#' @param xGroups A list of integer vectors that determine different combinations of the indexes of the exogenous variables to be used as exogenous variables in the SUR regressions.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
+#' @param combinations A list that determines the combinations of endogenous and exogenous variables in the search process.
+#' Use [get.combinations()] function to define it.
+#' @param metrics A list of options for measuring performance. Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set. Use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search. Use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search. Use [get.search.options] function to get them.
 #' @param maxParams An integer vector that determines the maximum values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(2,0,0,0,0,0)} is used.
 #' @param seasonsCount An integer value representing the number of observations per unit of time.
 #' @param maxHorizon An integer value representing the maximum value for the prediction horizon if \code{type1} is \code{TRUE} in the \code{modelChecks} argument. Also, it is used as the maximum prediction horizon in checking predictions.
-#' @param newX A matrix of new exogenous data for out-of-sample prediction. It must have the same number of columns as the \code{x} argument.
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
-#' @param lbfgsOptions A list containing L-BFGS optimization options.
-#' Use [get.options.lbfgs] function for initialization.
-#' @param metrics A list of options for measuring performance.
-#' Use [get.search.metrics] function to get them.
-#' @param modelChecks A list of options for excluding a subset of the model set.
-#' See and use [get.search.modelchecks] function to get them.
-#' @param items A list of options for specifying the purpose of the search.
-#' See and use [get.search.items] function to get them.
-#' @param options A list of extra options for performing the search.
-#' See and use [get.search.options] function to get them.
+#' @param lbfgsOptions A list containing L-BFGS optimization options. Use [get.options.lbfgs] function for initialization.
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{...}
-#' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
+#' \item{results}{A data frame with requested information in \code{items} list.}
+#' \item{info}{The arguments and some general information about the search process such as the elapsed time.}
 #'
-#' Note that the output does not contain any estimation results,
-#' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+#' Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
 #' @example man-roxygen/ex-search.varma.R
@@ -162,25 +146,20 @@ search.varma <- function(data = get.data(),
 #'
 #' Use this function to estimate a Vector Autoregressive Moving Average model.
 #'
-#' @param y A matrix of endogenous data with variables in the columns.
-#' @param x A matrix of exogenous data with variables in the columns. It can be \code{NULL}.
+#' @param data A list that determines data and other required information for the search process.
+#' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
 #' @param params An integer vector that determines the values for the parameters of the VARMA model: \code{(p,d,q,P,D,Q)}. If \code{NULL}, \code{c(1,0,0,0,0,0)} is used.
 #' @param seasonsCount An integer value representing the number of observations per unit of time.
-#' @param addIntercept If \code{TRUE}, an intercept is automatically added to x.
-#' @param lbfgsOptions A list containing L-BFGS optimization options.
-#' Use [get.options.lbfgs] function for initialization.
+#' @param lbfgsOptions A list containing L-BFGS optimization options. Use [get.options.lbfgs] function for initialization.
 #' @param olsStdMultiplier A number used as a multiplier for the standard deviation of OLS, used for restricting maximum likelihood estimation.
 #' @param pcaOptionsY A list of options to use principal components of \code{y}, instead of the actual values. Set to \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param pcaOptionsX A list of options to use principal components of \code{x}, instead of the actual values. Set to \code{NULL} to disable. Use [get.options.pca()] for initialization.
 #' @param maxHorizon An integer representing the maximum prediction horizon. Set to zero to disable prediction.
-#' @param newX A matrix containing new exogenous variables to be used in predictions. Its columns must be the same as \code{x}.
 #' @param simFixSize An integer that determines the number of out-of-sample simulations. Use zero to disable simulation.
 #' @param simHorizons An integer vector representing the prediction horizons to be used in out-of-sample simulations. See also [get.search.metrics()].
 #' @param simUsePreviousEstim If \code{TRUE}, parameters are initialized only in the first step of the simulation. The initial values of the n-th simulation (with one more observation) are the estimations from the previous step.
 #' @param simMaxConditionNumber A number representing the maximum value for the condition number in simulation.
-#' @param simTransform Use a character string (e.g. \code{exp} for exponential function) or a function to transform data before calculating RMSE, MAE, RMSPE, MAPE, CRPS metrics. To disable this feature, use \code{NULL}.
-#' @param printMsg Set to \code{TRUE} to enable printing some details.
-#'
+#' 
 #' @return A nested list with the following items:
 #' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
 #' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
@@ -205,7 +184,7 @@ search.varma <- function(data = get.data(),
 #' @importFrom Rdpack reprompt
 #' @export
 #' @example man-roxygen/ex-estim.varma.R
-#' @seealso [search.varma], [search.varma.stepwise]
+#' @seealso [search.varma]
 estim.varma <- function(data,
                         params = NULL,
                         seasonsCount = 0,
@@ -327,7 +306,7 @@ estim.varma.from.search <- function(searchResult, endogenous, exogenous, extra, 
 estim.varma.model.string <- function(obj){
   if (is.null(obj))
     stop("argument is null.")
-  if (!is(obj, "ldt.estim.varma"))
+  if (!inherits(obj, "ldt.estim.varma"))
     stop("Invalid class. An 'ldt.estim.varma' object is expected.")
 
   y <- obj$info$data$data[,1:obj$info$data$numEndo, drop = FALSE]
@@ -460,8 +439,6 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #' @param nBurn An integer representing the number of burn-in observations to remove from the generated time series.
 #' @param intercept A numeric vector representing the intercept of the VARMA model or a logical value indicating whether to generate a random intercept.
 #' @param d An integer representing the order of integration.
-#' @param numFormat A character string that determines how to format the numbers, to be used as the argument of the \code{sprintf} function.
-#' If \code{NULL}, conversion to latex or html representations are disabled.
 #' @param startFrequency The frequency of the first observation in the data.
 #' @param seasonalCoefs An integer vector of size 4: \code{(P,D,Q,s)} where
 #' \code{P} is the number of random seasonal AR coefficients to generate,
@@ -483,8 +460,6 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #'   \item{seasonalCoefs}{The argument \code{seasonalCoefs} }
 #'   \item{nObs}{The number of observations generated.}
 #'   \item{nBurn}{The number of burn-in observations removed.}
-#'   \item{eqsLatex}{character string, Latex representation of the equations of the system.}
-#'   \item{eqsLatexSys}{character string, Latex representation of the system in matrix form.}
 #'
 #'
 #' @export
@@ -493,7 +468,7 @@ arima_poly_0 <- function(p, q, P, Q, numS) {
 #'
 sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
                       exoCoef = 0L, nObs = 100, nBurn = 10,
-                      intercept = TRUE, d = 0, numFormat = "%.2f",
+                      intercept = TRUE, d = 0,
                       startFrequency = NULL,
                       seasonalCoefs = NULL) {
 
@@ -703,13 +678,7 @@ sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
               d = d,
               seasonalCoefs = seasonalCoefs,
               nObs = nObs,
-              nBurn = nBurn,
-              eqsLatex = ifelse(is.null(numFormat), NULL,
-                                varma.to.latex.eqs(sigma, arList, intercept,
-                                                   exoCoef, maList, d, D, s, as.character(numFormat))),
-              eqsLatexSys = ifelse(is.null(numFormat), NULL,
-                                   varma.to.latex.mat(sigma, arList, intercept,
-                                                      exoCoef, maList, d, D, s, as.character(numFormat)))))
+              nBurn = nBurn))
 }
 
 
@@ -741,7 +710,7 @@ sim.varma <- function(sigma = 2L, arList = 1L, maList = 0L,
 #' @seealso [estim.varma]
 get.varma.params <- function(coef, numAR = 1, numMA = 0,
                              numExo = 0, intercept = TRUE, numAR_s = 0, numMA_s = 0, numSeasons = 1) {
-  coef <- as.matrix(coef)
+  coef <- t(as.matrix(coef))
   numEq <- nrow(coef)
   numAR <- as.integer(numAR)
   numExo <- as.integer(numExo)
@@ -772,7 +741,7 @@ get.varma.params <- function(coef, numAR = 1, numMA = 0,
 
   expected_ncol <- numNon0Ar * numEq + numNon0Ma * numEq + numExo + ifelse(intercept, 1, 0)
   if (ncol(coef) != expected_ncol) {
-    stop("The number of columns of 'coef' is not consistent with the other arguments")
+    stop("The number of rows of 'coef' is not consistent with the other arguments")
   }
 
   start <- 1

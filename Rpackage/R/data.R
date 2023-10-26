@@ -1,30 +1,44 @@
 
 #' Transform and Prepare Data for Analysis
 #'
-#' This function prepares a data matrix for analysis by applying a Box-Cox transformation to the endogenous variables, adding an intercept column, and optionally adding new rows with exogenous data.
+#' This function prepares a data matrix for analysis. It applies a Box-Cox transformation to the endogenous variables, adds an intercept column, and optionally includes new rows with exogenous data.
 #'
-#' @param data A data.frame or a numeric matrix as the main data source.
-#' @param endogenous A single number for the number of endogenous variables at the first columns or a list of names indicating the endogenous variables. The rest will be exogenous variables.
-#' @param equations A formula or a list of formula objects representing the equations to be used instead of \code{endogenous}. If given, the final data is a matrix where the response variables are in the first columns, and the predictor variables are in the subsequent columns.
-#' @param lambdas A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation.
-#' Use \code{NULL} for no transformation, \code{NA} for estimating the lambda parameter for each variable,
-#' a single number for equal lambda parameter for all variables, and a numeric vector for distinct lambda parameters for the corresponding variables.
-#' @param newData A data.frame or a numeric matrix representing new data for exogenous variables. Its structure should be similar to \code{data} without endogenous or response variables.
+#' @param data A data.frame or a numeric matrix that serves as the primary data source.
+#' @param endogenous A single number indicating the number of endogenous variables in the first columns, or a list of names specifying the endogenous variables. The remaining variables will be treated as exogenous.
+#' @param equations A formula or a list of formula objects that represent the equations to be used instead of \code{endogenous}. If provided, the final data will be a matrix where the response variables are in the first columns and the predictor variables are in the subsequent columns.
+#' @param lambdas A numeric vector, a single number, NA, or NULL indicating the lambda parameter(s) for the Box-Cox transformation. Use \code{NULL} for no transformation, \code{NA} for estimating the lambda parameter for each variable, a single number for an equal lambda parameter for all variables, and a numeric vector for distinct lambda parameters for corresponding variables.
+#' @param newData A data.frame or a numeric matrix representing new data for exogenous variables. It should have a structure similar to \code{data}, excluding endogenous or response variables.
 #' @param addIntercept A logical value indicating whether to add an intercept column to the final matrix.
-#' @param weights A numeric vector or a column matrix representing weights of observations. It is not implemented in all applications.
-#' @param ... additional parameters for \code{MASS::boxcox} function.
+#' @param weights A numeric vector or a column matrix representing weights of observations. Not all applications implement this parameter.
+#' @param ... Additional parameters for the \code{MASS::boxcox} function.
 #'
-#' @return A list of items suitable for being used in the \code{ldt::search.?} functions. It has the following members:
-#' \item{data}{The final data matrix. Endogenous variables are in the first columns, then comes the weights (if given), then the intercept (if added), and finally the exogenous variables.}
+#' @return A list suitable for use in \code{ldt::search.?} functions. The list contains:
+#' \item{data}{The final data matrix. Endogenous variables are in the first columns, followed by weights (if provided), then the intercept (if added), and finally the exogenous variables.}
 #' \item{numEndo}{The number of endogenous variables in the data.}
 #' \item{numExo}{The number of exogenous variables in the data (including 'intercept' if it is added).}
 #' \item{obsCount}{The number of observations in the original data.}
-#' \item{newX}{The matrix of new observations for the exogenous variables.}
+#' \item{newX}{The matrix of new observations for exogenous variables.}
 #' \item{newObsCount}{The number of observations in the new data.}
 #' \item{lambdas}{The lambda parameters used in the Box-Cox transformation.}
-#' \item{hasIntercept}{Indicates whether an intercept column in added in the final matrix.}
+#' \item{hasIntercept}{Indicates whether an intercept column is added to the final matrix.}
 #' \item{hasWeight}{Indicates whether there is a weight column in the final matrix.}
-#' \item{startFrequency}{Frequency of the first observation, extracted from \code{ldtf} attribute of \code{data}, if available. It will be used in time-series analysis, such as VARMA estimation.}
+#' \item{startFrequency}{Frequency of the first observation, extracted from \code{ldtf} attribute of \code{data}, if available. This will be used in time-series analysis such as VARMA estimation.}
+#'
+#' @details
+#' This function is designed to prepare a data matrix for model search (or screening) analysis. It performs several operations to transform and structure the data appropriately.
+#'
+#' The function first checks if the input data is a matrix or a data frame. If new data is provided, it also checks its type. It then extracts the frequency of the first observation from the \code{ldtf} attribute of the data, if available.
+#'
+#' If no equations are provided, the function assumes that the endogenous variables are in the first columns of the data. It checks if an intercept is already present and throws an error if one is found and \code{addIntercept} is set to TRUE. It then validates the number of endogenous variables and converts the data to a numeric matrix.
+#'
+#' If column names are missing, they are added based on the number of endogenous and exogenous variables. If new data is provided, it checks its structure and matches it with the exogenous part of the original data.
+#'
+#' If equations are provided, they are used to transform the original data into a matrix where response variables are in the first columns and predictor variables in subsequent columns. The new data is also transformed accordingly.
+#'
+#' The function then applies a Box-Cox transformation to the endogenous variables if lambda parameters are provided. Weights are added if provided, and an intercept column is added if \code{addIntercept} is set to TRUE.
+#'
+#' Finally, the function returns a list containing all relevant information for further analysis. This includes the final data matrix, number of endogenous and exogenous variables, number of observations in original and new data, lambda parameters used in Box-Cox transformation, and flags indicating whether an intercept or weights were added.
+#'
 #'
 #' @examples
 #' # Example 1:
@@ -185,7 +199,7 @@ get.data <- function(data, endogenous = 1, equations = NULL,
   return(res)
 }
 
-#' Append \cpde{newX} to \code{data$data} matrix.
+#' Append \code{newX} to \code{data$data} matrix.
 #'
 #' Use it for VARMA estimation
 #'
@@ -246,7 +260,7 @@ get.data.keep.complete <- function(data, warn = TRUE){
 
 #' Check if a column is discrete
 #'
-#' For example, it checks if the dependent variable in binary model is 0 and 1 (number of choices is 2)
+#' For example, it checks if the endogenous variable in binary model is 0 and 1 (number of choices is 2)
 #'
 #' @param data Output of [get.data] function
 #' @param colIndex The index of column to be checked.
@@ -267,10 +281,10 @@ get.data.check.discrete <- function(data, colIndex = 1){
 #' Check for an intercept in a matrix
 #'
 #' This function checks if any column in the matrix is intercept.
+#' @param matrix data matrix
 #'
 #' @return The index of the intercept. '-1' in intercept is not found.
 #'
-#' @examples
 get.data.check.intercept <- function(matrix) {
   for (i in seq_len(ncol(matrix))) {
     if (all(matrix[, i] == 1))
@@ -301,9 +315,10 @@ get.data.check.intercept <- function(matrix) {
 #'                    savings = c(20000, 25000, 30000, 35000, 40000))
 #' equations <- list(as.formula("income ~ age + education"),
 #'                   as.formula("savings ~ age + education"))
-#' matrix_data <- eqList2Matrix(equations, data, addIntercept = TRUE)
+#' matrix_data <- ldt:::eqList2Matrix(equations, data, addIntercept = TRUE)
 #' print(matrix_data)
 #'
+#' @importFrom stats model.matrix model.response model.frame
 eqList2Matrix <- function(equations, data, addIntercept = FALSE) {
 
   stopifnot(inherits(equations, "formula") || is.list(equations))
@@ -347,7 +362,7 @@ eqList2Matrix <- function(equations, data, addIntercept = FALSE) {
 
   if (addIntercept) {
     intercept <- rep(1, nrow(res))
-    res <- cbind(res[,1:length(response_vars)], intercept, res[,-(1:length(response_vars)), drop = FALSE])
+    res <- cbind(res[,1:length(response_vars), drop = FALSE], intercept, res[,-(1:length(response_vars)), drop = FALSE])
     colnames(res)[length(response_vars)+1] <- "(Intercept)"
   }
 
@@ -365,12 +380,12 @@ eqList2Matrix <- function(equations, data, addIntercept = FALSE) {
 #' @param ... additional parameters for \code{MASS::boxcox} function.
 #'
 #' @return
-#' \code{data}{transformed data}
-#' \code{lambda}{final lambda vector used in the calculations.}
+#' \item{data}{transformed data}
+#' \item{lambda}{final lambda vector used in the calculations.}
 #'
 #' @examples
 #' data <- matrix(rnorm(40), ncol = 2)
-#' result <- boxCoxTransform(data, c(0.5, 0.5))
+#' result <- ldt:::boxCoxTransform(data, c(0.5, 0.5))
 #'
 #' @importFrom MASS boxcox
 boxCoxTransform <- function(data, lambda, ...) {
@@ -415,56 +430,81 @@ boxCoxTransform <- function(data, lambda, ...) {
 
 #' Define Combinations for Search Process
 #'
-#' Assuming a data matrix with variables in the columns and specific column names is generated by [get.data()] function,
-#' this function defines a structure for a two-level nested loop used in a search process.
-#' The outer loop is defined by a vector of sizes and all the combinations of the variables are generated automatically.
-#' The inner loop is defined by a list of predefined combinations of the variables.
-#' Each variable can belong to either endogenous or exogenous variables based on their usage.
+#' This function defines a structure for a two-level nested loop used in a model search (or screening) process. The outer loop is defined by a vector of sizes and all the combinations of the variables are generated automatically. The inner loop is defined by a list of predefined combinations of the variables. Each variable can belong to either endogenous or exogenous variables based on their usage.
 #'
-#' @param sizes A numeric vector or a list of numeric vectors that determines the sizes of outer loop combinations.
-#' For example, if the outer loop belongs to the endogenous variables, \code{c(1, 2)} means all models with 1 and 2 equations.
-#' If the outer loop belongs to exogenous variables, \code{c(1,2)} means all regressions with 1 and 2 exogenous variables.
-#' It can also be a list of numeric vectors for step-wise search.
-#' Each vector determines the size of the models in an step. In the next step, a subset of potential variables is selected by using \code{stepsNumVariables} argument. See also \code{stepsSavePre} argument.
+#' @param sizes A numeric vector or a list of numeric vectors that determines the sizes of outer loop combinations. For example, if the outer loop belongs to the endogenous variables, \code{c(1, 2)} means all models with 1 and 2 equations. If the outer loop belongs to exogenous variables, \code{c(1,2)} means all regressions with 1 and 2 exogenous variables. It can also be a list of numeric vectors for step-wise search. Each vector determines the size of the models in a step. In the next step, a subset of potential variables is selected by using \code{stepsNumVariables} argument.
 #' @param partitions A list of numeric vectors or character vectors that partitions the outer loop variables. No model is estimated with two variables from the same partition.
 #' @param numFixPartitions A single number that determines the number of partitions at the beginning of \code{partitions} to be included in all models.
-#' @param innerGroups A list of numeric vectors or character vectors that determines different combinations of the variables for the inner loop.
-#' For example, if the inner loop belongs to exogenous data, \code{list(c(1), c(1, 2))} means estimating all models with just the first exogenous variable and all models with the first and second exogenous variables.
+#' @param innerGroups A list of numeric vectors or character vectors that determines different combinations of the variables for the inner loop. For example, if the inner loop belongs to exogenous data, \code{list(c(1), c(1, 2))} means estimating all models with just the first exogenous variable and all models with both first and second exogenous variables.
 #' @param numTargets An integer for the number of target variables at the first columns of the data matrix. Results of a search process are specific to these variables. A model is not estimated if it does not contain a target variable.
 #' @param stepsNumVariables A numeric vector. If \code{sizes} is a list (i.e., a step-wise search), this vector must be of equal length and determines the number of variables (with best performance) in each step.
 #' @param stepsFixedNames A character vector. If \code{sizes} is a list (i.e., a step-wise search), this vector determines the name of variables to be included in all steps.
-#' @param stepsSavePre A name for saving and loading the progress, if \code{sizes} is a list.
-#' Each step's result is saved in a file (name=\code{paste0(stepsSavePre,i)} where \code{i} is the index of the step.
+#' @param stepsSavePre A name for saving and loading progress, if \code{sizes} is a list. Each step's result is saved in a file (name=\code{paste0(stepsSavePre,i)}) where \code{i} is the index of the step.
+#'
+#' @return A list suitable for use in \code{ldt::search.?} functions. The list contains:
+#' \item{sizes}{The sizes of outer loop combinations.}
+#' \item{partitions}{The partitions of outer loop variables.}
+#' \item{numFixPartitions}{The number of fixed partitions at the beginning.}
+#' \item{innerGroups}{Different combinations of variables for inner loop.}
+#' \item{numTargets}{The number of target variables at first columns.}
+#' \item{stepsNumVariables}{The number of variables in each step for step-wise search.}
+#' \item{stepsFixedNames}{The names of fixed variables in each step for step-wise search.}
+#' \item{stepsSavePre}{The name for saving and loading progress for step-wise search.}
 #'
 #' @details
-#' The indexation in \code{ldt} is a two-level nested loop over different combinations of endogenous and exogenous variables, similar to the following code:
+#' The \code{get.combinations} function in the \code{ldt} package uses a two-level nested loop to iterate over different combinations of endogenous and exogenous variables. This is similar to running the following code:
 #' \preformatted{
 #' for (endo in list(c(1), c(1, 2)))
 #'   for (exo in list(c(1), c(1, 2)))
-#'     Estimate a model by using \code{endo} and \code{exo} indexation
+#'     Estimate a model using \code{endo} and \code{exo} indexation
 #' }
-#' However, it is not memory efficient to predefine both loops and \code{ldt} uses a running algorithm to define the outer loop.
-#' It asks for the desired size of endogenous or exogenous variables in the model (i.e., \code{sizes})
-#' and creates the outer groups by using all possible combinations of the variables.
-#' Of course, the \code{partitions} and \code{numFixPartitions} can be used to restrict this set.
-#' However, for the inner loop, the desired combination of the variables (endogenous or exogenous) must be provided.
+#' However, predefining both loops is not memory efficient. Therefore, \code{ldt} uses a running algorithm to define the outer loop. It asks for the desired size of endogenous or exogenous variables in the model (i.e., \code{sizes}) and creates the outer groups using all possible combinations of the variables. The \code{partitions} and \code{numFixPartitions} parameters can be used to restrict this set.
 #'
-#' Note that given \code{m} as the number of variables, you can generate all possible combinations by the following code:
+#' For the inner loop, you must provide the desired combination of variables (endogenous or exogenous). Given \code{m} as the number of variables, you can generate all possible combinations using the following code:
 #' \preformatted{
 #' m <- 4
 #' combinations <- unlist(lapply(1:m, function(i) {
 #'  t(combn(1:m, i, simplify = FALSE))
 #' }), recursive = FALSE)
 #' }
-#' and use it as the \code{innerGroups} argument. Of course, this might result in a large model set.
+#' You can use this as the \code{innerGroups} argument. However, this might result in a large model set.
 #'
-#' Also note that in \code{ldt}, if the data matrix does not have column names,
-#' default names for the endogenous variables are \code{Y1, Y2, ...}
-#' and default names for the exogenous variables are \code{X1, X2, ...}. See [get.data()] function.
+#' Note that in \code{ldt}, if the data matrix does not have column names, default names for the endogenous variables are \code{Y1, Y2, ...}, and default names for the exogenous variables are \code{X1, X2, ...}. See [get.data()] function for more details.
 #'
-#' @return A list of items suitable for being used in the \code{ldt::search.?} functions.
+#' Also note that \code{ldt} ensure that all possible models can be estimated with the given number of partitions and sizes. If it's not possible, it will stop with an error message.
+#'
+#' @examples
+#' # Some basic examples are given in this section. However, more practical examples are available
+#' # for the \code{search.?} functions.
+#'
+#' # Example 1:
+#' combinations1 <- get.combinations(sizes = c(1, 2))
+#' # The function will generate all possible combinations of sizes 1 and 2.
+#'
+#' # Example 2: Using partitions
+#' combinations2 <- get.combinations(sizes = c(1, 2), partitions = list(c(1, 2), c(3, 4)))
+#'
+#' # Here, we're specifying partitions for the variables.
+#' # The function will generate combinations such that no model is estimated with two variables
+#' # from the same partition.
+#'
+#' # Example 3: Specifying inner groups
+#' combinations3 <- get.combinations(sizes = c(1, 2), innerGroups = list(c(1), c(1, 2)))
+#'
+#' # In this example, we're specifying different combinations of variables for the inner loop.
+#' # For instance, \code{list(c(1), c(1, 2))} means estimating all models with just the first
+#' # variable and all models with both first and second variables.
+#'
+#' # Example 4: Step-wise search
+#' combinations4 <- get.combinations(sizes = list(c(1), c(1, 2)), stepsNumVariables = c(NA, 1))
+#'
+#' # This example demonstrates a step-wise search. In the first step (\code{sizes = c(1)}), all
+#' # models with one variable are estimated.
+#' # In the next step (\code{sizes = c(1, 2)}), a subset of potential variables is selected based
+#' # on their performance in the previous step and all models with both first and second variables
+#' # are estimated.
+#'
 #' @export
-#'
 get.combinations <- function(sizes = c(1),
                              partitions = NULL,
                              numFixPartitions = 0,
@@ -531,10 +571,10 @@ get.indexation <- function(combinations, data, isInnerExogenous) {
 
   stopifnot(is.logical(isInnerExogenous))
   stopifnot(!is.null(data))
-  if (!(is(data, "ldt.search.data")))
+  if (!(inherits(data, "ldt.search.data")))
     stop("Invalid class. Use 'get.data()' function to generate 'data'.")
   stopifnot(!is.null(combinations))
-  if (!(is(combinations, "ldt.search.combinations")))
+  if (!(inherits(combinations, "ldt.search.combinations")))
     stop("Invalid class. Use 'get.combinations()' function to generate 'combinations'.")
   stopifnot(is.matrix(data$data) && is.numeric(data$data) && !is.null(colnames(data$data)))
 

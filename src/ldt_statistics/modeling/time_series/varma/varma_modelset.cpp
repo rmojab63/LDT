@@ -309,8 +309,8 @@ VarmaModelset::VarmaModelset(const SearchData &data,
                              Tv stdMultiplier, Ti maxHorizonCheck) {
   metrics.Update(false, true);
   checks.Update(metrics);
-  items.Update(metrics, items.LengthTargets, items.LengthDependents,
-               items.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthEndogenous,
+               items.LengthExogenous);
 
   // items.Length1 is the forecast horizon in 'metrics.Type1'
   if (items.Length1 > 0 && checks.Prediction == false)
@@ -322,7 +322,7 @@ VarmaModelset::VarmaModelset(const SearchData &data,
   // check group indexes and create sizes array
   for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a > items.LengthDependents)
+      if (a > items.LengthEndogenous)
         throw LdtException(ErrorType::kLogic, "varma-modelset",
                            "invalid endogenous group element (it is larger "
                            "than the number "

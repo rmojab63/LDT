@@ -352,24 +352,23 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
     throw LdtException(ErrorType::kLogic, "dc-modelset",
                        "invalid number of choices");
   items.LengthTargets = 1;
-  items.LengthDependents = 1;
-  items.LengthExogenouses =
+  items.LengthEndogenous = 1;
+  items.LengthExogenous =
       hasWeight ? (int)(source.ColsCount - 2) : (int)(source.ColsCount - 1);
-  if (items.LengthExogenouses <
-      1) // =1, means the model has just one intercept. Let estimation process
-         // throw error (if any)
+  if (items.LengthExogenous < 1) // =1, means the model has just one intercept.
+                                 // Let estimation process throw error (if any)
     throw LdtException(ErrorType::kLogic, "dc-modelset",
                        "invalid number of exogenous variables");
 
   metrics.Update(true, false);
   checks.Update(metrics);
-  items.Update(metrics, items.LengthTargets, items.LengthDependents,
-               items.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthEndogenous,
+               items.LengthExogenous);
 
   // check items.Length1 with the number of exogenous variables and
   // thresholds?!
   if (items.Length1 != 0 &&
-      items.Length1 != (items.LengthExogenouses + this->mNumChoices - 2))
+      items.Length1 != (items.LengthExogenous + this->mNumChoices - 2))
     throw LdtException(
         ErrorType::kLogic, "dc-modelset",
         "inconsistent number of exogenous variables and thresholds");
@@ -399,7 +398,7 @@ DiscreteChoiceModelset<hasWeight, modelType>::DiscreteChoiceModelset(
   // check group indexes and create sizes array
   for (auto const &b : combinations.Partitions) {
     for (auto &a : b) {
-      if (a > items.LengthExogenouses)
+      if (a > items.LengthExogenous)
         throw LdtException(
             ErrorType::kLogic, "dc-modelset",
             "invalid exogenous group element (it is larger than the number "

@@ -255,11 +255,6 @@ combine.search <- function(list, method) {
 #' @param removedIndices A vector of integers representing the indices to be removed.
 #'
 #' @return A list of adjusted indices. Each set of indices is adjusted separately.
-#'
-#' @examples
-#' indicesList <- list(c(1, 2, 3, 4, 5), c(2, 3, 4))
-#' removedIndices <- c(2, 4)
-#' adjust_indices_after_remove(indicesList, removedIndices)
 adjust_indices_after_remove <- function(indicesList, removedIndices){
   if (length(removedIndices) == 0)
     return(indicesList)
@@ -275,6 +270,7 @@ adjust_indices_after_remove <- function(indicesList, removedIndices){
 #' Note that it uses the values for the first target variable and first metric and might not be suitable for multi-target or multi-metric searches.
 #'
 #' @param method sur, bin or varma
+#' @param isInnerExogenous Determines if the inner indices are for exogenous variables.
 #' @param ... Additional arguments for the search function.
 #'
 #' @return the result

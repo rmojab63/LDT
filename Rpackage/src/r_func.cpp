@@ -135,8 +135,8 @@ RFuncModelset::RFuncModelset(
 
   metrics.Update(isOutOfSampleRandom, isTimeSeries);
   checks.Update(metrics);
-  items.Update(metrics, items.LengthTargets, items.LengthDependents,
-               items.LengthExogenouses);
+  items.Update(metrics, items.LengthTargets, items.LengthEndogenous,
+               items.LengthExogenous);
 
   unsigned int co = 0;
   for (auto const &size : combinations.Sizes) {

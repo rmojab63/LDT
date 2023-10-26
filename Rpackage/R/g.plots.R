@@ -305,22 +305,22 @@ fan.plot <- function (data,
 #' @param simMetric Name of metric to plot its details, provided that simulation details are available. If \code{NULL}, simulation details are not plotted.
 #' @param simLineArgs Arguments to pass to \code{line} function for simulation lines (if available).
 #' @param simPointsArgs Arguments to pass to \code{points} function for simulation points (if available).
+#' @param ... Additional parameters (unused)
 #'
-#' @return
+#' @return This function does not return a value.
 #' @export
 #'
-#' @examples
 plot.ldt.varma.prediction <- function(x,
                                       variable = 1,
                                       xAxisArgs = list(),
                                       fanPlotArgs = list(),
                                       simMetric = NULL,
                                       simLineArgs = list(),
-                                      simPointsArgs = list()){
+                                      simPointsArgs = list(), ...){
 
   if (is.null(x))
     stop("argument is null.")
-  if (!is(x, "ldt.varma.prediction"))
+  if (!inherits(x, "ldt.varma.prediction"))
     stop("Invalid class. An 'ldt.varma.prediction' object is expected.")
   if (is.null(x$means))
     stop("Invalid data. Predictions are not available.")

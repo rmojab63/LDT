@@ -3,10 +3,10 @@
 get.metric.from.estim <- function(model, metricName, targetName) {
   row <- which(rownames(model$metrics) == metricName)
   if (length(row) != 1)
-    stop("metric not found. method=", attr(model, "method"), "metric=", metricName, "target=", target)
+    stop("metric not found. method=", attr(model, "method"), "metric=", metricName, "target=", targetName)
   col <- which(colnames(model$metrics) == targetName)
   if (length(col) != 1)
-    stop("target not found. method=", attr(model, "method"), "metric=", metricName, "target=", target)
+    stop("target not found. method=", attr(model, "method"), "metric=", metricName, "target=", targetName)
   r <- model$metrics[row[[1]], col[[1]]]
   r
 }
@@ -27,14 +27,14 @@ get.metric.from.estim <- function(model, metricName, targetName) {
 
 #'
 #'
-#' @return If the object contains the indices of dependent variables of an estimated model, it returns the estimation output.
+#' @return If the object contains the indices of endogenous variables of an estimated model, it returns the estimation output.
 #' Otherwise, it returns object.
 #' @export
 summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ...) {
 
   if (is.null(object))
     stop("argument is null.")
-  if (!is(object, "ldt.search.item"))
+  if (!inherits(object, "ldt.search.item"))
     stop("Invalid class. An 'ldt.search.item' object is expected.")
 
   method <- tolower(attr(searchResult, "method"))
@@ -127,7 +127,7 @@ summary.ldt.search <- function(object, test = TRUE, ...) {
 
   if (is.null(object))
     stop("argument is null.")
-  if (!is(object, "ldt.search"))
+  if (!inherits(object, "ldt.search"))
     stop("Invalid class. An 'ldt.search' object is expected.")
   if (length(object$results) == 0)
     warning("Result list is empty. Check failed estimations.")

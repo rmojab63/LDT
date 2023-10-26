@@ -1,33 +1,25 @@
 
-#' Search for Best SUR Models
+#' Create a Model Set for SUR Models
 #'
 #' Use this function to create a Seemingly Unrelated Regression model set and search for the best models (and other information) based on in-sample and out-of-sample evaluation metrics.
 #'
 #' @param data A list that determines data and other required information for the search process.
 #' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
-#' This function is designed to help you specify endogenous and exogenous variables by a list of equations.
-#' It also helps to add intercept or define Box-Cox transformations for the endogenous variables.
 #' @param combinations A list that determines the combinations of endogenous and exogenous variables in the search process.
 #' Use [get.combinations()] function to define it.
-#' This is a two-level nested loop and in this function, the outer loop is defined over the exogenous variables.
-#' @param metrics A list of options for measuring performance.
-#' Use [get.search.metrics] function to get them.
-#' @param modelChecks A list of options for excluding a subset of the model set.
-#' See and use [get.search.modelchecks] function to get them.
-#' @param items A list of options for specifying the purpose of the search.
-#' See and use [get.search.items] function to get them.
-#' @param options A list of extra options for performing the search.
-#' See and use [get.search.options] function to get them.
+#' @param metrics A list of options for measuring performance. Use [get.search.metrics] function to get them.
+#' @param modelChecks A list of options for excluding a subset of the model set. Use [get.search.modelchecks] function to get them.
+#' @param items A list of options for specifying the purpose of the search. Use [get.search.items] function to get them.
+#' @param options A list of extra options for performing the search. Use [get.search.options] function to get them.
 #' @param searchSigMaxIter Maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
 #' @param searchSigMaxProb Maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
 #'
 #' @return A nested list with the following members:
 #' \item{counts}{Information about the expected number of models, number of estimated models, failed estimations, and some details about the failures.}
-#' \item{...}{A list of results.}
-#' \item{info}{General information about the search process, some arguments, elapsed time, etc.}
+#' \item{results}{A data frame with requested information in \code{items} list.}
+#' \item{info}{The arguments and some general information about the search process such as the elapsed time.}
 #'
-#' Note that the output does not contain any estimation results,
-#' but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
+#' Note that the output does not contain any estimation results, but minimum required data to estimate the models (Use \code{summary()} function to get the estimation).
 #'
 #' @export
 #'
@@ -117,8 +109,6 @@ search.sur <- function(data = get.data(),
 #'
 #' @param data A list that determines data and other required information for the search process.
 #' Use [get.data()] function to generate it from a \code{matrix} or a \code{data.frame}.
-#' This function is designed to help you specify endogenous and exogenous variables by a list of equations.
-#' It also helps to add intercept or define Box-Cox transformations for the endogenous variables.
 #' @param searchSigMaxIter An integer for the maximum number of iterations in searching for significant coefficients. Use 0 to disable the search.
 #' @param searchSigMaxProb A number for the maximum value of type I error to be used in searching for significant coefficients. If p-value is less than this, it is interpreted as significant.
 #' @param restriction A \code{km x q} matrix of restrictions where \code{m} is the number of endogenous data, \code{k} is the number of exogenous data, and \code{q} is the number of unrestricted coefficients.
@@ -130,32 +120,25 @@ search.sur <- function(data = get.data(),
 #' @param simSeed A seed for the random number generator. Use zero for a random value.
 #' @param simMaxConditionNumber A number for the maximum value for the condition number in the simulation.
 #'
-#' @return A nested list with the following items:
-#' \item{counts}{Information about different aspects of the estimation such as the number of observation, number of exogenous variables, etc.}
-#' \item{estimations}{Estimated coefficients, standard errors, z-statistics, p-values, etc.}
-#' \item{metrics}{Value of different goodness of fit and out-of-sample performance metrics. }
-#' \item{projections}{Information on the projected values, if \code{newX} is provided.}
-#' \item{info}{Some other general information.}
-#'
 #' @details
-#' As described in section 10.2 in \insertCite{greene2020econometric;textual}{ldt}, this type of statistical model consists of multiple regression equations, where each equation may have a different set of independent variables and the disturbances between the equations are assumed to be correlated. The general form with \eqn{m} equations can be written as \eqn{y_i=z_i'\gamma_i+v_i} and \eqn{E(v_i v_j)=\sigma_{ij}^2} for \eqn{i=1,\ldots m}. Assuming that a sample of \eqn{N} independent observations is available, we can stack the observations and use the following system for estimation:
+#' As described in section 10.2 in \insertCite{greene2020econometric;textual}{ldt}, this type of statistical model consists of multiple regression equations, where each equation may have a different set of exogenous variables and the disturbances between the equations are assumed to be correlated. The general form with \eqn{m} equations can be written as \eqn{y_i=z_i'\gamma_i+v_i} and \eqn{E(v_i v_j)=\sigma_{ij}^2} for \eqn{i=1,\ldots m}. Assuming that a sample of \eqn{N} independent observations is available, we can stack the observations and use the following system for estimation:
 #' \deqn{
-#' Y = X B + V, \quad \operatorname{vec}B = R\gamma,
+#' Y = X B + V, \quad \mathrm{vec}B = R\gamma,
 #' }
 #'
-#' where the columns of \eqn{Y:N \times m} contain the dependent variables for each equation and the columns of \eqn{X: N\times k} contain the explanatory variables, with \eqn{k} being the number of unique explanatory variables in all equations. Note that $X$ combines the \eqn{z_i} variables, and the restrictions imposed by \eqn{R:mk\times q} and \eqn{\gamma:q\times 1} determine a set of zero constraints on \eqn{B: k \times m}, resulting in a system of equations with different sets of independent variables.
+#' where the columns of \eqn{Y:N \times m} contain the endogenous variables for each equation and the columns of \eqn{X: N\times k} contain the explanatory variables, with \eqn{k} being the number of unique explanatory variables in all equations. Note that \eqn{X} combines the \eqn{z_i} variables, and the restrictions imposed by \eqn{R:mk\times q} and \eqn{\gamma:q\times 1} determine a set of zero constraints on \eqn{B: k \times m}, resulting in a system of equations with different sets of exogenous variables.
 #'
 #' Imposing restrictions on the model using the \eqn{R} matrix is not user-friendly, but it is suitable for use in this package, as users are not expected to specify such restrictions, but only to provide a list of potential regressors. Note that in this package, most procedures, including significance search, are supposed to be automated.
 #'
 #' The unrestricted estimators (i.e., \eqn{\hat{B}=(X'X)^{-1}X'Y}, and \eqn{\hat{\Sigma}=(\hat{V}'\hat{V})/N} where \eqn{\hat{V}=Y-X\hat{B}}) are used to initialize the feasible GLS estimators:
 #'
 #' \deqn{
-#'     \tilde{B} = RW^{-1}R'[\hat{V}-1 \otimes x']\operatorname{vec}Y, \quad \tilde{\Sigma}=(\tilde{V}'\tilde{V})/N,
+#'     \tilde{B} = RW^{-1}R'[\hat{V}-1 \otimes x']\mathrm{vec}Y, \quad \tilde{\Sigma}=(\tilde{V}'\tilde{V})/N,
 #' }
-#' where \eqn{W = R'[\hat{V}^{-1} \otimes X'X]R} and \eqn{\tilde{V}=Y-X\tilde{B}}. The properties of these estimators are discussed in proposition 5.3 in \insertCite{lutkepohl2005new;textual}{ldt}. See also section 10.2 in \insertCite{greene2020econometric;textual}{ldt}. The maximum likelihood value is calculated by \eqn{-\frac{N}{2}(m(\ln 2\pi+1)+\ln|\tilde{\Sigma}|)}. The condition number is calculated by multiplying 1-norm of $W$ and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given an out-of-sample observation such as \eqn{x:k\times 1}, the prediction is \eqn{y^f = \tilde{B}'x}, and its variance is estimated by the following formula:
+#' where \eqn{W = R'[\hat{V}^{-1} \otimes X'X]R} and \eqn{\tilde{V}=Y-X\tilde{B}}. The properties of these estimators are discussed in proposition 5.3 in \insertCite{lutkepohl2005new;textual}{ldt}. See also section 10.2 in \insertCite{greene2020econometric;textual}{ldt}. The maximum likelihood value is calculated by \eqn{-\frac{N}{2}(m(\ln 2\pi+1)+\ln|\tilde{\Sigma}|)}. The condition number is calculated by multiplying 1-norm of \eqn{W} and its inverse (e.g., see page 94 in \insertCite{trefethen1997numerical;textual}{ldt}). Furthermore, given an out-of-sample observation such as \eqn{x:k\times 1}, the prediction is \eqn{y^f = \tilde{B}'x}, and its variance is estimated by the following formula:
 #'
 #' \deqn{
-#'      \operatorname{var}y^f = \tilde{V} + (x' \otimes I_m)R W^{-1}R'(x \otimes I_m).
+#'      \mathrm{var}y^f = \tilde{V} + (x' \otimes I_m)R W^{-1}R'(x \otimes I_m).
 #' }
 #'
 #'
@@ -170,7 +153,7 @@ search.sur <- function(data = get.data(),
 #' @export
 #' @example man-roxygen/ex-estim.sur.R
 #'
-#' @seealso [search.sur], [search.sur.stepwise]
+#' @seealso [search.sur]
 estim.sur <- function(data, searchSigMaxIter = 0,
                       searchSigMaxProb = 0.1,
                       restriction = NULL,
@@ -262,7 +245,7 @@ estim.sur.from.search <- function(searchResult, endogenous, exogenous, extra, ..
 estim.sur.model.string <- function(obj){
   if (is.null(obj))
     stop("argument is null.")
-  if (!is(obj, "ldt.estim.sur"))
+  if (!inherits(obj, "ldt.estim.sur"))
     stop("Invalid class. An 'ldt.estim.sur' object is expected.")
 
   y <- obj$info$data$data[,1:obj$info$data$numEndo, drop = FALSE]
@@ -282,13 +265,13 @@ estim.sur.model.string <- function(obj){
 #' @param sigma covariance matrix of the errors.
 #' If it is an integer value, it specifies the number of equations in the SUR model and covariance matrix is generated randomly.
 #' @param coef Coefficients of the model.
-#' If it is an integer value, it specifies the number of independent variables in each equation of the SUR model and coefficient matrix is generated randomly.
+#' If it is an integer value, it specifies the number of exogenous variables in each equation of the SUR model and coefficient matrix is generated randomly.
 #' @param nObs Number of observations to generate.
 #' @param intercept If \code{TRUE}, an intercept is included in the model as the first exogenous variable.
 #'
 #' @return A list with the following items:
-#'   \item{y}{matrix, the generated dependent variable.}
-#'   \item{x}{matrix, the generated independent variable.}
+#'   \item{y}{matrix, the generated endogenous variable(s).}
+#'   \item{x}{matrix, the generated exogenous variable(s).}
 #'   \item{e}{matrix, the generated errors.}
 #'   \item{sigma}{matrix, the covariance matrix of the disturbances.}
 #'   \item{coef}{matrix, the coefficients used in the model.}

@@ -1309,7 +1309,7 @@ TEST(Varma_T, var_search) {
   items.KeepBestCount = 2;
   items.KeepAll = true;
   items.LengthTargets = 2;
-  items.LengthDependents = 3;
+  items.LengthEndogenous = 3;
   items.KeepMixture = true;
 
   items.Length1 = 2;

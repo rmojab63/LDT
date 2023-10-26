@@ -340,8 +340,8 @@ TEST(Sur_t, search_t) {
 
   items.KeepModelEvaluations = true;
   items.Length1 = 0;
-  items.LengthDependents = m;
-  items.LengthExogenouses = k;
+  items.LengthEndogenous = m;
+  items.LengthExogenous = k;
   items.ExtremeBoundsMultiplier = 2.0;
 
   metrics.SimFixSize = simfixsize;

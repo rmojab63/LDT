@@ -12,39 +12,40 @@ data <- data.frame(sample$y, sample$x, x_ir)
 colnames(data) <- c("Y", colnames(sample$x), paste0("z", 1:num_x_ir))
 
 # Use glm function to estimate and analyse:
-model1 <- glm(Y ~ . - Y, data = data, family = binomial())
-summary(model1)
+fit <- glm(Y ~ . - Y, data = data, family = binomial())
+summary(fit)
 
 # You can also use this package estimation function:
-model2 <- estim.bin(sample$y, data[,3:ncol(data), drop = FALSE])
+data0 <- get.data(data,
+                equations = list(Y ~ . - Y),
+                addIntercept = FALSE)
+fit <- estim.bin(data = data0)
 # format and print coefficients:
-coefs2 <- data.frame(model2$estimations[1:4])
-colnames(coefs2) <- names(model2$estimations)[1:4]
-print(coefs2)
+print(fit)
 
-# Alternatively, You can define a search process:
-x_sizes = c(1:4) # assuming we know the number of relevant explanatory variables is less than 4
+# Alternatively, You can define a binary choice model set:
+x_sizes = c(1:3) # assuming we know the number of relevant explanatory variables is less than 3
 metric_options <- get.search.metrics(typesIn = c("sic")) # We use SIC for searching
-search_res <- search.bin(sample$y, data[,3:ncol(data)],
-                        xSizes = x_sizes, metrics = metric_options)
-print(search_res$sic$target1$model$bests$best1$exogenous) # print best model's explanatory indexes
+search_res <- search.bin(data = data0,
+                         combinations = get.combinations(sizes = x_sizes),
+                         metrics = metric_options)
+print(search_res)
 
 # Use summary function to estimate the best model:
 search_sum <- summary(search_res, y = sample$y, x = data[,3:ncol(data)])
-# format and print coefficients:
-model3 <- search_sum$sic$target1$model$bests$best1
-coefs3 <- data.frame(model3$estimations[1:4])
-colnames(coefs3) <- names(model3$estimations)[1:4]
-print(coefs3)
 
-# Try a step-wise search (you can estimate larger models, faster):
-x_sizes_steps = list(c(1, 2, 3), c(4), c(5))
-counts_steps = c(NA, 10, 9)
-search_items <- get.search.items(bestK = 10)
-search_step_res <- search.bin.stepwise(sample$y, data[,3:ncol(data)],
-                                      xSizeSteps = x_sizes_steps, countSteps = counts_steps,
-                                      metrics = metric_options,
-                                      items = search_items)
-print(search_step_res$sic$target1$model$bests$best1$exogenous)
+# format and print coefficients:
+s_fit <- summary(search_res)
+print(s_fit$results[[1]]$value)
+
+# Try a step-wise search for creating a larger model set:
+search_res <- search.bin(data = data0,
+                         combinations = get.combinations(
+                           sizes = list(c(1, 2, 3), c(4)),
+                           stepsNumVariables = c(NA, 7)),
+                         metrics = metric_options)
+# combinations argument is different
+
+print(search_res)
 # Use summary like before.
 
