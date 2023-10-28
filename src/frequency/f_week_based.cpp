@@ -41,37 +41,32 @@ FrequencyWeekBased::FrequencyWeekBased(boost::gregorian::date day, bool isWeek,
 
 std::unique_ptr<FrequencyWeekBased>
 FrequencyWeekBased::Weekly(boost::gregorian::date day) {
-  return std::unique_ptr<FrequencyWeekBased>(
-      new FrequencyWeekBased(day, true, nullptr, true));
+  return std::make_unique<FrequencyWeekBased>(day, true, nullptr, true);
 }
 
 std::unique_ptr<FrequencyWeekBased>
 FrequencyWeekBased::MultiWeekly(boost::gregorian::date day, Ti multi) {
-  return std::unique_ptr<FrequencyWeekBased>(
-      new FrequencyWeekBased(day, true, nullptr, true, multi));
+  return std::make_unique<FrequencyWeekBased>(day, true, nullptr, true, multi);
 }
 
 std::unique_ptr<FrequencyWeekBased>
 FrequencyWeekBased::Daily(boost::gregorian::date day) {
-  return std::unique_ptr<FrequencyWeekBased>(
-      new FrequencyWeekBased(day, false, nullptr, true));
+  return std::make_unique<FrequencyWeekBased>(day, false, nullptr, true);
 }
 
 std::unique_ptr<FrequencyWeekBased>
 FrequencyWeekBased::MultiDaily(boost::gregorian::date day, Ti multi) {
-  return std::unique_ptr<FrequencyWeekBased>(
-      new FrequencyWeekBased(day, false, nullptr, true, multi));
+  return std::make_unique<FrequencyWeekBased>(day, false, nullptr, true, multi);
 }
 
 std::unique_ptr<FrequencyWeekBased>
 FrequencyWeekBased::DailyInWeek(boost::gregorian::date day,
                                 DayOfWeekRange range, bool forward) {
-  return std::unique_ptr<FrequencyWeekBased>(
-      new FrequencyWeekBased(day, false, &range, forward));
+  return std::make_unique<FrequencyWeekBased>(day, false, &range, forward);
 }
 
 std::unique_ptr<Frequency> FrequencyWeekBased::Clone() const {
-  return std::unique_ptr<FrequencyWeekBased>(new FrequencyWeekBased(*this));
+  return std::make_unique<FrequencyWeekBased>(*this);
 }
 
 void FrequencyWeekBased::Next(Ti steps) {

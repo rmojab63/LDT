@@ -45,41 +45,35 @@ FrequencyYearBased::FrequencyYearBased(Ti year, Ti partitionCount, Ti position,
 
 std::unique_ptr<FrequencyYearBased>
 FrequencyYearBased::XTimesZYear(Ti year, Ti X, Ti position, Ti Z) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, X, position, Z));
+  return std::make_unique<FrequencyYearBased>(year, X, position, Z);
 }
 
 std::unique_ptr<FrequencyYearBased>
 FrequencyYearBased::XTimesAYear(Ti year, Ti X, Ti position) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, X, position, 1));
+  return std::make_unique<FrequencyYearBased>(year, X, position, 1);
 }
 
 std::unique_ptr<FrequencyYearBased> FrequencyYearBased::Yearly(Ti year) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, 1, 1, 1));
+  return std::make_unique<FrequencyYearBased>(year, 1, 1, 1);
 }
 
 std::unique_ptr<FrequencyYearBased>
 FrequencyYearBased::MultiYearly(Ti year, Ti yearMulti) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, 1, 1, yearMulti));
+  return std::make_unique<FrequencyYearBased>(year, 1, 1, yearMulti);
 }
 
 std::unique_ptr<FrequencyYearBased> FrequencyYearBased::Quarterly(Ti year,
                                                                   Ti quarter) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, 4, quarter, 1));
+  return std::make_unique<FrequencyYearBased>(year, 4, quarter, 1);
 }
 
 std::unique_ptr<FrequencyYearBased> FrequencyYearBased::Monthly(Ti year,
                                                                 Ti month) {
-  return std::unique_ptr<FrequencyYearBased>(
-      new FrequencyYearBased(year, 12, month, 1));
+  return std::make_unique<FrequencyYearBased>(year, 12, month, 1);
 }
 
 std::unique_ptr<Frequency> FrequencyYearBased::Clone() const {
-  return std::unique_ptr<FrequencyYearBased>(new FrequencyYearBased(*this));
+  return std::make_unique<FrequencyYearBased>(*this);
 }
 
 void FrequencyYearBased::Next(Ti steps) {

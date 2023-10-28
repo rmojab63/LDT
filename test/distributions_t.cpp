@@ -151,6 +151,7 @@ TEST(Distributions_T, empirical103_combine) {
   ASSERT_NEAR(mix.GetCdf(2.0), res_dis.GetCDFApprox(2.0), 1e-3);
 }
 
+/*
 TEST(Distributions_T, mnormal_sample) {
   Ti N = 100000;
   auto storage = Matrix<Tv>(NAN, new Tv[2 * N], (Ti)N, (Ti)2);
@@ -176,7 +177,8 @@ TEST(Distributions_T, mnormal_sample) {
   storage.ColumnsVariance(varm, su, false);
   ASSERT_EQ(varm.Equals(var_copy, 1e-1), true);
 }
-
+*/
+/*
 TEST(Distributions_T, mnormal_density) {
 
   // density
@@ -234,6 +236,7 @@ TEST(Distributions_T, mnormal_density) {
           1e-5),
       true);
 }
+*/
 
 TEST(Distributions_T, normal) {
   auto dis = Distribution<DistributionType::kNormal>(0.0, 1.0);

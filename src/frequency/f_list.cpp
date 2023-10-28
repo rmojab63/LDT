@@ -30,7 +30,7 @@ template <typename T> Ti FrequencyList<T>::GetIndex() {
 
 template <typename T>
 std::unique_ptr<Frequency> FrequencyList<T>::Clone() const {
-  return std::unique_ptr<FrequencyList<T>>(new FrequencyList<T>(*this));
+  return std::make_unique<FrequencyList<T>>(*this);
 }
 
 template <typename T> void FrequencyList<T>::Next(Ti steps) {
@@ -164,17 +164,17 @@ FrequencyList<T>::ParseList(const std::string &str, const std::string &classStr,
   fClass = GetClass(classStr);
 
   if constexpr (std::is_same<T, std::string>()) {
-    auto f = new FrequencyList<std::string>("", nullptr);
+    auto f = std::make_unique<FrequencyList<std::string>>("", nullptr);
     FrequencyList<std::string>::Parse0(str, classStr, fClass, *f, &items);
     f->pItems = &items;
-    return std::unique_ptr<FrequencyList<std::string>>(f);
+    return f;
   } else if constexpr (std::is_same<T, boost::gregorian::date>()) {
-    auto f = new FrequencyList<boost::gregorian::date>(boost::gregorian::date(),
-                                                       nullptr);
+    auto f = std::make_unique<FrequencyList<boost::gregorian::date>>(
+        boost::gregorian::date(), nullptr);
     FrequencyList<boost::gregorian::date>::Parse0(str, classStr, fClass, *f,
                                                   &items);
     f->pItems = &items;
-    return std::unique_ptr<FrequencyList<boost::gregorian::date>>(f);
+    return f;
   } else if constexpr (true) {
     throw LdtException(
         ErrorType::kLogic, "freq-list",

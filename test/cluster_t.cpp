@@ -35,11 +35,9 @@ TEST(Cluster_t, single_t) {
 -3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 }, (Ti)15, (Ti)2)));*/
 
-  std::vector<std::vector<Ti> *> map;
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
+  std::vector<std::unique_ptr<std::vector<Ti>>> map;
+  for (int i = 0; i < 4; i++)
+    map.push_back(std::make_unique<std::vector<Ti>>());
   model.Group(map);
 
   ASSERT_EQ(map.at(0)->size(), (Ti)12);
@@ -88,11 +86,9 @@ TEST(Cluster_t, average_t) {
 -3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 }, (Ti)15, (Ti)2)));*/
 
-  std::vector<std::vector<Ti> *> map;
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
-  map.push_back(new std::vector<Ti>());
+  std::vector<std::unique_ptr<std::vector<Ti>>> map;
+  for (int i = 0; i < 4; i++)
+    map.push_back(std::make_unique<std::vector<Ti>>());
   model.Group(map);
 
   ASSERT_EQ(map.at(0)->size(), (Ti)8);

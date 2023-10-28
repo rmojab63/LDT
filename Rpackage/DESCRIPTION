@@ -1,6 +1,6 @@
 Package: ldt
 Title: Automated Uncertainty Analysis
-Version: 0.4.3
+Version: 0.4.4
 Authors@R: c(
     person("Ramin", "Mojab", email = "rmojab63@gmail.com", role = c("aut", "cre")),
     person("Stephen", "Becker", role = c("cph"), email = "stephen.becker@colorado.edu", comment = "BSD 3-clause license. Original code for L-BFGS-B algorithm. The L-BFGS-B algorithm was written in the 1990s (mainly 1994, some revisions 1996) by Ciyou Zhu (in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal). L-BFGS-B Version 3.0 is an algorithmic update from 2011, with coding changes by J. L. Morales"))

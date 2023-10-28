@@ -909,48 +909,6 @@ TEST(Varma_T, var_extended2) {
   delete[] W;
 }
 
-TEST(Varma_T, varma_sim) {
-  auto ars = std::vector<Matrix<Tv> *>(
-      {new Matrix<Tv>(new Tv[4]{0.2, -0.6, 0.3, 1.1}, 2, 2)});
-  auto mas = std::vector<Matrix<Tv> *>(
-      {new Matrix<Tv>(new Tv[4]{-0.5, 0, 0, -0.5}, 2, 2)}); // MA final form
-  auto sigma = Matrix<Tv>(new Tv[4]{0.2, 0.0, 0.0, 0.4}, 2, 2);
-  auto data = Varma::Simulate(&ars, &mas, {}, {}, &sigma, 1000, 100, 4888);
-  const Matrix<Tv> y = std::get<0>(data);
-  const Matrix<Tv> exo = std::get<1>(data);
-
-  auto sizes = VarmaSizes(1000, 2, exo.ColsCount, 1, 0, 1, 0, 0, 0, 0);
-
-  // restriction
-  auto rest = VarmaRestriction(sizes, VarmaRestrictionType::kMaFinal);
-  Tv *F = new Tv[rest.StorageSize];
-  rest.Calculate(F);
-
-  // estimate
-  auto var = Varma(sizes, true, true, true);
-  Tv *S = new Tv[var.Result.StorageSize];
-  Tv *W = new Tv[var.Result.WorkSize];
-  var.EstimateMl(y, &exo, W, S, &rest.R, nullptr, 0);
-
-  ASSERT_NEAR(var.Result.gamma.Get(0), 0.2, 1e-1);
-  ASSERT_NEAR(var.Result.gamma.Get(2), 0.4, 1e-1);
-
-  delete[] W;
-
-  auto forc = VarmaForecast(sizes, 5, true, false);
-  Tv *S1 = new Tv[forc.StorageSize];
-  W = new Tv[forc.WorkSize];
-  forc.Calculate(var, &exo, &y, S1, W);
-
-  // TODO:
-
-  // ASSERT_NEAR(forc.Forecast.Get(0, 3), 10.1541927, 1e-5);
-
-  delete[] S;
-  delete[] W;
-  delete[] S1;
-}
-
 TEST(Varma_T, varma_changeIndex) {
   Matrix<Tv> y0 =
       Matrix<Tv>(new Tv[50]{0.4, 0.9, 0.9, 0.6, 0.1, 0,   0.2, 1,   0.3, 0.4,

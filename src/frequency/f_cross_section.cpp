@@ -14,8 +14,7 @@ FrequencyCrossSection::FrequencyCrossSection(Ti position) {
 }
 
 std::unique_ptr<Frequency> FrequencyCrossSection::Clone() const {
-  return std::unique_ptr<FrequencyCrossSection>(
-      new FrequencyCrossSection(*this));
+  return std::make_unique<FrequencyCrossSection>(*this);
 }
 
 void FrequencyCrossSection::Next(Ti steps) { mPosition += steps; }

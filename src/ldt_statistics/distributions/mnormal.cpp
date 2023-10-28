@@ -25,7 +25,7 @@ NormalM::NormalM(Ti m, Matrix<Tv> *mean, Matrix<Tv> *variance,
 
   // make sure mean is not null
   if (!mean) {
-    Mean = Matrix<Tv>(new double[m], m, 1);
+    Mean = Matrix<Tv>(new double[m], m, 1); // TODO avoid new
     pDeleteMean = true;
     mean_is_const = true;
   } else {

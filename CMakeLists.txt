@@ -79,7 +79,7 @@ file(GLOB SOURCES
  src/ldt_statistics/distributions/distribution_gld.cpp
  src/ldt_statistics/distributions/histogram.cpp
  src/ldt_statistics/distributions/mixture.cpp
- src/ldt_statistics/distributions/mnormal.cpp 
+ #src/ldt_statistics/distributions/mnormal.cpp 
  src/ldt_statistics/distributions/empirical103.cpp 
  
  src/ldt_statistics/statistics/statistics.cpp 

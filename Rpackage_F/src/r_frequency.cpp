@@ -208,7 +208,7 @@ std::unique_ptr<FrequencyWeekBased> GetFreqFromSEXP_week(List f) {
   }
   default:
     throw LdtException(ErrorType::kLogic, "R-frequency",
-                   "use this class for week-based frequency");
+                       "use this class for week-based frequency");
   }
 }
 
@@ -220,8 +220,7 @@ GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
 
   switch (fclass) {
   case FrequencyClass::kCrossSection:
-    return std::unique_ptr<FrequencyCrossSection>(
-        new FrequencyCrossSection(as<int>(f["position"])));
+    return std::make_unique<FrequencyCrossSection>(as<int>(f["position"]));
 
   case FrequencyClass::kYearly:
     return FrequencyYearBased::Yearly(as<int>(f["year"]));
@@ -249,18 +248,16 @@ GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
 
   case FrequencyClass::kListString: {
     getCh(f["items"], listItems);
-    return std::unique_ptr<FrequencyList<std::string>>(
-        new FrequencyList<std::string>(as<std::string>(f["value"]),
-                                       &listItems));
+    return std::make_unique<FrequencyList<std::string>>(
+        as<std::string>(f["value"]), &listItems);
   }
   case FrequencyClass::kListDate: {
     getCh(f["items"], listItems);
     for (auto const &d : listItems)
       listItemsDate.push_back(boost::gregorian::date_from_iso_string(d));
     return std::unique_ptr<FrequencyList<boost::gregorian::date>>(
-        new FrequencyList<boost::gregorian::date>(
-            boost::gregorian::date_from_iso_string(as<std::string>(f["value"])),
-            &listItemsDate));
+        boost::gregorian::date_from_iso_string(as<std::string>(f["value"])),
+        &listItemsDate);
   }
 
   case FrequencyClass::kHourly: {
@@ -283,7 +280,7 @@ GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
 
   default:
     throw LdtException(ErrorType::kLogic, "R-frequency",
-                   "not implemeted for this type of frequency");
+                       "not implemeted for this type of frequency");
   }
 }
 
@@ -340,8 +337,9 @@ SEXP To_SEXP_week(FrequencyClass fClass, Frequency *F) {
   }
 
   default:
-    throw LdtException(ErrorType::kLogic, "R-frequency",
-                   "invalid frequency class. week-based frequency is expected");
+    throw LdtException(
+        ErrorType::kLogic, "R-frequency",
+        "invalid frequency class. week-based frequency is expected");
   }
 }
 
@@ -427,7 +425,7 @@ SEXP To_SEXP(Frequency *F, std::vector<std::string> &listItems,
 
   default:
     throw LdtException(ErrorType::kLogic, "R-frequency",
-                   "not implemeted for this type of frequency");
+                       "not implemeted for this type of frequency");
   }
 }
 

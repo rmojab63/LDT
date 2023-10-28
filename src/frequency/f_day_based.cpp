@@ -37,30 +37,26 @@ FrequencyDayBased::FrequencyDayBased(FrequencyWeekBased &day, Ti partitionCount,
 
 std::unique_ptr<FrequencyDayBased>
 FrequencyDayBased::XTimesADay(FrequencyWeekBased &day, Ti X, Ti position) {
-  return std::unique_ptr<FrequencyDayBased>(
-      new FrequencyDayBased(day, X, position));
+  return std::make_unique<FrequencyDayBased>(day, X, position);
 }
 
 std::unique_ptr<FrequencyDayBased>
 FrequencyDayBased::Hourly(FrequencyWeekBased &day, Ti hour) {
-  return std::unique_ptr<FrequencyDayBased>(
-      new FrequencyDayBased(day, 24, hour));
+  return std::make_unique<FrequencyDayBased>(day, 24, hour);
 }
 
 std::unique_ptr<FrequencyDayBased>
 FrequencyDayBased::Minutely(FrequencyWeekBased &day, Ti minute) {
-  return std::unique_ptr<FrequencyDayBased>(
-      new FrequencyDayBased(day, 1440, minute));
+  return std::make_unique<FrequencyDayBased>(day, 1440, minute);
 }
 
 std::unique_ptr<FrequencyDayBased>
 FrequencyDayBased::Secondly(FrequencyWeekBased &day, Ti second) {
-  return std::unique_ptr<FrequencyDayBased>(
-      new FrequencyDayBased(day, 86400, second));
+  return std::make_unique<FrequencyDayBased>(day, 86400, second);
 }
 
 std::unique_ptr<Frequency> FrequencyDayBased::Clone() const {
-  return std::unique_ptr<FrequencyDayBased>(new FrequencyDayBased(*this));
+  return std::make_unique<FrequencyDayBased>(*this);
 }
 
 void FrequencyDayBased::Next(Ti steps) {

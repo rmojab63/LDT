@@ -103,9 +103,9 @@ std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
   fClass = GetClass(classStr);
   switch (fClass) {
   case FrequencyClass::kCrossSection: {
-    auto f = new FrequencyCrossSection(0);
+    auto f = std::make_unique<FrequencyCrossSection>(0);
     FrequencyCrossSection::Parse0(str, *f);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
 
   case FrequencyClass::kYearly:
@@ -114,9 +114,9 @@ std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
   case FrequencyClass::kXTimesAYear:
   case FrequencyClass::kMultiYear:
   case FrequencyClass::kXTimesZYears: {
-    auto f = new FrequencyYearBased();
+    auto f = std::make_unique<FrequencyYearBased>();
     FrequencyYearBased::Parse0(str, classStr, fClass, *f);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
 
   case FrequencyClass::kWeekly:
@@ -124,31 +124,32 @@ std::unique_ptr<Frequency> Frequency::Parse(const std::string &str,
   case FrequencyClass::kDailyInWeek:
   case FrequencyClass::kMultiWeekly:
   case FrequencyClass::kMultiDaily: {
-    auto f = new FrequencyWeekBased();
+    auto f = std::make_unique<FrequencyWeekBased>();
     FrequencyWeekBased::Parse0(str, classStr, fClass, *f);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
 
   case FrequencyClass::kListString: {
-    auto f = new FrequencyList<std::string>("", nullptr);
+    auto f = std::make_unique<FrequencyList<std::string>>("", nullptr);
     FrequencyList<std::string>::Parse0(str, classStr, fClass, *f, nullptr);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
+
   case FrequencyClass::kListDate: {
-    auto f = new FrequencyList<boost::gregorian::date>(boost::gregorian::date(),
-                                                       nullptr);
+    auto f = std::make_unique<FrequencyList<boost::gregorian::date>>(
+        boost::gregorian::date(), nullptr);
     FrequencyList<boost::gregorian::date>::Parse0(str, classStr, fClass, *f,
                                                   nullptr);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
 
   case FrequencyClass::kHourly:
   case FrequencyClass::kMinutely:
   case FrequencyClass::kSecondly:
   case FrequencyClass::kXTimesADay: {
-    auto f = new FrequencyDayBased();
+    auto f = std::make_unique<FrequencyDayBased>();
     FrequencyDayBased::Parse0(str, classStr, fClass, *f);
-    return std::unique_ptr<Frequency>(f);
+    return f;
   }
 
   default:
@@ -161,7 +162,7 @@ void Frequency::Examples(std::vector<std::unique_ptr<Frequency>> &values,
                          std::vector<std::string> &listItemsString,
                          std::vector<boost::gregorian::date> &listItemsDate) {
 
-  values.push_back(std::unique_ptr<Frequency>(new FrequencyCrossSection(10)));
+  values.push_back(std::make_unique<FrequencyCrossSection>(10));
 
   values.push_back(FrequencyYearBased::Yearly(2000));
   values.push_back(FrequencyYearBased::Quarterly(2000, 2));
@@ -196,9 +197,9 @@ void Frequency::Examples(std::vector<std::unique_ptr<Frequency>> &values,
       std::end(listItemsString),
       {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"});
 
-  values.push_back(std::unique_ptr<Frequency>(new FrequencyList<std::string>(
-      "G", &listItemsString))); // add an item at the middle or 'Next' might
-                                // fail in some tests
+  values.push_back(std::make_unique<FrequencyList<std::string>>(
+      "G", &listItemsString)); // add an item at the middle or 'Next' might
+                               // fail in some tests
 
   listItemsDate.insert(std::end(listItemsDate),
                        {
@@ -215,9 +216,8 @@ void Frequency::Examples(std::vector<std::unique_ptr<Frequency>> &values,
                            boost::gregorian::date(2010, 8, 19),
                        });
 
-  values.push_back(
-      std::unique_ptr<Frequency>(new FrequencyList<boost::gregorian::date>(
-          boost::gregorian::date(2005, 5, 25), &listItemsDate)));
+  values.push_back(std::make_unique<FrequencyList<boost::gregorian::date>>(
+      boost::gregorian::date(2005, 5, 25), &listItemsDate));
 }
 
 // #pragma region DayOfWeekRange
