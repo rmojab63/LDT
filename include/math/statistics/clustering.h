@@ -218,6 +218,7 @@ class LDT_EXPORT HClusterBase {
 
 public:
   HClusterBase(){};
+  virtual ~HClusterBase() = default;
 
   /// @brief Array of Nodes. At first it has n nodes. After calculation, n-1
   /// more merged Nodes are added

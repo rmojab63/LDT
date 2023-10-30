@@ -187,7 +187,7 @@ void SearcherSummary::Push(std::shared_ptr<EstimationKeep> &coef,
   }
 
   if (pItems->KeepMixture) {
-    Mixture4.Combine(coef->Mean, coef->Variance, 0, 0, coef->Weight);
+    Mixture4.Combine(coef->Mean, coef->Variance, 0, 0, coef->Weight, 1);
   }
 
   if (pItems->ExtremeBoundsMultiplier > 0) {

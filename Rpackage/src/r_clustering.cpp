@@ -47,7 +47,7 @@ List ClusterH(NumericVector distances, std::string linkage) {
 
   auto cluster = HClusterBase::GetFromType(linkage0, numVariables);
   auto mdistances = MatrixSym<false>(&distances[0], numVariables);
-  cluster.get()->Calculate(mdistances);
+  cluster->Calculate(mdistances);
 
   // lets send similar output to R
   auto heightsData = std::make_unique<Tv[]>(numVariables - 1);
