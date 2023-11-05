@@ -103,7 +103,7 @@ summary.ldt.search.item <- function(object, searchResult = NULL, test = TRUE, ..
   #if (object$typeName == "cdf")
   #if (object$typeName == "mixture")
 
-  return(object)
+  return(object$value)
 }
 
 

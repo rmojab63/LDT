@@ -225,6 +225,10 @@ template <typename Tw> Tw Matrix<Tw>::Get0(Ti i, Ti j) const {
   return Data[i + RowsCount * j];
 }
 
+template <typename Tw> Tw &Matrix<Tw>::Get0r(Ti i, Ti j) {
+  return Data[i + RowsCount * j];
+}
+
 template <typename Tw> Tw Matrix<Tw>::Get(Ti i) const {
   if (i < 0 || i >= length())
     throw std::out_of_range(format(

@@ -164,9 +164,9 @@ print.ldt.search <- function(x, ...) {
           if (x$info$items$inclusion){
             inclusion <- values[which(sapply(values, function(y){y$typeName == "inclusion"}))][[1]]
             cat(indent, "Inclusion weights average:\n")
-            mi <- which.max(inclusion$value[,1])
+            mi <- which.max(ifelse(is.na(inclusion$value[,1]), -Inf, inclusion$value[,1])) #ignore NA
             rec.print.list(list(
-              "maximum value" = max(inclusion$value[,1]),
+              "maximum value" = max(inclusion$value[,1], na.rm = TRUE),
               "name" = rownames(inclusion$value)[mi],
               "count" = inclusion$value[,2][mi]
             ), indent = c(indent, "  "))
