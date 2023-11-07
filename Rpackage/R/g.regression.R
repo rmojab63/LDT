@@ -301,12 +301,12 @@ predict.ldt.estim.varma <- function(object,
     stop("Predictions are not available. Make sure you requested prediction in the 'estim.varma(...)' function.")
 
   added <- attr(object$info$data, "ldt.new.appended")
+  ldata <- nrow(object$info$data$data)
   if (!is.null(added) && added > 0)
-    aY <- object$info$data$data[1:(nrow(object$info$data$data) - added),
-                                colnames(object$estimations$Y)]#don't use Y (It is differenced in integrated models)
-  else
-    aY <- object$info$data$data[1:nrow(object$info$data$data),
-                                colnames(object$estimations$Y)]
+    ldata <- nrow(object$info$data$data) - added
+
+  aY <- object$info$data$data[1:ldata,
+                              colnames(object$estimations$Y), drop=FALSE]#don't use Y (It is differenced in integrated models)
 
   if (is.na(actualCount))
     actualCount <- nrow(aY)
@@ -338,7 +338,7 @@ predict.ldt.estim.varma <- function(object,
                     vars)
   }
 
-  dstart <- tdata::next.freq(startFrequency, nrow(object$estimations$Y) - actualCount)
+  dstart <- tdata::next.freq(startFrequency, ldata - actualCount)
   freqs <- tdata::get.seq0(dstart, nrow(preds))
 
   rownames(preds) <- freqs

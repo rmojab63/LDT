@@ -232,7 +232,7 @@ get.data.append.newX <- function(data, maxHorizon = NA){
                              nrow = nrow(data$newX)), data$newX)
     colnames(new_rows) <- colnames(data$data)
     data$data <- rbind(data$data, new_rows)
-    addedcount <- nrow(newX)
+    addedcount <- nrow(data$newX)
   }
 
   attr(data, "ldt.new.appended") <- addedcount

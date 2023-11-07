@@ -7,3 +7,4 @@
 ^vignettes/data$
 ^LICENSE\.md$
 ^man-roxygen$
+^data-raw$
