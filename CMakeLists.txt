@@ -143,6 +143,12 @@ if(COMPILE_R)
 		 Rpackage/src/r_varma.cpp
 		 Rpackage/src/r_dc.cpp
 		 Rpackage/src/r_func.cpp
+
+		 #Rpackage_F/src/r_tsdata.h
+		 #Rpackage_F/src/r_frequency.cpp 
+		 #Rpackage_F/src/r_variable.cpp
+		 #Rpackage_F/src/r_convert.cpp
+
     )
   
 	# currently, I hard code the paths:  

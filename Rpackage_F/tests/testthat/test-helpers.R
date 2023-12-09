@@ -1,15 +1,5 @@
 
 
-#test_that("Descriptive works", {
-#
-#  types = c("mean", "var", "std", "last", "first")
-#  data = c(1,2,3,4,5)
-#  res <- get.descriptive(data,"mean",TRUE)
-#
-#})
-
-
-
 test_that("Long-run growth works (discrete)", {
   g <- get.longrun.growth(c(1,2,1))
   expect_equal(0, g, tolerance = 1e-16)

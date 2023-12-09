@@ -80,13 +80,13 @@ List ConvertTo_MultiDaily(SEXP w, int k, SEXP aggregateFun, bool fromEnd) {
 }
 
 // [[Rcpp::export(.ConvertTo_Weekly)]]
-List ConvertTo_Weekly(SEXP w, const char *weekStart, SEXP aggregateFun) {
+List ConvertTo_Weekly(SEXP w, std::string weekStart, SEXP aggregateFun) {
   std::vector<std::string> listItems;
   std::vector<boost::gregorian::date> listItemsDate;
   Variable<double> v;
   UpdateVariableFromSEXP(w, v, listItems, listItemsDate);
 
-  auto weekstartType = FromString_DayOfWeek(weekStart);
+  auto weekstartType = FromString_DayOfWeek(weekStart.c_str());
 
   Variable<double> nv;
   if (aggregateFun == R_NilValue) {

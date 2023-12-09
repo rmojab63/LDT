@@ -255,7 +255,7 @@ GetFreqFromSEXP(SEXP value, std::vector<std::string> &listItems,
     getCh(f["items"], listItems);
     for (auto const &d : listItems)
       listItemsDate.push_back(boost::gregorian::date_from_iso_string(d));
-    return std::unique_ptr<FrequencyList<boost::gregorian::date>>(
+    return std::make_unique<FrequencyList<boost::gregorian::date>>(
         boost::gregorian::date_from_iso_string(as<std::string>(f["value"])),
         &listItemsDate);
   }

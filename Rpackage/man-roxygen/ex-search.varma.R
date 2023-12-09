@@ -23,7 +23,8 @@ metric_options <- get.search.metrics(typesIn = c("aic")) # We use SIC for search
 search_res <- search.varma(data = get.data(data, endogenous = num_eq + num_y_ir),
                            combinations = get.combinations(sizes = y_sizes,
                                                            numTargets = 3),
-                           metrics = metric_options)
+                           metrics = metric_options,
+                           maxHorizon = 0)
 print(search_res)
 
 

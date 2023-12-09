@@ -308,6 +308,8 @@ print.ldt.estim <- function(x, ...) {
     for (i in seq_len(nrow(df))){
       if (!is.null(x$estimations$isRestricted) && x$estimations$isRestricted[i,dep_var] == 1)
         stars[[i]] <- paste0("r", strrep(" ", ms - 1))
+      else if (is.na(df[i,4]))
+        stars[[i]] <- paste0("", strrep(" ", ms))
       else if (df[i,4] < .001)
         stars[[i]] <- "***"
       else if(df[i,4] < .01)

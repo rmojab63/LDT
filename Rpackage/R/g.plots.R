@@ -259,9 +259,6 @@ fan.plot <- function (data,
   if (startInd > 1)
     do.call(lines, c(list(medians[1:startInd]), actualArgs))
 
-  if (startInd == length(medians) - 1)
-    return() # no fan to plot
-
   cols <- colorRampPalette(c("white", boundColor, "white"),
                            alpha = TRUE)(ncol(quants) + 1)
   cols <- cols[2:(length(cols) - 1)]
@@ -351,7 +348,7 @@ plot.ldt.varma.prediction <- function(x,
   plotArgs <- fanPlotArgs$plotArgs
   if (is.null(plotArgs))
     plotArgs <- list()
-  plotArgs <- modifyList(list(xaxt = "n"), plotArgs)
+  plotArgs <- modifyList(list(xaxt = "n", main = var_name), plotArgs)
   fanPlotArgs$plotArgs <- plotArgs
 
   ylimSuggest <- c(NA,NA) # forecasts in evaluation might need more vertical space
