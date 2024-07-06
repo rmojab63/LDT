@@ -2,6 +2,12 @@
 OPTION(USE_MKL "MKL" OFF)#TODO: some fixes is needed
 OPTION(USE_OPENBLAS "OpenBLAS" OFF)
 OPTION(COMPILE_R "R" ON)
+OPTION(LITE "R" ON)
+
+if(LITE)
+set(COMPILE_R OFF)
+set(BUILD_TEST OFF)
+endif()
 
 # BUILD_COMPLETE : If a package is not found, it throws error. Otherwise, it builds the project but without the required package
 
@@ -32,8 +38,71 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
  
 message(STATUS "Project source directory: ${PROJECT_SOURCE_DIR}")
 
+if(LITE)
+
 file(GLOB SOURCES
  src/api.cpp  
+
+ src/ldt_statistics/scoring/scoring.cpp
+
+ src/ldt_statistics/distributions/distributions_uni.cpp
+ src/ldt_statistics/distributions/distribution_gld.cpp
+ src/ldt_statistics/distributions/histogram.cpp
+ src/ldt_statistics/distributions/mixture.cpp
+ #src/ldt_statistics/distributions/mnormal.cpp 
+ src/ldt_statistics/distributions/empirical103.cpp 
+ 
+ src/ldt_statistics/statistics/statistics.cpp 
+ src/ldt_statistics/statistics/descriptive.cpp
+ 
+
+ src/ldt_math/optimization/lmbfgsb.cpp
+ src/ldt_math/optimization/nelder_mead.cpp
+ src/ldt_math/optimization/newton.cpp
+
+ src/ldt_math/optimization/lbfgsb/lbfgsb.c
+ src/ldt_math/optimization/lbfgsb/linesearch.c
+ src/ldt_math/optimization/lbfgsb/linpack.c
+ src/ldt_math/optimization/lbfgsb/miniCBLAS.c
+ src/ldt_math/optimization/lbfgsb/print.c
+ src/ldt_math/optimization/lbfgsb/subalgorithms.c
+ src/ldt_math/optimization/lbfgsb/timer.c
+ 
+ src/ldt_math/polynomials/mpolynomial.cpp
+ src/ldt_math/polynomials/polynomial.cpp
+ src/ldt_math/derivative.cpp
+ src/ldt_math/auc.cpp
+
+ src/matrix/matrix_la.cpp
+ src/matrix/matrix.cpp
+ src/matrix/matrix_sym.cpp
+ src/matrix/dataset.cpp 
+ src/matrix/decompositions.cpp
+ src/matrix/vmatrix.cpp
+
+ src/variable/variables.cpp
+ src/variable/variable.cpp
+ 
+ src/frequency/f_base.cpp
+ src/frequency/f_cross_section.cpp
+ src/frequency/f_year_based.cpp
+ src/frequency/f_week_based.cpp
+ src/frequency/f_list.cpp
+ src/frequency/f_day_based.cpp
+
+ src/helpers.cpp
+ src/array.cpp
+  
+)
+
+SET(LDT_HEADER_DIR ${PROJECT_SOURCE_DIR}/include 
+                   ${PROJECT_SOURCE_DIR}/include/math 
+				   ${PROJECT_SOURCE_DIR}/include/blas 
+				   ${PROJECT_SOURCE_DIR}/include/math/statistics
+				   )
+
+else()
+file(GLOB SOURCES 
  
  #src/ldt_statistics/modeling/time_series/expsmoothing.cpp
  #src/ldt_statistics/modeling/time_series/tsfilter.cpp 
@@ -215,6 +284,8 @@ message(STATUS "Source files and headers are copied to Rpackage/src directory.")
 file(GLOB COPYRIGHT  ${PROJECT_SOURCE_DIR}/readme.md)
 file(COPY ${COPYRIGHT} DESTINATION ${PROJECT_SOURCE_DIR}/Rpackage/inst/COPYRIGHTS)
 # ------
+
+endif()
 
 add_library(ldt SHARED ${SOURCES})
 

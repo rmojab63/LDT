@@ -5,7 +5,6 @@
 #include "ldt_base.h"
 #include "scoring.h"
 #include "variable.h"
-#include "varma.h"
 
 #define LDT_C_EXPORT extern "C" LDT_EXPORT
 // #pragma region Exception
@@ -92,31 +91,5 @@ LDT_C_EXPORT double LDT_GetScoreCrpsNormal(double y, double mean,
 
 LDT_C_EXPORT double LDT_GetScoreCrpsLogNormal(double y, double meanLog,
                                               double varianceLog);
-
-// #pragma endregion
-
-// #pragma region Forecast
-
-LDT_C_EXPORT void LDT_Forecast(double *data, int dataRows, int dataCols,
-                               int exoStart, int horizon, bool &cancel) {
-  throw ldt::LdtException(ldt::ErrorType::kLogic, "api", "not implemented");
-
-  /*
-    auto source = Matrix<Tv>(data, dataRows, dataCols);
-    source.Transpose();
-
-    auto options = SearchOptions();
-    options.Parallel = true;
-
-    // metrics
-    auto metrics = SearchMetricOptions();
-    for (auto i = 1; i <= horizon; i++)
-      metrics.Horizons.push_back(i);
-    metrics.MetricsIn.push_back(ldt::GoodnessOfFitType::kAic);
-    metrics.MetricsOut = std::vector<ldt::ScoringType>(
-        {ScoringType::kDirection, ScoringType::kRmspe,
-    ScoringType::kCrps}); metrics.SimFixSize = 0; metrics.TrainRatio = 0.7;
-    */
-}
 
 // #pragma endregion
